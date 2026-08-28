@@ -32,7 +32,7 @@ struct VrFixture
 };
 
 TEST_CASE_METHOD(VrFixture, "frame_advance_outstanding_over_one_uses_ultra_fast_forward_when_render_throttling_enabled",
-                 "vr_update_effective_speed_mode")
+    "vr_update_effective_speed_mode")
 {
     g_r4300.effective_speed_mode.store(CoreSpeedMode::Normal);
     s_cfg.render_throttling = 1;
@@ -44,7 +44,7 @@ TEST_CASE_METHOD(VrFixture, "frame_advance_outstanding_over_one_uses_ultra_fast_
 }
 
 TEST_CASE_METHOD(VrFixture, "frame_advance_outstanding_over_one_uses_fast_forward_when_render_throttling_disabled",
-                 "vr_update_effective_speed_mode")
+    "vr_update_effective_speed_mode")
 {
     g_r4300.effective_speed_mode.store(CoreSpeedMode::Normal);
     s_cfg.render_throttling = 0;
@@ -55,8 +55,8 @@ TEST_CASE_METHOD(VrFixture, "frame_advance_outstanding_over_one_uses_fast_forwar
     REQUIRE(g_r4300.effective_speed_mode.load() == CoreSpeedMode::FastForward);
 }
 
-TEST_CASE_METHOD(VrFixture, "seek_to_frame_uses_ultra_fast_forward_when_render_throttling_enabled",
-                 "vr_update_effective_speed_mode")
+TEST_CASE_METHOD(
+    VrFixture, "seek_to_frame_uses_ultra_fast_forward_when_render_throttling_enabled", "vr_update_effective_speed_mode")
 {
     g_r4300.effective_speed_mode.store(CoreSpeedMode::Normal);
     s_cfg.render_throttling = 1;
@@ -67,8 +67,8 @@ TEST_CASE_METHOD(VrFixture, "seek_to_frame_uses_ultra_fast_forward_when_render_t
     REQUIRE(g_r4300.effective_speed_mode.load() == CoreSpeedMode::UltraFastForward);
 }
 
-TEST_CASE_METHOD(VrFixture, "seek_to_frame_uses_fast_forward_when_render_throttling_disabled",
-                 "vr_update_effective_speed_mode")
+TEST_CASE_METHOD(
+    VrFixture, "seek_to_frame_uses_fast_forward_when_render_throttling_disabled", "vr_update_effective_speed_mode")
 {
     g_r4300.effective_speed_mode.store(CoreSpeedMode::Normal);
     s_cfg.render_throttling = 0;
@@ -91,7 +91,7 @@ TEST_CASE_METHOD(VrFixture, "desired_speed_mode_uses_requested_value_when_not_no
 }
 
 TEST_CASE_METHOD(VrFixture, "desired_speed_mode_ultra_fast_forward_downgraded_when_render_throttling_disabled",
-                 "vr_update_effective_speed_mode")
+    "vr_update_effective_speed_mode")
 {
     g_r4300.effective_speed_mode.store(CoreSpeedMode::Normal);
     s_cfg.render_throttling = 0;
@@ -103,7 +103,7 @@ TEST_CASE_METHOD(VrFixture, "desired_speed_mode_ultra_fast_forward_downgraded_wh
 }
 
 TEST_CASE_METHOD(VrFixture, "desired_speed_mode_ultra_fast_forward_preserved_when_render_throttling_enabled",
-                 "vr_update_effective_speed_mode")
+    "vr_update_effective_speed_mode")
 {
     g_r4300.effective_speed_mode.store(CoreSpeedMode::Normal);
     s_cfg.render_throttling = 1;

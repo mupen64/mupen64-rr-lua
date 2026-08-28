@@ -41,8 +41,8 @@ template <class CharT, class Traits = std::char_traits<CharT>> class StringSplit
     using value_type = std::basic_string_view<CharT, Traits>;
 
     template <class CharT2, class Traits2>
-    inline friend auto ::StrUtils::split_basic_string(std::basic_string_view<CharT2, Traits2> str,
-                                                      std::basic_string_view<CharT2, Traits2> delim);
+    inline friend auto ::StrUtils::split_basic_string(
+        std::basic_string_view<CharT2, Traits2> str, std::basic_string_view<CharT2, Traits2> delim);
 
     value_type operator*() const
     {

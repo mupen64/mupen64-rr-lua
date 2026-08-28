@@ -143,11 +143,11 @@ static void update_dialog_position_and_size()
 {
     const RECT rc = CommandPalette::get_recommended_bounds(g_ctx.dlg_template->cy);
     SetWindowPos(g_ctx.hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
+        SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
 }
 
-static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                                           UINT_PTR id, DWORD_PTR ref_data)
+static LRESULT CALLBACK keyboard_interaction_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     switch (msg)
     {
@@ -277,7 +277,7 @@ void ParameterPalette::show(const ActionManager::action_path &action_path)
     if (!g_ctx.dlg_template)
     {
         const auto result = load_resource_as_dialog_template(IDD_PARAMETER_PALETTE, &g_ctx.dlg_template);
-        RT_ASSERT(result, "Failed to load parameter palette dialog template");
+        NEED(result, "Failed to load parameter palette dialog template");
     }
 
     const HWND hwnd = CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PARAMETER_PALETTE), g_main_ctx.hwnd, dlgproc);

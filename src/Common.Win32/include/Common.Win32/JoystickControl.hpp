@@ -7,10 +7,9 @@
 
 #include <filesystem>
 #include <numbers>
-#include <MiscHelpers.hpp>
+#include <Common/MiscHelpers.hpp>
 #if defined(_WIN32)
-#include <windows.h>
-#include <gdiplus.h>
+#include <Common.Win32/Common.hpp>
 #elif defined(__linux__)
 #error JoystickControl is not supported on Linux
 #endif

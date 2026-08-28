@@ -7,13 +7,7 @@
 
 #include <filesystem>
 
-#include <windows.h>
-#include <windowsx.h>
-#include <commdlg.h>
-#include <commctrl.h>
-#include <shlobj.h>
-#include <gdiplus.h>
-#include <wrl/client.h>
+#include <Common.Win32/Common.hpp>
 #include <spdlog/spdlog.h>
 #include <Common.Views/IDialogService.hpp>
 
@@ -137,7 +131,7 @@ inline RECT get_window_rect_client_space(HWND parent, HWND child)
     GetWindowRect(child, &client);
 
     return {offset_client.left, offset_client.top, offset_client.left + (client.right - client.left),
-            offset_client.top + (client.bottom - client.top)};
+        offset_client.top + (client.bottom - client.top)};
 }
 
 /**
@@ -280,7 +274,7 @@ inline std::filesystem::path get_desktop_path()
 inline std::string format_duration(size_t seconds)
 {
     char str[480] = {};
-    sprintf(str, "%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+    sprintf(str, "%02zu:%02zu:%02zu", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
     return str;
 }
 
@@ -431,8 +425,8 @@ inline void listbox_ensure_visible(const HWND hwnd, const int32_t index)
     }
 }
 
-inline LRESULT CALLBACK no_resize_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                                DWORD_PTR ref_data)
+inline LRESULT CALLBACK no_resize_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     switch (msg)
     {
@@ -578,8 +572,7 @@ inline void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id, b
     g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
 
     const Gdiplus::RectF dest(static_cast<Gdiplus::REAL>(rc.left), static_cast<Gdiplus::REAL>(rc.top),
-                              static_cast<Gdiplus::REAL>(rc.right - rc.left),
-                              static_cast<Gdiplus::REAL>(rc.bottom - rc.top));
+        static_cast<Gdiplus::REAL>(rc.right - rc.left), static_cast<Gdiplus::REAL>(rc.bottom - rc.top));
 
     g.DrawImage(bmp, dest);
 

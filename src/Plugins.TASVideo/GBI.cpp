@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "GBI.hpp"
 #include "RDP.hpp"
 #include "RSP.hpp"
@@ -29,16 +29,13 @@
 u32 uc_crc, uc_dcrc;
 char uc_str[256];
 
-SpecialMicrocodeInfo specialMicrocodes[] = {
-    {F3DWRUS, FALSE, 0xd17906e2, "RSP SW Version: 2.0D, 04-01-96"},
+SpecialMicrocodeInfo specialMicrocodes[] = {{F3DWRUS, FALSE, 0xd17906e2, "RSP SW Version: 2.0D, 04-01-96"},
     {F3DWRUS, FALSE, 0x94c4c833, "RSP SW Version: 2.0D, 04-01-96"},
 
     {S2DEX, FALSE, 0x9df31081, "RSP Gfx ucode S2DEX  1.06 Yoshitaka Yasumoto Nintendo."},
 
-    {F3DDKR, FALSE, 0x8d91244f, "Diddy Kong Racing"},
-    {F3DDKR, FALSE, 0x6e6fc893, "Diddy Kong Racing"},
-    {F3DDKR, FALSE, 0xbde9d1fb, "Jet Force Gemini"},
-    {F3DPD, FALSE, 0x1c4f7869, "Perfect Dark"}};
+    {F3DDKR, FALSE, 0x8d91244f, "Diddy Kong Racing"}, {F3DDKR, FALSE, 0x6e6fc893, "Diddy Kong Racing"},
+    {F3DDKR, FALSE, 0xbde9d1fb, "Jet Force Gemini"}, {F3DPD, FALSE, 0x1c4f7869, "Perfect Dark"}};
 
 u32 G_RDPHALF_1, G_RDPHALF_2, G_RDPHALF_CONT;
 u32 G_SPNOOP;

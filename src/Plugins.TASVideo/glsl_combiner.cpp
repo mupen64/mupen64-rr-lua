@@ -10,7 +10,7 @@
 #include "gDP.hpp"
 #include "gSP.hpp"
 #include "GBI.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "Textures.h"
 
 struct GLSLProgram
@@ -107,7 +107,7 @@ static GLuint CompileShader(GLenum type, const char *source)
     {
         LogInfoLog(type == GL_VERTEX_SHADER ? "GLSL combiner: vertex shader compile failed"
                                             : "GLSL combiner: fragment shader compile failed",
-                   shader, false);
+            shader, false);
         glDeleteShader(shader);
         return 0;
     }
@@ -430,7 +430,7 @@ void GLSLCombiner_Init()
     for (int i = 0; i < 16; i++) s_projection[i] = 0.0f;
     s_projection[0] = s_projection[5] = s_projection[10] = s_projection[15] = 1.0f;
 
-    if (!GLEW_VERSION_2_0)
+    if (!GLAD_GL_VERSION_2_0)
     {
         g_plugin->log_error("GLSL combiner: OpenGL 2.0 not available, shaders will fail to compile");
         return;

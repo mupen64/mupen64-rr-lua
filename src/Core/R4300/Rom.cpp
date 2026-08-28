@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
 #include <Core.hpp>
 // #include <PlatformService.h>
-#include <format>
+
 #include <md5.h>
 #include <Memory/Memory.hpp>
 #include <R4300/R4300.hpp>
@@ -63,8 +62,8 @@ void print_rom_info()
 {
     g_core->log_info("--- Rom Info ---");
     g_core->log_info(std::format("{:#06x} {:#06x} {:#06x} {:#06x}", ROM_HEADER.init_PI_BSB_DOM1_LAT_REG,
-                                 ROM_HEADER.init_PI_BSB_DOM1_PGS_REG, ROM_HEADER.init_PI_BSB_DOM1_PWD_REG,
-                                 ROM_HEADER.init_PI_BSB_DOM1_PGS_REG2));
+        ROM_HEADER.init_PI_BSB_DOM1_PGS_REG, ROM_HEADER.init_PI_BSB_DOM1_PWD_REG,
+        ROM_HEADER.init_PI_BSB_DOM1_PGS_REG2));
     g_core->log_info(std::format("Clock rate: {:#06x}", std::byteswap(ROM_HEADER.ClockRate)));
     g_core->log_info(std::format("Version: {:#06x}", std::byteswap(ROM_HEADER.Release)));
     g_core->log_info(
@@ -255,8 +254,8 @@ bool rom_load(std::filesystem::path path)
 
     if (rom_cache.size() < g_core->cfg->rom_cache_size)
     {
-        g_core->log_info(std::format("[Core] Putting ROM in cache... ({}/{} full)\n", rom_cache.size(),
-                                     g_core->cfg->rom_cache_size));
+        g_core->log_info(std::format(
+            "[Core] Putting ROM in cache... ({}/{} full)\n", rom_cache.size(), g_core->cfg->rom_cache_size));
         auto data = (uint8_t *)malloc(taille);
         memcpy(data, rom, taille);
         rom_cache[path] = std::make_pair(data, taille);

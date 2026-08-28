@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <windows.h>
+#include <Common.Win32/Common.hpp>
 #include <m64rr/Plugin.hpp>
-#include <WinFilePicker.hpp>
+#include <Common.Win32/WinFilePicker.hpp>
 #include <filesystem>
 
 extern HINSTANCE g_inst;

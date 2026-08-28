@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
 #include <Core.hpp>
 #include <R4300/Macros.hpp>
 #include <R4300/Recomph.hpp>
@@ -111,7 +110,7 @@ inline void grow_buffer()
     if (!new_buffer)
     {
         g_core->log_error(std::format("[Dynarec] FATAL: code buffer growth failed (code_length={}, max_code_length={})",
-                                      code_length, max_code_length));
+            code_length, max_code_length));
         abort();
     }
     *inst_pointer = new_buffer;

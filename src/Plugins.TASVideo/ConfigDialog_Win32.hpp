@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <windows.h>
+#include <Common.Win32/Common.hpp>
 
 namespace TASVideo
 {

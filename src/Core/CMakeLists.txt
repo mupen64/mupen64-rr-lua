@@ -4,16 +4,16 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Core.Headers INTERFACE
+add_library(Mupen64RR_Core_Headers INTERFACE
     "include/m64rr/API.hpp"
     "include/m64rr/Plugin.hpp"
     "include/m64rr/Types.hpp"
 )
-target_compile_features(Mupen64RR.Core.Headers INTERFACE cxx_std_26)
-target_include_directories(Mupen64RR.Core.Headers INTERFACE "include")
-target_link_libraries(Mupen64RR.Core.Headers INTERFACE Mupen64RR.Common)
+target_compile_features(Mupen64RR_Core_Headers INTERFACE cxx_std_26)
+target_include_directories(Mupen64RR_Core_Headers INTERFACE "include")
+target_link_libraries(Mupen64RR_Core_Headers INTERFACE Mupen64RR_Common)
 
-add_library(Mupen64RR.Core STATIC
+add_library(Mupen64RR_Core STATIC
     "Core.hpp"
     "Alloc.hpp"
     "Cheats.hpp"
@@ -76,39 +76,40 @@ add_library(Mupen64RR.Core STATIC
 
     "R4300/VCR.cpp"
 )
-target_compile_features(Mupen64RR.Core PUBLIC cxx_std_26)
-set_target_properties(Mupen64RR.Core PROPERTIES
+mupen64rr_reuse_common_pch(Mupen64RR_Core)
+target_compile_features(Mupen64RR_Core PUBLIC cxx_std_26)
+set_target_properties(Mupen64RR_Core PROPERTIES
     OUTPUT_NAME Core
 )
-target_include_directories(Mupen64RR.Core PUBLIC "include")
-target_include_directories(Mupen64RR.Core PRIVATE ".")
-target_link_libraries(Mupen64RR.Core PRIVATE
+target_include_directories(Mupen64RR_Core PUBLIC "include")
+target_include_directories(Mupen64RR_Core PRIVATE ".")
+target_link_libraries(Mupen64RR_Core PRIVATE
     libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
     PkgConfig::lz4
     vendor::aladdin-md5
 )
-target_link_libraries(Mupen64RR.Core PUBLIC
-    Mupen64RR.Common
-    Mupen64RR.Core.Headers
+target_link_libraries(Mupen64RR_Core PUBLIC
+    Mupen64RR_Common
+    Mupen64RR_Core_Headers
 )
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(Mupen64RR.Core PRIVATE -Werror=nonportable-include-path)
+    target_compile_options(Mupen64RR_Core PRIVATE -Werror=nonportable-include-path)
 endif()
 
 
 
 # options: disable dynarec
 if (${MUPEN64RR_ENABLE_DYNAREC})
-    target_compile_definitions(Mupen64RR.Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
+    target_compile_definitions(Mupen64RR_Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
     #[=[
     Select the dynarec backend by target architecture.
         x86-64 -> R4300/x86_64 (x86-64 recompiler)
         x86    -> R4300/x86 (original x86-32 recompiler)
-    
+
     Note that we detect using the compile triplet when Clang is used; otherwise we use CMAKE_SYSTEM_PROCESSOR.
     ]=]
     set(dynarec_dir)
-    
+
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         if ("${CMAKE_C_COMPILER_TARGET}" MATCHES "^amd64")
             set(dynarec_dir "R4300/x86_64")
@@ -130,11 +131,11 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
     endif()
     message(STATUS "Compiling dynarec: ${dynarec_dir}")
 
-    target_sources(Mupen64RR.Core PRIVATE
+    target_sources(Mupen64RR_Core PRIVATE
         "${dynarec_dir}/Assemble.hpp"
         "${dynarec_dir}/Gcop1Helpers.hpp"
         "${dynarec_dir}/RegCache.hpp"
-        
+
         "${dynarec_dir}/Assemble.cpp"
         "${dynarec_dir}/GBc.cpp"
         "${dynarec_dir}/GCop0.cpp"
@@ -156,8 +157,8 @@ endif()
 add_compile_definitions(NOMINMAX)
 
 # FOR TESTING ONLY. DO NOT USE OTHERWISE.
-add_library(Mupen64RR.Core._TestIncludes INTERFACE)
-target_link_libraries(Mupen64RR.Core._TestIncludes INTERFACE
-    Mupen64RR.Core
+add_library(Mupen64RR_Core__TestIncludes INTERFACE)
+target_link_libraries(Mupen64RR_Core__TestIncludes INTERFACE
+    Mupen64RR_Core
 )
-target_include_directories(Mupen64RR.Core._TestIncludes INTERFACE "../" "./")
+target_include_directories(Mupen64RR_Core__TestIncludes INTERFACE "../" "./")

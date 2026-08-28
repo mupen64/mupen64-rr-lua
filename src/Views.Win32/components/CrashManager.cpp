@@ -136,7 +136,7 @@ static void log_crash(std::string_view additional_info)
     g_view_logger->critical("Crash!");
     g_view_logger->critical(get_mupen_name());
     g_view_logger->critical(std::format("{:02}/{:02}/{} {:02}:{:02}:{:02}", time.wDay, time.wMonth, time.wYear,
-                                        time.wHour, time.wMinute, time.wSecond));
+        time.wHour, time.wMinute, time.wSecond));
     g_view_logger->critical("Video: {}", g_config.selected_video_plugin);
     g_view_logger->critical("Audio: {}", g_config.selected_audio_plugin);
     g_view_logger->critical("Input: {}", g_config.selected_input_plugin);

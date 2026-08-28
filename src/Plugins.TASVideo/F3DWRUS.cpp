@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "F3D.hpp"
 #include "F3DEX.hpp"
 #include "F3DWRUS.hpp"
@@ -29,7 +29,7 @@ void F3DWRUS_Tri1(u32 w0, u32 w1)
 void F3DWRUS_Tri2(u32 w0, u32 w1)
 {
     gSP2Triangles(_SHIFTR(w0, 16, 8) / 5, _SHIFTR(w0, 8, 8) / 5, _SHIFTR(w0, 0, 8) / 5, 0, _SHIFTR(w1, 16, 8) / 5,
-                  _SHIFTR(w1, 8, 8) / 5, _SHIFTR(w1, 0, 8) / 5, 0);
+        _SHIFTR(w1, 8, 8) / 5, _SHIFTR(w1, 0, 8) / 5, 0);
 }
 
 void F3DWRUS_Quad(u32 w0, u32 w1)

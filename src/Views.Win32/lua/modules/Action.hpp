@@ -9,7 +9,7 @@
 #include <Common.Views/ActionManager.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/modules/Hotkey.hpp>
-#include <IOUtils.hpp>
+#include <Common/IOUtils.hpp>
 
 namespace LuaCore::Action
 {
@@ -366,8 +366,8 @@ static int remove(lua_State *L)
     size_t i = 1;
     for (const auto &action : removed_actions)
     {
-        std::erase_if(lua->registered_actions,
-                      [&](const auto &registered_action) { return registered_action == action; });
+        std::erase_if(
+            lua->registered_actions, [&](const auto &registered_action) { return registered_action == action; });
         lua->param_meta_map.erase(action);
         lua_pushstring(L, action.c_str());
         lua_seti(L, -2, i++);

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
 #include <Core.hpp>
 #include <Memory/Memory.hpp>
 #include <R4300/Macros.hpp>
@@ -632,12 +631,11 @@ static void RDSRA32()
 #endif
 }
 
-static void (*recomp_special[64])(void) = {
-    RSLL,   RSV,   RSRL,   RSRA,    RSLLV, RSV,    RSRLV,  RSRAV,  RJR,     RJALR,  RSV,     RSV,    RSYSCALL,
-    RBREAK, RSV,   RSYNC,  RMFHI,   RMTHI, RMFLO,  RMTLO,  RDSLLV, RSV,     RDSRLV, RDSRAV,  RMULT,  RMULTU,
-    RDIV,   RDIVU, RDMULT, RDMULTU, RDDIV, RDDIVU, RADD,   RADDU,  RSUB,    RSUBU,  RAND,    ROR,    RXOR,
-    RNOR,   RSV,   RSV,    RSLT,    RSLTU, RDADD,  RDADDU, RDSUB,  RDSUBU,  RTGE,   RTGEU,   RTLT,   RTLTU,
-    RTEQ,   RSV,   RTNE,   RSV,     RDSLL, RSV,    RDSRL,  RDSRA,  RDSLL32, RSV,    RDSRL32, RDSRA32};
+static void (*recomp_special[64])(void) = {RSLL, RSV, RSRL, RSRA, RSLLV, RSV, RSRLV, RSRAV, RJR, RJALR, RSV, RSV,
+    RSYSCALL, RBREAK, RSV, RSYNC, RMFHI, RMTHI, RMFLO, RMTLO, RDSLLV, RSV, RDSRLV, RDSRAV, RMULT, RMULTU, RDIV, RDIVU,
+    RDMULT, RDMULTU, RDDIV, RDDIVU, RADD, RADDU, RSUB, RSUBU, RAND, ROR, RXOR, RNOR, RSV, RSV, RSLT, RSLTU, RDADD,
+    RDADDU, RDSUB, RDSUBU, RTGE, RTGEU, RTLT, RTLTU, RTEQ, RSV, RTNE, RSV, RDSLL, RSV, RDSRL, RDSRA, RDSLL32, RSV,
+    RDSRL32, RDSRA32};
 
 //-------------------------------------------------------------------------
 //                                   REGIMM
@@ -963,9 +961,9 @@ static void RBGEZALL()
 #endif
 }
 
-static void (*recomp_regimm[32])(void) = {
-    RBLTZ,   RBGEZ,   RBLTZL,   RBGEZL,   RSV, RSV, RSV, RSV, RTGEI, RTGEIU, RTLTI, RTLTIU, RTEQI, RSV, RTNEI, RSV,
-    RBLTZAL, RBGEZAL, RBLTZALL, RBGEZALL, RSV, RSV, RSV, RSV, RSV,   RSV,    RSV,   RSV,    RSV,   RSV, RSV,   RSV};
+static void (*recomp_regimm[32])(void) = {RBLTZ, RBGEZ, RBLTZL, RBGEZL, RSV, RSV, RSV, RSV, RTGEI, RTGEIU, RTLTI,
+    RTLTIU, RTEQI, RSV, RTNEI, RSV, RBLTZAL, RBGEZAL, RBLTZALL, RBGEZALL, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                     TLB
@@ -1011,11 +1009,10 @@ static void RERET()
 #endif
 }
 
-static void (*recomp_tlb[64])(void) = {RSV, RTLBR, RTLBWI, RSV, RSV, RSV, RTLBWR, RSV, RTLBP, RSV, RSV, RSV,   RSV,
-                                       RSV, RSV,   RSV,    RSV, RSV, RSV, RSV,    RSV, RSV,   RSV, RSV, RERET, RSV,
-                                       RSV, RSV,   RSV,    RSV, RSV, RSV, RSV,    RSV, RSV,   RSV, RSV, RSV,   RSV,
-                                       RSV, RSV,   RSV,    RSV, RSV, RSV, RSV,    RSV, RSV,   RSV, RSV, RSV,   RSV,
-                                       RSV, RSV,   RSV,    RSV, RSV, RSV, RSV,    RSV, RSV,   RSV, RSV, RSV};
+static void (*recomp_tlb[64])(void) = {RSV, RTLBR, RTLBWI, RSV, RSV, RSV, RTLBWR, RSV, RTLBP, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RERET, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                    COP0
@@ -1049,9 +1046,8 @@ static void RTLB()
     recomp_tlb[(src & 0x3F)]();
 }
 
-static void (*recomp_cop0[32])(void) = {RMFC0, RSV, RSV, RSV, RMTC0, RSV,  RSV, RSV, RSV, RSV, RSV,
-                                        RSV,   RSV, RSV, RSV, RSV,   RTLB, RSV, RSV, RSV, RSV, RSV,
-                                        RSV,   RSV, RSV, RSV, RSV,   RSV,  RSV, RSV, RSV, RSV};
+static void (*recomp_cop0[32])(void) = {RMFC0, RSV, RSV, RSV, RMTC0, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+    RSV, RTLB, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                     BC
@@ -1514,14 +1510,11 @@ static void RC_NGT_S()
 #endif
 }
 
-static void (*recomp_s[64])(void) = {
-    RADD_S,    RSUB_S,     RMUL_S,     RDIV_S,     RSQRT_S,   RABS_S,     RMOV_S,   RNEG_S,    RROUND_L_S, RTRUNC_L_S,
-    RCEIL_L_S, RFLOOR_L_S, RROUND_W_S, RTRUNC_W_S, RCEIL_W_S, RFLOOR_W_S, RSV,      RSV,       RSV,        RSV,
-    RSV,       RSV,        RSV,        RSV,        RSV,       RSV,        RSV,      RSV,       RSV,        RSV,
-    RSV,       RSV,        RSV,        RCVT_D_S,   RSV,       RSV,        RCVT_W_S, RCVT_L_S,  RSV,        RSV,
-    RSV,       RSV,        RSV,        RSV,        RSV,       RSV,        RSV,      RSV,       RC_F_S,     RC_UN_S,
-    RC_EQ_S,   RC_UEQ_S,   RC_OLT_S,   RC_ULT_S,   RC_OLE_S,  RC_ULE_S,   RC_SF_S,  RC_NGLE_S, RC_SEQ_S,   RC_NGL_S,
-    RC_LT_S,   RC_NGE_S,   RC_LE_S,    RC_NGT_S};
+static void (*recomp_s[64])(void) = {RADD_S, RSUB_S, RMUL_S, RDIV_S, RSQRT_S, RABS_S, RMOV_S, RNEG_S, RROUND_L_S,
+    RTRUNC_L_S, RCEIL_L_S, RFLOOR_L_S, RROUND_W_S, RTRUNC_W_S, RCEIL_W_S, RFLOOR_W_S, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RCVT_D_S, RSV, RSV, RCVT_W_S, RCVT_L_S, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV, RSV, RC_F_S, RC_UN_S, RC_EQ_S, RC_UEQ_S, RC_OLT_S, RC_ULT_S, RC_OLE_S, RC_ULE_S, RC_SF_S,
+    RC_NGLE_S, RC_SEQ_S, RC_NGL_S, RC_LT_S, RC_NGE_S, RC_LE_S, RC_NGT_S};
 
 //-------------------------------------------------------------------------
 //                                     D
@@ -1842,14 +1835,11 @@ static void RC_NGT_D()
 #endif
 }
 
-static void (*recomp_d[64])(void) = {
-    RADD_D,    RSUB_D,     RMUL_D,     RDIV_D,     RSQRT_D,   RABS_D,     RMOV_D,   RNEG_D,    RROUND_L_D, RTRUNC_L_D,
-    RCEIL_L_D, RFLOOR_L_D, RROUND_W_D, RTRUNC_W_D, RCEIL_W_D, RFLOOR_W_D, RSV,      RSV,       RSV,        RSV,
-    RSV,       RSV,        RSV,        RSV,        RSV,       RSV,        RSV,      RSV,       RSV,        RSV,
-    RSV,       RSV,        RCVT_S_D,   RSV,        RSV,       RSV,        RCVT_W_D, RCVT_L_D,  RSV,        RSV,
-    RSV,       RSV,        RSV,        RSV,        RSV,       RSV,        RSV,      RSV,       RC_F_D,     RC_UN_D,
-    RC_EQ_D,   RC_UEQ_D,   RC_OLT_D,   RC_ULT_D,   RC_OLE_D,  RC_ULE_D,   RC_SF_D,  RC_NGLE_D, RC_SEQ_D,   RC_NGL_D,
-    RC_LT_D,   RC_NGE_D,   RC_LE_D,    RC_NGT_D};
+static void (*recomp_d[64])(void) = {RADD_D, RSUB_D, RMUL_D, RDIV_D, RSQRT_D, RABS_D, RMOV_D, RNEG_D, RROUND_L_D,
+    RTRUNC_L_D, RCEIL_L_D, RFLOOR_L_D, RROUND_W_D, RTRUNC_W_D, RCEIL_W_D, RFLOOR_W_D, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RCVT_S_D, RSV, RSV, RSV, RCVT_W_D, RCVT_L_D, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV, RSV, RC_F_D, RC_UN_D, RC_EQ_D, RC_UEQ_D, RC_OLT_D, RC_ULT_D, RC_OLE_D, RC_ULE_D, RC_SF_D,
+    RC_NGLE_D, RC_SEQ_D, RC_NGL_D, RC_LT_D, RC_NGE_D, RC_LE_D, RC_NGT_D};
 
 //-------------------------------------------------------------------------
 //                                     W
@@ -1873,11 +1863,10 @@ static void RCVT_D_W()
 #endif
 }
 
-static void (*recomp_w[64])(void) = {RSV, RSV, RSV, RSV, RSV, RSV, RSV,      RSV,      RSV, RSV, RSV, RSV, RSV,
-                                     RSV, RSV, RSV, RSV, RSV, RSV, RSV,      RSV,      RSV, RSV, RSV, RSV, RSV,
-                                     RSV, RSV, RSV, RSV, RSV, RSV, RCVT_S_W, RCVT_D_W, RSV, RSV, RSV, RSV, RSV,
-                                     RSV, RSV, RSV, RSV, RSV, RSV, RSV,      RSV,      RSV, RSV, RSV, RSV, RSV,
-                                     RSV, RSV, RSV, RSV, RSV, RSV, RSV,      RSV,      RSV, RSV, RSV, RSV};
+static void (*recomp_w[64])(void) = {RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RCVT_S_W, RCVT_D_W, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                     L
@@ -1902,10 +1891,70 @@ static void RCVT_D_L()
 }
 
 static void (*recomp_l[64])(void) = {
-    RSV,      RSV,      RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV,      RSV,      RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RCVT_S_L, RCVT_D_L, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV,      RSV,      RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RCVT_S_L,
+    RCVT_D_L,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
+    RSV,
 };
 
 //-------------------------------------------------------------------------
@@ -2003,9 +2052,8 @@ static void RL()
     recomp_l[(src & 0x3F)]();
 }
 
-static void (*recomp_cop1[32])(void) = {RMFC1, RDMFC1, RCFC1, RSV, RMTC1, RDMTC1, RCTC1, RSV, RBC, RSV, RSV,
-                                        RSV,   RSV,    RSV,   RSV, RSV,   RS,     RD,    RSV, RSV, RW,  RL,
-                                        RSV,   RSV,    RSV,   RSV, RSV,   RSV,    RSV,   RSV, RSV, RSV};
+static void (*recomp_cop1[32])(void) = {RMFC1, RDMFC1, RCFC1, RSV, RMTC1, RDMTC1, RCTC1, RSV, RBC, RSV, RSV, RSV, RSV,
+    RSV, RSV, RSV, RS, RD, RSV, RSV, RW, RL, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                   R4300
@@ -2758,12 +2806,10 @@ static void RSD()
 #endif
 }
 
-static void (*recomp_ops[64])(void) = {
-    RSPECIAL, RREGIMM, RJ,   RJAL,  RBEQ,  RBNE,  RBLEZ, RBGTZ, RADDI,  RADDIU, RSLTI,  RSLTIU, RANDI,
-    RORI,     RXORI,   RLUI, RCOP0, RCOP1, RSV,   RSV,   RBEQL, RBNEL,  RBLEZL, RBGTZL, RDADDI, RDADDIU,
-    RLDL,     RLDR,    RSV,  RSV,   RSV,   RSV,   RLB,   RLH,   RLWL,   RLW,    RLBU,   RLHU,   RLWR,
-    RLWU,     RSB,     RSH,  RSWL,  RSW,   RSDL,  RSDR,  RSWR,  RCACHE, RLL,    RLWC1,  RSV,    RSV,
-    RLLD,     RLDC1,   RSV,  RLD,   RSC,   RSWC1, RSV,   RSV,   RSCD,   RSDC1,  RSV,    RSD};
+static void (*recomp_ops[64])(void) = {RSPECIAL, RREGIMM, RJ, RJAL, RBEQ, RBNE, RBLEZ, RBGTZ, RADDI, RADDIU, RSLTI,
+    RSLTIU, RANDI, RORI, RXORI, RLUI, RCOP0, RCOP1, RSV, RSV, RBEQL, RBNEL, RBLEZL, RBGTZL, RDADDI, RDADDIU, RLDL, RLDR,
+    RSV, RSV, RSV, RSV, RLB, RLH, RLWL, RLW, RLBU, RLHU, RLWR, RLWU, RSB, RSH, RSWL, RSW, RSDL, RSDR, RSWR, RCACHE, RLL,
+    RLWC1, RSV, RSV, RLLD, RLDC1, RSV, RLD, RSC, RSWC1, RSV, RSV, RSCD, RSDC1, RSV, RSD};
 
 /**********************************************************************
  ******************** initialize an empty block ***********************

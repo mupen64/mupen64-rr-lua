@@ -36,15 +36,25 @@ static std::jthread s_audio_thread;
 
 // These are embedded now, old ones are probably just stale and we want to ignore them.
 static const std::vector<std::string> excluded_plugin_names = {
-    "no-video", "no-audio", "no-input", "no-rsp",   "novideo",  "noaudio",
-    "noinput",  "norsp",    "tasvideo", "tasaudio", "tasinput", "tasrsp",
+    "no-video",
+    "no-audio",
+    "no-input",
+    "no-rsp",
+    "novideo",
+    "noaudio",
+    "noinput",
+    "norsp",
+    "tasvideo",
+    "tasaudio",
+    "tasinput",
+    "tasrsp",
 };
 
 static bool is_excluded_plugin(const std::filesystem::path &path)
 {
     std::string stem = path.stem().string();
-    std::transform(stem.begin(), stem.end(), stem.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(
+        stem.begin(), stem.end(), stem.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return std::ranges::find(excluded_plugin_names, stem) != excluded_plugin_names.end();
 }
 
@@ -267,7 +277,7 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
 
     // Special case: plugins are present but not in the plugin directory
     for (const auto &file : {g_config.selected_video_plugin, g_config.selected_audio_plugin,
-                             g_config.selected_input_plugin, g_config.selected_rsp_plugin})
+             g_config.selected_input_plugin, g_config.selected_rsp_plugin})
     {
         if (file.empty() || file.starts_with("<builtin>/")) continue;
 
@@ -292,7 +302,7 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
         return 2;
     };
     std::stable_sort(plugins.begin(), plugins.end(),
-                     [&](const auto &lhs, const auto &rhs) { return plugin_priority(lhs) < plugin_priority(rhs); });
+        [&](const auto &lhs, const auto &rhs) { return plugin_priority(lhs) < plugin_priority(rhs); });
 
     return t_plugin_discovery_result{
         .plugins = std::move(plugins),
@@ -454,9 +464,9 @@ void PluginUtil::initiate_plugins()
 void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)
 {
     const auto copy = [&](const std::shared_ptr<Plugin> &plugin, char *type) {
-        RT_ASSERT(plugin.get(), "Plugin not loaded");
+        NEED(plugin.get(), "Plugin not loaded");
         const auto result = strncpy_s(type, 64 - 1, plugin->name().c_str(), plugin->name().size());
-        RT_ASSERT(!result, "Plugin name copy failed");
+        NEED(!result, "Plugin name copy failed");
     };
 
     copy(video_plugin, video);

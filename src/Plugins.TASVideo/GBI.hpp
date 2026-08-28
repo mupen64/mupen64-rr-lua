@@ -22,8 +22,8 @@
 #define F3DWRUS 10
 #define NONE 11
 
-static const char *MicrocodeTypes[] = {"Fast3D", "F3DEX",  "F3DEX2",       "Line3D",  "L3DEX",       "L3DEX2",
-                                       "S2DEX",  "S2DEX2", "Perfect Dark", "DKR/JFG", "Waverace US", "None"};
+static const char *MicrocodeTypes[] = {"Fast3D", "F3DEX", "F3DEX2", "Line3D", "L3DEX", "L3DEX2", "S2DEX", "S2DEX2",
+    "Perfect Dark", "DKR/JFG", "Waverace US", "None"};
 
 static const int numMicrocodeTypes = 11;
 
@@ -168,14 +168,14 @@ static const int numMicrocodeTypes = 11;
 #define G_MWO_POINT_XYSCREEN 0x18
 #define G_MWO_POINT_ZSCREEN 0x1C
 
-static const char *MWOPointText[] = {"G_MWO_POINT_RGBA", "G_MWO_POINT_ST", "G_MWO_POINT_XYSCREEN",
-                                     "G_MWO_POINT_ZSCREEN"};
+static const char *MWOPointText[] = {
+    "G_MWO_POINT_RGBA", "G_MWO_POINT_ST", "G_MWO_POINT_XYSCREEN", "G_MWO_POINT_ZSCREEN"};
 
-static const char *MWOMatrixText[] = {
-    "G_MWO_MATRIX_XX_XY_I", "G_MWO_MATRIX_XZ_XW_I", "G_MWO_MATRIX_YX_YY_I", "G_MWO_MATRIX_YZ_YW_I",
-    "G_MWO_MATRIX_ZX_ZY_I", "G_MWO_MATRIX_ZZ_ZW_I", "G_MWO_MATRIX_WX_WY_I", "G_MWO_MATRIX_WZ_WW_I",
-    "G_MWO_MATRIX_XX_XY_F", "G_MWO_MATRIX_XZ_XW_F", "G_MWO_MATRIX_YX_YY_F", "G_MWO_MATRIX_YZ_YW_F",
-    "G_MWO_MATRIX_ZX_ZY_F", "G_MWO_MATRIX_ZZ_ZW_F", "G_MWO_MATRIX_WX_WY_F", "G_MWO_MATRIX_WZ_WW_F"};
+static const char *MWOMatrixText[] = {"G_MWO_MATRIX_XX_XY_I", "G_MWO_MATRIX_XZ_XW_I", "G_MWO_MATRIX_YX_YY_I",
+    "G_MWO_MATRIX_YZ_YW_I", "G_MWO_MATRIX_ZX_ZY_I", "G_MWO_MATRIX_ZZ_ZW_I", "G_MWO_MATRIX_WX_WY_I",
+    "G_MWO_MATRIX_WZ_WW_I", "G_MWO_MATRIX_XX_XY_F", "G_MWO_MATRIX_XZ_XW_F", "G_MWO_MATRIX_YX_YY_F",
+    "G_MWO_MATRIX_YZ_YW_F", "G_MWO_MATRIX_ZX_ZY_F", "G_MWO_MATRIX_ZZ_ZW_F", "G_MWO_MATRIX_WX_WY_F",
+    "G_MWO_MATRIX_WZ_WW_F"};
 
 // These flags change between ucodes
 extern u32 G_MTX_STACKSIZE;
@@ -222,15 +222,14 @@ extern u32 G_MWO_aLIGHT_8, G_MWO_bLIGHT_8;
 #define G_TX_MIRROR 0x1
 #define G_TX_CLAMP 0x2
 
-static const char *ImageFormatText[] = {"G_IM_FMT_RGBA", "G_IM_FMT_YUV",     "G_IM_FMT_CI",      "G_IM_FMT_IA",
-                                        "G_IM_FMT_I",    "G_IM_FMT_INVALID", "G_IM_FMT_INVALID", "G_IM_FMT_INVALID"};
+static const char *ImageFormatText[] = {"G_IM_FMT_RGBA", "G_IM_FMT_YUV", "G_IM_FMT_CI", "G_IM_FMT_IA", "G_IM_FMT_I",
+    "G_IM_FMT_INVALID", "G_IM_FMT_INVALID", "G_IM_FMT_INVALID"};
 
 static const char *ImageSizeText[] = {"G_IM_SIZ_4b", "G_IM_SIZ_8b", "G_IM_SIZ_16b", "G_IM_SIZ_32b"};
 
 static const char *SegmentText[] = {"G_MWO_SEGMENT_0", "G_MWO_SEGMENT_1", "G_MWO_SEGMENT_2", "G_MWO_SEGMENT_3",
-                                    "G_MWO_SEGMENT_4", "G_MWO_SEGMENT_5", "G_MWO_SEGMENT_6", "G_MWO_SEGMENT_7",
-                                    "G_MWO_SEGMENT_8", "G_MWO_SEGMENT_9", "G_MWO_SEGMENT_A", "G_MWO_SEGMENT_B",
-                                    "G_MWO_SEGMENT_C", "G_MWO_SEGMENT_D", "G_MWO_SEGMENT_E", "G_MWO_SEGMENT_F"};
+    "G_MWO_SEGMENT_4", "G_MWO_SEGMENT_5", "G_MWO_SEGMENT_6", "G_MWO_SEGMENT_7", "G_MWO_SEGMENT_8", "G_MWO_SEGMENT_9",
+    "G_MWO_SEGMENT_A", "G_MWO_SEGMENT_B", "G_MWO_SEGMENT_C", "G_MWO_SEGMENT_D", "G_MWO_SEGMENT_E", "G_MWO_SEGMENT_F"};
 
 #define G_NOOP 0x00
 
@@ -406,8 +405,8 @@ static const char *ColorDitherText[] = {"G_CD_MAGICSQ", "G_CD_BAYER", "G_CD_NOIS
 
 static const char *CombineKeyText[] = {"G_CK_NONE", "G_CK_KEY"};
 
-static const char *TextureConvertText[] = {"G_TC_CONV",    "G_TC_INVALID",  "G_TC_INVALID", "G_TC_INVALID",
-                                           "G_TC_INVALID", "G_TC_FILTCONV", "G_TC_FILT",    "G_TC_INVALID"};
+static const char *TextureConvertText[] = {"G_TC_CONV", "G_TC_INVALID", "G_TC_INVALID", "G_TC_INVALID", "G_TC_INVALID",
+    "G_TC_FILTCONV", "G_TC_FILT", "G_TC_INVALID"};
 
 static const char *TextureFilterText[] = {"G_TF_POINT", "G_TF_INVALID", "G_TF_BILERP", "G_TF_AVERAGE"};
 
@@ -427,8 +426,8 @@ static const char *CvgDestText[] = {"CVG_DST_CLAMP", "CVG_DST_WRAP", "CVG_DST_FU
 
 static const char *DepthModeText[] = {"ZMODE_OPA", "ZMODE_INTER", "ZMODE_XLU", "ZMODE_DEC"};
 
-static const char *ScissorModeText[] = {"G_SC_NON_INTERLACE", "G_SC_INVALID", "G_SC_EVEN_INTERLACE",
-                                        "G_SC_ODD_INTERLACE"};
+static const char *ScissorModeText[] = {
+    "G_SC_NON_INTERLACE", "G_SC_INVALID", "G_SC_EVEN_INTERLACE", "G_SC_ODD_INTERLACE"};
 
 /* Color combiner constants: */
 #define G_CCMUX_COMBINED 0
@@ -466,62 +465,68 @@ static const char *ScissorModeText[] = {"G_SC_NON_INTERLACE", "G_SC_INVALID", "G
 #define G_ACMUX_0 7
 
 static const char *saRGBText[] = {"COMBINED", "TEXEL0", "TEXEL1", "PRIMITIVE", "SHADE", "ENVIRONMENT", "NOISE", "1",
-                                  "0",        "0",      "0",      "0",         "0",     "0",           "0",     "0"};
+    "0", "0", "0", "0", "0", "0", "0", "0"};
 
 static const char *sbRGBText[] = {"COMBINED", "TEXEL0", "TEXEL1", "PRIMITIVE", "SHADE", "ENVIRONMENT", "CENTER", "K4",
-                                  "0",        "0",      "0",      "0",         "0",     "0",           "0",      "0"};
+    "0", "0", "0", "0", "0", "0", "0", "0"};
 
-static const char *mRGBText[] = {"COMBINED",
-                                 "TEXEL0",
-                                 "TEXEL1",
-                                 "PRIMITIVE",
-                                 "SHADE",
-                                 "ENVIRONMENT",
-                                 "SCALE",
-                                 "COMBINED_ALPHA",
-                                 "TEXEL0_ALPHA",
-                                 "TEXEL1_ALPHA",
-                                 "PRIMITIVE_ALPHA",
-                                 "SHADE_ALPHA",
-                                 "ENV_ALPHA",
-                                 "LOD_FRACTION",
-                                 "PRIM_LOD_FRAC",
-                                 "K5",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0",
-                                 "0"};
+static const char *mRGBText[] = {"COMBINED", "TEXEL0", "TEXEL1", "PRIMITIVE", "SHADE", "ENVIRONMENT", "SCALE",
+    "COMBINED_ALPHA", "TEXEL0_ALPHA", "TEXEL1_ALPHA", "PRIMITIVE_ALPHA", "SHADE_ALPHA", "ENV_ALPHA", "LOD_FRACTION",
+    "PRIM_LOD_FRAC", "K5", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"};
 
 static const char *aRGBText[] = {
-    "COMBINED", "TEXEL0", "TEXEL1", "PRIMITIVE", "SHADE", "ENVIRONMENT", "1", "0",
+    "COMBINED",
+    "TEXEL0",
+    "TEXEL1",
+    "PRIMITIVE",
+    "SHADE",
+    "ENVIRONMENT",
+    "1",
+    "0",
 };
 
 static const char *saAText[] = {
-    "COMBINED", "TEXEL0", "TEXEL1", "PRIMITIVE", "SHADE", "ENVIRONMENT", "1", "0",
+    "COMBINED",
+    "TEXEL0",
+    "TEXEL1",
+    "PRIMITIVE",
+    "SHADE",
+    "ENVIRONMENT",
+    "1",
+    "0",
 };
 
 static const char *sbAText[] = {
-    "COMBINED", "TEXEL0", "TEXEL1", "PRIMITIVE", "SHADE", "ENVIRONMENT", "1", "0",
+    "COMBINED",
+    "TEXEL0",
+    "TEXEL1",
+    "PRIMITIVE",
+    "SHADE",
+    "ENVIRONMENT",
+    "1",
+    "0",
 };
 
 static const char *mAText[] = {
-    "LOD_FRACTION", "TEXEL0", "TEXEL1", "PRIMITIVE", "SHADE", "ENVIRONMENT", "PRIM_LOD_FRAC", "0",
+    "LOD_FRACTION",
+    "TEXEL0",
+    "TEXEL1",
+    "PRIMITIVE",
+    "SHADE",
+    "ENVIRONMENT",
+    "PRIM_LOD_FRAC",
+    "0",
 };
 
 static const char *aAText[] = {
-    "COMBINED", "TEXEL0", "TEXEL1", "PRIMITIVE", "SHADE", "ENVIRONMENT", "1", "0",
+    "COMBINED",
+    "TEXEL0",
+    "TEXEL1",
+    "PRIMITIVE",
+    "SHADE",
+    "ENVIRONMENT",
+    "1",
+    "0",
 };
 
 extern u32 uc_crc;

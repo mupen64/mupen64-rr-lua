@@ -24,6 +24,7 @@
 #define RSPMSG_INITTEXTURES 6
 #define RSPMSG_READPIXELS 7
 #define RSPMSG_RESTART 8
+#define RSPMSG_BLACKOUT 9
 
 struct RSPMessage
 {

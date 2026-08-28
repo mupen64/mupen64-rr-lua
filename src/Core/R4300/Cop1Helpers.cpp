@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
 #include <Core.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Exception.hpp>
@@ -19,8 +18,8 @@ constexpr auto FLOAT_EXCEPTION_MSG = "A floating point exception has occured in 
 static void fail_float(std::string_view msg)
 {
     const auto message = std::format(FLOAT_EXCEPTION_MSG, msg, interpcore ? interp_addr : PC->addr);
-    const auto choice = g_core->show_multiple_choice_dialog(CORE_DLG_FLOAT_EXCEPTION, {"Close ROM", "Continue"},
-                                                            message.c_str(), "Core", fsvc_error);
+    const auto choice = g_core->show_multiple_choice_dialog(
+        CORE_DLG_FLOAT_EXCEPTION, {"Close ROM", "Continue"}, message.c_str(), "Core", fsvc_error);
 
     core_Cause = 15 << 2;
     exception_general();

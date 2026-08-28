@@ -12,9 +12,8 @@
 #include <unordered_map>
 #include <cassert>
 #include <ranges>
-#include <windows.h>
-#include <windowsx.h>
-#include <commctrl.h>
+
+#include <Common.Win32/Common.hpp>
 
 namespace ResizeAnchor
 {
@@ -111,7 +110,7 @@ inline bool update_anchors(const HWND hwnd)
             update_ctl_rc();
             const auto dist = ctx->initial_rects[hwnd].bottom - ctx->initial_rects[anchor_hwnd].bottom;
             SetWindowPos(anchor_hwnd, nullptr, 0, 0, ctl_rc.right - ctl_rc.left, (wnd_rc.bottom - dist) - ctl_rc.top,
-                         SWP_NOMOVE | SWP_NOZORDER);
+                SWP_NOMOVE | SWP_NOZORDER);
         }
 
         if (!static_cast<bool>(anchor_type & AnchorFlags::Top) && static_cast<bool>(anchor_type & AnchorFlags::Bottom))
@@ -126,7 +125,7 @@ inline bool update_anchors(const HWND hwnd)
             update_ctl_rc();
             const auto dist = ctx->initial_rects[hwnd].right - ctx->initial_rects[anchor_hwnd].right;
             SetWindowPos(anchor_hwnd, nullptr, 0, 0, (wnd_rc.right - dist) - ctl_rc.left, ctl_rc.bottom - ctl_rc.top,
-                         SWP_NOMOVE | SWP_NOZORDER);
+                SWP_NOMOVE | SWP_NOZORDER);
         }
 
         if (!static_cast<bool>(anchor_type & AnchorFlags::Left) && static_cast<bool>(anchor_type & AnchorFlags::Right))
@@ -156,8 +155,8 @@ inline bool update_anchors(const HWND hwnd)
     return true;
 }
 
-inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
-                                          DWORD_PTR dwRefData)
+inline LRESULT CALLBACK wnd_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
 {
     auto ctx = static_cast<t_anchor_context *>(GetProp(hwnd, CTX_PROP));
 
@@ -179,13 +178,13 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-inline void add_anchors_base(t_anchor_context &ctx, const std::vector<std::pair<HWND, AnchorFlags>> &anchors,
-                             bool replace_child_anchors)
+inline void add_anchors_base(
+    t_anchor_context &ctx, const std::vector<std::pair<HWND, AnchorFlags>> &anchors, bool replace_child_anchors)
 {
     std::erase_if(ctx.anchors, [&](const std::pair<HWND, AnchorFlags> &pair) {
         return std::ranges::find_if(anchors, [&](const std::pair<HWND, AnchorFlags> &new_pair) {
-                   return new_pair.first == pair.first;
-               }) != anchors.end();
+            return new_pair.first == pair.first;
+        }) != anchors.end();
     });
 
     for (const auto &anchor_hwnd : anchors | std::views::keys)
@@ -205,8 +204,8 @@ inline void add_anchors_base(t_anchor_context &ctx, const std::vector<std::pair<
     ctx.anchors.insert(ctx.anchors.end(), anchors.begin(), anchors.end());
 }
 
-inline bool add_anchors_impl(HWND hwnd, const std::vector<std::pair<HWND, AnchorFlags>> &anchors,
-                             bool replace_child_anchors)
+inline bool add_anchors_impl(
+    HWND hwnd, const std::vector<std::pair<HWND, AnchorFlags>> &anchors, bool replace_child_anchors)
 {
     // Not implemented yet
     assert(replace_child_anchors);
@@ -268,8 +267,8 @@ inline bool remove_anchor_impl(HWND hwnd, HWND child_hwnd)
  * WM_CREATE (window) processing. \remarks The window handles provided in `anchors` must be direct children of the
  * window provided via `hwnd`. \remarks The resizing hook will be removed when the window is destroyed.
  */
-inline bool add_anchors(HWND hwnd, const std::vector<std::pair<HWND, AnchorFlags>> &anchors,
-                        bool replace_child_anchors = true)
+inline bool add_anchors(
+    HWND hwnd, const std::vector<std::pair<HWND, AnchorFlags>> &anchors, bool replace_child_anchors = true)
 {
     return detail::add_anchors_impl(hwnd, anchors, replace_child_anchors);
 }

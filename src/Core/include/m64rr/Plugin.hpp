@@ -16,7 +16,6 @@
 #endif
 
 #include "m64rr/Types.hpp"
-#include <cstdint>
 
 #if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
@@ -82,7 +81,6 @@ extern "C"
         PluginType type;
         char name[128];
         char description[1024];
-        char target_version[32];
     };
 
     /**

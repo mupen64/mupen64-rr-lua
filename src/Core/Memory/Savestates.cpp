@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
 #include <Core.hpp>
-#include <FNV1A.hpp>
 #include <m64rr/API.hpp>
 #include <Memory/FlashRAM.hpp>
 #include <Memory/Memory.hpp>
@@ -339,11 +337,10 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
 
     if (!task.ignore_warnings && memcmp(md5, rom_md5, 32))
     {
-        auto result = g_core->show_ask_dialog(
-            CORE_DLG_ST_HASH_MISMATCH,
+        auto result = g_core->show_ask_dialog(CORE_DLG_ST_HASH_MISMATCH,
             std::format("The savestate was created on a rom with hash {}, but is being loaded on another rom.\r\nThe "
                         "emulator may crash. Are you sure you want to continue?",
-                        md5)
+                md5)
                 .c_str(),
             "Savestate", true);
 
@@ -450,11 +447,10 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     {
         if (!task.ignore_warnings && (vcr_get_task() == task_recording || vcr_get_task() == task_playback))
         {
-            const auto result =
-                g_core->show_ask_dialog(CORE_DLG_ST_NOT_FROM_MOVIE,
-                                        "The savestate is not from a movie. Loading it might desynchronize the "
-                                        "movie.\r\nAre you sure you want to continue?",
-                                        "Savestate", true);
+            const auto result = g_core->show_ask_dialog(CORE_DLG_ST_NOT_FROM_MOVIE,
+                "The savestate is not from a movie. Loading it might desynchronize the "
+                "movie.\r\nAre you sure you want to continue?",
+                "Savestate", true);
             if (!result)
             {
                 task.callback(
@@ -725,8 +721,8 @@ bool can_push_work()
     return core_executing;
 }
 
-bool st_do_file(const std::filesystem::path &path, const core_st_job job, const core_st_callback &callback,
-                bool ignore_warnings)
+bool st_do_file(
+    const std::filesystem::path &path, const core_st_job job, const core_st_callback &callback, bool ignore_warnings)
 {
     std::scoped_lock lock(g_task_mutex);
 
@@ -763,8 +759,8 @@ bool st_do_file(const std::filesystem::path &path, const core_st_job job, const 
     return true;
 }
 
-bool st_do_memory(const std::vector<uint8_t> &buffer, const core_st_job job, const core_st_callback &callback,
-                  bool ignore_warnings)
+bool st_do_memory(
+    const std::vector<uint8_t> &buffer, const core_st_job job, const core_st_callback &callback, bool ignore_warnings)
 {
     std::scoped_lock lock(g_task_mutex);
 
@@ -774,10 +770,10 @@ bool st_do_memory(const std::vector<uint8_t> &buffer, const core_st_job job, con
         if (callback)
         {
             callback(core_st_callback_info{.result = ST_CoreNotLaunched,
-                                           .job = job,
-                                           .medium = core_st_medium_memory,
-                                           .params = {.buffer = buffer}},
-                     {});
+                         .job = job,
+                         .medium = core_st_medium_memory,
+                         .params = {.buffer = buffer}},
+                {});
         }
         return false;
     }
@@ -821,11 +817,11 @@ bool st_sync_hash(const std::function<void(uint64_t hash)> &callback)
     };
 
     const t_savestate_task task = {.job = core_st_job_save,
-                                   .medium = core_st_medium_memory,
-                                   .callback = internal_callback_wrapper,
-                                   .params = {},
-                                   .ignore_warnings = true,
-                                   .pure = true};
+        .medium = core_st_medium_memory,
+        .callback = internal_callback_wrapper,
+        .params = {},
+        .ignore_warnings = true,
+        .pure = true};
 
     g_tasks.insert(g_tasks.begin(), task);
     return true;

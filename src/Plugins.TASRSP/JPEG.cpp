@@ -144,20 +144,20 @@ void jpg_uncompress(OSTask_t *task)
             for (j = 0; j < 8; j++)
             {
                 m[8 * 8 + j] = (((int32_t)temp2[i * 64 + 1 * 8 + j] * (int32_t)data[2 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                ((int32_t)temp2[i * 64 + 7 * 8 + j] * (int32_t)data[2 * 8 + 1 ^ S] * 2)) >>
+                                   ((int32_t)temp2[i * 64 + 7 * 8 + j] * (int32_t)data[2 * 8 + 1 ^ S] * 2)) >>
                                16;
                 m[9 * 8 + j] = (((int32_t)temp2[i * 64 + 5 * 8 + j] * (int32_t)data[2 * 8 + 2 ^ S] * 2) + 0x8000 +
-                                ((int32_t)temp2[i * 64 + 3 * 8 + j] * (int32_t)data[2 * 8 + 3 ^ S] * 2)) >>
+                                   ((int32_t)temp2[i * 64 + 3 * 8 + j] * (int32_t)data[2 * 8 + 3 ^ S] * 2)) >>
                                16;
                 m[10 * 8 + j] = (((int32_t)temp2[i * 64 + 3 * 8 + j] * (int32_t)data[2 * 8 + 2 ^ S] * 2) + 0x8000 +
-                                 ((int32_t)temp2[i * 64 + 5 * 8 + j] * (int32_t)data[2 * 8 + 4 ^ S] * 2)) >>
+                                    ((int32_t)temp2[i * 64 + 5 * 8 + j] * (int32_t)data[2 * 8 + 4 ^ S] * 2)) >>
                                 16;
                 m[11 * 8 + j] = (((int32_t)temp2[i * 64 + 7 * 8 + j] * (int32_t)data[2 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                 ((int32_t)temp2[i * 64 + 1 * 8 + j] * (int32_t)data[2 * 8 + 5 ^ S] * 2)) >>
+                                    ((int32_t)temp2[i * 64 + 1 * 8 + j] * (int32_t)data[2 * 8 + 5 ^ S] * 2)) >>
                                 16;
 
                 m[6 * 8 + j] = (((int32_t)temp2[i * 64 + 0 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                ((int32_t)temp2[i * 64 + 4 * 8 + j] * (int32_t)data[3 * 8 + 1 ^ S] * 2)) >>
+                                   ((int32_t)temp2[i * 64 + 4 * 8 + j] * (int32_t)data[3 * 8 + 1 ^ S] * 2)) >>
                                16;
 
                 m[5 * 8 + j] = m[11 * 8 + j] - m[10 * 8 + j];
@@ -166,20 +166,20 @@ void jpg_uncompress(OSTask_t *task)
                 m[15 * 8 + j] = m[11 * 8 + j] + m[10 * 8 + j];
 
                 m[13 * 8 + j] = (((int32_t)m[5 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                 ((int32_t)m[4 * 8 + j] * (int32_t)data[3 * 8 + 1 ^ S] * 2)) >>
+                                    ((int32_t)m[4 * 8 + j] * (int32_t)data[3 * 8 + 1 ^ S] * 2)) >>
                                 16;
                 m[14 * 8 + j] = (((int32_t)m[5 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                 ((int32_t)m[4 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2)) >>
+                                    ((int32_t)m[4 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2)) >>
                                 16;
 
                 m[4 * 8 + j] = (((int32_t)temp2[i * 64 + 0 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                ((int32_t)temp2[i * 64 + 4 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2)) >>
+                                   ((int32_t)temp2[i * 64 + 4 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2)) >>
                                16;
                 m[5 * 8 + j] = (((int32_t)temp2[i * 64 + 6 * 8 + j] * (int32_t)data[3 * 8 + 2 ^ S] * 2) + 0x8000 +
-                                ((int32_t)temp2[i * 64 + 2 * 8 + j] * (int32_t)data[3 * 8 + 4 ^ S] * 2)) >>
+                                   ((int32_t)temp2[i * 64 + 2 * 8 + j] * (int32_t)data[3 * 8 + 4 ^ S] * 2)) >>
                                16;
                 m[7 * 8 + j] = (((int32_t)temp2[i * 64 + 2 * 8 + j] * (int32_t)data[3 * 8 + 2 ^ S] * 2) + 0x8000 +
-                                ((int32_t)temp2[i * 64 + 6 * 8 + j] * (int32_t)data[3 * 8 + 3 ^ S] * 2)) >>
+                                   ((int32_t)temp2[i * 64 + 6 * 8 + j] * (int32_t)data[3 * 8 + 3 ^ S] * 2)) >>
                                16;
 
                 m[8 * 8 + j] = m[4 * 8 + j] + m[5 * 8 + j];
@@ -207,20 +207,20 @@ void jpg_uncompress(OSTask_t *task)
             for (j = 0; j < 8; j++)
             {
                 m[8 * 8 + j] = (((int32_t)m[25 * 8 + j] * (int32_t)data[2 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                ((int32_t)m[31 * 8 + j] * (int32_t)data[2 * 8 + 1 ^ S] * 2)) >>
+                                   ((int32_t)m[31 * 8 + j] * (int32_t)data[2 * 8 + 1 ^ S] * 2)) >>
                                16;
                 m[9 * 8 + j] = (((int32_t)m[29 * 8 + j] * (int32_t)data[2 * 8 + 2 ^ S] * 2) + 0x8000 +
-                                ((int32_t)m[27 * 8 + j] * (int32_t)data[2 * 8 + 3 ^ S] * 2)) >>
+                                   ((int32_t)m[27 * 8 + j] * (int32_t)data[2 * 8 + 3 ^ S] * 2)) >>
                                16;
                 m[10 * 8 + j] = (((int32_t)m[27 * 8 + j] * (int32_t)data[2 * 8 + 2 ^ S] * 2) + 0x8000 +
-                                 ((int32_t)m[29 * 8 + j] * (int32_t)data[2 * 8 + 4 ^ S] * 2)) >>
+                                    ((int32_t)m[29 * 8 + j] * (int32_t)data[2 * 8 + 4 ^ S] * 2)) >>
                                 16;
                 m[11 * 8 + j] = (((int32_t)m[31 * 8 + j] * (int32_t)data[2 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                 ((int32_t)m[25 * 8 + j] * (int32_t)data[2 * 8 + 5 ^ S] * 2)) >>
+                                    ((int32_t)m[25 * 8 + j] * (int32_t)data[2 * 8 + 5 ^ S] * 2)) >>
                                 16;
 
                 m[6 * 8 + j] = (((int32_t)m[24 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                ((int32_t)m[28 * 8 + j] * (int32_t)data[3 * 8 + 1 ^ S] * 2)) >>
+                                   ((int32_t)m[28 * 8 + j] * (int32_t)data[3 * 8 + 1 ^ S] * 2)) >>
                                16;
 
                 m[5 * 8 + j] = m[11 * 8 + j] - m[10 * 8 + j];
@@ -229,20 +229,20 @@ void jpg_uncompress(OSTask_t *task)
                 m[15 * 8 + j] = m[11 * 8 + j] + m[10 * 8 + j];
 
                 m[13 * 8 + j] = (((int32_t)m[5 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                 ((int32_t)m[4 * 8 + j] * (int32_t)data[3 * 8 + 1 ^ S] * 2)) >>
+                                    ((int32_t)m[4 * 8 + j] * (int32_t)data[3 * 8 + 1 ^ S] * 2)) >>
                                 16;
                 m[14 * 8 + j] = (((int32_t)m[5 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                 ((int32_t)m[4 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2)) >>
+                                    ((int32_t)m[4 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2)) >>
                                 16;
 
                 m[4 * 8 + j] = (((int32_t)m[24 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
-                                ((int32_t)m[28 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2)) >>
+                                   ((int32_t)m[28 * 8 + j] * (int32_t)data[3 * 8 + 0 ^ S] * 2)) >>
                                16;
                 m[5 * 8 + j] = (((int32_t)m[30 * 8 + j] * (int32_t)data[3 * 8 + 2 ^ S] * 2) + 0x8000 +
-                                ((int32_t)m[26 * 8 + j] * (int32_t)data[3 * 8 + 4 ^ S] * 2)) >>
+                                   ((int32_t)m[26 * 8 + j] * (int32_t)data[3 * 8 + 4 ^ S] * 2)) >>
                                16;
                 m[7 * 8 + j] = (((int32_t)m[26 * 8 + j] * (int32_t)data[3 * 8 + 2 ^ S] * 2) + 0x8000 +
-                                ((int32_t)m[30 * 8 + j] * (int32_t)data[3 * 8 + 3 ^ S] * 2)) >>
+                                   ((int32_t)m[30 * 8 + j] * (int32_t)data[3 * 8 + 3 ^ S] * 2)) >>
                                16;
 
                 m[8 * 8 + j] = m[4 * 8 + j] + m[5 * 8 + j];

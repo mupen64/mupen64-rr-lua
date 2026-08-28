@@ -7,7 +7,7 @@
 #pragma once
 
 #include <string>
-#include <windows.h>
+#include <Common.Win32/Common.hpp>
 #include <Common.Views/Hotkey.hpp>
 
 /**
@@ -43,7 +43,7 @@ bool show_prompt(HWND hwnd, const std::string &caption, ::Hotkey &hotkey);
  * through_action_manager Whether the ActionManager should be called to associate the hotkey. If false, the hotkey will
  * only be set in the config.
  */
-void try_associate_hotkey(HWND hwnd, const std::string &action, const ::Hotkey &new_hotkey,
-                          bool through_action_manager = true);
+void try_associate_hotkey(
+    HWND hwnd, const std::string &action, const ::Hotkey &new_hotkey, bool through_action_manager = true);
 
 } // namespace HotkeyUtils

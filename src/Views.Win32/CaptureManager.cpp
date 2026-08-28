@@ -157,7 +157,7 @@ void readscreen_hybrid()
 
             // Copy the raw readscreen output
             StretchDIBits(hy_dc, 0, 0, raw_video_width, raw_video_height, 0, 0, raw_video_width, raw_video_height,
-                          m_video_buf, &bmp_info, DIB_RGB_COLORS, SRCCOPY);
+                m_video_buf, &bmp_info, DIB_RGB_COLORS, SRCCOPY);
         }
 
         LuaRenderer::blit_all(hy_dc);
@@ -272,8 +272,8 @@ bool stop_capture_impl()
     return true;
 }
 
-bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encoder_type,
-                        const bool ask_for_capture_settings)
+bool start_capture_impl(
+    std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings)
 {
     if (!check_readscreen_available())
     {
@@ -348,7 +348,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
 }
 
 void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings,
-                   const std::function<void(bool)> &callback)
+    const std::function<void(bool)> &callback)
 {
     g_main_ctx.core_ctx->vr_wait_increment();
     ThreadPool::submit_task([=] {
@@ -399,8 +399,8 @@ void input()
     {
         if (!m_encoder->append_video(m_video_buf))
         {
-            DialogService::show_dialog("Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture",
-                                       fsvc_error);
+            DialogService::show_dialog(
+                "Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture", fsvc_error);
             stop_capture();
             return;
         }
@@ -414,8 +414,8 @@ void ai_len_changed()
 {
     std::lock_guard lock(m_mutex);
 
-    const auto p = reinterpret_cast<short *>((char *)g_main_ctx.core_ctx->rdram +
-                                             (g_main_ctx.core_ctx->ai_register->ai_dram_addr & 0xFFFFFF));
+    const auto p = reinterpret_cast<short *>(
+        (char *)g_main_ctx.core_ctx->rdram + (g_main_ctx.core_ctx->ai_register->ai_dram_addr & 0xFFFFFF));
     const auto buf = (char *)p;
     const int ai_len = (int)g_main_ctx.core_ctx->ai_register->ai_len;
 

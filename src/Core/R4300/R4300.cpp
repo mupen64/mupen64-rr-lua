@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
 #include "Rom.hpp"
 #include <Core.hpp>
-#include <format>
+
 #include <condition_variable>
 #include <Memory/Memory.hpp>
 #include <Memory/Pif.hpp>
@@ -28,13 +27,15 @@
 
 struct R4300Internal
 {
-    std::jthread emu_thread_handle;
-
     std::mutex emu_thread_mutex;
     std::condition_variable_any emu_thread_cv;
     std::condition_variable emu_thread_stopped_cv;
     bool emu_thread_start_requested;
     bool emu_session_stopped = true;
+
+    // This is last to ensure it's stopped before any of the
+    // mutexes/condition variables.
+    std::jthread emu_thread_handle;
 };
 
 R4300Internal s_r4300;
@@ -1620,7 +1621,7 @@ void jump_to_func()
         blocks[addr >> 12]->start = addr & ~0xFFF;
         blocks[addr >> 12]->end = (addr & ~0xFFF) + 0x1000;
         init_block((int32_t *)(rdram + (((paddr - (addr - blocks[addr >> 12]->start)) & 0x1FFFFFFF) >> 2)),
-                   blocks[addr >> 12]);
+            blocks[addr >> 12]);
     }
     PC = actual->block + ((addr - actual->start) >> 2);
 
@@ -1684,10 +1685,9 @@ void print_stop_debug()
     g_core->log_info(std::format("PC={:#08x}:{:#08x}", PC->addr, rdram[(PC->addr & 0xFFFFFF) / 4]));
     for (int32_t j = 0; j < 16; j++)
         g_core->log_info(std::format("reg[{}]:{:#08x}{:#08x}        reg[{}]:{:#08x}{:#08x}", j,
-                                     (uint32_t)(reg[j] >> 32), (uint32_t)reg[j], j + 16, (uint32_t)(reg[j + 16] >> 32),
-                                     (uint32_t)reg[j + 16]));
+            (uint32_t)(reg[j] >> 32), (uint32_t)reg[j], j + 16, (uint32_t)(reg[j + 16] >> 32), (uint32_t)reg[j + 16]));
     g_core->log_info(std::format("hi:{:#08x}{:#08x}        lo:{:#08x}{:#08x}", (uint32_t)(hi >> 32), (uint32_t)hi,
-                                 (uint32_t)(lo >> 32), (uint32_t)lo));
+        (uint32_t)(lo >> 32), (uint32_t)lo));
     g_core->log_info(std::format("Executed {} ({:#08x}) instructions", debug_count, debug_count));
 }
 
@@ -2094,8 +2094,7 @@ void emu_thread(std::stop_token stop_token)
         g_core->callbacks.emu_starting_changed(false);
         g_core->callbacks.reset();
 
-        g_core->log_info(std::format(
-            "[Core] Emu thread entry took {}ms",
+        g_core->log_info(std::format("[Core] Emu thread entry took {}ms",
             static_cast<int32_t>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000)));
         core_start();
 
@@ -2220,8 +2219,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
 
     g_ctx.vr_on_speed_modifier_changed();
 
-    g_core->log_info(std::format(
-        "[Core] vr_start_rom entry took {}ms",
+    g_core->log_info(std::format("[Core] vr_start_rom entry took {}ms",
         static_cast<int32_t>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000)));
 
     emu_paused = false;

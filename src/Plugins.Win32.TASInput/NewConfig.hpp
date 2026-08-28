@@ -195,11 +195,24 @@ struct t_controller_config
     {
 #define TASINPUT_FIELD(field) .field = j[#field]
         self = {
-            TASINPUT_FIELD(dpad_right), TASINPUT_FIELD(dpad_left), TASINPUT_FIELD(dpad_down), TASINPUT_FIELD(dpad_up),
-            TASINPUT_FIELD(c_right),    TASINPUT_FIELD(c_left),    TASINPUT_FIELD(c_down),    TASINPUT_FIELD(c_up),
-            TASINPUT_FIELD(a),          TASINPUT_FIELD(b),         TASINPUT_FIELD(z),         TASINPUT_FIELD(start),
-            TASINPUT_FIELD(l),          TASINPUT_FIELD(r),         TASINPUT_FIELD(x),         TASINPUT_FIELD(y),
-            TASINPUT_FIELD(x_scale),    TASINPUT_FIELD(y_scale),
+            TASINPUT_FIELD(dpad_right),
+            TASINPUT_FIELD(dpad_left),
+            TASINPUT_FIELD(dpad_down),
+            TASINPUT_FIELD(dpad_up),
+            TASINPUT_FIELD(c_right),
+            TASINPUT_FIELD(c_left),
+            TASINPUT_FIELD(c_down),
+            TASINPUT_FIELD(c_up),
+            TASINPUT_FIELD(a),
+            TASINPUT_FIELD(b),
+            TASINPUT_FIELD(z),
+            TASINPUT_FIELD(start),
+            TASINPUT_FIELD(l),
+            TASINPUT_FIELD(r),
+            TASINPUT_FIELD(x),
+            TASINPUT_FIELD(y),
+            TASINPUT_FIELD(x_scale),
+            TASINPUT_FIELD(y_scale),
         };
 #undef TASINPUT_FIELD
     }

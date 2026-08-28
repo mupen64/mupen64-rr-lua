@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "OpenGL.hpp"
 #include "RSP.hpp"
 #include "RDP.hpp"
@@ -117,6 +117,10 @@ void RSP_ThreadProc()
             break;
         case RSPMSG_READPIXELS:
             OGL_ReadPixels();
+            break;
+        case RSPMSG_BLACKOUT:
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             break;
         default:
             break;

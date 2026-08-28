@@ -132,12 +132,13 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         const int title_height = !toast->title.empty() ? 16 : 0;
         SetWindowPos(toast->icon_hwnd, nullptr, padding, padding, icon_size, icon_size, SWP_NOZORDER | SWP_NOACTIVATE);
         SetWindowPos(toast->close_hwnd, nullptr, width - close_size - padding, padding + close_top_offset, close_size,
-                     close_size, SWP_NOZORDER | SWP_NOACTIVATE);
+            close_size, SWP_NOZORDER | SWP_NOACTIVATE);
         if (toast->title_hwnd)
-            SetWindowPos(toast->title_hwnd, nullptr, text_x, padding, text_width, title_height,
-                         SWP_NOZORDER | SWP_NOACTIVATE);
+            SetWindowPos(
+                toast->title_hwnd, nullptr, text_x, padding, text_width, title_height, SWP_NOZORDER | SWP_NOACTIVATE);
         SetWindowPos(toast->content_hwnd, nullptr, text_x, padding + title_height, text_width,
-                     std::max(1, height - 2 * padding - title_height), SWP_NOZORDER | SWP_NOACTIVATE);
+            std::max(1, height - 2 * padding - title_height), SWP_NOZORDER | SWP_NOACTIVATE);
+        RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
         return 0;
     }
 
@@ -145,8 +146,8 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         const auto dis = reinterpret_cast<DRAWITEMSTRUCT *>(lparam);
         if (!toast || dis->CtlType != ODT_STATIC || dis->CtlID != IDC_TOAST_ICON) return FALSE;
 
-        DrawIconEx(dis->hDC, dis->rcItem.left, dis->rcItem.top, toast->icon, icon_size, icon_size, 0, nullptr,
-                   DI_NORMAL);
+        DrawIconEx(
+            dis->hDC, dis->rcItem.left, dis->rcItem.top, toast->icon, icon_size, icon_size, 0, nullptr, DI_NORMAL);
         return TRUE;
     }
 
@@ -178,7 +179,7 @@ void show_impl(const ToastData &data)
     toast->icon = icon_for_tone(data.tone);
 
     const HWND hwnd = CreateDialogParam(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_TOAST), g_main_ctx.hwnd, toast_proc,
-                                        reinterpret_cast<LPARAM>(toast.get()));
+        reinterpret_cast<LPARAM>(toast.get()));
     if (!hwnd) return;
     toast_windows.push_back(hwnd);
     toast.release();
@@ -224,7 +225,7 @@ namespace Toasts
 void show(const ToastData &data)
 {
     g_view_logger->info("Toast: title={}; content={}; tone={}; ttl={}", data.title.value_or(""), data.content,
-                        static_cast<uint8_t>(data.tone), data.ttl.count());
+        static_cast<uint8_t>(data.tone), data.ttl.count());
 
     switch ((t_config::ToastMode)g_config.toast_mode)
     {

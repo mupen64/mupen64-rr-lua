@@ -12,7 +12,6 @@
 
 #include "m64rr/Types.hpp"
 #include <optional>
-#include <stack>
 
 #ifdef __cplusplus
 extern "C"
@@ -161,7 +160,7 @@ extern "C"
          * again, this function will return the last choice.
          */
         std::function<size_t(std::string_view id, const std::vector<std::string> &choices, const char *str,
-                             const char *title, core_dialog_type type)>
+            const char *title, core_dialog_type type)>
             show_multiple_choice_dialog;
 
         /**
@@ -503,8 +502,8 @@ extern "C"
          * \param description The movie's description
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path, uint16_t flags, std::string author,
-                                  std::string description)>
+        std::function<core_result(
+            std::filesystem::path path, uint16_t flags, std::string author, std::string description)>
             vcr_start_record;
 
         /**
@@ -521,7 +520,7 @@ extern "C"
          * \return The operation result
          */
         std::function<core_result(const std::filesystem::path &path, std::optional<std::string> author,
-                                  std::optional<std::string> description)>
+            std::optional<std::string> description)>
             vcr_replace_author_info;
 
         /**
@@ -723,8 +722,8 @@ extern "C"
          * \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are
          * originating from the emu thread. \return Whether the operation was enqueued.
          */
-        std::function<bool(const std::filesystem::path &path, core_st_job job, const core_st_callback &callback,
-                           bool ignore_warnings)>
+        std::function<bool(
+            const std::filesystem::path &path, core_st_job job, const core_st_callback &callback, bool ignore_warnings)>
             st_do_file;
 
         /**
@@ -737,7 +736,7 @@ extern "C"
          * originating from the emu thread. \return Whether the operation was enqueued.
          */
         std::function<bool(const std::vector<uint8_t> &buffer, core_st_job job, const core_st_callback &callback,
-                           bool ignore_warnings)>
+            bool ignore_warnings)>
             st_do_memory;
 
         /**

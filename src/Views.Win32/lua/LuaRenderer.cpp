@@ -41,8 +41,8 @@ static void set_overlay_visibility(bool visible)
     }
 }
 
-static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                                  DWORD_PTR data)
+static LRESULT CALLBACK main_window_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR data)
 {
     switch (msg)
     {
@@ -77,7 +77,7 @@ static void present_gdi_content(t_lua_environment *lua)
     bf.SourceConstantAlpha = 255;
     bf.AlphaFormat = 0;
     UpdateLayeredWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, &size, lua->rctx.gdi_back_dc, &src_pt,
-                        LuaRenderer::LUA_GDI_COLOR_MASK, &bf, ULW_COLORKEY);
+        LuaRenderer::LUA_GDI_COLOR_MASK, &bf, ULW_COLORKEY);
 }
 
 static void draw_lua(bool force)
@@ -352,10 +352,10 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     const auto style = s_detached_overlays ? WS_POPUP | WS_VISIBLE : WS_CHILD | WS_VISIBLE;
 
     ctx->gdi_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, ctx->dc_size.width,
-                                           ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+        ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
     ctx->d2d_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, ctx->dc_size.width,
-                                           ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+        ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
     // This env isn't in g_lua_environments yet, so we provide these hwnds manually.
     move_and_order_overlays(std::vector<HWND>{ctx->gdi_overlay_hwnd, ctx->d2d_overlay_hwnd});
@@ -434,8 +434,8 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
 
     g_view_logger->trace("[Lua] Creating D2D renderer...");
 
-    DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(ctx->dw_factory),
-                        reinterpret_cast<IUnknown **>(&ctx->dw_factory));
+    DWriteCreateFactory(
+        DWRITE_FACTORY_TYPE_SHARED, __uuidof(ctx->dw_factory), reinterpret_cast<IUnknown **>(&ctx->dw_factory));
 
     if (g_config.presenter_type != (int32_t)t_config::PresenterType::GDI)
         ctx->presenter = new DCompPresenter();
@@ -497,6 +497,6 @@ void LuaRenderer::blit_all(HDC hdc)
         if (!lua->rctx.has_gdi_content) continue;
 
         TransparentBlt(hdc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0,
-                       lua->rctx.dc_size.width, lua->rctx.dc_size.height, LuaRenderer::LUA_GDI_COLOR_MASK);
+            lua->rctx.dc_size.width, lua->rctx.dc_size.height, LuaRenderer::LUA_GDI_COLOR_MASK);
     }
 }

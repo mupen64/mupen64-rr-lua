@@ -4,18 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
 #include "SDLBackend.hpp"
 #include "Main.hpp"
-#include <algorithm>
-#include <array>
-#include <bit>
-#include <cassert>
+
 #include <chrono>
-#include <cstdint>
-#include <format>
+
 #include <stdexcept>
-#include <string>
 
 namespace SDLAudio
 {
@@ -42,9 +36,9 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
     if (!m_stream) throw std::runtime_error(SDL_GetError());
     if (!SDL_BindAudioStream(m_device_id, m_stream)) throw std::runtime_error(SDL_GetError());
 
-    g_plugin->log_info(std::format("Opened default audio device, buffer size = {}, target = {}", m_buffer_size,
-                                   config.src_buffer_target)
-                           .c_str());
+    g_plugin->log_info(std::format(
+        "Opened default audio device, buffer size = {}, target = {}", m_buffer_size, config.src_buffer_target)
+            .c_str());
 
     // Pause the stream initially.
     set_paused(true);

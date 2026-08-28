@@ -5,14 +5,9 @@
  */
 
 #include <Common.Views/App.hpp>
-#include <Common.Views/Assert.hpp>
 #include <Common.Views/WinFFmpegEncoder.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
-#include <IOUtils.hpp>
-#include <string>
-#include <filesystem>
-#include <cstdint>
 #include <windows.h>
 
 const std::string NUT_PIPE_NAME = "\\\\.\\pipe\\mupennut";
@@ -65,9 +60,9 @@ std::optional<std::string> WinFFmpegEncoder::start(Params params)
     m_last_write_was_video = false;
 
     m_pipe = CreateNamedPipe(NUT_PIPE_NAME.c_str(), PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED,
-                             PIPE_TYPE_BYTE | PIPE_WAIT, 1,
-                             1 << 20, // 1 MB write buffer
-                             0, 0, nullptr);
+        PIPE_TYPE_BYTE | PIPE_WAIT, 1,
+        1 << 20, // 1 MB write buffer
+        0, 0, nullptr);
 
     if (m_pipe == INVALID_HANDLE_VALUE)
     {
@@ -89,7 +84,7 @@ std::optional<std::string> WinFFmpegEncoder::start(Params params)
     memset(&m_pi, 0, sizeof(m_pi));
 
     if (!CreateProcess(g_config.ffmpeg_path.c_str(), const_cast<char *>(options.data()), nullptr, nullptr, FALSE, 0,
-                       nullptr, nullptr, &m_si, &m_pi))
+            nullptr, nullptr, &m_si, &m_pi))
     {
         g_view_logger->error("[WinFFmpegEncoder] CreateProcess failed ({}).", GetLastError());
         CloseHandle(m_pipe);
@@ -177,7 +172,7 @@ std::optional<std::string> WinFFmpegEncoder::start(Params params)
     }
 
     g_view_logger->info("[WinFFmpegEncoder] NUT stream started ({}x{} @ {} fps, {} Hz audio)", m_params.width,
-                        m_params.height, m_params.fps, m_params.arate);
+        m_params.height, m_params.fps, m_params.arate);
 
     return std::nullopt;
 }
@@ -216,8 +211,8 @@ bool WinFFmpegEncoder::stop()
     {
         DialogService::show_dialog(std::format("{} frames were dropped during capture due to low memory.\n"
                                                "The capture might contain empty frames.",
-                                               m_dropped_frames),
-                                   "FFmpeg");
+                                       m_dropped_frames),
+            "FFmpeg");
     }
 
     return true;

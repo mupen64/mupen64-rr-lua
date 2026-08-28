@@ -125,8 +125,8 @@ static void start_capture()
         return;
     }
 
-    CaptureManager::start_capture(cli_params.avi.string().c_str(),
-                                  static_cast<t_config::EncoderType>(g_config.encoder_type), false);
+    CaptureManager::start_capture(
+        cli_params.avi.string().c_str(), static_cast<t_config::EncoderType>(g_config.encoder_type), false);
 }
 
 static void on_movie_playback_stop()

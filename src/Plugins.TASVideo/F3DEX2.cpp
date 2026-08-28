@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "F3D.hpp"
 #include "F3DEX.hpp"
 #include "F3DEX2.hpp"
@@ -138,7 +138,7 @@ void F3DEX2_MoveWord(u32 w0, u32 w1)
 void F3DEX2_Texture(u32 w0, u32 w1)
 {
     gSPTexture(_FIXED2FLOAT(_SHIFTR(w1, 16, 16), 16), _FIXED2FLOAT(_SHIFTR(w1, 0, 16), 16), _SHIFTR(w0, 11, 3),
-               _SHIFTR(w0, 8, 3), _SHIFTR(w0, 1, 7));
+        _SHIFTR(w0, 8, 3), _SHIFTR(w0, 1, 7));
 }
 
 void F3DEX2_SetOtherMode_H(u32 w0, u32 w1)
@@ -241,7 +241,7 @@ void F3DEX2_Special_3(u32 w0, u32 w1)
 void F3DEX2_Quad(u32 w0, u32 w1)
 {
     gSP2Triangles(_SHIFTR(w0, 17, 7), _SHIFTR(w0, 9, 7), _SHIFTR(w0, 1, 7), 0, _SHIFTR(w1, 17, 7), _SHIFTR(w1, 9, 7),
-                  _SHIFTR(w1, 1, 7), 0);
+        _SHIFTR(w1, 1, 7), 0);
 }
 
 void F3DEX2_Init()

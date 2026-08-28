@@ -6,12 +6,10 @@
 
 #include "Common.hpp"
 #include "MicrocodeDialog_Win32.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "Resource.h"
 #include "GBI.hpp"
-#include <windows.h>
-#include <commctrl.h>
-#include <windowsx.h>
+#include <Common.Win32/Common.hpp>
 
 INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -28,7 +26,7 @@ INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM
 
         char text[1024]{};
         sprintf(text, "Microcode CRC:\t\t0x%08x\r\nMicrocode Data CRC:\t0x%08x\r\nMicrocode Text:\t\t%s", uc_crc,
-                uc_dcrc, uc_str);
+            uc_dcrc, uc_str);
         Edit_SetText(GetDlgItem(hWndDlg, IDC_TEXTBOX), text);
         return TRUE;
     }
@@ -49,6 +47,6 @@ INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM
 
 uint32_t MicrocodeDialog::show()
 {
-    return DialogBox(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_MICROCODEDLG), g_plugin->main_window.hwnd(),
-                     MicrocodeDlgProc);
+    return DialogBox(
+        GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_MICROCODEDLG), g_plugin->main_window.hwnd(), MicrocodeDlgProc);
 }
