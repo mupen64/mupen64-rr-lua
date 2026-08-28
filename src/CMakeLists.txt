@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 add_subdirectory(Common)
 
 function(mupen64rr_reuse_common_pch target)
-    target_precompile_headers("${target}" REUSE_FROM Mupen64RR.Common)
+    target_precompile_headers("${target}" REUSE_FROM Mupen64RR_Common)
 endfunction()
 # core API and headers
 add_subdirectory(Core)
@@ -49,11 +49,11 @@ if (MUPEN64RR_BUILD_WIN32)
 
     add_subdirectory(Common.Win32)
 
-    add_library(Mupen64RR.Views.Win32.Headers INTERFACE
+    add_library(Mupen64RR_Views_Win32_Headers INTERFACE
         "Views.Win32/include/Views.Win32/ZESpec.h"
     )
-    target_compile_features(Mupen64RR.Views.Win32.Headers INTERFACE cxx_std_26)
-    target_include_directories(Mupen64RR.Views.Win32.Headers INTERFACE "Views.Win32/include")
+    target_compile_features(Mupen64RR_Views_Win32_Headers INTERFACE cxx_std_26)
+    target_include_directories(Mupen64RR_Views_Win32_Headers INTERFACE "Views.Win32/include")
 
     # BUNDLED PLUGINS
     # ============================
