@@ -89,12 +89,24 @@ def main() -> int:
         "-j",
         "--jobs",
         type=int,
-        default=os.cpu_count() or 1,
-        help="number of clang-tidy processes to run in parallel (default: number of CPUs)",
+        default=None,
+        help="number of clang-tidy processes to run in parallel (--check only; "
+        "fix mode is always serial to avoid concurrent header rewrites)",
     )
     args = parser.parse_args()
-    if args.jobs < 1:
+
+    if args.jobs is None:
+        jobs = (os.cpu_count() or 1) if args.check else 1
+    elif args.jobs < 1:
         parser.error("--jobs must be >= 1")
+    elif not args.check:
+        print(
+            "note: -j is ignored in fix mode (fixes are always applied serially)",
+            file=sys.stderr,
+        )
+        jobs = 1
+    else:
+        jobs = args.jobs
 
     root = project_root()
     build_dir = (root / BUILD_DIR).resolve()
@@ -142,7 +154,7 @@ def main() -> int:
     failures: list[tuple[str, int, str]] = []
     warnings_found: list[str] = []
     try:
-        with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
             futures = {
                 pool.submit(run_clang_tidy, entry, build_dir, args.check): entry["file"]
                 for entry in entries
