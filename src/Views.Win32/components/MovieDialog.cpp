@@ -325,9 +325,9 @@ refresh:
     SetDlgItemText(hwnd, IDC_INI_AUTHOR, header.author);
     SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, header.description);
 
-    CheckDlgButton(hwnd, IDC_RADIO_FROM_ST, header.startFlags == MOVIE_START_FROM_SNAPSHOT);
-    CheckDlgButton(hwnd, IDC_RADIO_FROM_START, header.startFlags == MOVIE_START_FROM_NOTHING);
-    CheckDlgButton(hwnd, IDC_RADIO_FROM_EEPROM, header.startFlags == MOVIE_START_FROM_EEPROM);
+    CheckDlgButton(hwnd, IDC_RADIO_FROM_ST, header.start_flags == MOVIE_START_FROM_SNAPSHOT);
+    CheckDlgButton(hwnd, IDC_RADIO_FROM_START, header.start_flags == MOVIE_START_FROM_NOTHING);
+    CheckDlgButton(hwnd, IDC_RADIO_FROM_EEPROM, header.start_flags == MOVIE_START_FROM_EEPROM);
 
     LVITEM lv_item = {0};
     lv_item.mask = LVIF_TEXT | LVIF_DI_SETITEM;

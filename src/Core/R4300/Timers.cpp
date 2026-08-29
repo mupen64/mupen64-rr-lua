@@ -21,10 +21,10 @@ struct timer_state
     time_point last_vi_time{};
     time_point last_frame_time{};
 
-    core_timer_delta frame_deltas[core_timer_max_deltas]{};
+    CoreTimerDelta frame_deltas[CORE_TIMER_MAX_DELTAS]{};
     std::mutex frame_deltas_mtx{};
 
-    core_timer_delta vi_deltas[core_timer_max_deltas]{};
+    CoreTimerDelta vi_deltas[CORE_TIMER_MAX_DELTAS]{};
     std::mutex vi_deltas_mtx{};
 };
 
@@ -35,7 +35,7 @@ static timer_state timer{};
  * \param times A circular buffer of deltas
  * \return The average rate per second from the delta in the queue
  */
-static float get_rate_per_second_from_deltas(const std::span<core_timer_delta> &times)
+static float get_rate_per_second_from_deltas(const std::span<CoreTimerDelta> &times)
 {
     size_t count = 0;
     float sum = 0.0f;
@@ -85,7 +85,7 @@ bool timer_new_frame()
     timer.frame_deltas_mtx.lock();
     timer.frame_deltas[timer.frame_deltas_ptr] = current_frame_time - timer.last_frame_time;
     timer.frame_deltas_mtx.unlock();
-    timer.frame_deltas_ptr = (timer.frame_deltas_ptr + 1) % core_timer_max_deltas;
+    timer.frame_deltas_ptr = (timer.frame_deltas_ptr + 1) % CORE_TIMER_MAX_DELTAS;
 
     timer.last_frame_time = std::chrono::high_resolution_clock::now();
 
@@ -160,7 +160,7 @@ void timer_new_vi()
     timer.vi_deltas_mtx.lock();
     timer.vi_deltas[timer.vi_deltas_ptr] = current_vi_time - timer.last_vi_time;
     timer.vi_deltas_mtx.unlock();
-    timer.vi_deltas_ptr = (timer.vi_deltas_ptr + 1) % core_timer_max_deltas;
+    timer.vi_deltas_ptr = (timer.vi_deltas_ptr + 1) % CORE_TIMER_MAX_DELTAS;
 
     timer.last_vi_time = std::chrono::high_resolution_clock::now();
 }

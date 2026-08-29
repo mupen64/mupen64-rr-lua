@@ -109,7 +109,6 @@ enum class CoreResult
 
     // The core params are missing a critical component.
     IN_MissingComponent,
-
 };
 
 /**
@@ -358,10 +357,10 @@ struct CoreCfg
 
 typedef std::common_type_t<std::chrono::duration<int64_t, std::ratio<1, 1000000000>>,
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>>>
-    core_timer_delta;
-constexpr uint8_t core_timer_max_deltas = 60;
+    CoreTimerDelta;
+constexpr uint8_t CORE_TIMER_MAX_DELTAS = 60;
 
- struct CoreRDRAMReg
+struct CoreRDRAMReg
 {
     uint32_t rdram_config;
     uint32_t rdram_device_id;
@@ -373,9 +372,9 @@ constexpr uint8_t core_timer_max_deltas = 60;
     uint32_t rdram_min_interval;
     uint32_t rdram_addr_select;
     uint32_t rdram_device_manuf;
-} ;
+};
 
- struct CoreSPReg
+struct CoreSPReg
 {
     uint32_t sp_mem_addr_reg;
     uint32_t sp_dram_addr_reg;
@@ -401,13 +400,13 @@ constexpr uint8_t core_timer_max_deltas = 60;
     uint32_t sp_dma_full_reg;
     uint32_t sp_dma_busy_reg;
     uint32_t sp_semaphore_reg;
-} ;
+};
 
 struct CoreRSPReg
 {
     uint32_t rsp_pc;
     uint32_t rsp_ibist;
-} ;
+};
 
 struct CoreDPCReg
 {
@@ -431,7 +430,7 @@ struct CoreDPCReg
     uint32_t dpc_bufbusy;
     uint32_t dpc_pipebusy;
     uint32_t dpc_tmem;
-} ;
+};
 
 struct CoreDPSReg
 {
@@ -439,7 +438,7 @@ struct CoreDPSReg
     uint32_t dps_test_mode;
     uint32_t dps_buftest_addr;
     uint32_t dps_buftest_data;
-} ;
+};
 
 struct CoreMIPSReg
 {
@@ -459,7 +458,7 @@ struct CoreMIPSReg
     char VI_intr_mask;
     char PI_intr_mask;
     char DP_intr_mask;
-} ;
+};
 
 struct CoreVIReg
 {
@@ -478,7 +477,7 @@ struct CoreVIReg
     uint32_t vi_x_scale;
     uint32_t vi_y_scale;
     uint32_t vi_delay;
-} ;
+};
 
 struct CoreAIReg
 {
@@ -495,7 +494,7 @@ struct CoreAIReg
     uint32_t next_len;
     uint32_t current_delay;
     uint32_t current_len;
-} ;
+};
 
 struct CorePIReg
 {
@@ -512,9 +511,9 @@ struct CorePIReg
     uint32_t pi_bsd_dom2_pwd_reg;
     uint32_t pi_bsd_dom2_pgs_reg;
     uint32_t pi_bsd_dom2_rls_reg;
-} ;
+};
 
- struct CoreRIReg
+struct CoreRIReg
 {
     uint32_t ri_mode;
     uint32_t ri_config;
@@ -524,7 +523,7 @@ struct CorePIReg
     uint32_t ri_latency;
     uint32_t ri_error;
     uint32_t ri_werror;
-} ;
+};
 
 struct CoreSIReg
 {
@@ -532,7 +531,7 @@ struct CoreSIReg
     uint32_t si_pif_addr_rd64b;
     uint32_t si_pif_addr_wr64b;
     uint32_t si_status;
-} ;
+};
 
 /**
  * \brief Represents a system type.
@@ -561,7 +560,7 @@ struct CoreROMHeader
     uint16_t Cartridge_ID;
     uint16_t Country_code;
     uint32_t Boot_Code[1008];
-} ;
+};
 
 #pragma endregion
 
@@ -708,7 +707,7 @@ typedef struct CoreVCRMovieHeader
      * \brief What state the movie is expected to start from
      * \remarks vcr.hpp:32
      */
-    uint16_t startFlags;
+    uint16_t start_flags;
 
     uint16_t reserved2;
 

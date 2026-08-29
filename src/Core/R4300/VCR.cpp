@@ -555,7 +555,7 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
 {
     if (vcr.task == CoreVCRTask::StartRecordingFromReset)
     {
-        bool clear_eeprom = !(vcr.hdr.startFlags & MOVIE_START_FROM_EEPROM);
+        bool clear_eeprom = !(vcr.hdr.start_flags & MOVIE_START_FROM_EEPROM);
         vcr.reset_pending = true;
         g_core->submit_task([clear_eeprom] {
             const auto result = vr_reset_rom(clear_eeprom, false);
@@ -590,7 +590,7 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
 
     if (vcr.task == CoreVCRTask::StartPlaybackFromReset)
     {
-        bool clear_eeprom = !(vcr.hdr.startFlags & MOVIE_START_FROM_EEPROM);
+        bool clear_eeprom = !(vcr.hdr.start_flags & MOVIE_START_FROM_EEPROM);
         vcr.reset_pending = true;
         g_core->submit_task([clear_eeprom] {
             const auto result = vr_reset_rom(clear_eeprom, false);
@@ -1040,7 +1040,7 @@ CoreResult vcr_start_record(std::filesystem::path path, uint16_t flags, std::str
     vcr.hdr.length_samples = 0;
 
     set_rerecord_count(0);
-    vcr.hdr.startFlags = flags;
+    vcr.hdr.start_flags = flags;
 
     if (flags & MOVIE_START_FROM_SNAPSHOT)
     {
@@ -1524,7 +1524,7 @@ CoreResult vcr_start_playback(std::filesystem::path path)
     vcr.inputs = movie_inputs;
     vcr.hdr = header;
 
-    if (header.startFlags & MOVIE_START_FROM_SNAPSHOT)
+    if (header.start_flags & MOVIE_START_FROM_SNAPSHOT)
     {
         g_core->log_info("[VCR] Loading state...");
 

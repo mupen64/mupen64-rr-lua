@@ -280,7 +280,7 @@ void CLI::init()
     {
         CoreVCRMovieHeader hdr{};
         g_main_ctx.core_ctx->vcr_parse_header(movie_path, &hdr);
-        cli_state.is_movie_from_start = hdr.startFlags & MOVIE_START_FROM_NOTHING;
+        cli_state.is_movie_from_start = hdr.start_flags & MOVIE_START_FROM_NOTHING;
     }
 
     cli_state.rom_is_movie = cli_params.rom.extension().compare(".m64") == 0;
