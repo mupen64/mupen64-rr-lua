@@ -46,7 +46,7 @@ extern "C"
         std::function<void(int32_t)> speed_modifier_changed = [](const auto &...) {};
         std::function<void(bool)> warp_modify_status_changed = [](const auto &...) {};
         std::function<void(int32_t)> current_sample_changed = [](const auto &...) {};
-        std::function<void(core_vcr_task)> task_changed = [](const auto &...) {};
+        std::function<void(CoreVCRTask)> task_changed = [](const auto &...) {};
         std::function<void(uint64_t)> rerecords_changed = [](const auto &...) {};
         std::function<void()> unfreeze_completed = [](const auto &...) {};
         std::function<void(size_t)> seek_savestate_changed = [](const auto &...) {};
@@ -216,7 +216,7 @@ extern "C"
          * \param predicate A predicate which determines if the rom matches.
          * \return The rom's path, or an empty string if no rom was found.
          */
-        std::function<std::filesystem::path(const std::function<bool(const core_rom_header &)> &predicate)>
+        std::function<std::filesystem::path(const std::function<bool(const CoreROMHeader &)> &predicate)>
             find_available_rom = [](const auto &...) { return std::filesystem::path(); };
 
         /**
@@ -246,8 +246,8 @@ extern "C"
          * \brief The savestate callback wrapper, which is invoked prior to individual savestate callbacks.
          * Can be used to display generic error information.
          */
-        std::function<void(const core_st_callback_info &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
-            [](const core_st_callback_info &, const std::vector<uint8_t> &) {};
+        std::function<void(const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
+            [](const CoreSTCallbackInfo &, const std::vector<uint8_t> &) {};
 
         std::function<void()> video_process_dlist;
         std::function<void()> video_process_rdp_list;
@@ -280,17 +280,17 @@ extern "C"
     {
         uint8_t *rom;
         uint32_t *rdram;
-        core_rdram_reg *rdram_register;
-        core_pi_reg *pi_register;
-        core_mips_reg *mi_register;
-        core_sp_reg *sp_register;
-        core_si_reg *si_register;
-        core_vi_reg *vi_register;
-        core_rsp_reg *rsp_register;
-        core_ri_reg *ri_register;
-        core_ai_reg *ai_register;
-        core_dpc_reg *dpc_register;
-        core_dps_reg *dps_register;
+        CoreRDRAMReg *rdram_register;
+        CorePIReg *pi_register;
+        CoreMIPSReg *mi_register;
+        CoreSPReg *sp_register;
+        CoreSIReg *si_register;
+        CoreVIReg *vi_register;
+        CoreRSPReg *rsp_register;
+        CoreRIReg *ri_register;
+        CoreAIReg *ai_register;
+        CoreDPCReg *dpc_register;
+        CoreDPSReg *dps_register;
         uint32_t *sp_dmem;
         uint32_t *sp_imem;
         uint32_t *PIF_RAM;
@@ -431,7 +431,7 @@ extern "C"
         /**
          * \breif Gets the rom header.
          */
-        std::function<core_rom_header *()> vr_get_rom_header;
+        std::function<CoreROMHeader *()> vr_get_rom_header;
 
         /**
          * \param country_code A rom's country code.
@@ -477,7 +477,7 @@ extern "C"
          * \param header The header to fill
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path, core_vcr_movie_header *header)> vcr_parse_header;
+        std::function<core_result(std::filesystem::path path, CoreVCRMovieHeader *header)> vcr_parse_header;
 
         /**
          * \brief Reads the inputs from a movie
@@ -526,7 +526,7 @@ extern "C"
         /**
          * \brief Gets information about the current seek operation.
          */
-        std::function<core_vcr_seek_info()> vcr_get_seek_info;
+        std::function<CoreVCRSeekInfo()> vcr_get_seek_info;
 
         /**
          * \brief Begins seeking to a frame in the current movie.
@@ -574,7 +574,7 @@ extern "C"
         /**
          * \brief Gets the current task
          */
-        std::function<core_vcr_task()> vcr_get_task;
+        std::function<CoreVCRTask()> vcr_get_task;
 
         /**
          * Gets the sample length of the current movie. If no movie is active, the function returns UINT32_MAX.
@@ -662,7 +662,7 @@ extern "C"
          * \param flags The start flags.
          * \return Information about the generated files.
          */
-        std::function<core_vcr_generated_file_info(const std::filesystem::path &movie_path, uint16_t flags)>
+        std::function<CoreVCRGeneratedFileInfo(const std::filesystem::path &movie_path, uint16_t flags)>
             vcr_get_generated_file_info;
 
 #pragma endregion
@@ -723,7 +723,7 @@ extern "C"
          * originating from the emu thread. \return Whether the operation was enqueued.
          */
         std::function<bool(
-            const std::filesystem::path &path, core_st_job job, const core_st_callback &callback, bool ignore_warnings)>
+            const std::filesystem::path &path, CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings)>
             st_do_file;
 
         /**
@@ -735,7 +735,7 @@ extern "C"
          * shown. \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are
          * originating from the emu thread. \return Whether the operation was enqueued.
          */
-        std::function<bool(const std::vector<uint8_t> &buffer, core_st_job job, const core_st_callback &callback,
+        std::function<bool(const std::vector<uint8_t> &buffer, CoreSTJob job, const CoreSTCallback &callback,
             bool ignore_warnings)>
             st_do_memory;
 
@@ -767,7 +767,7 @@ extern "C"
          * \param state The CPU state to disassemble.
          * \return The disassembled instruction as a string.
          */
-        std::function<std::string(const core_dbg_cpu_state &state)> dbg_disassemble;
+        std::function<std::string(const CoreDbgCPUState &state)> dbg_disassemble;
 
 #pragma endregion
 
@@ -779,25 +779,25 @@ extern "C"
          * \param cheat The compiled cheat. If the compilation fails, the cheat won't be mutated.
          * \return Whether the compilation was successful.
          */
-        std::function<bool(std::string_view code, core_cheat &cheat)> cht_compile;
+        std::function<bool(std::string_view code, CoreCheat &cheat)> cht_compile;
 
         /**
          * \brief Gets the cheat override stack.
          */
-        std::function<void(std::stack<std::vector<core_cheat>> &)> cht_get_override_stack;
+        std::function<void(std::stack<std::vector<CoreCheat>> &)> cht_get_override_stack;
 
         /**
          * \brief Gets the cheat list.
          * \remarks The returned cheat list may not be the one set via cht_set_list, as the core can apply cheat
          * overrides.
          */
-        std::function<void(std::vector<core_cheat> &)> cht_get_list;
+        std::function<void(std::vector<CoreCheat> &)> cht_get_list;
 
         /**
          * \brief Sets the cheat list.
          * \remarks If a core cheat override is active, cht_set_list will do nothing.
          */
-        std::function<void(const std::vector<core_cheat> &)> cht_set_list;
+        std::function<void(const std::vector<CoreCheat> &)> cht_set_list;
 
 #pragma endregion
     };

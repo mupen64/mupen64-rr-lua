@@ -37,7 +37,7 @@ static int stop(lua_State *L)
 
 static int GetMovieFilename(lua_State *L)
 {
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
+    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Idle)
     {
         luaL_error(L, "No movie is currently playing");
         lua_pushstring(L, "");
@@ -85,7 +85,7 @@ static int is_seeking(lua_State *L)
 
 static int get_seek_completion(lua_State *L)
 {
-    const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
     lua_newtable(L);
     lua_pushinteger(L, info.current_sample);

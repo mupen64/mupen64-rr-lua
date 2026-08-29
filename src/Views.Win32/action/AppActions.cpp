@@ -39,8 +39,8 @@ bool confirm_user_exit()
     }
 
     const std::tuple<bool, std::string_view> messages[] = {
-        {g_main_ctx.core_ctx->vcr_get_task() == task_recording, "Recording"},
-        {g_main_ctx.core_ctx->vcr_get_task() == task_playback, "Playback"}, {CaptureManager::is_capturing(), "Capture"},
+        {g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording, "Recording"},
+        {g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Playback, "Playback"}, {CaptureManager::is_capturing(), "Capture"},
         {g_main_ctx.core_ctx->tl_active(), "Trace logging"}};
 
     std::vector<std::string_view> active_messages;
@@ -153,7 +153,7 @@ static void close_rom()
 static void reset_rom()
 {
     const bool reset_will_continue_recording =
-        g_config.core.is_reset_recording_enabled && g_main_ctx.core_ctx->vcr_get_task() == task_recording;
+        g_config.core.is_reset_recording_enabled && g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording;
 
     if (!reset_will_continue_recording && !confirm_user_exit()) return;
 
@@ -312,7 +312,7 @@ static void save_slot()
     }
     ThreadPool::submit_task([=] {
         g_main_ctx.core_ctx->vr_wait_decrement();
-        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_save, nullptr, false);
+        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), CoreSTJob::Save, nullptr, false);
     });
 }
 
@@ -321,7 +321,7 @@ static void load_slot()
     g_main_ctx.core_ctx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         g_main_ctx.core_ctx->vr_wait_decrement();
-        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_load, nullptr, false);
+        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), CoreSTJob::Load, nullptr, false);
     });
 }
 
@@ -338,7 +338,7 @@ static void save_state_as()
     g_main_ctx.core_ctx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         g_main_ctx.core_ctx->vr_wait_decrement();
-        (void)g_main_ctx.core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
+        (void)g_main_ctx.core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
     });
 }
 
@@ -356,7 +356,7 @@ static void load_state_as()
     g_main_ctx.core_ctx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         g_main_ctx.core_ctx->vr_wait_decrement();
-        (void)g_main_ctx.core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
+        (void)g_main_ctx.core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
     });
 }
 
@@ -376,8 +376,8 @@ static void undo_load_state()
         }
 
         (void)g_main_ctx.core_ctx->st_do_memory(
-            buf, core_st_job_load,
-            [](const core_st_callback_info &info, auto) {
+            buf, CoreSTJob::Load,
+            [](const CoreSTCallbackInfo &info, auto) {
                 if (info.result == Res_Ok)
                 {
                     Statusbar::post("Undid load");
@@ -877,14 +877,14 @@ static bool disable_when_emu_launched()
 
 static bool enable_when_emu_launched_and_vcr_active()
 {
-    return g_main_ctx.core_ctx->vr_get_launched() && g_main_ctx.core_ctx->vcr_get_task() != task_idle;
+    return g_main_ctx.core_ctx->vr_get_launched() && g_main_ctx.core_ctx->vcr_get_task() != CoreVCRTask::Idle;
 }
 
 static bool enable_during_playback()
 {
     const auto task = g_main_ctx.core_ctx->vcr_get_task();
-    return g_main_ctx.core_ctx->vr_get_launched() && (task == task_playback || task == task_start_playback_from_reset ||
-                                                         task == task_start_playback_from_snapshot);
+    return g_main_ctx.core_ctx->vr_get_launched() && (task == CoreVCRTask::Playback || task == CoreVCRTask::StartPlaybackFromReset ||
+                                                         task == CoreVCRTask::StartPlaybackFromSnapshot);
 }
 
 static bool enable_when_emu_launched_and_capturing()
@@ -1064,7 +1064,7 @@ void AppActions::add()
         const int32_t save_key = i < 9 ? '1' + i : '0';
         const int32_t load_key = VK_F1 + i;
 
-        const auto do_work = [=](const core_st_job job) {
+        const auto do_work = [=](const CoreSTJob job) {
             g_main_ctx.core_ctx->vr_wait_increment();
 
             g_config.st_slot = i;
@@ -1076,9 +1076,9 @@ void AppActions::add()
             });
         };
 
-        const auto save = [=] { do_work(core_st_job_save); };
+        const auto save = [=] { do_work(CoreSTJob::Save); };
 
-        const auto load = [=] { do_work(core_st_job_load); };
+        const auto load = [=] { do_work(CoreSTJob::Load); };
 
         size_t visual_slot = i + 1;
         add_action(std::vformat(SAVE_SLOT_X, std::make_format_args(visual_slot)),

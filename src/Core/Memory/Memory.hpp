@@ -47,17 +47,17 @@ extern void (*writememb[0x10000])();
 extern void (*writememh[0x10000])();
 extern void (*writememd[0x10000])();
 
-extern core_rdram_reg rdram_register;
-extern core_pi_reg pi_register;
-extern core_mips_reg MI_register;
-extern core_sp_reg sp_register;
-extern core_si_reg si_register;
-extern core_vi_reg vi_register;
-extern core_rsp_reg rsp_register;
-extern core_ri_reg ri_register;
-extern core_ai_reg ai_register;
-extern core_dpc_reg dpc_register;
-extern core_dps_reg dps_register;
+extern CoreRDRAMReg rdram_register;
+extern CorePIReg pi_register;
+extern CoreMIPSReg MI_register;
+extern CoreSPReg sp_register;
+extern CoreSIReg si_register;
+extern CoreVIReg vi_register;
+extern CoreRSPReg rsp_register;
+extern CoreRIReg ri_register;
+extern CoreAIReg ai_register;
+extern CoreDPCReg dpc_register;
+extern CoreDPSReg dps_register;
 
 void read_nothing();
 void read_nothingh();
@@ -228,4 +228,4 @@ void update_DPC();
 /**
  * \brief Checks whether the provided register contents are valid.
  */
-bool check_register_validity(const core_si_reg *si_reg);
+bool check_register_validity(const CoreSIReg *si_reg);

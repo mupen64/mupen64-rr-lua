@@ -17,7 +17,7 @@ struct t_simple_rom_info
 {
     std::string path;
     size_t size;
-    core_rom_header header;
+    CoreROMHeader header;
 };
 
 /**
@@ -41,14 +41,14 @@ LRESULT notify(LPARAM lparam);
  * \param predicate A predicate which determines if the rom matches
  * \return The rom's path, or an empty string if no rom was found
  */
-std::filesystem::path find_available_rom(const std::function<bool(const core_rom_header &)> &predicate);
+std::filesystem::path find_available_rom(const std::function<bool(const CoreROMHeader &)> &predicate);
 
 /**
  * \brief Finds ROMs from the available ROM list which match the predicate
  * \param predicate A predicate which determines if the rom matches
  * \return The rom paths.
  */
-std::vector<std::filesystem::path> find_available_roms(const std::function<bool(const core_rom_header &)> &predicate);
+std::vector<std::filesystem::path> find_available_roms(const std::function<bool(const CoreROMHeader &)> &predicate);
 
 /**
  * \brief Gets the list of discovered ROMs. This list is cached and updated when the rombrowser is built.

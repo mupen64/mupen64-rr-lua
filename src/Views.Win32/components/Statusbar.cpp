@@ -257,9 +257,9 @@ static void on_rerecords_changed(uint64_t value)
     post(str, Statusbar::Section::Rerecords);
 }
 
-static void on_task_changed(core_vcr_task value)
+static void on_task_changed(CoreVCRTask value)
 {
-    if (value == task_idle)
+    if (value == CoreVCRTask::Idle)
     {
         post("", Statusbar::Section::Rerecords);
     }

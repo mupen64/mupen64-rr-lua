@@ -66,15 +66,15 @@ struct t_window_info
 
 extern t_main_context g_main_ctx;
 
-static bool task_is_playback(const core_vcr_task task)
+static bool task_is_playback(const CoreVCRTask task)
 {
-    return task == task_playback || task == task_start_playback_from_reset || task == task_start_playback_from_snapshot;
+    return task == CoreVCRTask::Playback || task == CoreVCRTask::StartPlaybackFromReset || task == CoreVCRTask::StartPlaybackFromSnapshot;
 }
 
-static bool vcr_is_task_recording(const core_vcr_task task)
+static bool vcr_is_task_recording(const CoreVCRTask task)
 {
-    return task == task_recording || task == task_start_recording_from_reset ||
-           task == task_start_recording_from_snapshot;
+    return task == CoreVCRTask::Recording || task == CoreVCRTask::StartRecordingFromReset ||
+           task == CoreVCRTask::StartRecordingFromSnapshot;
 }
 
 /**

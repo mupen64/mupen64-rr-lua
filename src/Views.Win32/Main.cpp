@@ -151,7 +151,7 @@ const char *get_status_text()
     static char text[1024]{};
     memset(text, 0, sizeof(text));
 
-    const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
     const auto index_adjustment = g_config.vcr_0_index ? 1 : 0;
     const auto current_sample = info.current_sample;
@@ -165,7 +165,7 @@ const char *get_status_text()
         return text;
     }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_recording)
+    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording)
     {
         if (is_before_start)
         {
@@ -177,7 +177,7 @@ const char *get_status_text()
         }
     }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_playback)
+    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Playback)
     {
         if (is_before_start)
         {
@@ -206,14 +206,14 @@ std::filesystem::path get_st_with_slot_path(const size_t slot)
     return Config::save_directory() / fname;
 }
 
-void st_callback_wrapper(const core_st_callback_info &info, const std::vector<uint8_t> &)
+void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8_t> &)
 {
-    if (info.medium == core_st_medium_memory)
+    if (info.medium == CoreSTMedium::Memory)
     {
         return;
     }
 
-    if (info.medium == core_st_medium_path)
+    if (info.medium == CoreSTMedium::Path)
     {
         const auto &fname = info.params.path.filename().string();
         const bool is_slot = fname.find(".st") != std::string::npos && std::isdigit(fname.back());
@@ -225,14 +225,14 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
             switch (info.result)
             {
             case Res_Ok:
-                Statusbar::post(std::format("{} slot {}", info.job == core_st_job_save ? "Saved" : "Loaded", slot + 1));
+                Statusbar::post(std::format("{} slot {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", slot + 1));
                 break;
             case Res_Cancelled:
-                Statusbar::post(std::format("Cancelled {}", info.job == core_st_job_save ? "save" : "load"));
+                Statusbar::post(std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
                 break;
             default:
                 Statusbar::post(
-                    std::format("Failed to {} slot {}", info.job == core_st_job_save ? "save" : "load", slot + 1));
+                    std::format("Failed to {} slot {}", info.job == CoreSTJob::Save ? "save" : "load", slot + 1));
                 break;
             }
             return;
@@ -242,15 +242,15 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
         {
         case Res_Ok:
             Statusbar::post(std::format(
-                "{} {}", info.job == core_st_job_save ? "Saved" : "Loaded", info.params.path.filename().string()));
+                "{} {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", info.params.path.filename().string()));
             break;
         case Res_Cancelled:
-            Statusbar::post(std::format("Cancelled {}", info.job == core_st_job_save ? "save" : "load"));
+            Statusbar::post(std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
             break;
         default: {
             const auto message =
                 std::format("Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
-                    info.job == core_st_job_save ? "save" : "load", info.params.path.filename().string(),
+                    info.job == CoreSTJob::Save ? "save" : "load", info.params.path.filename().string(),
                     (int32_t)info.result);
             DialogService::show_dialog(message, "Savestate", CoreMessageTone::Error);
             break;
@@ -278,7 +278,7 @@ static std::string get_titlebar_text()
     if (g_main_ctx.core_ctx->vr_get_launched())
         text += std::format(" - {}", IOUtils::rom_name_to_string(g_main_ctx.core_ctx->vr_get_rom_header()->nom));
 
-    if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
+    if (g_main_ctx.core_ctx->vcr_get_task() != CoreVCRTask::Idle)
     {
         auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
         text += std::format(" - {}", vcr_filename.string());
@@ -308,7 +308,7 @@ void on_script_started(std::filesystem::path value)
     });
 }
 
-void on_task_changed(core_vcr_task value)
+void on_task_changed(CoreVCRTask value)
 {
     g_main_ctx.dispatcher->invoke([=] {
         static auto previous_value = value;
@@ -580,7 +580,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             g_main_ctx.core_ctx->vr_wait_increment();
             ThreadPool::submit_task([=] {
                 g_main_ctx.core_ctx->vr_wait_decrement();
-                g_main_ctx.core_ctx->st_do_file(fname, core_st_job_load, nullptr, false);
+                g_main_ctx.core_ctx->st_do_file(fname, CoreSTJob::Load, nullptr, false);
             });
         }
         else if (extension == ".lua")
@@ -806,7 +806,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
 
         if (CaptureManager::is_capturing())
         {
-            if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
+            if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Idle)
             {
                 Statusbar::post(std::format("{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
             }
@@ -895,7 +895,7 @@ static core_result init_core()
     g_main_ctx.core.callbacks.current_sample_changed = [](int32_t value) {
         Messenger::broadcast<Messenger::Message::CurrentSampleChanged>(value);
     };
-    g_main_ctx.core.callbacks.task_changed = [](core_vcr_task value) {
+    g_main_ctx.core.callbacks.task_changed = [](CoreVCRTask value) {
         Messenger::broadcast<Messenger::Message::TaskChanged>(value);
     };
     g_main_ctx.core.callbacks.rerecords_changed = [](uint64_t value) {

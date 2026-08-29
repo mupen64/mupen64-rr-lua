@@ -264,7 +264,7 @@ void EmuContext::saveFile(const QUrl &url)
     m_core_ctx->vr_wait_increment();
     m_task_pool.start([=, this] {
         m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
+        m_core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
     });
 }
 
@@ -283,7 +283,7 @@ void EmuContext::loadFile(const QUrl &url)
     m_core_ctx->vr_wait_increment();
     m_task_pool.start([=, this] {
         m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
+        m_core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
     });
 }
 

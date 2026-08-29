@@ -96,7 +96,7 @@ static void load_st()
         return;
     }
 
-    g_main_ctx.core_ctx->st_do_file(cli_params.st.c_str(), core_st_job_load, nullptr, false);
+    g_main_ctx.core_ctx->st_do_file(cli_params.st.c_str(), CoreSTJob::Load, nullptr, false);
 }
 
 static void start_lua()
@@ -152,7 +152,7 @@ static void on_movie_playback_stop()
     }
 }
 
-static void on_task_changed(core_vcr_task value)
+static void on_task_changed(CoreVCRTask value)
 {
     static auto previous_value = value;
 
@@ -278,7 +278,7 @@ void CLI::init()
     const auto movie_path = (cli_params.rom.extension().compare(".m64") == 0) ? cli_params.rom : cli_params.m64;
     if (!movie_path.empty())
     {
-        core_vcr_movie_header hdr{};
+        CoreVCRMovieHeader hdr{};
         g_main_ctx.core_ctx->vcr_parse_header(movie_path, &hdr);
         cli_state.is_movie_from_start = hdr.startFlags & MOVIE_START_FROM_NOTHING;
     }

@@ -2160,7 +2160,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     // If we get a movie instead of a rom, we try to search the available rom lists to find one matching the movie
     if (path.extension().compare(".m64") == 0)
     {
-        core_vcr_movie_header movie_header{};
+        CoreVCRMovieHeader movie_header{};
         const auto result = g_ctx.vcr_parse_header(path, &movie_header);
         if (result != Res_Ok)
         {
@@ -2266,7 +2266,7 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     // If we're recording a movie and have reset recording enabled, we don't reset immediately, but let the VCR
     // handle the reset instead. This is to ensure that the movie file is properly closed and saved.
     const auto task = g_ctx.vcr_get_task();
-    if (g_core->cfg->is_reset_recording_enabled && !skip_reset_recording_check && task == task_recording)
+    if (g_core->cfg->is_reset_recording_enabled && !skip_reset_recording_check && task == CoreVCRTask::Recording)
     {
         vcr_request_reset();
         return Res_Ok;

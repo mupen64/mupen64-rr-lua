@@ -19,14 +19,14 @@ struct DebuggerState
 {
     std::shared_mutex mtx;
     std::atomic<uint32_t> breakpoint_count{0};
-    core_dbg_cpu_state cpu_state{};
+    CoreDbgCPUState cpu_state{};
     std::unordered_map<uintptr_t, std::vector<Breakpoint>> breakpoints;
     CoreBreakpointId next_breakpoint_id{0};
 };
 
 static DebuggerState s_dbg{};
 
-void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state)
+void dbg_call_breakpoints_and_wait(const CoreDbgCPUState &state)
 {
     if (s_dbg.breakpoint_count == 0) return;
 
@@ -64,7 +64,7 @@ void dbg_remove_breakpoint(const CoreBreakpointId &id)
     }
 }
 
-std::string dbg_disassemble(const core_dbg_cpu_state &state)
+std::string dbg_disassemble(const CoreDbgCPUState &state)
 {
     INSTDECODE decode;
     DecodeInstruction(state.opcode, &decode);

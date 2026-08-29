@@ -24,8 +24,8 @@ void st_do_work();
 void st_on_core_stop();
 
 bool st_do_file(
-    const std::filesystem::path &path, core_st_job job, const core_st_callback &callback, bool ignore_warnings);
+    const std::filesystem::path &path, CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings);
 bool st_do_memory(
-    const std::vector<uint8_t> &buffer, core_st_job job, const core_st_callback &callback, bool ignore_warnings);
+    const std::vector<uint8_t> &buffer, CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings);
 void st_get_undo_savestate(std::vector<uint8_t> &buffer);
 bool st_sync_hash(const std::function<void(uint64_t hash)> &callback);

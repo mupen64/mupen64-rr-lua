@@ -55,7 +55,7 @@ static std::optional<std::string> readonly_when_emu_running()
 
 static std::optional<std::string> readonly_when_vcr_active()
 {
-    if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
+    if (g_main_ctx.core_ctx->vcr_get_task() != CoreVCRTask::Idle)
         return "The movie needs to be stopped before changing this option";
     return std::nullopt;
 }

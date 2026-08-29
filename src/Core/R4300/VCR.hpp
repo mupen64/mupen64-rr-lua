@@ -11,7 +11,7 @@
 struct t_vcr_state
 {
     std::filesystem::path movie_path{};
-    core_vcr_task task = task_idle;
+    CoreVCRTask task = CoreVCRTask::Idle;
 
     bool reset_pending{};
 
@@ -24,7 +24,7 @@ struct t_vcr_state
     bool warp_modify_active{};
     size_t warp_modify_first_difference_frame{};
 
-    core_vcr_movie_header hdr{};
+    CoreVCRMovieHeader hdr{};
     std::vector<CoreButtons> inputs{};
 
     int32_t current_sample = -1;
@@ -78,15 +78,15 @@ void vcr_on_vi();
 bool vcr_allows_core_pause();
 bool vcr_allows_core_unpause();
 void vcr_request_reset();
-core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_header *header);
-core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *header);
+core_result vcr_read_movie_header(std::vector<uint8_t> buf, CoreVCRMovieHeader *header);
+core_result vcr_parse_header(std::filesystem::path path, CoreVCRMovieHeader *header);
 core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<CoreButtons> &inputs);
 core_result vcr_start_playback(std::filesystem::path path);
 core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description);
 core_result vcr_continue_recording();
 core_result vcr_replace_author_info(
     const std::filesystem::path &path, std::optional<std::string> author, std::optional<std::string> description);
-core_vcr_seek_info vcr_get_seek_info();
+CoreVCRSeekInfo vcr_get_seek_info();
 core_result vcr_begin_seek(std::string str, bool pause_at_end);
 void vcr_stop_seek();
 bool vcr_is_seeking();
@@ -95,7 +95,7 @@ core_result vcr_unfreeze(const vcr_freeze_info &freeze);
 core_result vcr_write_backup();
 core_result vcr_stop_all();
 std::filesystem::path vcr_get_path();
-core_vcr_task vcr_get_task();
+CoreVCRTask vcr_get_task();
 uint32_t vcr_get_length_samples();
 uint32_t vcr_get_length_vis();
 int32_t vcr_get_current_vi();
@@ -106,7 +106,7 @@ size_t vcr_get_warp_modify_first_difference_frame();
 void vcr_get_seek_savestate_frames(std::unordered_map<size_t, bool> &map);
 bool vcr_has_seek_savestate_at_frame(size_t frame);
 std::optional<size_t> vcr_try_resolve_seek_str(const std::string &str);
-core_vcr_generated_file_info vcr_get_generated_file_info(const std::filesystem::path &movie_path, uint16_t flags);
+CoreVCRGeneratedFileInfo vcr_get_generated_file_info(const std::filesystem::path &movie_path, uint16_t flags);
 
-std::optional<SyncData> vcr_get_sync_data_from_header(const core_vcr_movie_header &header);
+std::optional<SyncData> vcr_get_sync_data_from_header(const CoreVCRMovieHeader &header);
 std::vector<std::string> vcr_get_sync_warnings(const SyncData &sync_data);

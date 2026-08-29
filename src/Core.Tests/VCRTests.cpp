@@ -88,7 +88,7 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input", "vcr_on_controlle
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.current_sample = 2;
 
     CoreButtons input{};
@@ -114,7 +114,7 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_2", "vcr_on_control
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0) | CONTROLLER_X_PRESENT(1);
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.current_sample = 0;
 
     CoreButtons input{};
@@ -158,7 +158,7 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_3", "vcr_on_control
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0) | CONTROLLER_X_PRESENT(2) | CONTROLLER_X_PRESENT(3);
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.current_sample = 0;
 
     CoreButtons input{};
@@ -198,7 +198,7 @@ TEST_CASE_METHOD(VcrFixture, "record_appends_input", "vcr_on_controller_poll")
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.current_sample = 4;
 
     CoreButtons input{0xDEAD};
@@ -214,7 +214,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_continues_when_end_not_reached", "vcr_on_cont
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.current_sample = 1;
     vcr.seek_to_frame = std::make_optional(3);
 
@@ -231,7 +231,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_when_end_reached", "vcr_on_controller_p
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.current_sample = 3;
     vcr.seek_to_frame = std::make_optional(3);
 
@@ -243,7 +243,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_when_end_reached", "vcr_on_controller_p
 
 TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_start_type_from_start", "vcr_get_generated_file_info")
 {
-    core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_NOTHING);
+    CoreVCRGeneratedFileInfo info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_NOTHING);
 
     REQUIRE(info.movie_path == "test.m64");
     REQUIRE(info.st_path.empty());
@@ -252,7 +252,7 @@ TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_start_type_from_start"
 
 TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_start_type_from_savestate", "vcr_get_generated_file_info")
 {
-    core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_SNAPSHOT);
+    CoreVCRGeneratedFileInfo info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_SNAPSHOT);
 
     REQUIRE(info.movie_path == "test.m64");
     REQUIRE(info.st_path == "test.st");
@@ -261,7 +261,7 @@ TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_start_type_from_savest
 
 TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_start_type_from_eeprom", "vcr_get_generated_file_info")
 {
-    core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_EEPROM);
+    CoreVCRGeneratedFileInfo info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_EEPROM);
 
     REQUIRE(info.movie_path == "test.m64");
     REQUIRE(info.st_path.empty());
@@ -270,10 +270,10 @@ TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_start_type_from_eeprom
 
 TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_cheats", "vcr_get_generated_file_info")
 {
-    core_cheat cheat{};
+    CoreCheat cheat{};
     s_core_ctx->cht_set_list({cheat});
 
-    core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_EEPROM);
+    CoreVCRGeneratedFileInfo info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_EEPROM);
 
     REQUIRE(info.movie_path == "test.m64");
     REQUIRE(info.st_path.empty());
@@ -295,7 +295,7 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_called_when_using_input_buffer_duri
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.current_sample = 2;
 
     CoreButtons input{};
@@ -307,7 +307,7 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_called_when_using_input_buffer_duri
 // 94e3d9d
 TEST_CASE_METHOD(VcrFixture, "sample_length_gets_clamped_to_buffer_max", "read_movie_header")
 {
-    core_vcr_movie_header hdr{};
+    CoreVCRMovieHeader hdr{};
     hdr.magic = 0x1a34364d;
     hdr.version = 3;
     hdr.length_samples = 3;
@@ -317,7 +317,7 @@ TEST_CASE_METHOD(VcrFixture, "sample_length_gets_clamped_to_buffer_max", "read_m
     bytes.insert(bytes.end(), {0, 0, 0, 0});
     bytes.insert(bytes.end(), {0, 0, 0, 0});
 
-    core_vcr_movie_header out_hdr{};
+    CoreVCRMovieHeader out_hdr{};
     vcr_read_movie_header(bytes, &out_hdr);
 
     REQUIRE(out_hdr.length_samples == 2);
@@ -329,7 +329,7 @@ TEST_CASE_METHOD(VcrFixture, "sample_length_gets_clamped_to_buffer_max", "read_m
 TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_idle", "vcr_on_controller_poll")
 {
     s_core_params.callbacks.input = [](CoreButtons *input, int index) { *input = {0xDEAD}; };
-    vcr.task = task_idle;
+    vcr.task = CoreVCRTask::Idle;
 
     CoreButtons input{};
     vcr_on_controller_poll(0, &input);
@@ -347,7 +347,7 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_called_on_last_frame_of_movie", "vc
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.current_sample = 4;
 
     CoreButtons input{};
@@ -366,7 +366,7 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_recording", "vc
     vcr.inputs = {};
     vcr.hdr.length_samples = 0;
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.current_sample = 0;
 
     CoreButtons input{};
@@ -385,7 +385,7 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_playback", "vcr
     vcr.inputs = {{1}, {2}, {3}, {4}};
     vcr.hdr.length_samples = vcr.inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.current_sample = 1;
 
     CoreButtons input{};
@@ -405,7 +405,7 @@ TEST_CASE_METHOD(
     vcr.inputs = {{1}, {2}, {3}, {4}};
     vcr.hdr.length_samples = vcr.inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.current_sample = vcr.hdr.length_samples;
 
     CoreButtons input{};
@@ -427,7 +427,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
         seek_test_params{
             .vcr =
                 {
-                    .task = task_playback,
+                    .task = CoreVCRTask::Playback,
                     .hdr =
                         {
                             .magic = 0x1a34364d,
@@ -452,7 +452,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
         seek_test_params{
             .vcr =
                 {
-                    .task = task_playback,
+                    .task = CoreVCRTask::Playback,
                     .hdr =
                         {
                             .magic = 0x1a34364d,
@@ -477,7 +477,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
         seek_test_params{
             .vcr =
                 {
-                    .task = task_playback,
+                    .task = CoreVCRTask::Playback,
                     .hdr =
                         {
                             .magic = 0x1a34364d,
@@ -502,7 +502,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
         seek_test_params{
             .vcr =
                 {
-                    .task = task_playback,
+                    .task = CoreVCRTask::Playback,
                     .hdr =
                         {
                             .magic = 0x1a34364d,
@@ -536,7 +536,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
     };
 
     s_core_ctx->vcr_start_playback = [](std::filesystem::path path) {
-        vcr.task = task_playback;
+        vcr.task = CoreVCRTask::Playback;
         vcr.current_sample = 0;
         return Res_Ok;
     };
@@ -578,7 +578,7 @@ TEST_CASE_METHOD(VcrFixture, "out_freeze_is_correct", "vcr_freeze")
     const auto param = GENERATE(freeze_test_params{
         .vcr =
             {
-                .task = task_playback,
+                .task = CoreVCRTask::Playback,
                 .hdr =
                     {
                         .uid = 0xDEAD,
@@ -627,7 +627,7 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_idle", "vcr_unfreeze")
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_size_too_small", "vcr_unfreeze")
 {
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
 
     vcr_freeze_info freeze{
         .size = 15,
@@ -643,7 +643,7 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_size_too_small", "vcr_unfreeze")
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_uid_incompatible", "vcr_unfreeze")
 {
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.hdr.uid = 0xBEEF;
 
     vcr_freeze_info freeze{
@@ -664,7 +664,7 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_desync_risk", "vcr_unfreeze")
 {
     s_cfg.vcr_readonly = true;
 
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.hdr.uid = 0xDEAD;
 
     vcr_freeze_info freeze{
@@ -686,7 +686,7 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_malformed_input_size", "vcr_unfreeze")
 {
     s_cfg.vcr_readonly = false;
 
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.hdr.uid = 0xDEAD;
 
     vcr_freeze_info freeze{
@@ -709,7 +709,7 @@ TEST_CASE_METHOD(VcrFixture, "input_buffer_doesnt_change_if_seeking_while_record
 {
     s_cfg.vcr_readonly = false;
 
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.hdr.uid = 0xDEAD;
     vcr.seek_to_frame = std::make_optional(1);
     vcr.current_sample = 2;
@@ -761,7 +761,7 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.current_sample = 4;
 
     CoreButtons input{};
@@ -782,7 +782,7 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.current_sample = 2;
 
     CoreButtons input{};
@@ -803,7 +803,7 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.current_sample = 3;
 
     CoreButtons input{};
@@ -831,7 +831,7 @@ TEST_CASE_METHOD(VcrFixture,
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.current_sample = 3;
 
     CoreButtons input{};
@@ -853,13 +853,13 @@ TEST_CASE_METHOD(
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.current_sample = 4;
 
     CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
-    REQUIRE(vcr.task == task_idle);
+    REQUIRE(vcr.task == CoreVCRTask::Idle);
     REQUIRE(vcr.hdr.length_samples == inputs.size());
     REQUIRE(vcr.current_sample == 4);
 }
@@ -881,7 +881,7 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_callbacks_with_playback_task
         REQUIRE(!is_vcr_lock_held());
     };
 
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
 
     vcr_stop_all();
 
@@ -907,7 +907,7 @@ TEST_CASE_METHOD(
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.current_sample = 1;
     vcr.seek_start_sample = 0;
     vcr.seek_to_frame = std::make_optional(1);
@@ -921,7 +921,7 @@ TEST_CASE_METHOD(
 
 TEST_CASE_METHOD(VcrFixture, "fails_when_not_playback", "vcr_continue_recording")
 {
-    vcr.task = task_idle;
+    vcr.task = CoreVCRTask::Idle;
     const auto result = vcr_continue_recording();
     REQUIRE(result == VCR_NeedsPlayback);
 }
@@ -932,7 +932,7 @@ TEST_CASE_METHOD(VcrFixture, "changes_task_and_header_and_inputs", "vcr_continue
 
     s_cfg.vcr_backups = false;
 
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.hdr.length_samples = 5;
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
     vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
@@ -941,7 +941,7 @@ TEST_CASE_METHOD(VcrFixture, "changes_task_and_header_and_inputs", "vcr_continue
     const auto result = vcr_continue_recording();
 
     REQUIRE(result == Res_Ok);
-    REQUIRE(vcr.task == task_recording);
+    REQUIRE(vcr.task == CoreVCRTask::Recording);
     REQUIRE(vcr.hdr.length_samples == 2);
     REQUIRE(vcr.inputs.size() == 2);
     REQUIRE(vcr.inputs[0].value == 1);
@@ -959,7 +959,7 @@ TEST_CASE_METHOD(VcrFixture, "invokes_task_callback_correctly", "vcr_continue_re
 
     s_cfg.vcr_backups = false;
 
-    vcr.task = task_playback;
+    vcr.task = CoreVCRTask::Playback;
     vcr.hdr.length_samples = 5;
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
     vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
@@ -974,7 +974,7 @@ TEST_CASE_METHOD(VcrFixture, "doesnt_deadlock", "vcr_begin_warp_modify")
 {
     s_cfg.vcr_backups = false;
 
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.hdr.length_samples = 5;
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
     vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
@@ -987,7 +987,7 @@ TEST_CASE_METHOD(VcrFixture, "doesnt_deadlock", "vcr_begin_warp_modify")
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_0", "vcr_get_sync_data_from_header")
 {
-    core_vcr_movie_header header{};
+    CoreVCRMovieHeader header{};
     header.extended_version = 0;
     header.extended_flags.wii_vc = true;
     header.extended_flags.c_eq_s_accurate = true;
@@ -1007,7 +1007,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_0",
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_1", "vcr_get_sync_data_from_header")
 {
-    core_vcr_movie_header header{};
+    CoreVCRMovieHeader header{};
     header.extended_version = 1;
     header.extended_flags.wii_vc = true;
 
@@ -1023,7 +1023,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_1",
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_2", "vcr_get_sync_data_from_header")
 {
-    core_vcr_movie_header header{};
+    CoreVCRMovieHeader header{};
     header.extended_version = 2;
     header.extended_flags.wii_vc = true;
     header.extended_flags.c_eq_s_accurate = true;
@@ -1040,7 +1040,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_2",
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_3", "vcr_get_sync_data_from_header")
 {
-    core_vcr_movie_header header{};
+    CoreVCRMovieHeader header{};
     header.extended_version = 3;
     header.extended_flags.wii_vc = false;
     header.extended_flags.c_eq_s_accurate = true;
@@ -1058,7 +1058,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_3",
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_4", "vcr_get_sync_data_from_header")
 {
-    core_vcr_movie_header header{};
+    CoreVCRMovieHeader header{};
     header.extended_version = 4;
     header.extended_flags.wii_vc = true;
     header.extended_flags.c_eq_s_accurate = false;
@@ -1078,7 +1078,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_4",
 
 TEST_CASE_METHOD(VcrFixture, "returns_nullopt_for_invalid_extended_version", "vcr_get_sync_data_from_header")
 {
-    core_vcr_movie_header header{};
+    CoreVCRMovieHeader header{};
     header.extended_version = 5;
 
     const auto sync_data = vcr_get_sync_data_from_header(header);
@@ -1211,7 +1211,7 @@ constexpr auto REPLACE_MOVIE_PATH = "test_replace_author.m64";
 
 void create_test_movie(const std::string &author, const std::string &description)
 {
-    core_vcr_movie_header hdr{};
+    CoreVCRMovieHeader hdr{};
     hdr.magic = 0x1a34364d;
     hdr.version = 3;
     hdr.length_samples = 0;

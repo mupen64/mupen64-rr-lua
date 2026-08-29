@@ -103,12 +103,12 @@ static void on_can_modify_inputs_changed()
 static void update_can_modify_inputs()
 {
     ThreadPool::submit_task([] {
-        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+        const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
         const auto prev_can_modify_inputs = piano_roll.readwrite;
         piano_roll.readwrite = !g_main_ctx.core_ctx->vcr_get_warp_modify_status() &&
                                info.seek_target_sample == SIZE_MAX &&
-                               g_main_ctx.core_ctx->vcr_get_task() == task_recording &&
+                               g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording &&
                                !g_main_ctx.core_ctx->vcr_is_seeking() && !g_config.core.vcr_readonly &&
                                g_config.core.seek_savestate_interval > 0 && g_main_ctx.core_ctx->vr_get_paused();
 
@@ -150,13 +150,13 @@ static void update_inputs()
     }
 
     // If VCR is idle, we can't really show anything.
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
+    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Idle)
     {
         ListView_DeleteAllItems(piano_roll.lv_hwnd);
     }
 
     // In playback mode, the input buffer can't change so we're safe to only pull it once.
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_playback)
+    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Playback)
     {
         SetWindowRedraw(piano_roll.lv_hwnd, false);
 
@@ -332,12 +332,12 @@ static void print_clipboard_dump()
 static void ensure_relevant_item_visible()
 {
     const int32_t i = ListView_GetNextItem(piano_roll.lv_hwnd, -1, LVNI_SELECTED);
-    const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
     const auto current_sample =
         std::min(ListView_GetItemCount(piano_roll.lv_hwnd), static_cast<int32_t>(info.current_sample) + 10);
     const auto playhead_sample =
-        g_main_ctx.core_ctx->vcr_get_task() == task_recording ? current_sample - 1 : current_sample;
+        g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording ? current_sample - 1 : current_sample;
 
     if (g_config.piano_roll_keep_playhead_visible)
     {
@@ -736,7 +736,7 @@ static bool can_joystick_be_modified()
     return !piano_roll.current_state.selected_indicies.empty() && piano_roll.readwrite;
 }
 
-static void on_task_changed(core_vcr_task value)
+static void on_task_changed(CoreVCRTask value)
 {
     update_can_modify_inputs();
 
@@ -773,13 +773,13 @@ static void on_current_sample_changed(int32_t)
         return;
     }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
+    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Idle)
     {
         return;
     }
 
     g_main_ctx.dispatcher->invoke([=] {
-        if (g_main_ctx.core_ctx->vcr_get_task() == task_recording)
+        if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording)
         {
             piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
             ListView_SetItemCountEx(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size(), LVSICF_NOSCROLL);
@@ -805,9 +805,9 @@ static void on_unfreeze_completed()
         ListView_DeleteAllItems(piano_roll.lv_hwnd);
 
         piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
-        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+        const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
-        const auto item_count = g_main_ctx.core_ctx->vcr_get_task() == task_recording
+        const auto item_count = g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording
                                     ? std::min(info.current_sample, piano_roll.current_state.inputs.size())
                                     : piano_roll.current_state.inputs.size();
 
@@ -1207,7 +1207,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         update_inputs();
         on_task_changed(g_main_ctx.core_ctx->vcr_get_task());
 
-        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+        const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
         // ReSharper disable once CppRedundantCastExpression
         on_current_sample_changed(static_cast<int32_t>(info.current_sample));

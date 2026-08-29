@@ -11,12 +11,12 @@
 #include <R4300/R4300.hpp>
 
 static std::recursive_mutex cheats_mutex;
-static std::vector<core_cheat> host_cheats;
-static std::stack<std::vector<core_cheat>> cheat_stack;
+static std::vector<CoreCheat> host_cheats;
+static std::stack<std::vector<CoreCheat>> cheat_stack;
 
-bool cht_compile(std::string_view code, core_cheat &cheat)
+bool cht_compile(std::string_view code, CoreCheat &cheat)
 {
-    core_cheat compiled_cheat{};
+    CoreCheat compiled_cheat{};
 
     bool serial = false;
     size_t serial_count = 0;
@@ -150,7 +150,7 @@ bool cht_compile(std::string_view code, core_cheat &cheat)
     return true;
 }
 
-bool cht_read_from_file(const std::filesystem::path &path, std::vector<core_cheat> &cheats)
+bool cht_read_from_file(const std::filesystem::path &path, std::vector<CoreCheat> &cheats)
 {
     std::ifstream file(path);
     if (!file.is_open())
@@ -178,7 +178,7 @@ bool cht_read_from_file(const std::filesystem::path &path, std::vector<core_chea
         if (line.starts_with("--"))
         {
             reading_cheat_code = true;
-            core_cheat cheat{};
+            CoreCheat cheat{};
             cheat.name = line.substr(2);
             cheats.emplace_back(cheat);
         }
@@ -215,21 +215,21 @@ std::string cht_serialize()
     return str;
 }
 
-void cht_get_override_stack(std::stack<std::vector<core_cheat>> &stack)
+void cht_get_override_stack(std::stack<std::vector<CoreCheat>> &stack)
 {
     std::scoped_lock lock(cheats_mutex);
 
     stack = cheat_stack;
 }
 
-void cht_get_list(std::vector<core_cheat> &list)
+void cht_get_list(std::vector<CoreCheat> &list)
 {
     std::scoped_lock lock(cheats_mutex);
 
     list = cheat_stack.empty() ? host_cheats : cheat_stack.top();
 }
 
-void cht_set_list(const std::vector<core_cheat> &list)
+void cht_set_list(const std::vector<CoreCheat> &list)
 {
     std::scoped_lock lock(cheats_mutex);
 
@@ -242,7 +242,7 @@ void cht_set_list(const std::vector<core_cheat> &list)
     host_cheats = list;
 }
 
-void cht_layer_push(const std::vector<core_cheat> &cheats)
+void cht_layer_push(const std::vector<CoreCheat> &cheats)
 {
     std::scoped_lock lock(cheats_mutex);
 

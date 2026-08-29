@@ -234,7 +234,7 @@ template <> struct MessageData<Message::ReadonlyChanged>
 };
 template <> struct MessageData<Message::TaskChanged>
 {
-    using type = core_vcr_task;
+    using type = CoreVCRTask;
 };
 template <> struct MessageData<Message::CurrentSampleChanged>
 {

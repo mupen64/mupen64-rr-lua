@@ -505,7 +505,7 @@ void update_pif_read()
                     // we handle raw data-mode controllers here:
                     // this is incompatible with VCR!
                     if (g_core->controls[channel].present && g_core->controls[channel].raw &&
-                        g_ctx.vcr_get_task() == task_idle)
+                        g_ctx.vcr_get_task() == CoreVCRTask::Idle)
                     {
                         g_core->input_read_controller(channel, &PIF_RAMb[i]);
                         CoreButtons input;

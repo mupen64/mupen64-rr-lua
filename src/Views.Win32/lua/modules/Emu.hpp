@@ -21,7 +21,7 @@ static int GetVICount(lua_State *L)
 
 static int GetSampleCount(lua_State *L)
 {
-    const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
     lua_pushinteger(L, info.current_sample);
     return 1;
 }

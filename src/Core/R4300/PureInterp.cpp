@@ -3070,7 +3070,7 @@ void pure_interpreter()
 
         prefetch();
 
-        core_dbg_cpu_state state = {.address = instr_addr, .opcode = vr_op};
+        CoreDbgCPUState state = {.address = instr_addr, .opcode = vr_op};
 
         dbg_call_breakpoints_and_wait(state);
 

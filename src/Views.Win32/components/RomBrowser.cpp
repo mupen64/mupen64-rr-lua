@@ -249,9 +249,9 @@ static void build_impl()
             entry.path = path.string();
             entry.size = len;
 
-            if (len > sizeof(core_rom_header))
+            if (len > sizeof(CoreROMHeader))
             {
-                core_rom_header header{};
+                CoreROMHeader header{};
                 fread(&header, sizeof(header), 1, f);
 
                 g_main_ctx.core_ctx->vr_byteswap((uint8_t *)&header);
@@ -408,7 +408,7 @@ notify(LPARAM lparam)
     return 0;
 }
 
-std::filesystem::path find_available_rom(const std::function<bool(const core_rom_header &)> &predicate)
+std::filesystem::path find_available_rom(const std::function<bool(const CoreROMHeader &)> &predicate)
 {
     auto rom_paths = discover_roms();
     for (auto rom_path : rom_paths)
@@ -424,10 +424,10 @@ std::filesystem::path find_available_rom(const std::function<bool(const core_rom
         uint64_t len = ftell(f);
         fseek(f, 0, SEEK_SET);
 
-        if (len > sizeof(core_rom_header))
+        if (len > sizeof(CoreROMHeader))
         {
-            auto header = (core_rom_header *)malloc(sizeof(core_rom_header));
-            fread(header, sizeof(core_rom_header), 1, f);
+            auto header = (CoreROMHeader *)malloc(sizeof(CoreROMHeader));
+            fread(header, sizeof(CoreROMHeader), 1, f);
 
             g_main_ctx.core_ctx->vr_byteswap((uint8_t *)header);
 
@@ -447,7 +447,7 @@ std::filesystem::path find_available_rom(const std::function<bool(const core_rom
     return "";
 }
 
-std::vector<std::filesystem::path> find_available_roms(const std::function<bool(const core_rom_header &)> &predicate)
+std::vector<std::filesystem::path> find_available_roms(const std::function<bool(const CoreROMHeader &)> &predicate)
 {
     std::vector<std::filesystem::path> matching_roms;
     auto rom_paths = discover_roms();
@@ -464,10 +464,10 @@ std::vector<std::filesystem::path> find_available_roms(const std::function<bool(
         uint64_t len = ftell(f);
         fseek(f, 0, SEEK_SET);
 
-        if (len > sizeof(core_rom_header))
+        if (len > sizeof(CoreROMHeader))
         {
-            auto header = (core_rom_header *)malloc(sizeof(core_rom_header));
-            fread(header, sizeof(core_rom_header), 1, f);
+            auto header = (CoreROMHeader *)malloc(sizeof(CoreROMHeader));
+            fread(header, sizeof(CoreROMHeader), 1, f);
 
             g_main_ctx.core_ctx->vr_byteswap((uint8_t *)header);
 

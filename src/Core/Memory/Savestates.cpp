@@ -27,16 +27,16 @@ bool g_st_skip_dma{};
 struct t_savestate_task
 {
     /// The job to perform.
-    core_st_job job;
+    CoreSTJob job;
 
     /// The savestate's source or target medium.
-    core_st_medium medium;
+    CoreSTMedium medium;
 
     /// Callback to invoke when the task finishes. Mustn't be null.
-    core_st_callback callback;
+    CoreSTCallback callback;
 
     /// The task's parameters. Only one field in the struct is valid at a time.
-    core_st_job_params params{};
+    CoreSTJobParams params{};
 
     /// Whether warnings, such as those about ROM compatibility, shouldn't be shown.
     bool ignore_warnings;
@@ -72,22 +72,22 @@ void get_paths_for_task(const t_savestate_task &task, std::filesystem::path &st_
 
 void load_memory_from_buffer(uint8_t *p)
 {
-    MiscHelpers::memread(&p, &rdram_register, sizeof(core_rdram_reg));
+    MiscHelpers::memread(&p, &rdram_register, sizeof(CoreRDRAMReg));
     if (rdram_register.rdram_device_manuf & RDRAM_DEVICE_MANUF_NEW_FIX_BIT)
     {
         rdram_register.rdram_device_manuf &= ~RDRAM_DEVICE_MANUF_NEW_FIX_BIT; // remove the trick
         g_st_skip_dma = true;                                                 // tell dma.c to skip it
     }
-    MiscHelpers::memread(&p, &MI_register, sizeof(core_mips_reg));
-    MiscHelpers::memread(&p, &pi_register, sizeof(core_pi_reg));
-    MiscHelpers::memread(&p, &sp_register, sizeof(core_sp_reg));
-    MiscHelpers::memread(&p, &rsp_register, sizeof(core_rsp_reg));
-    MiscHelpers::memread(&p, &si_register, sizeof(core_si_reg));
-    MiscHelpers::memread(&p, &vi_register, sizeof(core_vi_reg));
-    MiscHelpers::memread(&p, &ri_register, sizeof(core_ri_reg));
-    MiscHelpers::memread(&p, &ai_register, sizeof(core_ai_reg));
-    MiscHelpers::memread(&p, &dpc_register, sizeof(core_dpc_reg));
-    MiscHelpers::memread(&p, &dps_register, sizeof(core_dps_reg));
+    MiscHelpers::memread(&p, &MI_register, sizeof(CoreMIPSReg));
+    MiscHelpers::memread(&p, &pi_register, sizeof(CorePIReg));
+    MiscHelpers::memread(&p, &sp_register, sizeof(CoreSPReg));
+    MiscHelpers::memread(&p, &rsp_register, sizeof(CoreRSPReg));
+    MiscHelpers::memread(&p, &si_register, sizeof(CoreSIReg));
+    MiscHelpers::memread(&p, &vi_register, sizeof(CoreVIReg));
+    MiscHelpers::memread(&p, &ri_register, sizeof(CoreRIReg));
+    MiscHelpers::memread(&p, &ai_register, sizeof(CoreAIReg));
+    MiscHelpers::memread(&p, &dpc_register, sizeof(CoreDPCReg));
+    MiscHelpers::memread(&p, &dps_register, sizeof(CoreDPSReg));
     MiscHelpers::memread(&p, rdram, 0x800000);
     MiscHelpers::memread(&p, SP_DMEM, 0x1000);
     MiscHelpers::memread(&p, SP_IMEM, 0x1000);
@@ -164,17 +164,17 @@ static std::vector<uint8_t> generate_savestate(bool pure)
     const int32_t event_queue_len = save_eventqueue_infos(g_event_queue_buf);
 
     MiscHelpers::vecwrite(b, rom_md5, 32);
-    MiscHelpers::vecwrite(b, &rdram_register, sizeof(core_rdram_reg));
-    MiscHelpers::vecwrite(b, &MI_register, sizeof(core_mips_reg));
-    MiscHelpers::vecwrite(b, &pi_register, sizeof(core_pi_reg));
-    MiscHelpers::vecwrite(b, &sp_register, sizeof(core_sp_reg));
-    MiscHelpers::vecwrite(b, &rsp_register, sizeof(core_rsp_reg));
-    MiscHelpers::vecwrite(b, &si_register, sizeof(core_si_reg));
-    MiscHelpers::vecwrite(b, &vi_register, sizeof(core_vi_reg));
-    MiscHelpers::vecwrite(b, &ri_register, sizeof(core_ri_reg));
-    MiscHelpers::vecwrite(b, &ai_register, sizeof(core_ai_reg));
-    MiscHelpers::vecwrite(b, &dpc_register, sizeof(core_dpc_reg));
-    MiscHelpers::vecwrite(b, &dps_register, sizeof(core_dps_reg));
+    MiscHelpers::vecwrite(b, &rdram_register, sizeof(CoreRDRAMReg));
+    MiscHelpers::vecwrite(b, &MI_register, sizeof(CoreMIPSReg));
+    MiscHelpers::vecwrite(b, &pi_register, sizeof(CorePIReg));
+    MiscHelpers::vecwrite(b, &sp_register, sizeof(CoreSPReg));
+    MiscHelpers::vecwrite(b, &rsp_register, sizeof(CoreRSPReg));
+    MiscHelpers::vecwrite(b, &si_register, sizeof(CoreSIReg));
+    MiscHelpers::vecwrite(b, &vi_register, sizeof(CoreVIReg));
+    MiscHelpers::vecwrite(b, &ri_register, sizeof(CoreRIReg));
+    MiscHelpers::vecwrite(b, &ai_register, sizeof(CoreAIReg));
+    MiscHelpers::vecwrite(b, &dpc_register, sizeof(CoreDPCReg));
+    MiscHelpers::vecwrite(b, &dps_register, sizeof(CoreDPSReg));
     MiscHelpers::vecwrite(b, rdram, 0x800000);
     MiscHelpers::vecwrite(b, SP_DMEM, 0x1000);
     MiscHelpers::vecwrite(b, SP_IMEM, 0x1000);
@@ -242,7 +242,7 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
 
     const auto st = generate_savestate(task.pure);
 
-    if (task.medium == core_st_medium_path)
+    if (task.medium == CoreSTMedium::Path)
     {
         // Always save summercart for some reason
         std::filesystem::path new_st_path = task.params.path;
@@ -256,7 +256,7 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
         if (compressed.empty())
         {
             task.callback(
-                core_st_callback_info{
+                CoreSTCallbackInfo{
                     .result = ST_FileWriteError, .job = task.job, .medium = task.medium, .params = task.params},
                 st);
             return;
@@ -266,7 +266,7 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
         if (!IOUtils::write_entire_file(new_st_path, compressed))
         {
             task.callback(
-                core_st_callback_info{
+                CoreSTCallbackInfo{
                     .result = ST_FileWriteError, .job = task.job, .medium = task.medium, .params = task.params},
                 st);
             return;
@@ -274,7 +274,7 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
     }
 
     task.callback(
-        core_st_callback_info{.result = Res_Ok, .job = task.job, .medium = task.medium, .params = task.params}, st);
+        CoreSTCallbackInfo{.result = Res_Ok, .job = task.job, .medium = task.medium, .params = task.params}, st);
     g_core->callbacks.save_state();
 }
 
@@ -298,10 +298,10 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
 
     switch (task.medium)
     {
-    case core_st_medium_path:
+    case CoreSTMedium::Path:
         st_buf = IOUtils::read_entire_file(new_st_path);
         break;
-    case core_st_medium_memory:
+    case CoreSTMedium::Memory:
         st_buf = task.params.buffer;
         break;
     default:
@@ -311,7 +311,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     if (st_buf.empty())
     {
         task.callback(
-            core_st_callback_info{.result = ST_NotFound, .job = task.job, .medium = task.medium, .params = task.params},
+            CoreSTCallbackInfo{.result = ST_NotFound, .job = task.job, .medium = task.medium, .params = task.params},
             {});
         return;
     }
@@ -321,7 +321,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     if (decompressed_buf.empty())
     {
         task.callback(
-            core_st_callback_info{
+            CoreSTCallbackInfo{
                 .result = ST_DecompressionError, .job = task.job, .medium = task.medium, .params = task.params},
             {});
         return;
@@ -347,7 +347,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
         if (!result)
         {
             task.callback(
-                core_st_callback_info{
+                CoreSTCallbackInfo{
                     .result = Res_Cancelled, .job = task.job, .medium = task.medium, .params = task.params},
                 {});
             return;
@@ -357,7 +357,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     // new version does one bigass gzread for first part of .st (static size)
     MiscHelpers::memread(&ptr, g_first_block, sizeof(g_first_block));
 
-    core_si_reg si_reg;
+    CoreSIReg si_reg;
     std::memcpy(&si_reg, &g_first_block[0xDC - 0x20], sizeof(si_reg));
     const bool si_register_valid = check_register_validity(&si_reg);
     const bool flashram_infos_valid = check_flashram_infos(&g_first_block[0x8021F0 - 0x20]);
@@ -365,7 +365,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     if (!si_register_valid || !flashram_infos_valid)
     {
         task.callback(
-            core_st_callback_info{
+            CoreSTCallbackInfo{
                 .result = ST_InvalidRegisters, .job = task.job, .medium = task.medium, .params = task.params},
             {});
         return;
@@ -385,7 +385,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     {
         // Exhausted the buffer and still no terminator. Prevents the buffer overflow "Queuecrush".
         task.callback(
-            core_st_callback_info{
+            CoreSTCallbackInfo{
                 .result = ST_EventQueueTooLong, .job = task.job, .medium = task.medium, .params = task.params},
             {});
         return;
@@ -411,7 +411,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
 
         const auto code = vcr_unfreeze(freeze);
 
-        if (!task.ignore_warnings && code != Res_Ok && vcr_get_task() != task_idle)
+        if (!task.ignore_warnings && code != Res_Ok && vcr_get_task() != CoreVCRTask::Idle)
         {
             std::string err_str = "Failed to restore movie, ";
             switch (code)
@@ -436,7 +436,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
             if (!result)
             {
                 task.callback(
-                    core_st_callback_info{
+                    CoreSTCallbackInfo{
                         .result = Res_Cancelled, .job = task.job, .medium = task.medium, .params = task.params},
                     {});
                 goto failedLoad;
@@ -445,7 +445,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     }
     else
     {
-        if (!task.ignore_warnings && (vcr_get_task() == task_recording || vcr_get_task() == task_playback))
+        if (!task.ignore_warnings && (vcr_get_task() == CoreVCRTask::Recording || vcr_get_task() == CoreVCRTask::Playback))
         {
             const auto result = g_core->show_ask_dialog(CORE_DLG_ST_NOT_FROM_MOVIE,
                 "The savestate is not from a movie. Loading it might desynchronize the "
@@ -454,7 +454,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
             if (!result)
             {
                 task.callback(
-                    core_st_callback_info{
+                    CoreSTCallbackInfo{
                         .result = Res_Cancelled, .job = task.job, .medium = task.medium, .params = task.params},
                     {});
                 return;
@@ -513,7 +513,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
 
     g_core->callbacks.load_state();
     task.callback(
-        core_st_callback_info{.result = Res_Ok, .job = task.job, .medium = task.medium, .params = task.params},
+        CoreSTCallbackInfo{.result = Res_Ok, .job = task.job, .medium = task.medium, .params = task.params},
         decompressed_buf);
 
 failedLoad:
@@ -551,19 +551,19 @@ void savestates_simplify_tasks()
     {
         const auto &task = g_tasks[i];
 
-        if (task.medium != core_st_medium_path) continue;
+        if (task.medium != CoreSTMedium::Path) continue;
 
         // 2. If a path task is detected, loop through all other tasks up to the next load task to find duplicates
         for (size_t j = i + 1; j < g_tasks.size(); j++)
         {
             const auto &other_task = g_tasks[j];
 
-            if (other_task.job == core_st_job_load)
+            if (other_task.job == CoreSTJob::Load)
             {
                 break;
             }
 
-            if (other_task.medium == core_st_medium_path && task.params.path == other_task.params.path)
+            if (other_task.medium == CoreSTMedium::Path && task.params.path == other_task.params.path)
             {
                 g_core->log_trace(std::format("[ST] Found duplicate slot task at index {}", j));
                 duplicate_indicies.push_back(j);
@@ -584,7 +584,7 @@ void savestates_warn_if_load_after_save()
     bool encountered_load = false;
     for (const auto &task : g_tasks)
     {
-        if (task.job == core_st_job_save && encountered_load)
+        if (task.job == CoreSTJob::Save && encountered_load)
         {
             // tood
             g_core->log_warn("[ST] A savestate save task is scheduled after a load task. This may cause "
@@ -592,7 +592,7 @@ void savestates_warn_if_load_after_save()
             break;
         }
 
-        if (task.job == core_st_job_load)
+        if (task.job == CoreSTJob::Load)
         {
             encountered_load = true;
         }
@@ -609,14 +609,14 @@ void savestates_log_tasks()
     savestates_warn_if_load_after_save();
     for (const auto &task : g_tasks)
     {
-        std::string job_str = (task.job == core_st_job_save) ? "Save" : "Load";
+        std::string job_str = (task.job == CoreSTJob::Save) ? "Save" : "Load";
         std::string medium_str;
         switch (task.medium)
         {
-        case core_st_medium_path:
+        case CoreSTMedium::Path:
             medium_str = "Path";
             break;
-        case core_st_medium_memory:
+        case CoreSTMedium::Memory:
             medium_str = "Memory";
             break;
         default:
@@ -640,7 +640,7 @@ void savestates_create_undo_point()
     }
 
     bool queue_contains_load =
-        std::ranges::any_of(g_tasks, [](const t_savestate_task &task) { return task.job == core_st_job_load; });
+        std::ranges::any_of(g_tasks, [](const t_savestate_task &task) { return task.job == CoreSTJob::Load; });
 
     if (!queue_contains_load)
     {
@@ -651,10 +651,10 @@ void savestates_create_undo_point()
     g_core->log_trace("[ST] Inserting undo point creation into task queue...");
 
     const t_savestate_task task = {
-        .job = core_st_job_save,
-        .medium = core_st_medium_memory,
+        .job = CoreSTJob::Save,
+        .medium = CoreSTMedium::Memory,
         .callback =
-            [](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
+            [](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buffer) {
                 if (info.result != Res_Ok)
                 {
                     return;
@@ -689,9 +689,9 @@ void st_do_work()
 
     for (const auto &task : g_tasks)
     {
-        g_core->log_info(std::format("---------- Savestate {}:", (task.job == core_st_job_save) ? "save" : "load"));
+        g_core->log_info(std::format("---------- Savestate {}:", (task.job == CoreSTJob::Save) ? "save" : "load"));
 
-        if (task.job == core_st_job_save)
+        if (task.job == CoreSTJob::Save)
         {
             savestates_save_immediate_impl(task);
         }
@@ -722,7 +722,7 @@ bool can_push_work()
 }
 
 bool st_do_file(
-    const std::filesystem::path &path, const core_st_job job, const core_st_callback &callback, bool ignore_warnings)
+    const std::filesystem::path &path, const CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings)
 {
     std::scoped_lock lock(g_task_mutex);
 
@@ -732,14 +732,14 @@ bool st_do_file(
         if (callback)
         {
             callback(
-                core_st_callback_info{
-                    .result = ST_CoreNotLaunched, .job = job, .medium = core_st_medium_path, .params = {.path = path}},
+                CoreSTCallbackInfo{
+                    .result = ST_CoreNotLaunched, .job = job, .medium = CoreSTMedium::Path, .params = {.path = path}},
                 {});
         }
         return false;
     }
 
-    auto internal_callback_wrapper = [=](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
+    auto internal_callback_wrapper = [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buffer) {
         g_core->st_pre_callback(info, buffer);
         if (callback)
         {
@@ -749,7 +749,7 @@ bool st_do_file(
 
     const t_savestate_task task = {
         .job = job,
-        .medium = core_st_medium_path,
+        .medium = CoreSTMedium::Path,
         .callback = internal_callback_wrapper,
         .params = {.path = path},
         .ignore_warnings = ignore_warnings,
@@ -760,7 +760,7 @@ bool st_do_file(
 }
 
 bool st_do_memory(
-    const std::vector<uint8_t> &buffer, const core_st_job job, const core_st_callback &callback, bool ignore_warnings)
+    const std::vector<uint8_t> &buffer, const CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings)
 {
     std::scoped_lock lock(g_task_mutex);
 
@@ -769,16 +769,16 @@ bool st_do_memory(
         g_core->log_trace("[ST] do_memory: Can't enqueue work.");
         if (callback)
         {
-            callback(core_st_callback_info{.result = ST_CoreNotLaunched,
+            callback(CoreSTCallbackInfo{.result = ST_CoreNotLaunched,
                          .job = job,
-                         .medium = core_st_medium_memory,
+                         .medium = CoreSTMedium::Memory,
                          .params = {.buffer = buffer}},
                 {});
         }
         return false;
     }
 
-    auto internal_callback_wrapper = [=](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
+    auto internal_callback_wrapper = [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buffer) {
         g_core->st_pre_callback(info, buffer);
         if (callback)
         {
@@ -788,7 +788,7 @@ bool st_do_memory(
 
     const t_savestate_task task = {
         .job = job,
-        .medium = core_st_medium_memory,
+        .medium = CoreSTMedium::Memory,
         .callback = internal_callback_wrapper,
         .params = {.buffer = buffer},
         .ignore_warnings = ignore_warnings,
@@ -810,14 +810,14 @@ bool st_sync_hash(const std::function<void(uint64_t hash)> &callback)
     std::scoped_lock lock(g_task_mutex);
     if (!can_push_work()) return false;
 
-    auto internal_callback_wrapper = [=](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
+    auto internal_callback_wrapper = [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buffer) {
         if (!callback) return;
         const auto hash = FNV1A::hash(buffer);
         callback(hash);
     };
 
-    const t_savestate_task task = {.job = core_st_job_save,
-        .medium = core_st_medium_memory,
+    const t_savestate_task task = {.job = CoreSTJob::Save,
+        .medium = CoreSTMedium::Memory,
         .callback = internal_callback_wrapper,
         .params = {},
         .ignore_warnings = true,

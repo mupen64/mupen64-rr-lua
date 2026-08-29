@@ -121,8 +121,8 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             EnableWindow(GetDlgItem(hwnd, id), false);
         }
         SendMessage(
-            GetDlgItem(hwnd, IDC_INI_DESCRIPTION), EM_SETLIMITTEXT, sizeof(core_vcr_movie_header::description), 0);
-        SendMessage(GetDlgItem(hwnd, IDC_INI_AUTHOR), EM_SETLIMITTEXT, sizeof(core_vcr_movie_header::author), 0);
+            GetDlgItem(hwnd, IDC_INI_DESCRIPTION), EM_SETLIMITTEXT, sizeof(CoreVCRMovieHeader::description), 0);
+        SendMessage(GetDlgItem(hwnd, IDC_INI_AUTHOR), EM_SETLIMITTEXT, sizeof(CoreVCRMovieHeader::author), 0);
 
         SetDlgItemText(hwnd, IDC_INI_AUTHOR, g_config.last_movie_author.c_str());
         SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, "");
@@ -150,14 +150,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDOK: {
             g_config.last_movie_type = g_ctx.user_result.start_flag;
 
-            char author[sizeof(core_vcr_movie_header::author)] = {0};
+            char author[sizeof(CoreVCRMovieHeader::author)] = {0};
             GetDlgItemText(hwnd, IDC_INI_AUTHOR, author, std::size(author));
 
             g_ctx.user_result.author = author;
             if (g_ctx.user_result.author.empty()) g_ctx.user_result.author = "(unspecified)";
             g_config.last_movie_author = g_ctx.user_result.author;
 
-            char description[sizeof(core_vcr_movie_header::description)] = {0};
+            char description[sizeof(CoreVCRMovieHeader::description)] = {0};
             GetDlgItemText(hwnd, IDC_INI_DESCRIPTION, description, std::size(description));
 
             g_ctx.user_result.description = description;
@@ -240,7 +240,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return FALSE;
 
 refresh:
-    core_vcr_movie_header header = {};
+    CoreVCRMovieHeader header = {};
 
     if (g_main_ctx.core_ctx->vcr_parse_header(g_ctx.user_result.path, &header) != Res_Ok)
     {
