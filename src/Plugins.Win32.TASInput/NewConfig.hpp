@@ -121,6 +121,9 @@ struct t_controller_config
     float x_scale = 1.0f;
     float y_scale = 1.0f;
 
+    t_button_mapping mag1{};
+    t_button_mapping mag2{};
+
     static t_controller_config gamepad_config()
     {
         t_controller_config config{};
@@ -162,6 +165,8 @@ struct t_controller_config
         config.c_right = {.key = VK_RIGHT};
         config.x = {.key_negative = 'A', .key_positive = 'D'};
         config.y = {.key_negative = 'W', .key_positive = 'S'};
+        config.mag1 = {.key = 'M'};
+        config.mag2 = {.key = 'C'};
         return config;
     }
 
@@ -187,6 +192,8 @@ struct t_controller_config
             TASINPUT_FIELD(y),
             TASINPUT_FIELD(x_scale),
             TASINPUT_FIELD(y_scale),
+            TASINPUT_FIELD(mag1),
+            TASINPUT_FIELD(mag2),
         });
 #undef TASINPUT_FIELD
     }
@@ -213,6 +220,8 @@ struct t_controller_config
             TASINPUT_FIELD(y),
             TASINPUT_FIELD(x_scale),
             TASINPUT_FIELD(y_scale),
+            TASINPUT_FIELD(mag1),
+            TASINPUT_FIELD(mag2),
         };
 #undef TASINPUT_FIELD
     }
