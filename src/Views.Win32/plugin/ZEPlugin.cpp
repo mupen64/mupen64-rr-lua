@@ -108,7 +108,7 @@ static void CALL dummy_capture_screen(char *)
 {
     if (!PluginUtil::mge_available())
     {
-        DialogService::show_dialog("The current video plugin doesn't support screenshots.", "Screenshot", fsvc_error);
+        DialogService::show_dialog("The current video plugin doesn't support screenshots.", "Screenshot", CoreMessageTone::Error);
         return;
     }
 
@@ -222,7 +222,7 @@ void ZEPlugin::config(HWND hwnd)
         dll_config(hwnd);
     else
     {
-        DialogService::show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", fsvc_error, hwnd);
+        DialogService::show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", CoreMessageTone::Error, hwnd);
     }
 
     deinitiate_dummy();
@@ -317,7 +317,7 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         {
             const auto msg = std::format(
                 "The plugin {} is incompatible with this version of Mupen64 and may not work properly.", m_name);
-            DialogService::show_dialog(msg, "Plugin Incompatibility", fsvc_error);
+            DialogService::show_dialog(msg, "Plugin Incompatibility", CoreMessageTone::Error);
         }
 
         break;
@@ -476,7 +476,7 @@ void ZEPlugin::initiate_dummy()
             const auto initiate_gfx = (ZESpec::INITIATEGFX)GetProcAddress(m_module, "InitiateGFX");
             if (initiate_gfx && !initiate_gfx(dummy_video_info))
             {
-                DialogService::show_dialog("Couldn't initialize video plugin.", "Core", fsvc_information);
+                DialogService::show_dialog("Couldn't initialize video plugin.", "Core", CoreMessageTone::Info);
             }
         }
 
@@ -488,7 +488,7 @@ void ZEPlugin::initiate_dummy()
             const auto initiate_audio = (ZESpec::INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
             if (initiate_audio && !initiate_audio(dummy_audio_info))
             {
-                DialogService::show_dialog("Couldn't initialize audio plugin.", "Core", fsvc_information);
+                DialogService::show_dialog("Couldn't initialize audio plugin.", "Core", CoreMessageTone::Info);
             }
         }
 

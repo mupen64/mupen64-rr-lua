@@ -248,7 +248,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
         DialogService::show_dialog("Audio output failure!\n"
                                    "A call to AVIStreamWrite failed.\n"
                                    "Perhaps you ran out of memory?",
-            "AVI Encoder", fsvc_error);
+            "AVI Encoder", CoreMessageTone::Error);
         return false;
     }
 
@@ -270,7 +270,7 @@ bool WinVFWEncoder::append_video_impl(uint8_t *image)
     {
         DialogService::show_dialog(
             "Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", "AVI Encoder",
-            fsvc_error);
+            CoreMessageTone::Error);
     }
 
     return ret == 0;

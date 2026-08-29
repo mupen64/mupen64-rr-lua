@@ -49,7 +49,7 @@ struct summercart summercart;
 
 static int32_t sd_error(const char *text, const char *caption)
 {
-    g_core->show_dialog(text, caption, fsvc_error);
+    g_core->show_dialog(text, caption, CoreMessageTone::Error);
     return -1;
 }
 

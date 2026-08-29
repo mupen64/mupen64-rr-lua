@@ -252,7 +252,7 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
                 std::format("Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
                     info.job == core_st_job_save ? "save" : "load", info.params.path.filename().string(),
                     (int32_t)info.result);
-            DialogService::show_dialog(message, "Savestate", fsvc_error);
+            DialogService::show_dialog(message, "Savestate", CoreMessageTone::Error);
             break;
         }
         }
@@ -931,18 +931,18 @@ static core_result init_core()
     g_main_ctx.core.get_backups_directory = Config::backup_directory;
     g_main_ctx.core.get_summercart_path = get_summercart_path;
     g_main_ctx.core.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
-                                                      const char *str, const char *title, core_dialog_type type) {
+                                                      const char *str, const char *title, CoreMessageTone type) {
         return DialogService::show_multiple_choice_dialog(
             id, choices, str, title ? std::make_optional(title) : std::nullopt, type);
     };
     g_main_ctx.core.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {
         return DialogService::show_ask_dialog(id, str, title ? std::make_optional(title) : std::nullopt, warning);
     };
-    g_main_ctx.core.show_dialog = [](const char *str, const char *title, core_dialog_type type) {
+    g_main_ctx.core.show_dialog = [](const char *str, const char *title, CoreMessageTone type) {
         DialogService::show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
     };
     g_main_ctx.core.show_statusbar = [](const char *str) { DialogService::show_statusbar(str); };
-    g_main_ctx.core.show_notification = [](const char *str, const char *title, core_dialog_type tone) {
+    g_main_ctx.core.show_notification = [](const char *str, const char *title, CoreMessageTone tone) {
         DialogService::show_notification(str, title ? std::make_optional(title) : std::nullopt, tone);
     };
     g_main_ctx.core.update_screen = PluginUtil::update_screen;
@@ -1242,7 +1242,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     if (!g_ui_timer)
     {
         DialogService::show_dialog(
-            "timeSetEvent call failed. Verify that your system supports multimedia timers.", "Error", fsvc_error);
+            "timeSetEvent call failed. Verify that your system supports multimedia timers.", "Error", CoreMessageTone::Error);
         return -1;
     }
 

@@ -208,7 +208,7 @@ void M64RRPlugin::config(HWND hwnd)
     }
     else
     {
-        DialogService::show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", fsvc_error, hwnd);
+        DialogService::show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", CoreMessageTone::Error, hwnd);
     }
 
     if (newly_initiated)

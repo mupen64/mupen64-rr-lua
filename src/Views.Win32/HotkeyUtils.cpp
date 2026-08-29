@@ -387,7 +387,7 @@ void HotkeyUtils::try_associate_hotkey(
         new_hotkey.to_string(), conflicting_hotkey_identifiers);
 
     const size_t choice = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT,
-        {"Keep New", "Keep Old", "Proceed Anyway"}, str, "Hotkey Conflict", fsvc_warning, hwnd);
+        {"Keep New", "Keep Old", "Proceed Anyway"}, str, "Hotkey Conflict", CoreMessageTone::Warn, hwnd);
 
     switch (choice)
     {

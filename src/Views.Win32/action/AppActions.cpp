@@ -99,7 +99,7 @@ void AppActions::load_rom_from_path(const std::filesystem::path &path)
 
 static void stub()
 {
-    DialogService::show_dialog("ActionManager::stub", "Stub", fsvc_error);
+    DialogService::show_dialog("ActionManager::stub", "Stub", CoreMessageTone::Error);
 }
 
 #pragma region File
@@ -645,7 +645,7 @@ static void show_ram_start()
     const auto str = std::format("The RAM start is {}.\r\nHow would you like to proceed?", ram_start_str);
 
     const auto result = DialogService::show_multiple_choice_dialog(
-        VIEW_DLG_RAMSTART, {"Copy STROOP config line", "Close"}, str, "Core Information", fsvc_information);
+        VIEW_DLG_RAMSTART, {"Copy STROOP config line", "Close"}, str, "Core Information", CoreMessageTone::Info);
 
     if (result == 0)
     {
@@ -813,7 +813,7 @@ static void show_about_dialog()
                      "\r\n"
                      "Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
     const auto result =
-        DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", fsvc_information);
+        DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", CoreMessageTone::Info);
 
     if (result == 0)
     {

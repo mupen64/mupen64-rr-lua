@@ -212,7 +212,7 @@ void critical_stop(std::string_view message)
 {
     const auto formatted =
         std::format("A critical emulation error has occured: {}.\n\nEmulation will now stop.", message);
-    g_core->show_dialog(formatted.c_str(), "Critical Error", fsvc_error);
+    g_core->show_dialog(formatted.c_str(), "Critical Error", CoreMessageTone::Error);
     g_core->submit_task([] { (void)g_ctx.vr_close_rom(true); });
 }
 

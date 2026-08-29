@@ -1083,7 +1083,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             ListView_Update(ctx->lv_hwnd, i);
             break;
         case 2:
-            DialogService::show_dialog(option_item.get_friendly_info(), option_item.name, fsvc_information, hwnd);
+            DialogService::show_dialog(option_item.get_friendly_info(), option_item.name, CoreMessageTone::Info, hwnd);
             break;
         case 4:
             option_item.current_value.set(Hotkey::make_empty());
@@ -1110,7 +1110,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             {
                 DialogService::show_dialog("Some settings can't be reset, as they are currently read-only. Try again "
                                            "with emulation stopped.\nNo changes have been made to the settings.",
-                    "Reset all to default", fsvc_warning, hwnd);
+                    "Reset all to default", CoreMessageTone::Warn, hwnd);
                 break;
             }
 

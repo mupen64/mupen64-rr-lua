@@ -927,13 +927,16 @@ using core_st_callback = std::function<void(const core_st_callback_info &, const
 // ==========================================
 
 /**
- * The tone of a dialog.
+ * The tone of a message.
  */
-typedef enum
+enum class CoreMessageTone
 {
-    fsvc_error,
-    fsvc_warning,
-    fsvc_information
-} core_dialog_type;
+    // The message is an error.
+    Error,
+    // The message is a warning.
+    Warn,
+    // The message is purely informational.
+    Info
+};
 
 #pragma endregion

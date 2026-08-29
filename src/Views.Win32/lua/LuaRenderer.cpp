@@ -446,7 +446,7 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
     {
         DialogService::show_dialog(
             "Failed to initialize presenter.\r\nVerify that your system supports the selected presenter.", "Lua",
-            fsvc_error);
+            CoreMessageTone::Error);
         return;
     }
 

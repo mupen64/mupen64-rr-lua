@@ -139,18 +139,18 @@ QML_ELEMENT
 
 enum Value
 {
-    Error = fsvc_error,
-    Warning = fsvc_warning,
-    Information = fsvc_information,
+    Error = CoreMessageTone::Error,
+    Warning = CoreMessageTone::Warn,
+    Information = CoreMessageTone::Info,
 };
 Q_ENUM_NS(Value)
 
-inline Value from_core(::core_dialog_type result)
+inline Value from_core(::CoreMessageTone result)
 {
     return (Value)(int)result;
 }
-inline ::core_dialog_type to_core(Value value)
+inline ::CoreMessageTone to_core(Value value)
 {
-    return (::core_dialog_type)(int)value;
+    return (::CoreMessageTone)(int)value;
 }
 } // namespace CoreDialogType

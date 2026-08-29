@@ -36,15 +36,15 @@ struct ToastWindow
 std::vector<HWND> toast_windows;
 
 // TODO: Move this into some util file. There's really no appropriate place in our codebase for this as it stands
-HICON icon_for_tone(const core_dialog_type tone)
+HICON icon_for_tone(const CoreMessageTone tone)
 {
     switch (tone)
     {
-    case fsvc_error:
+    case CoreMessageTone::Error:
         return LoadIcon(nullptr, IDI_ERROR);
-    case fsvc_information:
+    case CoreMessageTone::Info:
         return LoadIcon(nullptr, IDI_INFORMATION);
-    case fsvc_warning:
+    case CoreMessageTone::Warn:
     default:
         return LoadIcon(nullptr, IDI_WARNING);
     }

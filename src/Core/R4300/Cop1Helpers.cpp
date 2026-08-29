@@ -19,7 +19,7 @@ static void fail_float(std::string_view msg)
 {
     const auto message = std::format(FLOAT_EXCEPTION_MSG, msg, interpcore ? interp_addr : PC->addr);
     const auto choice = g_core->show_multiple_choice_dialog(
-        CORE_DLG_FLOAT_EXCEPTION, {"Close ROM", "Continue"}, message.c_str(), "Core", fsvc_error);
+        CORE_DLG_FLOAT_EXCEPTION, {"Close ROM", "Continue"}, message.c_str(), "Core", CoreMessageTone::Error);
 
     core_Cause = 15 << 2;
     exception_general();

@@ -536,7 +536,7 @@ void vcr_create_n_frame_savestate(size_t frame)
             if (info.result != Res_Ok)
             {
                 g_core->show_notification(
-                    std::format("Failed to save seek savestate at frame {}.", frame).c_str(), "VCR", fsvc_error);
+                    std::format("Failed to save seek savestate at frame {}.", frame).c_str(), "VCR", CoreMessageTone::Error);
                 return;
             }
 
@@ -567,7 +567,7 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
             {
                 g_core->show_dialog(
                     "Failed to reset the rom when initiating a from-start recording.\nRecording will be stopped.",
-                    "VCR", fsvc_error);
+                    "VCR", CoreMessageTone::Error);
                 {
                     vcr_anti_lock bypass;
                     g_ctx.vcr_stop_all();
@@ -602,7 +602,7 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
             {
                 g_core->show_dialog(
                     "Failed to reset the rom when playing back a from-start movie.\nPlayback will be stopped.", "VCR",
-                    fsvc_error);
+                    CoreMessageTone::Error);
                 {
                     vcr_anti_lock bypass;
                     g_ctx.vcr_stop_all();
@@ -699,7 +699,7 @@ void vcr_handle_recording(int32_t index, CoreButtons *input)
 
             if (result != Res_Ok)
             {
-                g_core->show_dialog("Failed to reset the rom following a user-invoked reset.", "VCR", fsvc_error);
+                g_core->show_dialog("Failed to reset the rom following a user-invoked reset.", "VCR", CoreMessageTone::Error);
             }
         });
     }
@@ -775,7 +775,7 @@ void vcr_handle_playback(int32_t index, CoreButtons *input)
             {
                 g_core->show_dialog(
                     "Failed to reset the rom following a movie-invoked reset.\nRecording will be stopped.", "VCR",
-                    fsvc_error);
+                    CoreMessageTone::Error);
                 {
                     vcr_anti_lock bypass;
                     g_ctx.vcr_stop_all();
@@ -814,7 +814,7 @@ void vcr_stop_seek_if_needed()
     {
         g_core->show_dialog("Seek frame exceeded without seek having been stopped!\nThis incident has been logged, "
                             "please report this issue along with the log file.",
-            "VCR", fsvc_error);
+            "VCR", CoreMessageTone::Error);
     }
 
     if (vcr.current_sample >= vcr.seek_to_frame.value())
@@ -1056,7 +1056,7 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
                 {
                     g_core->show_dialog(
                         "Failed to save savestate while starting recording.\nRecording will be stopped.", "VCR",
-                        fsvc_error);
+                        CoreMessageTone::Error);
 
                     {
                         vcr_anti_lock bypass;
@@ -1225,31 +1225,31 @@ bool show_controller_warning(const core_vcr_movie_header &header)
     {
         if (!g_core->controls[i].present && header.controller_flags & CONTROLLER_X_PRESENT(i))
         {
-            g_core->show_dialog(std::format(CONTROLLER_OFF_ON_MISMATCH, i + 1).c_str(), "VCR", fsvc_error);
+            g_core->show_dialog(std::format(CONTROLLER_OFF_ON_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Error);
             return false;
         }
         if (g_core->controls[i].present && !(header.controller_flags & CONTROLLER_X_PRESENT(i)))
         {
-            g_core->show_notification(std::format(CONTROLLER_ON_OFF_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
+            g_core->show_notification(std::format(CONTROLLER_ON_OFF_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
         }
         else
         {
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::Mempak) &&
                 header.controller_flags & CONTROLLER_X_MEMPAK(i))
             {
-                g_core->show_notification(std::format(CONTROLLER_MEMPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
+                g_core->show_notification(std::format(CONTROLLER_MEMPAK_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
             }
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::Rumblepak) &&
                 header.controller_flags & CONTROLLER_X_RUMBLE(i))
             {
                 g_core->show_notification(
-                    std::format(CONTROLLER_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
+                    std::format(CONTROLLER_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
             }
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::None) &&
                 !(header.controller_flags & (CONTROLLER_X_MEMPAK(i) | CONTROLLER_X_RUMBLE(i))))
             {
                 g_core->show_notification(
-                    std::format(CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
+                    std::format(CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
             }
         }
     }
@@ -1268,7 +1268,7 @@ static std::optional<core_result> ask_user_rom_conflict(
     std::string_view id, const std::string &message, const std::filesystem::path &movie_path)
 {
     const auto choice = g_core->show_multiple_choice_dialog(
-        id, {"Switch ROM", "Play Anyway", "Cancel"}, message.c_str(), "VCR", core_dialog_type::fsvc_warning);
+        id, {"Switch ROM", "Play Anyway", "Cancel"}, message.c_str(), "VCR", CoreMessageTone::Warn);
 
     if (choice == 0)
     {
@@ -1447,7 +1447,7 @@ core_result vcr_start_playback(std::filesystem::path path)
 
     // Suspicious! Someone shoved data where it didn't belong...
     if (header.extended_version == 0 && header.extended_flags.data != 0)
-        g_core->show_dialog(OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE, "VCR", fsvc_warning);
+        g_core->show_dialog(OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE, "VCR", CoreMessageTone::Warn);
 
     if (!warnings.empty())
     {
@@ -1458,7 +1458,7 @@ core_result vcr_start_playback(std::filesystem::path path)
         }
         warning += "Playback might desynchronize. Do you want to continue?";
         const auto result =
-            g_core->show_ask_dialog(CORE_DLG_VCR_GENERAL_SYNC_WARNING, warning.c_str(), "VCR", fsvc_warning);
+            g_core->show_ask_dialog(CORE_DLG_VCR_GENERAL_SYNC_WARNING, warning.c_str(), "VCR", true);
         if (!result) return Res_Cancelled;
     }
 
@@ -1548,7 +1548,7 @@ core_result vcr_start_playback(std::filesystem::path path)
                     {
                         g_core->show_dialog(
                             "Failed to load savestate while starting playback.\nRecording will be stopped.", "VCR",
-                            fsvc_error);
+                            CoreMessageTone::Error);
 
                         {
                             vcr_anti_lock bypass;
@@ -1749,7 +1749,7 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
                     [=](const core_st_callback_info &info, auto &&...) {
                         if (info.result != Res_Ok)
                         {
-                            g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR", fsvc_error);
+                            g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR", CoreMessageTone::Error);
                             vcr.seek_savestate_loading = false;
 
                             {
@@ -1802,7 +1802,7 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
             // TODO: We can't backtrack using savestates, so we'd have to restart into recording mode while restoring
             // the buffer, leave it for the next release...
             g_core->show_dialog(
-                "The seek savestate interval can't be 0 when seeking backwards during recording.", "VCR", fsvc_error);
+                "The seek savestate interval can't be 0 when seeking backwards during recording.", "VCR", CoreMessageTone::Error);
             return VCR_SeekSavestateIntervalZero;
         }
 
@@ -1845,7 +1845,7 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
                 [=](const core_st_callback_info &info, auto &&...) {
                     if (info.result != Res_Ok)
                     {
-                        g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR", fsvc_error);
+                        g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR", CoreMessageTone::Error);
                         vcr.seek_savestate_loading = false;
 
                         {

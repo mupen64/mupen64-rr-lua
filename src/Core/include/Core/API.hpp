@@ -160,7 +160,7 @@ extern "C"
          * again, this function will return the last choice.
          */
         std::function<size_t(std::string_view id, const std::vector<std::string> &choices, const char *str,
-            const char *title, core_dialog_type type)>
+            const char *title, CoreMessageTone type)>
             show_multiple_choice_dialog;
 
         /**
@@ -182,7 +182,7 @@ extern "C"
          * \param title The dialog title.
          * \param type The dialog's tone.
          */
-        std::function<void(const char *str, const char *title, core_dialog_type type)> show_dialog =
+        std::function<void(const char *str, const char *title, CoreMessageTone type)> show_dialog =
             [](const auto &...) {};
 
         /**
@@ -196,7 +196,7 @@ extern "C"
          * \param title The notification title.
          * \param tone The notification's tone.
          */
-        std::function<void(const char *str, const char *title, core_dialog_type tone)> show_notification =
+        std::function<void(const char *str, const char *title, CoreMessageTone tone)> show_notification =
             [](const auto &...) {};
 
         /**

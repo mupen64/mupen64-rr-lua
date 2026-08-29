@@ -195,7 +195,7 @@ Plugin::~Plugin()
 {
     if (m_module && !FreeLibrary(m_module))
     {
-        DialogService::show_dialog(std::format("Failed to free library {}.", (void *)m_module), "Core", fsvc_error);
+        DialogService::show_dialog(std::format("Failed to free library {}.", (void *)m_module), "Core", CoreMessageTone::Error);
     }
 }
 

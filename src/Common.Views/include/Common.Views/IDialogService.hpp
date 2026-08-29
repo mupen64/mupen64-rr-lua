@@ -29,7 +29,7 @@ namespace DialogService
  * function will return the last choice.
  */
 size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices, std::string_view str,
-    std::optional<std::string_view> title = std::nullopt, core_dialog_type type = fsvc_warning, void *hwnd = nullptr,
+    std::optional<std::string_view> title = std::nullopt, CoreMessageTone type = CoreMessageTone::Warn, void *hwnd = nullptr,
     std::optional<std::string_view> details = std::nullopt);
 
 /**
@@ -54,7 +54,7 @@ bool show_ask_dialog(std::string_view id, std::string_view str, std::optional<st
  * \param hwnd The parent window. If nullptr, the main window will be used.
  */
 void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt,
-    core_dialog_type type = fsvc_warning, void *hwnd = nullptr);
+    CoreMessageTone type = CoreMessageTone::Warn, void *hwnd = nullptr);
 
 /**
  * \brief Shows text in the statusbar.
@@ -69,5 +69,5 @@ void show_statusbar(std::string_view str);
  * \param type The notification tone.
  */
 void show_notification(
-    std::string str, std::optional<std::string> title = std::nullopt, core_dialog_type type = fsvc_warning);
+    std::string str, std::optional<std::string> title = std::nullopt, CoreMessageTone type = CoreMessageTone::Warn);
 } // namespace DialogService

@@ -259,7 +259,7 @@ void CLI::init()
     {
         DialogService::show_dialog(
             "Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", "CLI",
-            fsvc_error);
+            CoreMessageTone::Error);
         cli_params.st.clear();
     }
 
@@ -267,7 +267,7 @@ void CLI::init()
     {
         DialogService::show_dialog(
             "Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.",
-            "CLI", fsvc_warning);
+            "CLI", CoreMessageTone::Warn);
         g_config.core.is_movie_loop_enabled = false;
     }
 

@@ -95,7 +95,7 @@ EmuContext::EmuContext(QObject *parent)
 #pragma region Dialog service
     m_core_params->show_multiple_choice_dialog = [&](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title,
-                                                     core_dialog_type type) -> size_t {
+                                                     CoreMessageTone type) -> size_t {
         std::promise<size_t> promise;
         auto future = promise.get_future();
 
@@ -127,7 +127,7 @@ EmuContext::EmuContext(QObject *parent)
 
         return future.get();
     };
-    m_core_params->show_dialog = [&](const char *str, const char *title, core_dialog_type type) {
+    m_core_params->show_dialog = [&](const char *str, const char *title, CoreMessageTone type) {
         std::promise<void> promise;
         auto future = promise.get_future();
 
