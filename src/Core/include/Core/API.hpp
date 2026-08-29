@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "m64rr/Types.hpp"
+#include <Core/Types.hpp>
 #include <optional>
 
 #ifdef __cplusplus

@@ -9,8 +9,8 @@
 #include <variant>
 
 #include <decan.hpp>
-#include <m64rr/API.hpp>
-#include <m64rr/Plugin.hpp>
+#include <Core/API.hpp>
+#include <Core/Plugin.hpp>
 #include "BuiltinTAS.hpp"
 
 class PluginLoadFailed : std::runtime_error

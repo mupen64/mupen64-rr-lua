@@ -6,7 +6,7 @@
 #include "Common.hpp"
 
 #define PLUGIN_WITH_CALLBACKS
-#include <m64rr/Plugin.hpp>
+#include <Core/Plugin.hpp>
 
 #define MATCH_PLUGIN_FN(name)                                                                                          \
     static_assert(std::is_same_v<decltype(&M64RR##name), M64RRSpec::Ptr##name>,                                        \

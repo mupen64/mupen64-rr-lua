@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "m64rr/Types.hpp"
+#include <Core/Types.hpp>
 #include <Core.hpp>
 #include <Cheats.hpp>
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/VCR.hpp>

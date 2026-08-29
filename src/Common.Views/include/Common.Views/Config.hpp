@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 #include <Common.Views/Hotkey.hpp>
 #include <map>
 

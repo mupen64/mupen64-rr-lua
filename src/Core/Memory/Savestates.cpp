@@ -5,7 +5,7 @@
  */
 
 #include <Core.hpp>
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include <Memory/FlashRAM.hpp>
 #include <Memory/Memory.hpp>
 #include <Memory/Savestates.hpp>

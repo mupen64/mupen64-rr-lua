@@ -14,7 +14,7 @@
 #include <utility>
 #include <vector>
 #include <Common.Views/Config.hpp>
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 #include <Common.Views/Messenger.hpp>
 
 namespace Messenger

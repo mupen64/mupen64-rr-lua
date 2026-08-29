@@ -10,7 +10,7 @@
 #include <Common.Views/Config.hpp>
 #include <Common.Views/ConfigLegacy.hpp>
 #include <Common.Views/Messages.hpp>
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include <Common.Views/ActionManager.hpp>
 
 using nlohmann::json;

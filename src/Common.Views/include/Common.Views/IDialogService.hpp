@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include <optional>
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 
 /**
  * \brief Provides dialog and notification-related functionality.

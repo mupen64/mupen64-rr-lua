@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 
 /**
  * \brief A module responsible for implementing the rombrowser.

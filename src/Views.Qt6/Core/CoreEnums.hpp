@@ -10,7 +10,7 @@
 #include <QJSValue>
 #include <qqmlintegration.h>
 
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 
 class CoreResult : public QObject
 {
@@ -21,7 +21,7 @@ class CoreResult : public QObject
     /**
      * @brief Result returned by the core.
      *
-     * Copied directly from `m64rr/Types.hpp`; allowing it to be used directly from Qt.
+     * Copied directly from `Core/Types.hpp`; allowing it to be used directly from Qt.
      */
     enum Value
     {

@@ -10,7 +10,7 @@
 #include <QUrl>
 #include <qqmlintegration.h>
 
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include "plugin/Plugin.hpp"
 
 #include "CoreEnums.hpp"

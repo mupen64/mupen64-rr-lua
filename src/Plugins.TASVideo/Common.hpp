@@ -8,8 +8,8 @@
 
 
 #include <Common/VersionNameHelpers.hpp>
-#include <m64rr/API.hpp>
-#include <m64rr/Plugin.hpp>
+#include <Core/API.hpp>
+#include <Core/Plugin.hpp>
 #include <glad/glad.h>
 #include <emmintrin.h>
 #include <xbrz.h>

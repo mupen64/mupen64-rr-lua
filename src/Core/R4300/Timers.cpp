@@ -6,7 +6,7 @@
 
 #include <Core.hpp>
 #include <R4300/Timers.hpp>
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include <Memory/Pif.hpp>
 #include <R4300/R4300.hpp>
 

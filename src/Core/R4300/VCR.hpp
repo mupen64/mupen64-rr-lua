@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 
 struct t_vcr_state
 {

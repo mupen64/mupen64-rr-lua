@@ -7,7 +7,7 @@
 #pragma once
 
 #include <Views.Win32/ZESpec.h>
-#include <m64rr/Plugin.hpp>
+#include <Core/Plugin.hpp>
 
 struct ZESpecFuncs
 {

@@ -15,7 +15,7 @@
 #error "The M64RR specification is only for C++"
 #endif
 
-#include "m64rr/Types.hpp"
+#include <Core/Types.hpp>
 
 #if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
