@@ -12,8 +12,8 @@
 // Prompts the user to change their plugin selection.
 static void prompt_plugin_change(HWND hwnd)
 {
-    auto result = DialogService::show_multiple_choice_dialog(
-        VIEW_DLG_PLUGIN_LOAD_ERROR, {"Choose Default Plugins", "Change Plugins", "Cancel"},
+    auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_PLUGIN_LOAD_ERROR,
+        {"Choose Default Plugins", "Change Plugins", "Cancel"},
         "One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", "Core", fsvc_error, hwnd);
 
     if (result == 0)
@@ -135,10 +135,6 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
         module = "VCR";
         error = "The provided input buffer is empty.";
         break;
-    case VCR_SeekAlreadyRunning:
-        module = "VCR";
-        error = "Another seek operation is already running.";
-        break;
     case VCR_SeekSavestateLoadFailed:
         module = "VCR";
         error = "The seek operation could not be initiated due to a savestate not being loaded successfully.";
@@ -186,8 +182,8 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
 
 bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
 {
-    g_view_logger->error("CoreUtils::show_error_dialog_for_result({}, {})", static_cast<int32_t>(result),
-                         static_cast<void *>(hwnd));
+    g_view_logger->error(
+        "CoreUtils::show_error_dialog_for_result({}, {})", static_cast<int32_t>(result), static_cast<void *>(hwnd));
 
     const auto [module, error] = get_error_message_for_result(result);
     if (error.empty()) return false;

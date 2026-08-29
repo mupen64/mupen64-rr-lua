@@ -88,6 +88,6 @@ void GDIPresenter::present()
 
 void GDIPresenter::blit(HDC hdc, RECT rect)
 {
-    TransparentBlt(hdc, 0, 0, m_size.width, m_size.height, m_gdi_back_dc, 0, 0, m_size.width, m_size.height,
-                   m_mask_color);
+    TransparentBlt(
+        hdc, 0, 0, m_size.width, m_size.height, m_gdi_back_dc, 0, 0, m_size.width, m_size.height, m_mask_color);
 }

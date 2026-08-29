@@ -9,7 +9,7 @@
 #include "Config.hpp"
 
 #ifdef _WIN32
-#include <windows.h>
+#include <Common.Win32/Common.hpp>
 
 namespace SDLAudio
 {

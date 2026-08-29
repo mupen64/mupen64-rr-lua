@@ -157,8 +157,8 @@ static void update_inputs()
 
         piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
         ListView_SetItemCount(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size());
-        g_view_logger->info("[PianoRoll] Pulled inputs from core for playback mode, count: {}",
-                            piano_roll.current_state.inputs.size());
+        g_view_logger->info(
+            "[PianoRoll] Pulled inputs from core for playback mode, count: {}", piano_roll.current_state.inputs.size());
 
         SetWindowRedraw(piano_roll.lv_hwnd, true);
     }
@@ -414,7 +414,7 @@ static void push_state_to_history()
     piano_roll.state_index = std::min(piano_roll.state_index + 1, piano_roll.piano_roll_history.size() - 1);
 
     g_view_logger->info("[PianoRoll] Undo stack size: {}. Current index: {}.", piano_roll.piano_roll_history.size(),
-                        piano_roll.state_index);
+        piano_roll.state_index);
     update_history_listbox();
 }
 
@@ -646,8 +646,8 @@ static void delete_inputs_in_selection()
         return;
     }
 
-    std::vector selected_indicies(piano_roll.current_state.selected_indicies.begin(),
-                                  piano_roll.current_state.selected_indicies.end());
+    std::vector selected_indicies(
+        piano_roll.current_state.selected_indicies.begin(), piano_roll.current_state.selected_indicies.end());
     piano_roll.current_state.inputs = MiscHelpers::erase_indices(piano_roll.current_state.inputs, selected_indicies);
     ListView_RedrawItems(piano_roll.lv_hwnd, 0, ListView_GetItemCount(piano_roll.lv_hwnd));
     const int32_t offset =
@@ -708,15 +708,14 @@ static void update_groupbox_status_text()
             }
             else if (piano_roll.current_state.selected_indicies.size() == 1)
             {
-                SetWindowText(
-                    piano_roll.hwnd,
+                SetWindowText(piano_roll.hwnd,
                     std::format("Piano Roll - Frame {}", piano_roll.current_state.selected_indicies[0]).c_str());
             }
             else
             {
-                SetWindowText(piano_roll.hwnd, std::format("Piano Roll - {} frames selected",
-                                                           piano_roll.current_state.selected_indicies.size())
-                                                   .c_str());
+                SetWindowText(piano_roll.hwnd,
+                    std::format("Piano Roll - {} frames selected", piano_roll.current_state.selected_indicies.size())
+                        .c_str());
             }
         });
     });
@@ -739,8 +738,8 @@ static void on_task_changed(core_vcr_task value)
 
         if (value != previous_value)
         {
-            g_view_logger->info("[PianoRoll] Processing TaskChanged from {} to {}", (int32_t)previous_value,
-                                (int32_t)value);
+            g_view_logger->info(
+                "[PianoRoll] Processing TaskChanged from {} to {}", (int32_t)previous_value, (int32_t)value);
             update_inputs();
         }
 
@@ -806,7 +805,7 @@ static void on_unfreeze_completed()
                                     : piano_roll.current_state.inputs.size();
 
         g_view_logger->info("[PianoRoll] Setting item count to {} (input count: {})...", item_count,
-                            piano_roll.current_state.inputs.size());
+            piano_roll.current_state.inputs.size());
         ListView_SetItemCountEx(piano_roll.lv_hwnd, item_count, LVSICF_NOSCROLL);
 
         SetWindowRedraw(piano_roll.lv_hwnd, true);
@@ -1077,14 +1076,14 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         // dialog manager and manual creation
         piano_roll.hwnd = hwnd;
         piano_roll.joy_hwnd = CreateWindowEx(WS_EX_STATICEDGE, JOYSTICK_CLASS, "", WS_CHILD | WS_VISIBLE, 17, 30, 131,
-                                             131, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+            131, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
         CreateWindowEx(0, WC_STATIC, "History", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT | SS_CENTERIMAGE, 17, 166,
-                       131, 15, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+            131, 15, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
         piano_roll.hist_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTBOX, "",
-                                              WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY,
-                                              17, 186, 131, 181, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+            WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, 17, 186, 131, 181, piano_roll.hwnd,
+            nullptr, g_main_ctx.hinst, nullptr);
         piano_roll.status_hwnd = CreateWindowEx(0, WC_STATIC, "", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT, 17, 370,
-                                                131, 60, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+            131, 60, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
         // Some controls don't get the font set by default, so we do it manually
         EnumChildWindows(
@@ -1100,14 +1099,13 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
         RECT grid_rect = get_window_rect_client_space(hwnd, GetDlgItem(hwnd, IDC_LIST_PIANO_ROLL));
 
-        piano_roll.lv_hwnd =
-            CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, nullptr, lv_style, grid_rect.left, grid_rect.top,
-                           grid_rect.right - grid_rect.left, grid_rect.bottom - grid_rect.top, hwnd,
-                           (HMENU)IDC_PIANO_ROLL_LV, g_main_ctx.hinst, nullptr);
+        piano_roll.lv_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, nullptr, lv_style, grid_rect.left,
+            grid_rect.top, grid_rect.right - grid_rect.left, grid_rect.bottom - grid_rect.top, hwnd,
+            (HMENU)IDC_PIANO_ROLL_LV, g_main_ctx.hinst, nullptr);
         SetWindowSubclass(piano_roll.lv_hwnd, list_view_proc, 0, 0);
 
-        ListView_SetExtendedListViewStyle(piano_roll.lv_hwnd,
-                                          LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+        ListView_SetExtendedListViewStyle(
+            piano_roll.lv_hwnd, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
         HIMAGELIST image_list = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 1, 0);
         ImageList_AddMaskedFromBitmap(image_list, g_main_ctx.hinst, IDB_CURRENT);
@@ -1157,8 +1155,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         update_groupbox_status_text();
         update_history_listbox();
 
-        ResizeAnchor::add_anchors(
-            piano_roll.hwnd,
+        ResizeAnchor::add_anchors(piano_roll.hwnd,
             {
                 {piano_roll.lv_hwnd, ResizeAnchor::FULL_ANCHOR},
                 {piano_roll.joy_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},

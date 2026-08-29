@@ -77,8 +77,8 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 }
 
 // !!!
-static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name,
-                                    std::vector<std::string> &value)
+static void ini_handle_config_value(
+    mINI::INIStructure &ini, const std::string &field_name, std::vector<std::string> &value)
 {
     const auto key = ini_cleanup_field(field_name);
 
@@ -95,8 +95,8 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 }
 
 // !!!
-static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name,
-                                    std::map<std::string, std::string> &value)
+static void ini_handle_config_value(
+    mINI::INIStructure &ini, const std::string &field_name, std::map<std::string, std::string> &value)
 {
     const auto key = ini_cleanup_field(field_name);
 
@@ -113,8 +113,8 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 }
 
 // !!!
-static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name,
-                                    std::map<std::string, Hotkey> &value)
+static void ini_handle_config_value(
+    mINI::INIStructure &ini, const std::string &field_name, std::map<std::string, Hotkey> &value)
 {
     // Structure:
     // [action_fullpath]

@@ -27,9 +27,8 @@ t_lua_environment *get_environment_for_state(lua_State *lua_state);
  * \param print_callback A callback that is called when the Lua environment prints text.
  * \return The newly created lua environment or an error message if the operation failed.
  */
-std::expected<t_lua_environment *, std::string> create_environment(
-    const std::filesystem::path &path, const t_lua_environment::destroying_func &destroying_callback,
-    const t_lua_environment::print_func &print_callback);
+std::expected<t_lua_environment *, std::string> create_environment(const std::filesystem::path &path,
+    const t_lua_environment::destroying_func &destroying_callback, const t_lua_environment::print_func &print_callback);
 
 /**
  * \brief Begins code execution in the a Lua environment.

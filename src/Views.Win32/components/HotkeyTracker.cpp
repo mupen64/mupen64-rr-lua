@@ -62,8 +62,8 @@ static std::optional<bool> on_key(bool is_up, int32_t key)
     return hit;
 }
 
-static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
-                                                      DWORD_PTR dwRefData)
+static LRESULT CALLBACK action_menu_wnd_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
 {
     auto ctx = static_cast<t_hotkey_tracker_context *>(GetProp(hwnd, HOTKEY_TRACKER_CTX));
 

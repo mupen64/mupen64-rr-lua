@@ -48,7 +48,7 @@ std::string get_latest_release_as_json()
 
     HINTERNET h_request =
         WinHttpOpenRequest(h_connect, L"GET", IOUtils::to_wide_string(REPO_LATEST_RELEASE_URL).c_str(), NULL,
-                           WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+            WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
 
     if (!h_request)
     {
@@ -154,8 +154,8 @@ void show_connectivity_error(bool manual)
 {
     if (manual)
     {
-        DialogService::show_dialog("Failed to fetch update information. Please try again later.", "Update Error",
-                                   fsvc_error);
+        DialogService::show_notification(
+            "Failed to fetch update information. Please try again later.", "Update Error", fsvc_error);
     }
 }
 
@@ -209,7 +209,7 @@ void check(bool manual)
     {
         if (manual)
         {
-            DialogService::show_dialog("You are already up-to-date.", "Already up-to-date", fsvc_information);
+            DialogService::show_notification("You are already up-to-date.", "Already up-to-date", fsvc_information);
         }
 
         return;
@@ -217,8 +217,8 @@ void check(bool manual)
 
 show_prompt:
 
-    const auto result = DialogService::show_multiple_choice_dialog(
-        VIEW_DLG_UPDATE_DIALOG, {"Update Now", "Show Changelog", "Skip Version", "Remind Me Later"},
+    const auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_UPDATE_DIALOG,
+        {"Update Now", "Show Changelog", "Skip Version", "Remind Me Later"},
         std::format("Mupen64 {} is available for download.", version), "Update Available", fsvc_information);
 
     switch (result)

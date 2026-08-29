@@ -7,7 +7,6 @@
 #include "Common.hpp"
 #include <lua/LuaCallbacks.hpp>
 #include <lua/LuaManager.hpp>
-#include <Common.Views/Assert.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
@@ -48,130 +47,130 @@ static int pcall_no_params(lua_State *L)
 
 const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State *)>> CALLBACK_FUNC_MAP = {
     {LuaCallbacks::REG_ATINPUT,
-     [](auto l) -> int {
-         lua_pushinteger(l, current_input_n);
-         return lua_pcall(l, 1, 0, 0);
-     }},
+        [](auto l) -> int {
+            lua_pushinteger(l, current_input_n);
+            return lua_pcall(l, 1, 0, 0);
+        }},
     {LuaCallbacks::REG_WINDOWMESSAGE,
-     [](auto l) -> int {
-         lua_pushinteger(l, (lua_Integer)atwindowmessage_ctx.wnd);
-         lua_pushinteger(l, atwindowmessage_ctx.msg);
-         lua_pushinteger(l, atwindowmessage_ctx.w_param);
-         lua_pushinteger(l, atwindowmessage_ctx.l_param);
-         return lua_pcall(l, 4, 0, 0);
-     }},
+        [](auto l) -> int {
+            lua_pushinteger(l, (lua_Integer)atwindowmessage_ctx.wnd);
+            lua_pushinteger(l, atwindowmessage_ctx.msg);
+            lua_pushinteger(l, atwindowmessage_ctx.w_param);
+            lua_pushinteger(l, atwindowmessage_ctx.l_param);
+            return lua_pcall(l, 4, 0, 0);
+        }},
     {LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED,
-     [](auto l) -> int {
-         lua_pushinteger(l, g_main_ctx.core_ctx->vcr_get_warp_modify_status());
-         return lua_pcall(l, 1, 0, 0);
-     }},
+        [](auto l) -> int {
+            lua_pushinteger(l, g_main_ctx.core_ctx->vcr_get_warp_modify_status());
+            return lua_pcall(l, 1, 0, 0);
+        }},
     {LuaCallbacks::REG_ATKEY,
-     [](auto l) -> int {
-         lua_newtable(l);
-         if (atkey_ctx.keycode.has_value())
-         {
-             lua_pushstring(l, "keycode");
-             lua_pushinteger(l, atkey_ctx.keycode.value());
-             lua_settable(l, -3);
-         }
-         if (atkey_ctx.pressed.has_value())
-         {
-             lua_pushstring(l, "pressed");
-             lua_pushboolean(l, atkey_ctx.pressed.value());
-             lua_settable(l, -3);
-         }
-         if (atkey_ctx.text.has_value())
-         {
-             lua_pushstring(l, "text");
-             lua_pushstring(l, atkey_ctx.text.value().c_str());
-             lua_settable(l, -3);
-         }
-         lua_pushstring(l, "ctrl");
-         lua_pushboolean(l, atkey_ctx.ctrl);
-         lua_settable(l, -3);
+        [](auto l) -> int {
+            lua_newtable(l);
+            if (atkey_ctx.keycode.has_value())
+            {
+                lua_pushstring(l, "keycode");
+                lua_pushinteger(l, atkey_ctx.keycode.value());
+                lua_settable(l, -3);
+            }
+            if (atkey_ctx.pressed.has_value())
+            {
+                lua_pushstring(l, "pressed");
+                lua_pushboolean(l, atkey_ctx.pressed.value());
+                lua_settable(l, -3);
+            }
+            if (atkey_ctx.text.has_value())
+            {
+                lua_pushstring(l, "text");
+                lua_pushstring(l, atkey_ctx.text.value().c_str());
+                lua_settable(l, -3);
+            }
+            lua_pushstring(l, "ctrl");
+            lua_pushboolean(l, atkey_ctx.ctrl);
+            lua_settable(l, -3);
 
-         lua_pushstring(l, "alt");
-         lua_pushboolean(l, atkey_ctx.alt);
-         lua_settable(l, -3);
+            lua_pushstring(l, "alt");
+            lua_pushboolean(l, atkey_ctx.alt);
+            lua_settable(l, -3);
 
-         lua_pushstring(l, "shift");
-         lua_pushboolean(l, atkey_ctx.shift);
-         lua_settable(l, -3);
+            lua_pushstring(l, "shift");
+            lua_pushboolean(l, atkey_ctx.shift);
+            lua_settable(l, -3);
 
-         lua_pushstring(l, "meta");
-         lua_pushboolean(l, atkey_ctx.meta);
-         lua_settable(l, -3);
+            lua_pushstring(l, "meta");
+            lua_pushboolean(l, atkey_ctx.meta);
+            lua_settable(l, -3);
 
-         lua_pushstring(l, "repeat");
-         lua_pushboolean(l, atkey_ctx.repeat);
-         lua_settable(l, -3);
-         return lua_pcall(l, 1, 0, 0);
-     }},
+            lua_pushstring(l, "repeat");
+            lua_pushboolean(l, atkey_ctx.repeat);
+            lua_settable(l, -3);
+            return lua_pcall(l, 1, 0, 0);
+        }},
     {LuaCallbacks::REG_ATMOUSE,
-     [](auto l) -> int {
-         lua_newtable(l);
+        [](auto l) -> int {
+            lua_newtable(l);
 
-         lua_pushstring(l, "x");
-         lua_pushinteger(l, atmouse_ctx.x);
-         lua_settable(l, -3);
+            lua_pushstring(l, "x");
+            lua_pushinteger(l, atmouse_ctx.x);
+            lua_settable(l, -3);
 
-         lua_pushstring(l, "y");
-         lua_pushinteger(l, atmouse_ctx.y);
-         lua_settable(l, -3);
+            lua_pushstring(l, "y");
+            lua_pushinteger(l, atmouse_ctx.y);
+            lua_settable(l, -3);
 
-         lua_pushstring(l, "ctrl");
-         lua_pushboolean(l, atmouse_ctx.ctrl);
-         lua_settable(l, -3);
+            lua_pushstring(l, "ctrl");
+            lua_pushboolean(l, atmouse_ctx.ctrl);
+            lua_settable(l, -3);
 
-         lua_pushstring(l, "alt");
-         lua_pushboolean(l, atmouse_ctx.alt);
-         lua_settable(l, -3);
+            lua_pushstring(l, "alt");
+            lua_pushboolean(l, atmouse_ctx.alt);
+            lua_settable(l, -3);
 
-         lua_pushstring(l, "shift");
-         lua_pushboolean(l, atmouse_ctx.shift);
-         lua_settable(l, -3);
+            lua_pushstring(l, "shift");
+            lua_pushboolean(l, atmouse_ctx.shift);
+            lua_settable(l, -3);
 
-         lua_pushstring(l, "meta");
-         lua_pushboolean(l, atmouse_ctx.meta);
-         lua_settable(l, -3);
+            lua_pushstring(l, "meta");
+            lua_pushboolean(l, atmouse_ctx.meta);
+            lua_settable(l, -3);
 
-         if (atmouse_ctx.x_wheel.has_value())
-         {
-             lua_pushstring(l, "x_wheel");
-             lua_pushinteger(l, atmouse_ctx.x_wheel.value());
-             lua_settable(l, -3);
-         }
+            if (atmouse_ctx.x_wheel.has_value())
+            {
+                lua_pushstring(l, "x_wheel");
+                lua_pushinteger(l, atmouse_ctx.x_wheel.value());
+                lua_settable(l, -3);
+            }
 
-         if (atmouse_ctx.y_wheel.has_value())
-         {
-             lua_pushstring(l, "y_wheel");
-             lua_pushinteger(l, atmouse_ctx.y_wheel.value());
-             lua_settable(l, -3);
-         }
+            if (atmouse_ctx.y_wheel.has_value())
+            {
+                lua_pushstring(l, "y_wheel");
+                lua_pushinteger(l, atmouse_ctx.y_wheel.value());
+                lua_settable(l, -3);
+            }
 
-         if (atmouse_ctx.button.has_value())
-         {
-             lua_pushstring(l, "button");
-             lua_pushinteger(l, atmouse_ctx.button.value());
-             lua_settable(l, -3);
-         }
+            if (atmouse_ctx.button.has_value())
+            {
+                lua_pushstring(l, "button");
+                lua_pushinteger(l, atmouse_ctx.button.value());
+                lua_settable(l, -3);
+            }
 
-         if (atmouse_ctx.pressed.has_value())
-         {
-             lua_pushstring(l, "pressed");
-             lua_pushboolean(l, atmouse_ctx.pressed.value());
-             lua_settable(l, -3);
-         }
+            if (atmouse_ctx.pressed.has_value())
+            {
+                lua_pushstring(l, "pressed");
+                lua_pushboolean(l, atmouse_ctx.pressed.value());
+                lua_settable(l, -3);
+            }
 
-         if (atmouse_ctx.double_click.has_value())
-         {
-             lua_pushstring(l, "double_click");
-             lua_pushboolean(l, atmouse_ctx.double_click.value());
-             lua_settable(l, -3);
-         }
+            if (atmouse_ctx.double_click.has_value())
+            {
+                lua_pushstring(l, "double_click");
+                lua_pushboolean(l, atmouse_ctx.double_click.value());
+                lua_settable(l, -3);
+            }
 
-         return lua_pcall(l, 1, 0, 0);
-     }},
+            return lua_pcall(l, 1, 0, 0);
+        }},
 
 };
 
@@ -189,9 +188,9 @@ void LuaCallbacks::call_window_message(void *wnd, unsigned int msg, std::uintptr
     RET_IF_NOT_REGISTERED(REG_WINDOWMESSAGE);
 
     atwindowmessage_ctx = {.wnd = static_cast<HWND>(wnd),
-                           .msg = msg,
-                           .w_param = static_cast<WPARAM>(w),
-                           .l_param = static_cast<LPARAM>(l)};
+        .msg = msg,
+        .w_param = static_cast<WPARAM>(w),
+        .l_param = static_cast<LPARAM>(l)};
 
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_WINDOWMESSAGE); });
 }
@@ -282,10 +281,10 @@ void LuaCallbacks::call_atmouse(const LuaMouseEventArgs &args)
     g_main_ctx.dispatcher->invoke([=] { invoke_callbacks_with_key_on_all_instances(REG_ATMOUSE); });
 }
 
-bool invoke_callbacks_with_key_impl(const t_lua_environment *lua, const std::function<int(lua_State *)> &function,
-                                    LuaCallbacks::callback_key key)
+bool invoke_callbacks_with_key_impl(
+    const t_lua_environment *lua, const std::function<int(lua_State *)> &function, LuaCallbacks::callback_key key)
 {
-    RT_ASSERT(is_on_gui_thread(), "not on GUI thread");
+    NEED(is_on_gui_thread(), "not on GUI thread");
 
     lua_State *L = lua->L;
 

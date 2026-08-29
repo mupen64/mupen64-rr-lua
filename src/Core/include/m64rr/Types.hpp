@@ -6,10 +6,6 @@
 
 // ReSharper disable CppInconsistentNaming
 #pragma once
-#include <cstdint>
-#include <filesystem>
-#include <functional>
-#include <string>
 
 /**
  * An enum containing results that can be returned by the core.
@@ -63,8 +59,6 @@ typedef enum
     VCR_WarpModifyNeedsRecordingTask,
     // The provided input buffer is empty
     VCR_WarpModifyEmptyInputBuffer,
-    // Another seek operation is already running
-    VCR_SeekAlreadyRunning,
     // The seek operation could not be initiated due to a savestate not being loaded successfully
     VCR_SeekSavestateLoadFailed,
     // The seek operation can't be initiated because the seek savestate interval is 0
@@ -363,7 +357,7 @@ struct core_cfg
 // ==========================================
 
 typedef std::common_type_t<std::chrono::duration<int64_t, std::ratio<1, 1000000000>>,
-                           std::chrono::duration<int64_t, std::ratio<1, 1000000000>>>
+    std::chrono::duration<int64_t, std::ratio<1, 1000000000>>>
     core_timer_delta;
 constexpr uint8_t core_timer_max_deltas = 60;
 

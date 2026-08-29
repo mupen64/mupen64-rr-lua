@@ -223,20 +223,13 @@ static int GetAddress(lua_State *L)
         x, n                                                                                                           \
     }
     const NameAndVariable list[] = {A("rdram", g_main_ctx.core_ctx->rdram),
-                                    A("rdram_register", g_main_ctx.core_ctx->rdram_register),
-                                    A("MI_register", g_main_ctx.core_ctx->mi_register),
-                                    A("pi_register", g_main_ctx.core_ctx->pi_register),
-                                    A("sp_register", g_main_ctx.core_ctx->sp_register),
-                                    A("rsp_register", g_main_ctx.core_ctx->rsp_register),
-                                    A("si_register", g_main_ctx.core_ctx->si_register),
-                                    A("vi_register", g_main_ctx.core_ctx->vi_register),
-                                    A("ri_register", g_main_ctx.core_ctx->ri_register),
-                                    A("ai_register", g_main_ctx.core_ctx->ai_register),
-                                    A("dpc_register", g_main_ctx.core_ctx->dpc_register),
-                                    A("dps_register", g_main_ctx.core_ctx->dps_register),
-                                    B("SP_DMEM", g_main_ctx.core_ctx->sp_dmem),
-                                    B("PIF_RAM", g_main_ctx.core_ctx->PIF_RAM),
-                                    {NULL, NULL}};
+        A("rdram_register", g_main_ctx.core_ctx->rdram_register), A("MI_register", g_main_ctx.core_ctx->mi_register),
+        A("pi_register", g_main_ctx.core_ctx->pi_register), A("sp_register", g_main_ctx.core_ctx->sp_register),
+        A("rsp_register", g_main_ctx.core_ctx->rsp_register), A("si_register", g_main_ctx.core_ctx->si_register),
+        A("vi_register", g_main_ctx.core_ctx->vi_register), A("ri_register", g_main_ctx.core_ctx->ri_register),
+        A("ai_register", g_main_ctx.core_ctx->ai_register), A("dpc_register", g_main_ctx.core_ctx->dpc_register),
+        A("dps_register", g_main_ctx.core_ctx->dps_register), B("SP_DMEM", g_main_ctx.core_ctx->sp_dmem),
+        B("PIF_RAM", g_main_ctx.core_ctx->PIF_RAM), {NULL, NULL}};
 #undef A
 #undef B
     const char *s = lua_tostring(L, 1);

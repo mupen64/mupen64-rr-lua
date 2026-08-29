@@ -6,7 +6,6 @@
 
 #include "Common.hpp"
 #include "ReorderableListView.hpp"
-#include <Common.Views/Assert.hpp>
 
 namespace ReorderableListView
 {
@@ -58,8 +57,8 @@ static void draw_reorder_bar(const Context &ctx, int index)
     ReleaseDC(ctx.lv_hwnd, hdc);
 }
 
-LRESULT CALLBACK parent_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                      DWORD_PTR ref_data)
+LRESULT CALLBACK parent_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     auto ctx = static_cast<Context *>(GetProp(hwnd, CTX_KEY));
 
@@ -87,8 +86,8 @@ LRESULT CALLBACK parent_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
     return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
-LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                        DWORD_PTR ref_data)
+LRESULT CALLBACK listview_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     auto ctx = static_cast<Context *>(GetProp(hwnd, CTX_KEY));
 
@@ -178,15 +177,15 @@ void make_reorderable(HWND hwnd, HWND parent_hwnd, const Params &params)
     bool success = true;
 
     success = SetProp(parent_hwnd, CTX_KEY, context);
-    RT_ASSERT(success, "Failed to set context property on parent");
+    NEED(success, "Failed to set context property on parent");
 
     success = SetProp(hwnd, CTX_KEY, context);
-    RT_ASSERT(success, "Failed to set context property on list view");
+    NEED(success, "Failed to set context property on list view");
 
     success = SetWindowSubclass(parent_hwnd, parent_subclass_proc, 0, 0);
-    RT_ASSERT(success, "Failed to set parent window subclass");
+    NEED(success, "Failed to set parent window subclass");
 
     success = SetWindowSubclass(hwnd, listview_subclass_proc, 0, 0);
-    RT_ASSERT(success, "Failed to set list view subclass");
+    NEED(success, "Failed to set list view subclass");
 }
 } // namespace ReorderableListView

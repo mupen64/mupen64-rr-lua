@@ -7,9 +7,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #
 
 # Common Win32 plugin dependencies.
-add_library(Mupen64RR.Plugins.Win32.Common INTERFACE)
-target_link_libraries(Mupen64RR.Plugins.Win32.Common INTERFACE
-    Mupen64RR.Plugins.Common
-    Mupen64RR.Common.Win32
-    Mupen64RR.Views.Win32.Headers
+add_library(Mupen64RR_Plugins_Win32_Common INTERFACE)
+target_link_libraries(Mupen64RR_Plugins_Win32_Common INTERFACE
+    Mupen64RR_Plugins_Common
+    Mupen64RR_Common_Win32
+    Mupen64RR_Views_Win32_Headers
 )

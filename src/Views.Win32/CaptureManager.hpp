@@ -34,7 +34,7 @@ bool is_capturing();
  * emulator thread. Emulation will be paused until the operation completes.
  */
 void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, bool ask_for_capture_settings = true,
-                   const std::function<void(bool)> &callback = nullptr);
+    const std::function<void(bool)> &callback = nullptr);
 
 /**
  * \brief Stops capturing a video.

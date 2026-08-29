@@ -27,7 +27,7 @@
 
       "inherits": "sys-linux",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ]

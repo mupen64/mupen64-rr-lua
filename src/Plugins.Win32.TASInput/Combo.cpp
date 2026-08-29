@@ -9,8 +9,8 @@
 
 bool t_combo::uses_joystick() const
 {
-    return std::any_of(samples.begin(), samples.end(),
-                       [](const CoreButtons sample) { return sample.x != 0 || sample.y != 0; });
+    return std::any_of(
+        samples.begin(), samples.end(), [](const CoreButtons sample) { return sample.x != 0 || sample.y != 0; });
 }
 
 std::vector<uint8_t> t_combo::serialize() const
@@ -26,13 +26,13 @@ std::vector<uint8_t> t_combo::serialize() const
     // 2. Write the size of the samples vector.
     uint32_t samples_size = this->samples.size();
     buffer.insert(buffer.end(), reinterpret_cast<uint8_t *>(&samples_size),
-                  reinterpret_cast<uint8_t *>(&samples_size) + sizeof(samples_size));
+        reinterpret_cast<uint8_t *>(&samples_size) + sizeof(samples_size));
 
     // 3. Write the samples vector.
     const auto input_begin_offset = buffer.size();
     buffer.resize(buffer.size() + sizeof(this->samples[0]) * this->samples.size());
-    std::memcpy(buffer.data() + input_begin_offset, this->samples.data(),
-                sizeof(this->samples[0]) * this->samples.size());
+    std::memcpy(
+        buffer.data() + input_begin_offset, this->samples.data(), sizeof(this->samples[0]) * this->samples.size());
 
     return buffer;
 }

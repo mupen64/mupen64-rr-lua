@@ -5,7 +5,6 @@
  */
 
 #include <Common.Views/App.hpp>
-#include <Common.Views/Assert.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Resampler.hpp>
@@ -89,7 +88,7 @@ std::optional<std::string> WinVFWEncoder::start(Params params)
     }
 
     if (AVIStreamSetFormat(m_compressed_video_stream, 0, &m_info_hdr,
-                           m_info_hdr.biSize + m_info_hdr.biClrUsed * sizeof(RGBQUAD)) != AVIERR_OK)
+            m_info_hdr.biSize + m_info_hdr.biClrUsed * sizeof(RGBQUAD)) != AVIERR_OK)
     {
         stop_impl();
         return "Failed to set video stream format.";
@@ -222,7 +221,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
     if (len <= 0) return true;
 
     const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / SOUND_BUF_SIZE;
-    RT_ASSERT(fill_percentage <= 80, "Audio buffer overflowed");
+    NEED(fill_percentage <= 80, "Audio buffer overflowed");
 
     memcpy(m_sound_buf + sound_buf_pos, buf, len);
     sound_buf_pos += len;
@@ -235,21 +234,21 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
     if (expected_len <= 0 || (expected_len % 8) != 0) return true;
 
     int resampled_len = Resampler::resample(&m_resampled_sound, RESAMPLED_FREQ, reinterpret_cast<short *>(m_sound_buf),
-                                            m_params.arate, bitrate, sound_buf_pos);
+        m_params.arate, bitrate, sound_buf_pos);
 
     if (resampled_len <= 0) return true;
 
-    RT_ASSERT((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
+    NEED((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
 
     BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, resampled_len / m_sound_format.nBlockAlign,
-                                   m_resampled_sound, resampled_len, 0, NULL, NULL));
+                        m_resampled_sound, resampled_len, 0, NULL, NULL));
 
     if (!ok)
     {
         DialogService::show_dialog("Audio output failure!\n"
                                    "A call to AVIStreamWrite failed.\n"
                                    "Perhaps you ran out of memory?",
-                                   "AVI Encoder", fsvc_error);
+            "AVI Encoder", fsvc_error);
         return false;
     }
 
@@ -263,8 +262,8 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 bool WinVFWEncoder::append_video_impl(uint8_t *image)
 {
     LONG written_len = 0;
-    BOOL ret = AVIStreamWrite(m_compressed_video_stream, m_frame++, 1, image, m_info_hdr.biSizeImage, AVIIF_KEYFRAME,
-                              NULL, &written_len);
+    BOOL ret = AVIStreamWrite(
+        m_compressed_video_stream, m_frame++, 1, image, m_info_hdr.biSizeImage, AVIIF_KEYFRAME, NULL, &written_len);
     m_avi_file_size += written_len;
 
     if (ret != 0)

@@ -195,17 +195,30 @@ struct t_controller_config
     {
 #define TASINPUT_FIELD(field) .field = j[#field]
         self = {
-            TASINPUT_FIELD(dpad_right), TASINPUT_FIELD(dpad_left), TASINPUT_FIELD(dpad_down), TASINPUT_FIELD(dpad_up),
-            TASINPUT_FIELD(c_right),    TASINPUT_FIELD(c_left),    TASINPUT_FIELD(c_down),    TASINPUT_FIELD(c_up),
-            TASINPUT_FIELD(a),          TASINPUT_FIELD(b),         TASINPUT_FIELD(z),         TASINPUT_FIELD(start),
-            TASINPUT_FIELD(l),          TASINPUT_FIELD(r),         TASINPUT_FIELD(x),         TASINPUT_FIELD(y),
-            TASINPUT_FIELD(x_scale),    TASINPUT_FIELD(y_scale),
+            TASINPUT_FIELD(dpad_right),
+            TASINPUT_FIELD(dpad_left),
+            TASINPUT_FIELD(dpad_down),
+            TASINPUT_FIELD(dpad_up),
+            TASINPUT_FIELD(c_right),
+            TASINPUT_FIELD(c_left),
+            TASINPUT_FIELD(c_down),
+            TASINPUT_FIELD(c_up),
+            TASINPUT_FIELD(a),
+            TASINPUT_FIELD(b),
+            TASINPUT_FIELD(z),
+            TASINPUT_FIELD(start),
+            TASINPUT_FIELD(l),
+            TASINPUT_FIELD(r),
+            TASINPUT_FIELD(x),
+            TASINPUT_FIELD(y),
+            TASINPUT_FIELD(x_scale),
+            TASINPUT_FIELD(y_scale),
         };
 #undef TASINPUT_FIELD
     }
 };
 
-struct t_config
+struct t_input_config
 {
     int32_t version = 7;
     int32_t always_on_top = false;
@@ -220,10 +233,11 @@ struct t_config
     // Increments joystick position by the value of the magnitude slider when moving via keyboard or gamepad
     int32_t relative_mode = false;
     int32_t approach_mode = false;
+    int32_t wrap_joystick = false;
     t_controller_config controller_config[4] = {t_controller_config::keyboard_config(), {}, {}, {}};
     std::optional<SDL_GUID> preferred_device_guid;
 
-    friend void to_json(nlohmann::json &j, const t_config &self)
+    friend void to_json(nlohmann::json &j, const t_input_config &self)
     {
 #define TASINPUT_FIELD(field) {#field, self.field}
 #define TASINPUT_ARRAY_FIELD(field) nlohmann::to_json(j[#field], self.field)
@@ -236,6 +250,7 @@ struct t_config
             TASINPUT_FIELD(loop_combo),
             TASINPUT_FIELD(relative_mode),
             TASINPUT_FIELD(approach_mode),
+            TASINPUT_FIELD(wrap_joystick),
             TASINPUT_FIELD(preferred_device_guid),
         });
         TASINPUT_ARRAY_FIELD(dialog_expanded);
@@ -247,9 +262,9 @@ struct t_config
 #undef TASINPUT_ARRAY_FIELD
     }
 
-    friend void from_json(const nlohmann::json &j, t_config &self)
+    friend void from_json(const nlohmann::json &j, t_input_config &self)
     {
-        if (!j.is_object()) throw std::domain_error("t_config expected JSON object");
+        if (!j.is_object()) throw std::domain_error("t_input_config expected JSON object");
 #define TASINPUT_FIELD(field) nlohmann::from_json(j.at(#field), self.field)
         self = {};
         TASINPUT_FIELD(version);
@@ -262,6 +277,7 @@ struct t_config
             TASINPUT_FIELD(loop_combo);
             TASINPUT_FIELD(relative_mode);
             TASINPUT_FIELD(approach_mode);
+            TASINPUT_FIELD(wrap_joystick);
             TASINPUT_FIELD(dialog_expanded);
             TASINPUT_FIELD(controller_active);
             TASINPUT_FIELD(controller_mempak);
@@ -273,7 +289,7 @@ struct t_config
     }
 };
 
-extern t_config new_config;
+extern t_input_config new_config;
 
 /**
  * \brief Saves the current config to a file

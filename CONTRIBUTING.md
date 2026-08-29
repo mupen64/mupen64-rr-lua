@@ -27,7 +27,7 @@ If you want to save space, you can skip installing Qt Creator, CMake, Ninja; the
 Arch (and relatives):
 ```sh
 # core dependencies
-sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lz4 lua
+sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lz4 lua glew
 yay -S --needed libsafec
 
 # Qt frontend
@@ -165,7 +165,9 @@ Code formatting must abide by the [.clang-format](https://github.com/mupen64/mup
 
 Failure to comply will fail the check-format workflow.
 
-Naming must abide by the [.clang-tidy](https://github.com/mupen64/mupen64-rr-lua/blob/master/.clang-tidy) file provided in the repository root.
+Naming must abide by the [.clang-tidy](https://github.com/mupen64/mupen64-rr-lua/blob/master/.clang-tidy) file provided in the repository root, except for the `Views.Qt6` module, where they should follow Qt conventions.
+
+CMake targets must remain 
 
 # Merge/Release Checklist
 

@@ -9,9 +9,9 @@
 
 #define CONFIG_FILE_NAME "TASRSP.json"
 
-t_config config = {};
-t_config default_config = {};
-t_config prev_config = {};
+t_rsp_config config = {};
+t_rsp_config default_config = {};
+t_rsp_config prev_config = {};
 
 static std::filesystem::path get_config_path()
 {

@@ -6,12 +6,12 @@
 
 #include "Common.hpp"
 #include <NewConfig.hpp>
-#include <MiscHelpers.hpp>
+
 #include <Main.hpp>
 #include <GamepadManager.hpp>
 
-const t_config default_config{};
-t_config new_config{};
+const t_input_config default_config{};
+t_input_config new_config{};
 
 static std::filesystem::path get_config_path()
 {

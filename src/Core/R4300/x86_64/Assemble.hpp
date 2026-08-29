@@ -5,7 +5,6 @@
  */
 
 #pragma once
-#include <cstdint>
 
 #define EAX 0
 #define ECX 1
@@ -173,12 +172,12 @@ void mov_reg32_preg32x4preg32(int32_t reg1, int32_t reg2, int32_t reg3);
 void mov_reg32_preg32x4preg32pimm32(int32_t reg1, int32_t reg2, int32_t reg3, uint32_t imm32);
 void mov_reg32_preg32x4pimm32(int32_t reg1, int32_t reg2, uint32_t imm32);
 void mov_reg32_preg32x4pimm64(int32_t reg1, int32_t reg2,
-                              uint64_t ptr); // x64: load 64-bit ptr into R10 then mov [idx*4+R10]
+    uint64_t ptr); // x64: load 64-bit ptr into R10 then mov [idx*4+R10]
 void mov_reg32_preg32x4_r10(int32_t dst_reg, int32_t index_reg,
-                            uint64_t func_ptr); // x64: load 64-bit func_ptr into R10 then mov [idx*4+R10]
+    uint64_t func_ptr); // x64: load 64-bit func_ptr into R10 then mov [idx*4+R10]
 void cmp_reg32_prx4_r10(int32_t index_reg,
-                        uint64_t func_ptr); // x64: load 64-bit func_ptr into R10, mov to r11, for compare ops
-void mov_rax_r11_idx4(int32_t idx_reg);     // x64: mov rax, [r11 + idx*4] - base already in r11
+    uint64_t func_ptr);                 // x64: load 64-bit func_ptr into R10, mov to r11, for compare ops
+void mov_rax_r11_idx4(int32_t idx_reg); // x64: mov rax, [r11 + idx*4] - base already in r11
 void and_reg32_imm32(int32_t reg32, uint32_t imm32);
 void and_reg32_imm32(int32_t reg32, uint32_t imm32);
 void movsx_reg32_m8(int32_t reg32, unsigned char *m8);

@@ -8,7 +8,7 @@
 #include <Combo.hpp>
 #include <ConfigDialog.hpp>
 #include <GamepadManager.hpp>
-#include <JoystickControl.hpp>
+#include <Common.Win32/JoystickControl.hpp>
 #include <Main.hpp>
 #include <NewConfig.hpp>
 #include <TASInput.hpp>
@@ -609,18 +609,18 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         GetWindowRect(ctx->hwnd, &ctx->initial_window_rect);
 
         SetWindowPos(ctx->hwnd, nullptr, ctx->window_position.x, ctx->window_position.y, 0, 0,
-                     SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+            SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
         SetWindowText(ctx->hwnd, std::format("TASInput - Controller {}", ctx->controller_index + 1).c_str());
 
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETRANGE, TRUE, MAKELONG(10, 2010));
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETPOS, TRUE,
-                           (int)MiscHelpers::remap(new_config.controller_config[ctx->controller_index].x_scale, 0.0f,
-                                                   1.0f, 10.0f, 2010.0f));
+            (int)MiscHelpers::remap(
+                new_config.controller_config[ctx->controller_index].x_scale, 0.0f, 1.0f, 10.0f, 2010.0f));
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETRANGE, TRUE, MAKELONG(10, 2010));
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETPOS, TRUE,
-                           (int)MiscHelpers::remap(new_config.controller_config[ctx->controller_index].y_scale, 0.0f,
-                                                   1.0f, 10.0f, 2010.0f));
+            (int)MiscHelpers::remap(
+                new_config.controller_config[ctx->controller_index].y_scale, 0.0f, 1.0f, 10.0f, 2010.0f));
 
         SetDlgItemText(ctx->hwnd, IDC_X_DOWN, "3");
         SetDlgItemText(ctx->hwnd, IDC_X_UP, "4");
@@ -639,7 +639,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         const auto scale = GetDpiForWindow(hwnd) / 96.0;
 
         ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, JOYSTICK_CONTROL_CLASS, "", WS_CHILD | WS_VISIBLE, 8, 4,
-                                       131 * scale, 131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
+            131 * scale, 131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
 
         // It can take a bit until we receive the first GetKeys, so let's just show some basic default state in the
         // meanwhile
@@ -650,12 +650,18 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         ctx->ready = true;
     }
     break;
-    case WM_SHOWWINDOW:
-        if (!wparam)
+    case WM_SHOWWINDOW: {
+        if (!wparam) save_config();
+
+        constexpr int controls[] = {IDC_X_DOWN, IDC_X_UP, IDC_Y_DOWN, IDC_Y_UP};
+        for (const auto id : controls)
         {
-            save_config();
+            const auto control = GetDlgItem(hwnd, id);
+            SendMessage(control, WM_SETFONT, reinterpret_cast<WPARAM>(icon_font), TRUE);
         }
+
         break;
+    }
     case SC_MINIMIZE:
         DestroyMenu(hmenu);
         break;
@@ -878,14 +884,28 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         case IDC_X_DOWN:
         case IDC_X_UP: {
             int increment = get_joystick_increment(LOWORD(wparam) == IDC_X_UP);
-            ctx->current_input.x = MiscHelpers::wrapping_clamp(ctx->current_input.x + increment, -128, 127);
+            if (new_config.wrap_joystick)
+            {
+                ctx->current_input.x = MiscHelpers::wrapping_clamp(ctx->current_input.x + increment, -128, 127);
+            }
+            else
+            {
+                ctx->current_input.x = std::clamp(ctx->current_input.x + increment, -128, 127);
+            }
             ctx->set_visuals(ctx->current_input);
         }
         break;
         case IDC_Y_DOWN:
         case IDC_Y_UP: {
             int increment = get_joystick_increment(LOWORD(wparam) == IDC_Y_UP);
-            ctx->current_input.y = MiscHelpers::wrapping_clamp(ctx->current_input.y + increment, -128, 127);
+            if (new_config.wrap_joystick)
+            {
+                ctx->current_input.y = MiscHelpers::wrapping_clamp(ctx->current_input.y + increment, -128, 127);
+            }
+            else
+            {
+                ctx->current_input.y = std::clamp(ctx->current_input.y + increment, -128, 127);
+            }
             ctx->set_visuals(ctx->current_input);
         }
         break;
@@ -985,9 +1005,9 @@ void Status::start_edit(int id)
 {
     RECT item_rect;
     ListBox_GetItemRect(combo_listbox, id, &item_rect);
-    combo_edit_box = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
-                                    item_rect.top, item_rect.right - item_rect.left,
-                                    item_rect.bottom - item_rect.top + 4, combo_listbox, 0, g_inst, 0);
+    combo_edit_box =
+        CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left, item_rect.top,
+            item_rect.right - item_rect.left, item_rect.bottom - item_rect.top + 4, combo_listbox, 0, g_inst, 0);
     // Clear selection to prevent it from repainting randomly and fighting with our textbox
     ListBox_SetCurSel(combo_listbox, -1);
     SendMessage(combo_edit_box, WM_SETFONT, (WPARAM)SendMessage(combo_listbox, WM_GETFONT, 0, 0), 0);
@@ -1068,9 +1088,10 @@ bool Status::show_context_menu(int x, int y)
 
     // HACK: disable topmost so menu doesnt appear under tasinput
     hmenu = CreatePopupMenu();
-#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_config, x), y)
+#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_input_config, x), y)
     ADD_ITEM(hmenu, relative_mode, "Relative");
     ADD_ITEM(hmenu, approach_mode, "Approach");
+    ADD_ITEM(hmenu, wrap_joystick, "Wrap joystick");
     AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
     ADD_ITEM(hmenu, always_on_top, "Always on top");
     ADD_ITEM(hmenu, float_from_parent, "Float from parent");
@@ -1146,12 +1167,13 @@ void Status::on_config_changed()
         combos_hwnd = CreateDialogParam(g_inst, MAKEINTRESOURCE(IDD_COMBOS), hwnd, combos_dlgproc, (LPARAM)this);
         CheckDlgButton(combos_hwnd, IDC_LOOP, new_config.loop_combo);
 
-        RECT expanded_rect = rect;
         RECT combos_dlg_rect{};
         GetClientRect(combos_hwnd, &combos_dlg_rect);
-        expanded_rect.bottom += combos_dlg_rect.bottom;
 
-        SetWindowPos(hwnd, nullptr, 0, 0, expanded_rect.right, expanded_rect.bottom, SWP_NOMOVE);
+        RECT rc{};
+        GetWindowRect(hwnd, &rc);
+        SetWindowPos(hwnd, nullptr, 0, 0, rc.right - rc.left,
+            rc.bottom - rc.top + (combos_dlg_rect.bottom - combos_dlg_rect.top), SWP_NOMOVE);
         SetWindowPos(combos_hwnd, nullptr, 0, initial_client_rect.bottom, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW);
     }
 
@@ -1168,16 +1190,12 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     const auto description = "Built-in plugin for Mupen64."
                              "\n\n"
                              "https://mupen64.com";
-    const auto target_version = CURRENT_VERSION;
 
     auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
     metadata->name[result.size] = '\0';
 
     result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
     metadata->description[result.size] = '\0';
-
-    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
-    metadata->target_version[result.size] = '\0';
 }
 
 EXPORT void CALL M64RRProcessEvent(Event event)
@@ -1187,6 +1205,8 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     case M64RRSpec::Event::Type::Initiate: {
         g_inst = GetModuleHandle(nullptr);
         g_plugin = event.initiate.init;
+
+        load_config();
 
         for (int i = 0; i < 4; ++i)
         {
@@ -1199,7 +1219,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         }
 
         icon_font = CreateFont(-20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS,
-                               CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Marlett"));
+            CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Marlett"));
 
         // HACK: perform windows left handed mode check
         // and adjust accordingly
@@ -1238,7 +1258,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             {
                 status[i].controller_index = i;
                 status[i].hwnd = CreateDialogParam(g_inst, MAKEINTRESOURCE(IDD_MAIN), g_plugin->main_window.hwnd(),
-                                                   wndproc, reinterpret_cast<LPARAM>(&status[i]));
+                    wndproc, reinterpret_cast<LPARAM>(&status[i]));
             }
         }
 

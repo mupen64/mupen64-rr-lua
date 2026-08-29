@@ -53,7 +53,7 @@ static int remove_breakpoint(lua_State *L)
     g_main_ctx.core_ctx->dbg_remove_breakpoint(id);
 
     const auto it = std::find_if(env->active_breakpoints.begin(), env->active_breakpoints.end(),
-                                 [&](const std::pair<CoreBreakpointId, uintptr_t *> &v) { return v.first == id; });
+        [&](const std::pair<CoreBreakpointId, uintptr_t *> &v) { return v.first == id; });
     if (it != env->active_breakpoints.end())
     {
         lua_freecallback(L, it->second);

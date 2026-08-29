@@ -4,7 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Plugins.Win32.TASInput STATIC
+add_library(Mupen64RR_Plugins_Win32_TASInput STATIC
     "TASInput.hpp"
     "Common.hpp"
     "Resource.h"
@@ -24,21 +24,22 @@ add_library(Mupen64RR.Plugins.Win32.TASInput STATIC
 
     "Resource.rc"
 )
-target_compile_features(Mupen64RR.Plugins.Win32.TASInput PRIVATE cxx_std_26)
-set_target_properties(Mupen64RR.Plugins.Win32.TASInput PROPERTIES
+mupen64rr_reuse_common_pch(Mupen64RR_Plugins_Win32_TASInput)
+target_compile_features(Mupen64RR_Plugins_Win32_TASInput PRIVATE cxx_std_26)
+set_target_properties(Mupen64RR_Plugins_Win32_TASInput PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
     OUTPUT_NAME "TASInput"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
-target_include_directories(Mupen64RR.Plugins.Win32.TASInput PRIVATE ".")
-target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE
-    Mupen64RR.Plugins.Win32.Common
+target_include_directories(Mupen64RR_Plugins_Win32_TASInput PRIVATE ".")
+target_link_libraries(Mupen64RR_Plugins_Win32_TASInput PRIVATE
+    Mupen64RR_Plugins_Win32_Common
     SDL3::SDL3
     nlohmann_json::nlohmann_json
 )
-target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE
+target_link_libraries(Mupen64RR_Plugins_Win32_TASInput PRIVATE
     setupapi
     hid
     imm32
@@ -49,7 +50,7 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE
     gdiplus
 )
 
-target_compile_definitions(Mupen64RR.Plugins.Win32.TASInput PRIVATE
+target_compile_definitions(Mupen64RR_Plugins_Win32_TASInput PRIVATE
     M64RRGetMetadata=M64RRBuiltinTASInputGetMetadata
     M64RRProcessEvent=M64RRBuiltinTASInputProcessEvent
     M64RRReadController=M64RRBuiltinTASInputReadController

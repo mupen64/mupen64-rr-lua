@@ -52,6 +52,19 @@ struct t_config
         ModernWithReadOnly
     };
 
+    /**
+     * \brief Describes how toasts are shown.
+     */
+    enum class ToastMode : uint8_t
+    {
+        // Toasts are shown in non-modal windows.
+        Window,
+        // Toasts are shown in the statusbar.
+        Statusbar,
+        // Toasts are shown in modal dialogs.
+        Dialog
+    };
+
     /// <summary>
     /// The core config.
     /// </summary>
@@ -167,7 +180,8 @@ struct t_config
     /// <summary>
     /// FFmpeg options.
     /// </summary>
-    std::string ffmpeg_options = "-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -vf vflip";
+    std::string ffmpeg_options =
+        "-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -vf \"vflip,format=yuv420p\"";
 
     /// <summary>
     /// FFmpeg binary path
@@ -272,6 +286,9 @@ struct t_config
     /// The main window's height
     /// </summary>
     int32_t window_height = 480;
+
+    // The mode in which toasts are displayed.
+    int32_t toast_mode = (int32_t)ToastMode::Window;
 
     /// <summary>
     /// The width of rombrowser columns by index

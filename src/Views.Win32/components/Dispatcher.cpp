@@ -6,7 +6,6 @@
 
 #include "Common.hpp"
 #include "Dispatcher.hpp"
-#include <Common.Views/Assert.hpp>
 
 // #define DISPATCHER_OVERHEAD_LOGGING
 
@@ -33,7 +32,7 @@ void Dispatcher::execute()
 {
     if (m_func == nullptr) return;
 
-    RT_ASSERT(GetCurrentThreadId() == m_thread_id, "Dispatcher::execute() called from incorrect thread");
+    NEED(GetCurrentThreadId() == m_thread_id, "Dispatcher::execute() called from incorrect thread");
 
 #ifdef DISPATCHER_OVERHEAD_LOGGING
     const auto execute_start = std::chrono::high_resolution_clock::now();
@@ -67,7 +66,7 @@ void Dispatcher::execute()
     }
     double avg_overhead_time = overhead_sum / (double)std::size(m_overhead_times);
 
-    g_view_logger->trace("[Dispatcher] id {} overhead avg {:.0f}ns ({:.2f}%)", m_thread_id, avg_overhead_time,
-                         avg_overhead_percentage);
+    g_view_logger->trace(
+        "[Dispatcher] id {} overhead avg {:.0f}ns ({:.2f}%)", m_thread_id, avg_overhead_time, avg_overhead_percentage);
 #endif
 }

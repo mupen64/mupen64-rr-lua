@@ -6,7 +6,6 @@
 
 #include "Common.hpp"
 #include <Common.Views/Config.hpp>
-#include <uxtheme.h>
 #include <components/RomBrowser.hpp>
 #include <components/Statusbar.hpp>
 #include <action/AppActions.hpp>
@@ -46,9 +45,9 @@ std::vector<std::filesystem::path> discover_roms()
     if (std::filesystem::is_directory(abs_rom_directory))
     {
         // this filters a directory iterator to get the paths of all regular files.
-        auto only_file_paths =
-            std::views::filter([](const std::filesystem::directory_entry &entry) { return entry.is_regular_file(); }) |
-            std::views::transform([](const std::filesystem::directory_entry &entry) { return entry.path(); });
+        auto only_file_paths = std::views::filter([](const std::filesystem::directory_entry &entry) {
+            return entry.is_regular_file();
+        }) | std::views::transform([](const std::filesystem::directory_entry &entry) { return entry.path(); });
 
         if (g_config.is_rombrowser_recursion_enabled)
         {
@@ -135,10 +134,10 @@ void rombrowser_create()
     GetWindowRect(Statusbar::hwnd(), &rstatus);
 
     g_ctx.hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
-                                WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS, 0,
-                                rtool.bottom - rtool.top, rcl.right - rcl.left,
-                                rcl.bottom - rcl.top - rtool.bottom + rtool.top - rstatus.bottom + rstatus.top,
-                                g_main_ctx.hwnd, (HMENU)IDC_ROMLIST, g_main_ctx.hinst, NULL);
+        WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS, 0,
+        rtool.bottom - rtool.top, rcl.right - rcl.left,
+        rcl.bottom - rcl.top - rtool.bottom + rtool.top - rstatus.bottom + rstatus.top, g_main_ctx.hwnd,
+        (HMENU)IDC_ROMLIST, g_main_ctx.hinst, NULL);
     ListView_SetExtendedListViewStyle(g_ctx.hwnd, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
     const HIMAGELIST h_small = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 11, 0);
@@ -258,7 +257,6 @@ static void build_impl()
                 g_main_ctx.core_ctx->vr_byteswap((uint8_t *)&header);
 
                 MiscHelpers::strtrim((char *)header.nom, sizeof(header.nom));
-                header.nom[sizeof(header.nom) - 1] = '\0';
 
                 entry.header = header;
             }
@@ -297,7 +295,7 @@ static void build_impl()
     });
 
     g_view_logger->info("Rombrowser loading took {}ms",
-                        static_cast<int>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000));
+        static_cast<int>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000));
 }
 
 void build()
@@ -368,8 +366,8 @@ notify(LPARAM lparam)
                 break;
             case 2: {
                 char filename[MAX_PATH] = {0};
-                _splitpath_s(rombrowser_entry.path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename),
-                             nullptr, 0);
+                _splitpath_s(
+                    rombrowser_entry.path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr, 0);
                 text = filename;
                 break;
             }

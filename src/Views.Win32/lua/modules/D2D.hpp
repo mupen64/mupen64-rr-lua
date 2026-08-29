@@ -8,7 +8,7 @@
 
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaManager.hpp>
-#include <Common.Views/Assert.hpp>
+#include <Common/Assert.hpp>
 
 namespace LuaCore::D2D
 {
@@ -53,11 +53,11 @@ typedef struct
 
 #define D2D_GET_RECT(L, idx)                                                                                           \
     D2D1::RectF(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                  \
-                luaL_checknumber(L, idx + 3))
+        luaL_checknumber(L, idx + 3))
 
 #define D2D_GET_COLOR(L, idx)                                                                                          \
     D2D1::ColorF(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                 \
-                 luaL_checknumber(L, idx + 3))
+        luaL_checknumber(L, idx + 3))
 
 #define D2D_GET_POINT(L, idx)                                                                                          \
     D2D1_POINT_2F                                                                                                      \
@@ -328,9 +328,9 @@ static int draw_text(lua_State *L)
 
         IDWriteTextFormat *text_format;
 
-        lua->rctx.dw_factory->CreateTextFormat(
-            IOUtils::to_wide_string(font_name).c_str(), nullptr, static_cast<DWRITE_FONT_WEIGHT>(font_weight),
-            static_cast<DWRITE_FONT_STYLE>(font_style), DWRITE_FONT_STRETCH_NORMAL, font_size, L"", &text_format);
+        lua->rctx.dw_factory->CreateTextFormat(IOUtils::to_wide_string(font_name).c_str(), nullptr,
+            static_cast<DWRITE_FONT_WEIGHT>(font_weight), static_cast<DWRITE_FONT_STYLE>(font_style),
+            DWRITE_FONT_STRETCH_NORMAL, font_size, L"", &text_format);
 
         text_format->SetTextAlignment(static_cast<DWRITE_TEXT_ALIGNMENT>(horizontal_alignment));
         text_format->SetParagraphAlignment(static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(vertical_alignment));
@@ -339,8 +339,7 @@ static int draw_text(lua_State *L)
 
         auto wtext = IOUtils::to_wide_string(text);
         lua->rctx.dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format,
-                                               rectangle.right - rectangle.left, rectangle.bottom - rectangle.top,
-                                               &text_layout);
+            rectangle.right - rectangle.left, rectangle.bottom - rectangle.top, &text_layout);
 
         lua->rctx.dw_text_layouts.add(params_hash, text_layout);
         text_format->Release();
@@ -404,13 +403,13 @@ static int measure_text(lua_State *L)
         IDWriteTextFormat *text_format;
 
         lua->rctx.dw_factory->CreateTextFormat(IOUtils::to_wide_string(font_name).c_str(), NULL,
-                                               DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-                                               DWRITE_FONT_STRETCH_NORMAL, font_size, L"", &text_format);
+            DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, font_size, L"",
+            &text_format);
 
         IDWriteTextLayout *text_layout;
 
-        lua->rctx.dw_factory->CreateTextLayout(text.c_str(), text.length(), text_format, max_width, max_height,
-                                               &text_layout);
+        lua->rctx.dw_factory->CreateTextLayout(
+            text.c_str(), text.length(), text_format, max_width, max_height, &text_layout);
 
         DWRITE_TEXT_METRICS text_metrics;
         text_layout->GetMetrics(&text_metrics);
@@ -496,8 +495,8 @@ static int load_image(lua_State *L)
 
     CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pIWICFactory));
 
-    HRESULT hr = pIWICFactory->CreateDecoderFromFilename(IOUtils::to_wide_string(path).c_str(), NULL, GENERIC_READ,
-                                                         WICDecodeMetadataCacheOnLoad, &pDecoder);
+    HRESULT hr = pIWICFactory->CreateDecoderFromFilename(
+        IOUtils::to_wide_string(path).c_str(), NULL, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &pDecoder);
 
     if (!SUCCEEDED(hr))
     {
@@ -508,8 +507,8 @@ static int load_image(lua_State *L)
 
     pIWICFactory->CreateFormatConverter(&pConverter);
     pDecoder->GetFrame(0, &pSource);
-    pConverter->Initialize(pSource, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.0f,
-                           WICBitmapPaletteTypeMedianCut);
+    pConverter->Initialize(
+        pSource, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.0f, WICBitmapPaletteTypeMedianCut);
 
     lua->rctx.d2d_render_target_stack.top()->CreateBitmapFromWicBitmap(pConverter, NULL, &bmp);
 
@@ -544,21 +543,20 @@ static int draw_image2(lua_State *L)
     if (params.color.r == 1.0f && params.color.g == 1.0f && params.color.b == 1.0f)
     {
         lua->rctx.d2d_render_target_stack.top()->DrawBitmap(params.bmp, params.destination_rectangle, params.color.a,
-                                                            (D2D1_BITMAP_INTERPOLATION_MODE)params.interpolation,
-                                                            params.source_rectangle);
+            (D2D1_BITMAP_INTERPOLATION_MODE)params.interpolation, params.source_rectangle);
         return 0;
     }
 
     ComPtr<ID2D1DeviceContext> dc;
     const auto hr = lua->rctx.d2d_render_target_stack.top()->QueryInterface(IID_PPV_ARGS(dc.GetAddressOf()));
-    RT_ASSERT_HR(hr, "Failed to get ID2D1DeviceContext from render target");
+    NEED_HR(hr, "Failed to get ID2D1DeviceContext from render target");
 
     ComPtr<ID2D1Effect> effect;
     dc->CreateEffect(CLSID_D2D1ColorMatrix, effect.GetAddressOf());
 
     effect->SetInput(0, params.bmp);
-    effect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, D2D1::Matrix5x4F(color.r, 0, 0, 0, 0, color.g, 0, 0, 0, 0,
-                                                                          color.b, 0, 0, 0, 0, color.a, 0, 0, 0, 0));
+    effect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX,
+        D2D1::Matrix5x4F(color.r, 0, 0, 0, 0, color.g, 0, 0, 0, 0, color.b, 0, 0, 0, 0, color.a, 0, 0, 0, 0));
 
     D2D1_MATRIX_3X2_F old_transform;
     dc->GetTransform(&old_transform);
@@ -580,7 +578,7 @@ static int draw_image2(lua_State *L)
 
     D2D1_POINT_2F target_offset = D2D1::Point2F(0, 0);
     dc->DrawImage(output.Get(), &target_offset, &params.source_rectangle, (D2D1_INTERPOLATION_MODE)params.interpolation,
-                  D2D1_COMPOSITE_MODE_SOURCE_OVER);
+        D2D1_COMPOSITE_MODE_SOURCE_OVER);
 
     dc->SetTransform(old_transform);
 

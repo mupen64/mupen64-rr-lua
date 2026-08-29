@@ -4,7 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Common.Views STATIC
+add_library(Mupen64RR_Common_Views STATIC
     "include/Common.Views/App.hpp"
     "include/Common.Views/Config.hpp"
     "include/Common.Views/Hotkey.hpp"
@@ -14,18 +14,19 @@ add_library(Mupen64RR.Common.Views STATIC
     "include/Common.Views/Resampler.hpp"
     "include/Common.Views/Encoder.hpp"
     "include/Common.Views/IDialogService.hpp"
-    "include/Common.Views/Assert.hpp"
     "include/Common.Views/ConfigLegacy.hpp"
+    "include/Common.Views/OptionItem.hpp"
     "Config.cpp"
     "ConfigLegacy.cpp"
     "Hotkey.cpp"
     "Messenger.cpp"
     "ActionManager.cpp"
     "Resampler.cpp"
+    "OptionItem.cpp"
 )
 
 if (WIN32)
-    target_sources(Mupen64RR.Common.Views PRIVATE
+    target_sources(Mupen64RR_Common_Views PRIVATE
         "include/Common.Views/WinFFmpegEncoder.hpp"
         "include/Common.Views/WinVFWEncoder.hpp"
         "WinFFmpegEncoder.cpp"
@@ -33,12 +34,13 @@ if (WIN32)
     )
 endif()
 
-target_compile_features(Mupen64RR.Common.Views PUBLIC cxx_std_23)
-target_include_directories(Mupen64RR.Common.Views PUBLIC include)
+mupen64rr_reuse_common_pch(Mupen64RR_Common_Views)
+target_compile_features(Mupen64RR_Common_Views PUBLIC cxx_std_23)
+target_include_directories(Mupen64RR_Common_Views PUBLIC include)
 
-target_link_libraries(Mupen64RR.Common.Views PUBLIC
-    Mupen64RR.Common
-    Mupen64RR.Core.Headers
+target_link_libraries(Mupen64RR_Common_Views PUBLIC
+    Mupen64RR_Common
+    Mupen64RR_Core_Headers
     vendor::xxhash64
     vendor::mini
     vendor::microlru
@@ -51,14 +53,14 @@ target_link_libraries(Mupen64RR.Common.Views PUBLIC
 )
 
 if (WIN32)
-    target_link_libraries(Mupen64RR.Common.Views PUBLIC vfw32)
+    target_link_libraries(Mupen64RR_Common_Views PUBLIC vfw32)
 endif()
 
 if (NOT WIN32)
-    target_link_libraries(Mupen64RR.Common.Views PUBLIC PkgConfig::libsafec)
+    target_link_libraries(Mupen64RR_Common_Views PUBLIC PkgConfig::libsafec)
 endif()
 
-target_compile_definitions(Mupen64RR.Common.Views PUBLIC
+target_compile_definitions(Mupen64RR_Common_Views PUBLIC
     NOMINMAX
     MINI_CASE_SENSITIVE
 )

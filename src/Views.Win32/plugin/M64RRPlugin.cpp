@@ -11,7 +11,6 @@
 #include <components/Statusbar.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
-#include <Common.Views/Assert.hpp>
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows s_mupenrr_video_get_windows_fn = nullptr;
@@ -65,18 +64,6 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE modu
 
     M64RRSpec::PluginMetadata metadata{};
     get_metadata(&metadata);
-
-    const size_t target_version_len = strnlen(metadata.target_version, std::size(metadata.target_version));
-    if (target_version_len > 0)
-    {
-        // Plugin is tied to one version of mupen
-        const auto current_version = CURRENT_VERSION;
-        const std::string target_version(metadata.target_version, target_version_len);
-        if (current_version != target_version)
-        {
-            return std::make_pair("Incompatible with this version of Mupen64", nullptr);
-        }
-    }
 
     const size_t plugin_name_len = strlen(metadata.name);
     while (plugin_name_len > 0 && metadata.name[plugin_name_len - 1] == ' ')
@@ -337,16 +324,16 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
 
         funcs.video_rom_open = []() {
-            process_event_on_gui_thread(s_mupenrr_video_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
+            process_event_on_gui_thread(
+                s_mupenrr_video_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
         };
         funcs.video_rom_closed = []() {
-            process_event_on_gui_thread(s_mupenrr_video_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+            process_event_on_gui_thread(
+                s_mupenrr_video_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.video_close_dll = []() {
-            process_event_on_gui_thread(s_mupenrr_video_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+            process_event_on_gui_thread(
+                s_mupenrr_video_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.video_process_dlist = []() {
             if (s_mupenrr_process_dlist_fn) s_mupenrr_process_dlist_fn();
@@ -385,16 +372,16 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, M64RRSpec::PtrAILenChanged, "M64RRAILenChanged");
 
         funcs.audio_rom_open = []() {
-            process_event_on_gui_thread(s_mupenrr_audio_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
+            process_event_on_gui_thread(
+                s_mupenrr_audio_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
         };
         funcs.audio_rom_closed = []() {
-            process_event_on_gui_thread(s_mupenrr_audio_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+            process_event_on_gui_thread(
+                s_mupenrr_audio_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.audio_close_dll_audio = []() {
-            process_event_on_gui_thread(s_mupenrr_audio_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+            process_event_on_gui_thread(
+                s_mupenrr_audio_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.audio_ai_dacrate_changed = [](CoreSystemType system_type) {
             if (s_mupenrr_ai_dacrate_changed_fn) s_mupenrr_ai_dacrate_changed_fn(system_type);
@@ -418,16 +405,16 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, M64RRSpec::PtrReadController, "M64RRReadController");
 
         funcs.input_rom_open = []() {
-            process_event_on_gui_thread(s_mupenrr_input_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
+            process_event_on_gui_thread(
+                s_mupenrr_input_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
         };
         funcs.input_rom_closed = []() {
-            process_event_on_gui_thread(s_mupenrr_input_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+            process_event_on_gui_thread(
+                s_mupenrr_input_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.input_close_dll = []() {
-            process_event_on_gui_thread(s_mupenrr_input_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+            process_event_on_gui_thread(
+                s_mupenrr_input_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.input_controller_command = [](int32_t, uint8_t *) {};
         funcs.input_get_keys = [](int32_t controller, ZESpec::Buttons *keys) {
@@ -456,12 +443,12 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 
         // FIXME: add rsp_rom_opened
         funcs.rsp_rom_closed = []() {
-            process_event_on_gui_thread(s_mupenrr_rsp_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+            process_event_on_gui_thread(
+                s_mupenrr_rsp_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.rsp_close_dll = []() {
-            process_event_on_gui_thread(s_mupenrr_rsp_event_fn,
-                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+            process_event_on_gui_thread(
+                s_mupenrr_rsp_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.rsp_do_rsp_cycles = [](uint32_t cycles) {
             if (s_mupenrr_do_rsp_cycles_fn)
@@ -474,7 +461,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         break;
     }
     default:
-        RT_ASSERT(false, "Unsupported plugin type");
+        NEED(false, "Unsupported plugin type");
         break;
     }
 

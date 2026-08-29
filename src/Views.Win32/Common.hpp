@@ -12,7 +12,7 @@
 
 #define SPDLOG_LEVEL_NAMES {"🔍", "🪲", "ℹ️", "⚠️", "❌", "💥", ""}
 
-#include <CommonPCH.hpp>
+
 #include <m64rr/API.hpp>
 
 #pragma warning(push, 0)
@@ -24,52 +24,22 @@ extern "C"
 }
 #include <spdlog/logger.h>
 #include <microlru.h>
-#include <windows.h>
-#include <commctrl.h>
+#include <Common.Win32/Common.hpp>
 #include <resource.h>
-#include <shlobj.h>
-#include <dbghelp.h>
-#include <shlwapi.h>
-#include <shellapi.h>
-#include <windowsx.h>
-#include <psapi.h>
-#include <mmsystem.h>
-
-#include <wincodec.h>
-#include <gdiplus.h>
-#include <uxtheme.h>
-#include <vssym32.h>
-#include <d2d1.h>
-#include <d2d1_3.h>
-#include <d2d1helper.h>
-#include <d2d1effects.h>
-#include <d3d11.h>
-#include <dcomp.h>
-#include <dwrite.h>
-#include <d3dcompiler.h>
-#include <wrl/client.h>
-#include <dwmapi.h>
-#include <xxh64.h>
-#include <strsafe.h>
-#include <commdlg.h>
-#include <unordered_set>
-#include <expected>
-#include <ranges>
-#include <set>
 #include <cwctype>
 #include <WinDarkMode.h>
 using Microsoft::WRL::ComPtr;
 #pragma warning(pop)
 
 #include <Loggers.hpp>
-#include <WinUtils.hpp>
+#include <Common.Win32/WinUtils.hpp>
 #include <Main.hpp>
 #include <lua/LuaHelpers.hpp>
 #include <lua/LuaTypes.hpp>
 #include <Common.Views/Config.hpp>
-#include <ResizeAnchor.hpp>
-#include <JoystickControl.hpp>
-#include <VersionNameHelpers.hpp>
+#include <Common.Win32/ResizeAnchor.hpp>
+#include <Common.Win32/JoystickControl.hpp>
+#include <Common/VersionNameHelpers.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/App.hpp>
 

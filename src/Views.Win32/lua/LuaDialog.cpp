@@ -271,12 +271,12 @@ static void create_placeholder_dialog(t_dialog_state &dlg)
 
     dlg.placeholder_hwnd =
         CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_LUA_INSTANCE_PLACEHOLDER), dlg.mgr_hwnd, nullptr);
-    SetWindowPos(dlg.placeholder_hwnd, nullptr, dlg.initial_rect.right, 0, 0, 0,
-                 SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
-    ResizeAnchor::add_anchors(dlg.mgr_hwnd,
-                              {{dlg.placeholder_hwnd, ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
-    ResizeAnchor::add_anchors(dlg.placeholder_hwnd, {{GetDlgItem(dlg.placeholder_hwnd, IDC_STATIC),
-                                                      ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
+    SetWindowPos(
+        dlg.placeholder_hwnd, nullptr, dlg.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+    ResizeAnchor::add_anchors(
+        dlg.mgr_hwnd, {{dlg.placeholder_hwnd, ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
+    ResizeAnchor::add_anchors(dlg.placeholder_hwnd,
+        {{GetDlgItem(dlg.placeholder_hwnd, IDC_STATIC), ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
     WinDarkMode::attach(dlg.placeholder_hwnd);
 }
 
@@ -288,8 +288,8 @@ static void add_recent_scripts_to_instance_list()
     for (const auto &path : g_config.recent_lua_script_paths)
     {
         const bool already_present = std::ranges::find_if(g_lua_instance_wnd_ctxs, [&](const auto &ctx) {
-                                         return ctx->typed_path == path;
-                                     }) != g_lua_instance_wnd_ctxs.end();
+            return ctx->typed_path == path;
+        }) != g_lua_instance_wnd_ctxs.end();
 
         if (!already_present)
         {
@@ -467,8 +467,8 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         RECT effective_rc = mgr_rc;
         AdjustWindowRect(&effective_rc, GetWindowLong(hwnd, GWL_STYLE), FALSE);
 
-        SetWindowPos(hwnd, 0, 0, 0, effective_rc.right + dlg_rect.right, effective_rc.bottom,
-                     SWP_NOMOVE | SWP_NOZORDER);
+        SetWindowPos(
+            hwnd, 0, 0, 0, effective_rc.right + dlg_rect.right, effective_rc.bottom, SWP_NOMOVE | SWP_NOZORDER);
 
         g_dlg.initial_rect = mgr_rc;
 
@@ -476,7 +476,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
         ResizeAnchor::add_anchors(
             hwnd, {{GetDlgItem(hwnd, IDC_ADD_INSTANCE), ResizeAnchor::AnchorFlags::Bottom},
-                   {g_dlg.lv_hwnd, ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom}});
+                      {g_dlg.lv_hwnd, ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom}});
 
         create_placeholder_dialog(g_dlg);
 
@@ -539,8 +539,8 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         AppendMenu(h_menu, MF_STRING, 5, "Stop All");
         AppendMenu(h_menu, MF_STRING, 6, "Add Recent Scripts");
 
-        const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lparam),
-                                            GET_Y_LPARAM(lparam), hwnd, nullptr);
+        const int offset = TrackPopupMenuEx(
+            h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), hwnd, nullptr);
 
         switch (offset)
         {
@@ -629,11 +629,11 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
             destroy_placeholder_dialog(g_dlg);
 
             const auto param = g_lua_instance_wnd_ctxs[index].get();
-            g_dlg.inst_hwnd = CreateDialogParam(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd,
-                                                lua_instance_dialog_proc, (LPARAM)param);
+            g_dlg.inst_hwnd = CreateDialogParam(
+                g_main_ctx.hinst, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd, lua_instance_dialog_proc, (LPARAM)param);
 
             SetWindowPos(g_dlg.inst_hwnd, nullptr, g_dlg.initial_rect.right, 0, 0, 0,
-                         SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+                SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 
             ResizeAnchor::add_anchors(
                 hwnd, {{g_dlg.inst_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right |

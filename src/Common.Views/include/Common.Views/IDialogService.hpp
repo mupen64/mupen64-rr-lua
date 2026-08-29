@@ -29,9 +29,8 @@ namespace DialogService
  * function will return the last choice.
  */
 size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices, std::string_view str,
-                                   std::optional<std::string_view> title = std::nullopt,
-                                   core_dialog_type type = fsvc_warning, void *hwnd = nullptr,
-                                   std::optional<std::string_view> details = std::nullopt);
+    std::optional<std::string_view> title = std::nullopt, core_dialog_type type = fsvc_warning, void *hwnd = nullptr,
+    std::optional<std::string_view> details = std::nullopt);
 
 /**
  * \brief Asks the user a Yes/No question.
@@ -45,7 +44,7 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
  * function will return the last choice.
  */
 bool show_ask_dialog(std::string_view id, std::string_view str, std::optional<std::string_view> title = std::nullopt,
-                     bool warning = false, void *hwnd = nullptr);
+    bool warning = false, void *hwnd = nullptr);
 
 /**
  * \brief Shows the user a dialog with the specified content.
@@ -55,11 +54,20 @@ bool show_ask_dialog(std::string_view id, std::string_view str, std::optional<st
  * \param hwnd The parent window. If nullptr, the main window will be used.
  */
 void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt,
-                 core_dialog_type type = fsvc_warning, void *hwnd = nullptr);
+    core_dialog_type type = fsvc_warning, void *hwnd = nullptr);
 
 /**
  * \brief Shows text in the statusbar.
  * \param str The text.
  */
 void show_statusbar(std::string_view str);
+
+/**
+ * \brief Shows a non-modal notification to the user.
+ * \param str The notification text.
+ * \param title The notification title. If `std::nullopt`, no title will be shown.
+ * \param type The notification tone.
+ */
+void show_notification(
+    std::string str, std::optional<std::string> title = std::nullopt, core_dialog_type type = fsvc_warning);
 } // namespace DialogService

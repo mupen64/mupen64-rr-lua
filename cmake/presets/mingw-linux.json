@@ -42,7 +42,7 @@
       "inherits": "mingw-linux-x64",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
@@ -64,7 +64,7 @@
       "inherits": "mingw-linux-x86",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ]

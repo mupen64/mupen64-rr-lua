@@ -13,6 +13,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 # common headers and PCH
 add_subdirectory(Common)
+
+function(mupen64rr_reuse_common_pch target)
+    target_precompile_headers("${target}" REUSE_FROM Mupen64RR_Common)
+endfunction()
 # core API and headers
 add_subdirectory(Core)
 # shared view functions
@@ -29,6 +33,8 @@ add_subdirectory(Plugins.DummyAudio)
 add_subdirectory(Plugins.DummyInput)
 add_subdirectory(Plugins.DummyVideo)
 
+# SDL video plugin
+add_subdirectory(Plugins.TASVideo)
 # SDL audio plugin
 add_subdirectory(Plugins.TASAudio)
 # HLE RSP plugin (core cannot live without a functioning RSP)
@@ -43,11 +49,11 @@ if (MUPEN64RR_BUILD_WIN32)
 
     add_subdirectory(Common.Win32)
 
-    add_library(Mupen64RR.Views.Win32.Headers INTERFACE
+    add_library(Mupen64RR_Views_Win32_Headers INTERFACE
         "Views.Win32/include/Views.Win32/ZESpec.h"
     )
-    target_compile_features(Mupen64RR.Views.Win32.Headers INTERFACE cxx_std_26)
-    target_include_directories(Mupen64RR.Views.Win32.Headers INTERFACE "Views.Win32/include")
+    target_compile_features(Mupen64RR_Views_Win32_Headers INTERFACE cxx_std_26)
+    target_include_directories(Mupen64RR_Views_Win32_Headers INTERFACE "Views.Win32/include")
 
     # BUNDLED PLUGINS
     # ============================
@@ -56,9 +62,8 @@ if (MUPEN64RR_BUILD_WIN32)
     include("${CMAKE_CURRENT_LIST_DIR}/Plugins.Win32.Common.cmake")
 
     # Windows-based TAS plugins.
-    # TASVideo and TASInput rely heavily on Windows APIs to work.
+    # TASInput relies heavily on Windows APIs to work.
     # Note that we can't port config dialogs until we settle on a GUI frontend framework.
-    add_subdirectory(Plugins.Win32.TASVideo)
     add_subdirectory(Plugins.Win32.TASInput)
 
     # VIEW
@@ -70,6 +75,7 @@ endif()
 # ============================
 
 if (MUPEN64RR_BUILD_QT6)
+    # add_subdirectory(ViewModels.Qt6)
     add_subdirectory(Views.Qt6)
 endif()
 
