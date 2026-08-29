@@ -50,6 +50,13 @@ CheckOptions:
     value: lower_case
 
 
+  # === Parameters ===
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+
+  - key: readability-identifier-naming.ConstantParameterCase
+    value: lower_case
+
   # === Local Variables ===
   - key: readability-identifier-naming.VariableCase
     value: lower_case
