@@ -68,7 +68,7 @@ struct t_config
     /// <summary>
     /// The core config.
     /// </summary>
-    core_cfg core{};
+    CoreCfg core{};
 
     /// <summary>
     /// The new version of Mupen64 currently ignored by the update checker.

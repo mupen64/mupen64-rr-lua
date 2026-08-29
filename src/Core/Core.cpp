@@ -18,8 +18,8 @@
 #include <R4300/VCR.hpp>
 #include <Cheats.hpp>
 
-core_params *g_core{};
-core_ctx g_ctx{};
+CoreParams *g_core{};
+CoreCtx g_ctx{};
 
 #if defined(_WIN32)
 #define CORE_EXPORT __declspec(dllexport)
@@ -38,7 +38,7 @@ static void log_dummy(std::string_view)
 {
 }
 
-core_result core_create(core_params *params, core_ctx **ctx)
+core_result core_create(CoreParams *params, CoreCtx **ctx)
 {
     g_core = params;
 
@@ -78,7 +78,7 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.dps_register = &dps_register;
     g_ctx.sp_dmem = SP_DMEM;
     g_ctx.sp_imem = SP_IMEM;
-    g_ctx.PIF_RAM = PIF_RAM;
+    g_ctx.pif_ram = PIF_RAM;
     g_ctx.rcp_counter = &g_r4300.rcp_counter;
     CORE_RDRAM = rdram;
 

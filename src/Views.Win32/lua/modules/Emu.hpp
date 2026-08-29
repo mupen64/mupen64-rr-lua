@@ -229,7 +229,7 @@ static int GetAddress(lua_State *L)
         A("vi_register", g_main_ctx.core_ctx->vi_register), A("ri_register", g_main_ctx.core_ctx->ri_register),
         A("ai_register", g_main_ctx.core_ctx->ai_register), A("dpc_register", g_main_ctx.core_ctx->dpc_register),
         A("dps_register", g_main_ctx.core_ctx->dps_register), B("SP_DMEM", g_main_ctx.core_ctx->sp_dmem),
-        B("PIF_RAM", g_main_ctx.core_ctx->PIF_RAM), {NULL, NULL}};
+        B("PIF_RAM", g_main_ctx.core_ctx->pif_ram), {NULL, NULL}};
 #undef A
 #undef B
     const char *s = lua_tostring(L, 1);

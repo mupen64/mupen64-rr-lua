@@ -203,7 +203,7 @@ enum class CoreSpeedMode
     UltraFastForward = 2
 };
 
-struct core_cfg
+struct CoreCfg
 {
     /// <summary>
     /// Statistic - Amount of state loads during recording
@@ -350,7 +350,7 @@ struct core_cfg
     /// </summary>
     int32_t render_throttling = 1;
 
-    bool operator==(const core_cfg &) const = default;
+    bool operator==(const CoreCfg &) const = default;
 };
 
 // #pragma region Emulator

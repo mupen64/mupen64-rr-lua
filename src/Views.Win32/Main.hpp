@@ -28,8 +28,8 @@
 
 struct t_main_context
 {
-    core_params core{};
-    core_ctx *core_ctx{};
+    CoreParams core{};
+    CoreCtx *core_ctx{};
     // PlatformService io_service{};
     bool frame_changed{};
     int last_wheel_delta{};

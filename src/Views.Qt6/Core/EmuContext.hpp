@@ -191,8 +191,8 @@ class EmuContext : public QObject
     void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
 
   private:
-    core_cfg *m_core_cfg;
-    core_params *m_core_params;
+    CoreCfg *m_core_cfg;
+    CoreParams *m_core_params;
     core_ctx *m_core_ctx;
 
     std::optional<PluginSet> m_plugins;
@@ -203,5 +203,5 @@ class EmuContext : public QObject
 
 namespace CoreUtil
 {
-void clear_plugin_funcs(core_params &params);
+void clear_plugin_funcs(CoreParams &params);
 }

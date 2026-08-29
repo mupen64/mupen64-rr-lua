@@ -8,9 +8,9 @@
 #include <Core/R4300/VCR.hpp>
 #include <Core/R4300/R4300.hpp>
 
-static core_cfg s_cfg{};
-static core_params s_core_params{};
-static core_ctx *s_core_ctx = nullptr;
+static CoreCfg s_cfg{};
+static CoreParams s_core_params{};
+static CoreCtx *s_core_ctx = nullptr;
 
 struct VrFixture
 {

@@ -21,7 +21,7 @@ extern "C"
     /**
      * \brief Callbacks for the core to call into the host.
      */
-    struct core_callbacks
+    struct CoreCallbacks
     {
         std::function<void(bool new_present)> vi = [](const auto &...) {};
         std::function<void(CoreButtons *input, int index)> input = [](const auto &...) {};
@@ -74,12 +74,12 @@ extern "C"
     /**
      * \brief Represents parameters passed to the core when creating it.
      */
-    struct core_params
+    struct CoreParams
     {
         /**
          * \brief The core's configuration.
          */
-        core_cfg *cfg;
+        CoreCfg *cfg;
 
         /**
          * \brief The core's controller configuration. Can be written to by the host during `initiate_plugins`.
@@ -89,7 +89,7 @@ extern "C"
         /**
          * \brief Optional callbacks for the core to invoke during emulation.
          */
-        core_callbacks callbacks;
+        CoreCallbacks callbacks;
 
         /**
          * \brief Logs the specified message at the trace level.
@@ -276,7 +276,7 @@ extern "C"
      * \brief The context of a core instance.
      * There currently can't be multiple core instances running simultaneously.
      */
-    struct core_ctx
+    struct CoreCtx
     {
         uint8_t *rom;
         uint32_t *rdram;
@@ -293,7 +293,7 @@ extern "C"
         CoreDPSReg *dps_register;
         uint32_t *sp_dmem;
         uint32_t *sp_imem;
-        uint32_t *PIF_RAM;
+        uint32_t *pif_ram;
         size_t *rcp_counter;
 
 #pragma region Emulator
@@ -875,6 +875,6 @@ template <typename T> bool core_rdram_store(uint8_t *rdram, const uint32_t addr,
  * \brief Creates a core instance with the specified parameters.
  * \remark Only one core instance is currently supported.
  */
-core_result core_create(core_params *params, core_ctx **ctx);
+core_result core_create(CoreParams *params, CoreCtx **ctx);
 
 #endif
