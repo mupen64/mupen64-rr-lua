@@ -33,21 +33,21 @@ struct UniformUsage
     bool prim, env, center, scale, lodFrac, primLodFrac, k4, k5, noise;
 };
 
-static std::vector<GLSLProgram *> s_programs;
-static GLuint s_vertexShader = 0;
-static GLSLProgram *s_currentProgram = nullptr;
+static std::vector<GLSLProgram *> g_programs;
+static GLuint g_vertexShader = 0;
+static GLSLProgram *g_currentProgram = nullptr;
 
-static int s_alphaTestMode = 0;
-static float s_alphaRef = 0.0f;
+static int g_alphaTestMode = 0;
+static float g_alphaRef = 0.0f;
 
-static float s_ditherAlpha = 0.0f;
-static float s_ditherSeed = 0.0f;
+static float g_ditherAlpha = 0.0f;
+static float g_ditherSeed = 0.0f;
 
-static int s_fogEnabled = 0;
+static int g_fogEnabled = 0;
 
-static float s_projection[16];
+static float g_projection[16];
 
-static const char *s_vertexShaderBody = "attribute vec4 aPosition;\n"
+static const char *VERTEX_SHADER_BODY = "attribute vec4 aPosition;\n"
                                         "attribute vec4 aColor;\n"
                                         "attribute vec4 aSecondaryColor;\n"
                                         "attribute vec2 aTexCoord0;\n"
@@ -407,7 +407,7 @@ static void CacheUniformLocations(GLSLProgram *program)
 
 static GLuint GetVertexShader()
 {
-    if (s_vertexShader == 0)
+    if (g_vertexShader == 0)
     {
         std::string source;
         if (OGL.isGLES)
@@ -419,16 +419,16 @@ static GLuint GetVertexShader()
             source = "#version 120\n";
             source += "#define lowp\n#define mediump\n#define highp\n";
         }
-        source += s_vertexShaderBody;
-        s_vertexShader = CompileShader(GL_VERTEX_SHADER, source.c_str());
+        source += VERTEX_SHADER_BODY;
+        g_vertexShader = CompileShader(GL_VERTEX_SHADER, source.c_str());
     }
-    return s_vertexShader;
+    return g_vertexShader;
 }
 
 void GLSLCombiner_Init()
 {
-    for (int i = 0; i < 16; i++) s_projection[i] = 0.0f;
-    s_projection[0] = s_projection[5] = s_projection[10] = s_projection[15] = 1.0f;
+    for (int i = 0; i < 16; i++) g_projection[i] = 0.0f;
+    g_projection[0] = g_projection[5] = g_projection[10] = g_projection[15] = 1.0f;
 
     if (!GLAD_GL_VERSION_2_0)
     {
@@ -443,20 +443,20 @@ void GLSLCombiner_Uninit()
 {
     glUseProgram(0);
 
-    for (GLSLProgram *program : s_programs)
+    for (GLSLProgram *program : g_programs)
     {
         if (program->program != 0) glDeleteProgram(program->program);
         delete program;
     }
-    s_programs.clear();
+    g_programs.clear();
 
-    if (s_vertexShader != 0)
+    if (g_vertexShader != 0)
     {
-        glDeleteShader(s_vertexShader);
-        s_vertexShader = 0;
+        glDeleteShader(g_vertexShader);
+        g_vertexShader = 0;
     }
 
-    s_currentProgram = nullptr;
+    g_currentProgram = nullptr;
 }
 
 GLSLProgram *GLSLCombiner_Compile(Combiner *color, Combiner *alpha)
@@ -466,7 +466,7 @@ GLSLProgram *GLSLCombiner_Compile(Combiner *color, Combiner *alpha)
     program->usesT0 = FALSE;
     program->usesT1 = FALSE;
     program->usesNoise = FALSE;
-    s_programs.push_back(program);
+    g_programs.push_back(program);
 
     ScanCombiner(program, color);
     ScanCombiner(program, alpha);
@@ -517,18 +517,18 @@ GLSLProgram *GLSLCombiner_Compile(Combiner *color, Combiner *alpha)
 
 void GLSLCombiner_Set(GLSLProgram *program)
 {
-    s_currentProgram = program;
+    g_currentProgram = program;
 
     glUseProgram(program->program);
     glUniform1i(program->locTex0, 0);
     glUniform1i(program->locTex1, 1);
 
-    glUniform1i(program->locAlphaTest, s_alphaTestMode);
-    glUniform1f(program->locAlphaRef, s_alphaRef);
-    glUniform1f(program->locDitherAlpha, s_ditherAlpha);
-    glUniform1f(program->locDitherSeed, s_ditherSeed);
-    glUniform1i(program->locFogEnabled, s_fogEnabled);
-    glUniformMatrix4fv(program->locProjection, 1, GL_FALSE, s_projection);
+    glUniform1i(program->locAlphaTest, g_alphaTestMode);
+    glUniform1f(program->locAlphaRef, g_alphaRef);
+    glUniform1f(program->locDitherAlpha, g_ditherAlpha);
+    glUniform1f(program->locDitherSeed, g_ditherSeed);
+    glUniform1i(program->locFogEnabled, g_fogEnabled);
+    glUniformMatrix4fv(program->locProjection, 1, GL_FALSE, g_projection);
 
     combiner.usesT0 = program->usesT0;
     combiner.usesT1 = program->usesT1;
@@ -560,50 +560,50 @@ void GLSLCombiner_UpdateColors(GLSLProgram *program)
 
 void GLSLCombiner_SetFogEnabled(bool enabled)
 {
-    s_fogEnabled = enabled ? 1 : 0;
+    g_fogEnabled = enabled ? 1 : 0;
 
-    if (s_currentProgram != nullptr && s_currentProgram->program != 0)
+    if (g_currentProgram != nullptr && g_currentProgram->program != 0)
     {
-        glUseProgram(s_currentProgram->program);
-        glUniform1i(s_currentProgram->locFogEnabled, s_fogEnabled);
+        glUseProgram(g_currentProgram->program);
+        glUniform1i(g_currentProgram->locFogEnabled, g_fogEnabled);
     }
 }
 
 void GLSLCombiner_SetAlphaTest(int mode, float ref)
 {
-    s_alphaTestMode = mode;
-    s_alphaRef = ref;
+    g_alphaTestMode = mode;
+    g_alphaRef = ref;
 
-    if (s_currentProgram != nullptr && s_currentProgram->program != 0)
+    if (g_currentProgram != nullptr && g_currentProgram->program != 0)
     {
-        glUseProgram(s_currentProgram->program);
-        glUniform1i(s_currentProgram->locAlphaTest, s_alphaTestMode);
-        glUniform1f(s_currentProgram->locAlphaRef, s_alphaRef);
+        glUseProgram(g_currentProgram->program);
+        glUniform1i(g_currentProgram->locAlphaTest, g_alphaTestMode);
+        glUniform1f(g_currentProgram->locAlphaRef, g_alphaRef);
     }
 }
 
 void GLSLCombiner_UpdateDither(float alpha)
 {
-    s_ditherAlpha = alpha;
+    g_ditherAlpha = alpha;
     // Rotate through 8 patterns like the fixed-function path did, so the grain animates.
-    s_ditherSeed = (float)(((int)s_ditherSeed + 1) & 0x7);
+    g_ditherSeed = (float)(((int)g_ditherSeed + 1) & 0x7);
 
-    if (s_currentProgram != nullptr && s_currentProgram->program != 0)
+    if (g_currentProgram != nullptr && g_currentProgram->program != 0)
     {
-        glUseProgram(s_currentProgram->program);
-        glUniform1f(s_currentProgram->locDitherAlpha, s_ditherAlpha);
-        glUniform1f(s_currentProgram->locDitherSeed, s_ditherSeed);
+        glUseProgram(g_currentProgram->program);
+        glUniform1f(g_currentProgram->locDitherAlpha, g_ditherAlpha);
+        glUniform1f(g_currentProgram->locDitherSeed, g_ditherSeed);
     }
 }
 
 void GLSLCombiner_SetProjection(const float *matrix)
 {
-    for (int i = 0; i < 16; i++) s_projection[i] = matrix[i];
+    for (int i = 0; i < 16; i++) g_projection[i] = matrix[i];
 
-    if (s_currentProgram != nullptr && s_currentProgram->program != 0)
+    if (g_currentProgram != nullptr && g_currentProgram->program != 0)
     {
-        glUseProgram(s_currentProgram->program);
-        glUniformMatrix4fv(s_currentProgram->locProjection, 1, GL_FALSE, s_projection);
+        glUseProgram(g_currentProgram->program);
+        glUniformMatrix4fv(g_currentProgram->locProjection, 1, GL_FALSE, g_projection);
     }
 }
 
@@ -614,5 +614,5 @@ void GLSLCombiner_BeginTextureUpdate()
 
 void GLSLCombiner_EndTextureUpdate()
 {
-    if (s_currentProgram != nullptr) glUseProgram(s_currentProgram->program);
+    if (g_currentProgram != nullptr) glUseProgram(g_currentProgram->program);
 }

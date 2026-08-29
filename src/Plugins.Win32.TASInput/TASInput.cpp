@@ -181,7 +181,7 @@ struct Status
 static std::atomic<int64_t> frame_counter{};
 static std::atomic<bool> new_frame{};
 static std::atomic<bool> rom_open{};
-static std::atomic<bool> s_event_watch_attached{};
+static std::atomic<bool> g_event_watch_attached{};
 static HMENU hmenu{};
 static HFONT icon_font{};
 static Status status[NUMBER_OF_CONTROLS]{};
@@ -197,8 +197,8 @@ static bool event_watch(void *, SDL_Event *event)
 
 static void attach_event_watch()
 {
-    if (s_event_watch_attached) return;
-    s_event_watch_attached = true;
+    if (g_event_watch_attached) return;
+    g_event_watch_attached = true;
 
     SDL_AddEventWatch(event_watch, nullptr);
 }
@@ -1243,10 +1243,10 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             icon_font = {};
         }
 
-        if (s_event_watch_attached)
+        if (g_event_watch_attached)
         {
             SDL_RemoveEventWatch(event_watch, nullptr);
-            s_event_watch_attached = false;
+            g_event_watch_attached = false;
         }
 
         break;

@@ -38,7 +38,7 @@ struct R4300Internal
     std::jthread emu_thread_handle;
 };
 
-R4300Internal s_r4300;
+R4300Internal g_r4300i;
 
 // Lock to prevent emu state change race conditions
 std::recursive_mutex g_emu_cs;
@@ -2073,13 +2073,13 @@ void emu_thread(std::stop_token stop_token)
     while (true)
     {
         {
-            std::unique_lock lock(s_r4300.emu_thread_mutex);
-            s_r4300.emu_thread_cv.wait(lock, stop_token, [] { return s_r4300.emu_thread_start_requested; });
+            std::unique_lock lock(g_r4300i.emu_thread_mutex);
+            g_r4300i.emu_thread_cv.wait(lock, stop_token, [] { return g_r4300i.emu_thread_start_requested; });
             if (stop_token.stop_requested())
             {
                 return;
             }
-            s_r4300.emu_thread_start_requested = false;
+            g_r4300i.emu_thread_start_requested = false;
         }
 
         const auto start_time = std::chrono::high_resolution_clock::now();
@@ -2109,10 +2109,10 @@ void emu_thread(std::stop_token stop_token)
             g_core->callbacks.emu_launched_changed(false);
         }
         {
-            std::lock_guard lock(s_r4300.emu_thread_mutex);
-            s_r4300.emu_session_stopped = true;
+            std::lock_guard lock(g_r4300i.emu_thread_mutex);
+            g_r4300i.emu_session_stopped = true;
         }
-        s_r4300.emu_thread_stopped_cv.notify_all();
+        g_r4300i.emu_thread_stopped_cv.notify_all();
     }
 }
 
@@ -2137,8 +2137,8 @@ CoreResult vr_close_rom_impl(bool stop_vcr)
     stop = 1;
 
     {
-        std::unique_lock lock(s_r4300.emu_thread_mutex);
-        s_r4300.emu_thread_stopped_cv.wait(lock, [] { return s_r4300.emu_session_stopped; });
+        std::unique_lock lock(g_r4300i.emu_thread_mutex);
+        g_r4300i.emu_thread_stopped_cv.wait(lock, [] { return g_r4300i.emu_session_stopped; });
     }
 
     fflush(g_eeprom_file);
@@ -2225,18 +2225,18 @@ CoreResult vr_start_rom_impl(std::filesystem::path path)
     emu_paused = false;
     emu_launched = true;
     {
-        std::lock_guard lock(s_r4300.emu_thread_mutex);
-        s_r4300.emu_session_stopped = false;
+        std::lock_guard lock(g_r4300i.emu_thread_mutex);
+        g_r4300i.emu_session_stopped = false;
     }
-    if (!s_r4300.emu_thread_handle.joinable())
+    if (!g_r4300i.emu_thread_handle.joinable())
     {
-        s_r4300.emu_thread_handle = std::jthread(emu_thread);
+        g_r4300i.emu_thread_handle = std::jthread(emu_thread);
     }
     {
-        std::lock_guard lock(s_r4300.emu_thread_mutex);
-        s_r4300.emu_thread_start_requested = true;
+        std::lock_guard lock(g_r4300i.emu_thread_mutex);
+        g_r4300i.emu_thread_start_requested = true;
     }
-    s_r4300.emu_thread_cv.notify_one();
+    g_r4300i.emu_thread_cv.notify_one();
 
     // We need to wait until the core is actually done and running before we can continue, because we release the lock
     // If we return too early (before core is ready to also be killed), then another start or close might come in during

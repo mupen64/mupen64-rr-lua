@@ -18,7 +18,7 @@
 
 const auto OVERLAY_CLASS = "lua_overlay";
 
-static bool s_detached_overlays{};
+static bool g_detached_overlays{};
 static HBRUSH g_alpha_mask_brush;
 
 static std::thread draw_thread;
@@ -28,7 +28,7 @@ static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnd
 
 static void set_overlay_visibility(bool visible)
 {
-    if (!s_detached_overlays) return;
+    if (!g_detached_overlays) return;
 
     for (const auto &lua : g_lua_environments)
     {
@@ -214,7 +214,7 @@ static void resize(uint32_t width, uint32_t height)
 
         if (lua->rctx.presenter) lua->rctx.presenter->resize(lua->rctx.dc_size);
 
-        const UINT overlay_swp_flags = SWP_NOACTIVATE | SWP_NOMOVE | (s_detached_overlays ? SWP_NOZORDER : 0);
+        const UINT overlay_swp_flags = SWP_NOACTIVATE | SWP_NOMOVE | (g_detached_overlays ? SWP_NOZORDER : 0);
         SetWindowPos(lua->rctx.gdi_overlay_hwnd, HWND_TOP, 0, 0, width, height, overlay_swp_flags);
         SetWindowPos(lua->rctx.d2d_overlay_hwnd, HWND_TOP, 0, 0, width, height, overlay_swp_flags);
     }
@@ -234,7 +234,7 @@ static LRESULT CALLBACK overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 // If no hwnds are provided, all overlay windows from all Lua environments are updated.
 static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds)
 {
-    if (!s_detached_overlays) return;
+    if (!g_detached_overlays) return;
 
     std::vector<HWND> wnds;
     if (hwnds.has_value())
@@ -266,7 +266,7 @@ void LuaRenderer::init()
 {
     if (g_main_ctx.wine)
     {
-        s_detached_overlays = true;
+        g_detached_overlays = true;
         SetWindowSubclass(g_main_ctx.hwnd, main_window_subclass_proc, 0, 0);
         g_view_logger->warn("Detected Wine environment, using detached Lua overlays");
     }
@@ -348,8 +348,8 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     FillRect(ctx->gdi_back_dc, &window_rect, g_alpha_mask_brush);
 
     const auto ex_style =
-        s_detached_overlays ? WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW : WS_EX_LAYERED | WS_EX_TRANSPARENT;
-    const auto style = s_detached_overlays ? WS_POPUP | WS_VISIBLE : WS_CHILD | WS_VISIBLE;
+        g_detached_overlays ? WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW : WS_EX_LAYERED | WS_EX_TRANSPARENT;
+    const auto style = g_detached_overlays ? WS_POPUP | WS_VISIBLE : WS_CHILD | WS_VISIBLE;
 
     ctx->gdi_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, ctx->dc_size.width,
         ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
@@ -361,7 +361,7 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     move_and_order_overlays(std::vector<HWND>{ctx->gdi_overlay_hwnd, ctx->d2d_overlay_hwnd});
 
     // Put these over the MGE compositor.
-    if (!s_detached_overlays)
+    if (!g_detached_overlays)
     {
         SetWindowPos(ctx->gdi_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
         SetWindowPos(ctx->d2d_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);

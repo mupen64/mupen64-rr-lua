@@ -32,7 +32,7 @@ static std::shared_ptr<Plugin> audio_plugin;
 static std::shared_ptr<Plugin> input_plugin;
 static std::shared_ptr<Plugin> rsp_plugin;
 
-static std::jthread s_audio_thread;
+static std::jthread g_audio_thread;
 
 // These are embedded now, old ones are probably just stale and we want to ignore them.
 static const std::vector<std::string> excluded_plugin_names = {
@@ -71,9 +71,9 @@ static void audio_thread_proc(std::stop_token st)
 
 static void stop_audio_thread()
 {
-    if (!s_audio_thread.joinable()) return;
-    s_audio_thread.request_stop();
-    s_audio_thread = {};
+    if (!g_audio_thread.joinable()) return;
+    g_audio_thread.request_stop();
+    g_audio_thread = {};
 }
 
 static void start_audio_thread()
@@ -87,8 +87,8 @@ static void start_audio_thread()
     }
 
     g_view_logger->info("Starting audio thread...");
-    if (s_audio_thread.joinable()) stop_audio_thread();
-    s_audio_thread = std::jthread(audio_thread_proc);
+    if (g_audio_thread.joinable()) stop_audio_thread();
+    g_audio_thread = std::jthread(audio_thread_proc);
 }
 
 ZESpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module)

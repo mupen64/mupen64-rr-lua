@@ -19,40 +19,40 @@ struct Context
     std::vector<std::pair<int32_t, uint64_t>> checkpoints;
 };
 
-static Context s_ctx;
+static Context g_ctx;
 
 void start(int32_t interval)
 {
-    if (s_ctx.active) return;
-    s_ctx.active = true;
-    s_ctx.interval = std::max(interval, 1);
-    s_ctx.running = FNV1A::FNV_OFFSET_BASIS;
-    s_ctx.checkpoints.clear();
-    g_core->log_info(std::format("[ParityChecker] Started (interval={} samples)", s_ctx.interval));
+    if (g_ctx.active) return;
+    g_ctx.active = true;
+    g_ctx.interval = std::max(interval, 1);
+    g_ctx.running = FNV1A::FNV_OFFSET_BASIS;
+    g_ctx.checkpoints.clear();
+    g_core->log_info(std::format("[ParityChecker] Started (interval={} samples)", g_ctx.interval));
 }
 
 void stop()
 {
-    if (!s_ctx.active) [[likely]]
+    if (!g_ctx.active) [[likely]]
         return;
 
-    s_ctx.active = false;
+    g_ctx.active = false;
 
     g_core->log_info(
-        std::format("[ParityChecker] Final hash: {:016x} ({} checkpoints)", s_ctx.running, s_ctx.checkpoints.size()));
+        std::format("[ParityChecker] Final hash: {:016x} ({} checkpoints)", g_ctx.running, g_ctx.checkpoints.size()));
 }
 
 void on_sample(int32_t sample)
 {
-    if (!s_ctx.active) [[likely]]
+    if (!g_ctx.active) [[likely]]
         return;
 
-    if (sample % s_ctx.interval != 0) return;
+    if (sample % g_ctx.interval != 0) return;
 
     const auto result = st_sync_hash([=](const uint64_t hash) {
         const auto running_span = std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(&hash), sizeof(hash));
-        s_ctx.running = FNV1A::hash(running_span, s_ctx.running);
-        s_ctx.checkpoints.emplace_back(sample, hash);
+        g_ctx.running = FNV1A::hash(running_span, g_ctx.running);
+        g_ctx.checkpoints.emplace_back(sample, hash);
         g_core->log_info(std::format("[ParityChecker] sample {} -> {:016x}", sample, hash));
     });
 
@@ -65,6 +65,6 @@ void on_sample(int32_t sample)
 
 bool active()
 {
-    return s_ctx.active;
+    return g_ctx.active;
 }
 } // namespace ParityChecker

@@ -39,14 +39,14 @@ EmuContext::EmuContext(QObject *parent)
 #pragma region Directories
     m_core_params->submit_task = [&](const std::function<void()> &cb) { m_task_pool.start(cb); };
     m_core_params->get_saves_directory = [] {
-        static auto s_save_path = IOUtils::exe_path().parent_path() / "saves";
-        if (!std::filesystem::is_directory(s_save_path)) std::filesystem::create_directories(s_save_path);
-        return s_save_path;
+        static auto save_path = IOUtils::exe_path().parent_path() / "saves";
+        if (!std::filesystem::is_directory(save_path)) std::filesystem::create_directories(save_path);
+        return save_path;
     };
     m_core_params->get_backups_directory = [] {
-        static auto s_backups_path = IOUtils::exe_path().parent_path() / "backups";
-        if (!std::filesystem::is_directory(s_backups_path)) std::filesystem::create_directories(s_backups_path);
-        return s_backups_path;
+        static auto backups_path = IOUtils::exe_path().parent_path() / "backups";
+        if (!std::filesystem::is_directory(backups_path)) std::filesystem::create_directories(backups_path);
+        return backups_path;
     };
     m_core_params->get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
 #pragma endregion

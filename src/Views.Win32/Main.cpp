@@ -46,7 +46,7 @@
 t_main_context g_main_ctx{};
 
 bool g_frame_changed = true;
-static bool s_sdl_initialized = false;
+static bool g_sdl_initialized = false;
 
 constexpr UINT_PTR SDL_TIMER_ID = 1;
 MMRESULT g_ui_timer;
@@ -541,7 +541,7 @@ static t_lua_key_event_args get_base_key_event_args()
 
 static void CALLBACK sdl_timer_proc(HWND, UINT, UINT_PTR, DWORD)
 {
-    if (!s_sdl_initialized) return;
+    if (!g_sdl_initialized) return;
 
     SDL_Event e{};
     while (SDL_PollEvent(&e));
@@ -1067,7 +1067,7 @@ std::optional<Hotkey> app_json_to_hotkey(const nlohmann::basic_json<> &hotkey_js
 
 void Main::init_sdl()
 {
-    if (!s_sdl_initialized)
+    if (!g_sdl_initialized)
     {
         g_main_ctx.dispatcher->invoke([] {
             NEED(
@@ -1268,7 +1268,7 @@ quit:
     timeKillEvent(g_ui_timer);
     Gdiplus::GdiplusShutdown(gdi_plus_token);
     CoUninitialize();
-    if (s_sdl_initialized) SDL_Quit();
+    if (g_sdl_initialized) SDL_Quit();
 
     return (int)msg.wParam;
 }

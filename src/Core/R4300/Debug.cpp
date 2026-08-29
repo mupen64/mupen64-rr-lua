@@ -24,15 +24,15 @@ struct DebuggerState
     CoreBreakpointId next_breakpoint_id{0};
 };
 
-static DebuggerState s_dbg{};
+static DebuggerState g_dbg{};
 
 void dbg_call_breakpoints_and_wait(const CoreDbgCPUState &state)
 {
-    if (s_dbg.breakpoint_count == 0) return;
+    if (g_dbg.breakpoint_count == 0) return;
 
-    std::shared_lock lock(s_dbg.mtx);
-    const auto it = s_dbg.breakpoints.find(state.address);
-    if (it == s_dbg.breakpoints.end()) return;
+    std::shared_lock lock(g_dbg.mtx);
+    const auto it = g_dbg.breakpoints.find(state.address);
+    if (it == g_dbg.breakpoints.end()) return;
 
     const auto bps_copy = it->second;
     lock.unlock();
@@ -42,23 +42,23 @@ void dbg_call_breakpoints_and_wait(const CoreDbgCPUState &state)
 
 CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallback &callback)
 {
-    std::unique_lock lock(s_dbg.mtx);
-    CoreBreakpointId id = s_dbg.next_breakpoint_id++;
-    s_dbg.breakpoints[address].push_back({id, callback});
-    s_dbg.breakpoint_count++;
+    std::unique_lock lock(g_dbg.mtx);
+    CoreBreakpointId id = g_dbg.next_breakpoint_id++;
+    g_dbg.breakpoints[address].push_back({id, callback});
+    g_dbg.breakpoint_count++;
     return id;
 }
 
 void dbg_remove_breakpoint(const CoreBreakpointId &id)
 {
-    std::unique_lock lock(s_dbg.mtx);
-    for (auto &[address, bps] : s_dbg.breakpoints)
+    std::unique_lock lock(g_dbg.mtx);
+    for (auto &[address, bps] : g_dbg.breakpoints)
     {
         auto it = std::find_if(bps.begin(), bps.end(), [&](const Breakpoint &bp) { return bp.id == id; });
         if (it != bps.end())
         {
             bps.erase(it);
-            s_dbg.breakpoint_count--;
+            g_dbg.breakpoint_count--;
             break;
         }
     }

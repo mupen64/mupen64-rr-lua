@@ -443,7 +443,7 @@ void Config::load()
 
 const t_config &Config::default_config()
 {
-    static const t_config s_default_config = [] {
+    static const t_config default_config = [] {
         t_config cfg;
         for (const auto &pair : get_merged_silent_mode_dialog_choices())
         {
@@ -452,7 +452,7 @@ const t_config &Config::default_config()
         return cfg;
     }();
 
-    return s_default_config;
+    return default_config;
 }
 
 std::filesystem::path Config::rom_directory()
