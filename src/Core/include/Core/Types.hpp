@@ -10,7 +10,7 @@
 /**
  * An enum containing results that can be returned by the core.
  */
-typedef enum
+enum class CoreResult
 {
 
     // Generic
@@ -110,7 +110,7 @@ typedef enum
     // The core params are missing a critical component.
     IN_MissingComponent,
 
-} core_result;
+};
 
 /**
  * \brief Represents an extension for a controller.
@@ -916,7 +916,7 @@ struct CoreSTJobParams
 
 struct CoreSTCallbackInfo
 {
-    core_result result{};
+    CoreResult result{};
     CoreSTJob job{};
     CoreSTMedium medium{};
     CoreSTJobParams params{};

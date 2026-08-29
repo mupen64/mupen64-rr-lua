@@ -378,13 +378,13 @@ static void undo_load_state()
         (void)g_main_ctx.core_ctx->st_do_memory(
             buf, CoreSTJob::Load,
             [](const CoreSTCallbackInfo &info, auto) {
-                if (info.result == Res_Ok)
+                if (info.result == CoreResult::Res_Ok)
                 {
                     Statusbar::post("Undid load");
                     return;
                 }
 
-                if (info.result == Res_Cancelled)
+                if (info.result == CoreResult::Res_Cancelled)
                 {
                     return;
                 }

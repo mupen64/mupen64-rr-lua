@@ -224,10 +224,10 @@ void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8
 
             switch (info.result)
             {
-            case Res_Ok:
+            case CoreResult::Res_Ok:
                 Statusbar::post(std::format("{} slot {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", slot + 1));
                 break;
-            case Res_Cancelled:
+            case CoreResult::Res_Cancelled:
                 Statusbar::post(std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
                 break;
             default:
@@ -240,11 +240,11 @@ void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8
 
         switch (info.result)
         {
-        case Res_Ok:
+        case CoreResult::Res_Ok:
             Statusbar::post(std::format(
                 "{} {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", info.params.path.filename().string()));
             break;
-        case Res_Cancelled:
+        case CoreResult::Res_Cancelled:
             Statusbar::post(std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
             break;
         default: {
@@ -837,7 +837,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
     }
 }
 
-static core_result init_core()
+static CoreResult init_core()
 {
     g_main_ctx.core.cfg = &g_config.core;
     // g_main_ctx.core.io_service = &g_main_ctx.io_service;
@@ -1166,10 +1166,10 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     std::filesystem::create_directories(Config::plugin_directory());
     std::filesystem::create_directories(Config::backup_directory());
 
-    const auto core_result = init_core();
-    if (core_result != Res_Ok)
+    const auto init_result = init_core();
+    if (init_result != CoreResult::Res_Ok)
     {
-        CoreUtils::show_error_dialog_for_result(core_result);
+        CoreUtils::show_error_dialog_for_result(init_result);
         return 1;
     }
 

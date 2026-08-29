@@ -2116,11 +2116,11 @@ void emu_thread(std::stop_token stop_token)
     }
 }
 
-core_result vr_close_rom_impl(bool stop_vcr)
+CoreResult vr_close_rom_impl(bool stop_vcr)
 {
     if (!emu_launched)
     {
-        return VR_NotRunning;
+        return CoreResult::VR_NotRunning;
     }
 
     vr_resume_emu_impl(true);
@@ -2150,10 +2150,10 @@ core_result vr_close_rom_impl(bool stop_vcr)
     fclose(g_fram_file);
     fclose(g_mpak_file);
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vr_start_rom_impl(std::filesystem::path path)
+CoreResult vr_start_rom_impl(std::filesystem::path path)
 {
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -2162,7 +2162,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     {
         CoreVCRMovieHeader movie_header{};
         const auto result = g_ctx.vcr_parse_header(path, &movie_header);
-        if (result != Res_Ok)
+        if (result != CoreResult::Res_Ok)
         {
             return result;
         }
@@ -2175,7 +2175,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
 
         if (matching_rom.empty())
         {
-            return VR_NoMatchingRom;
+            return CoreResult::VR_NoMatchingRom;
         }
 
         path = matching_rom;
@@ -2185,7 +2185,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     if (emu_launched)
     {
         auto result = vr_close_rom_impl(true);
-        if (result != Res_Ok)
+        if (result != CoreResult::Res_Ok)
         {
             g_core->log_info("[Core] Failed to close rom before starting rom.");
             return result;
@@ -2198,13 +2198,13 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     if (!g_core->load_plugins())
     {
         g_core->callbacks.emu_starting_changed(false);
-        return VR_PluginError;
+        return CoreResult::VR_PluginError;
     }
 
     if (!rom_load(path.string().c_str()))
     {
         g_core->callbacks.emu_starting_changed(false);
-        return VR_RomInvalid;
+        return CoreResult::VR_RomInvalid;
     }
 
     // Open all the save file streams
@@ -2214,7 +2214,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
         !open_core_file_stream(get_mempak_path(), &g_mpak_file))
     {
         g_core->callbacks.emu_starting_changed(false);
-        return VR_FileOpenFailed;
+        return CoreResult::VR_FileOpenFailed;
     }
 
     g_ctx.vr_on_speed_modifier_changed();
@@ -2243,24 +2243,24 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     // the core initialization (catastrophe)
     while (!core_executing);
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vr_start_rom(std::filesystem::path path)
+CoreResult vr_start_rom(std::filesystem::path path)
 {
     std::lock_guard lock(g_emu_cs);
     return vr_start_rom_impl(path);
 }
 
-core_result vr_close_rom(bool stop_vcr)
+CoreResult vr_close_rom(bool stop_vcr)
 {
     std::lock_guard lock(g_emu_cs);
     return vr_close_rom_impl(stop_vcr);
 }
 
-core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check)
+CoreResult vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check)
 {
-    if (!emu_launched) return VR_NotRunning;
+    if (!emu_launched) return CoreResult::VR_NotRunning;
 
     // Special case:
     // If we're recording a movie and have reset recording enabled, we don't reset immediately, but let the VCR
@@ -2269,7 +2269,7 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     if (g_core->cfg->is_reset_recording_enabled && !skip_reset_recording_check && task == CoreVCRTask::Recording)
     {
         vcr_request_reset();
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     }
 
     // why is it so damned difficult to reset the game?
@@ -2280,8 +2280,8 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     emu_resetting = true;
     vr_update_effective_speed_mode();
 
-    core_result result = g_ctx.vr_close_rom(stop_vcr);
-    if (result != Res_Ok)
+    CoreResult result = g_ctx.vr_close_rom(stop_vcr);
+    if (result != CoreResult::Res_Ok)
     {
         emu_resetting = false;
         g_core->callbacks.reset_completed();
@@ -2294,7 +2294,7 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     }
 
     result = g_ctx.vr_start_rom(rom_path);
-    if (result != Res_Ok)
+    if (result != CoreResult::Res_Ok)
     {
         emu_resetting = false;
         g_core->callbacks.reset_completed();
@@ -2303,10 +2303,10 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
 
     emu_resetting = false;
     g_core->callbacks.reset_completed();
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vr_reset_rom(bool reset_save_data, bool stop_vcr)
+CoreResult vr_reset_rom(bool reset_save_data, bool stop_vcr)
 {
     std::lock_guard lock(g_emu_cs);
     return vr_reset_rom_impl(reset_save_data, stop_vcr);

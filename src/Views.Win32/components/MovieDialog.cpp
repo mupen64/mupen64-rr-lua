@@ -242,14 +242,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 refresh:
     CoreVCRMovieHeader header = {};
 
-    if (g_main_ctx.core_ctx->vcr_parse_header(g_ctx.user_result.path, &header) != Res_Ok)
+    if (g_main_ctx.core_ctx->vcr_parse_header(g_ctx.user_result.path, &header) != CoreResult::Res_Ok)
     {
         return FALSE;
     }
 
     std::vector<CoreButtons> inputs = {};
 
-    if (g_main_ctx.core_ctx->vcr_read_movie_inputs(g_ctx.user_result.path, inputs) != Res_Ok)
+    if (g_main_ctx.core_ctx->vcr_read_movie_inputs(g_ctx.user_result.path, inputs) != CoreResult::Res_Ok)
     {
         return FALSE;
     }

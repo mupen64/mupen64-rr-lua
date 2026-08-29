@@ -38,13 +38,13 @@ static void log_dummy(std::string_view)
 {
 }
 
-core_result core_create(CoreParams *params, CoreCtx **ctx)
+CoreResult core_create(CoreParams *params, CoreCtx **ctx)
 {
     g_core = params;
 
     // if (!g_core->io_service)
     // {
-    //     return IN_MissingComponent;
+    //     return CoreResult::IN_MissingComponent;
     // }
 
     if (!g_core->log_trace)
@@ -155,5 +155,5 @@ core_result core_create(CoreParams *params, CoreCtx **ctx)
 
     *ctx = &g_ctx;
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }

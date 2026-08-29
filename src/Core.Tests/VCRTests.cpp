@@ -532,17 +532,17 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
     s_core_ctx->vr_start_rom = [](std::filesystem::path path) {
         emu_launched = true;
         core_executing = true;
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     };
 
     s_core_ctx->vcr_start_playback = [](std::filesystem::path path) {
         vcr.task = CoreVCRTask::Playback;
         vcr.current_sample = 0;
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     };
 
     const auto result = s_core_ctx->vcr_begin_seek(param.str, false);
-    REQUIRE(result == Res_Ok);
+    REQUIRE(result == CoreResult::Res_Ok);
 
     while (!seek_completed)
     {
@@ -612,18 +612,18 @@ TEST_CASE_METHOD(VcrFixture, "out_freeze_is_correct", "vcr_freeze")
 }
 
 /*
- * Tests that vcr_unfreeze fails with VCR_NeedsPlaybackOrRecording when called while idle.
+ * Tests that vcr_unfreeze fails with CoreResult::VCR_NeedsPlaybackOrRecording when called while idle.
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_idle", "vcr_unfreeze")
 {
     vcr_freeze_info freeze{};
     const auto result = vcr_unfreeze(freeze);
 
-    REQUIRE(result == VCR_NeedsPlaybackOrRecording);
+    REQUIRE(result == CoreResult::VCR_NeedsPlaybackOrRecording);
 }
 
 /*
- * Tests that vcr_unfreeze fails with VCR_InvalidFormat when the freeze buffer's size field is categorically too small.
+ * Tests that vcr_unfreeze fails with CoreResult::VCR_InvalidFormat when the freeze buffer's size field is categorically too small.
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_size_too_small", "vcr_unfreeze")
 {
@@ -634,11 +634,11 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_size_too_small", "vcr_unfreeze")
     };
     const auto result = vcr_unfreeze(freeze);
 
-    REQUIRE(result == VCR_InvalidFormat);
+    REQUIRE(result == CoreResult::VCR_InvalidFormat);
 }
 
 /*
- * Tests that vcr_unfreeze fails with VCR_NotFromThisMovie when the freeze buffer's uid field doesn't match the current
+ * Tests that vcr_unfreeze fails with CoreResult::VCR_NotFromThisMovie when the freeze buffer's uid field doesn't match the current
  * movie's uid.
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_uid_incompatible", "vcr_unfreeze")
@@ -652,11 +652,11 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_uid_incompatible", "vcr_unfreeze")
     };
     const auto result = vcr_unfreeze(freeze);
 
-    REQUIRE(result == VCR_NotFromThisMovie);
+    REQUIRE(result == CoreResult::VCR_NotFromThisMovie);
 }
 
 /*
- * Tests that vcr_unfreeze fails with VCR_InvalidFrame when the freeze buffer is from a future sample of the current
+ * Tests that vcr_unfreeze fails with CoreResult::VCR_InvalidFrame when the freeze buffer is from a future sample of the current
  * movie, but the VCR is in read-only mode (which would cause a desync due to the input buffer not being updated and
  * therefore mismatched).
  */
@@ -675,11 +675,11 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_desync_risk", "vcr_unfreeze")
     };
     const auto result = vcr_unfreeze(freeze);
 
-    REQUIRE(result == VCR_InvalidFrame);
+    REQUIRE(result == CoreResult::VCR_InvalidFrame);
 }
 
 /*
- * Tests that vcr_unfreeze fails with VCR_InvalidFormat when the freeze buffer's size field is smaller than the expected
+ * Tests that vcr_unfreeze fails with CoreResult::VCR_InvalidFormat when the freeze buffer's size field is smaller than the expected
  * size for the given input buffer.
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_malformed_input_size", "vcr_unfreeze")
@@ -698,7 +698,7 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_malformed_input_size", "vcr_unfreeze")
     };
     const auto result = vcr_unfreeze(freeze);
 
-    REQUIRE(result == VCR_InvalidFormat);
+    REQUIRE(result == CoreResult::VCR_InvalidFormat);
 }
 
 /*
@@ -724,7 +724,7 @@ TEST_CASE_METHOD(VcrFixture, "input_buffer_doesnt_change_if_seeking_while_record
     };
     const auto result = vcr_unfreeze(freeze);
 
-    REQUIRE(result == Res_Ok);
+    REQUIRE(result == CoreResult::Res_Ok);
     REQUIRE(vcr.inputs.size() == 3);
     REQUIRE(vcr.inputs[0].value == 0xDEAD);
     REQUIRE(vcr.inputs[1].value == 0xBEEF);
@@ -923,7 +923,7 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_not_playback", "vcr_continue_recording"
 {
     vcr.task = CoreVCRTask::Idle;
     const auto result = vcr_continue_recording();
-    REQUIRE(result == VCR_NeedsPlayback);
+    REQUIRE(result == CoreResult::VCR_NeedsPlayback);
 }
 
 TEST_CASE_METHOD(VcrFixture, "changes_task_and_header_and_inputs", "vcr_continue_recording")
@@ -940,7 +940,7 @@ TEST_CASE_METHOD(VcrFixture, "changes_task_and_header_and_inputs", "vcr_continue
 
     const auto result = vcr_continue_recording();
 
-    REQUIRE(result == Res_Ok);
+    REQUIRE(result == CoreResult::Res_Ok);
     REQUIRE(vcr.task == CoreVCRTask::Recording);
     REQUIRE(vcr.hdr.length_samples == 2);
     REQUIRE(vcr.inputs.size() == 2);
@@ -982,7 +982,7 @@ TEST_CASE_METHOD(VcrFixture, "doesnt_deadlock", "vcr_begin_warp_modify")
 
     const auto result = vcr_begin_warp_modify({{0}, {0}, {0}, {0}});
 
-    REQUIRE(result == Res_Ok);
+    REQUIRE(result == CoreResult::Res_Ok);
 }
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_0", "vcr_get_sync_data_from_header")
@@ -1251,7 +1251,7 @@ TEST_CASE_METHOD(VcrFixture, "replaces_author_only_keeps_description", "vcr_repl
 
     const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string("new author"), std::nullopt);
 
-    REQUIRE(result == Res_Ok);
+    REQUIRE(result == CoreResult::Res_Ok);
     REQUIRE(read_movie_author() == "new author");
     REQUIRE(read_movie_description() == "old description");
 }
@@ -1262,7 +1262,7 @@ TEST_CASE_METHOD(VcrFixture, "replaces_description_only_keeps_author", "vcr_repl
 
     const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::nullopt, std::string("new description"));
 
-    REQUIRE(result == Res_Ok);
+    REQUIRE(result == CoreResult::Res_Ok);
     REQUIRE(read_movie_author() == "old author");
     REQUIRE(read_movie_description() == "new description");
 }
@@ -1274,7 +1274,7 @@ TEST_CASE_METHOD(VcrFixture, "replaces_author_and_description", "vcr_replace_aut
     const auto result =
         vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string("new author"), std::string("new description"));
 
-    REQUIRE(result == Res_Ok);
+    REQUIRE(result == CoreResult::Res_Ok);
     REQUIRE(read_movie_author() == "new author");
     REQUIRE(read_movie_description() == "new description");
 }
@@ -1285,7 +1285,7 @@ TEST_CASE_METHOD(VcrFixture, "nullopt_fields_leave_movie_unchanged", "vcr_replac
 
     const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::nullopt, std::nullopt);
 
-    REQUIRE(result == Res_Ok);
+    REQUIRE(result == CoreResult::Res_Ok);
     REQUIRE(read_movie_author() == "old author");
     REQUIRE(read_movie_description() == "old description");
 }
@@ -1297,7 +1297,7 @@ TEST_CASE_METHOD(VcrFixture, "identical_values_leave_movie_unchanged", "vcr_repl
     const auto result =
         vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string("same author"), std::string("same description"));
 
-    REQUIRE(result == Res_Ok);
+    REQUIRE(result == CoreResult::Res_Ok);
     REQUIRE(read_movie_author() == "same author");
     REQUIRE(read_movie_description() == "same description");
 }
@@ -1308,7 +1308,7 @@ TEST_CASE_METHOD(VcrFixture, "author_longer_than_222_returns_invalid_format", "v
 
     const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string(223, 'a'), std::nullopt);
 
-    REQUIRE(result == VCR_InvalidFormat);
+    REQUIRE(result == CoreResult::VCR_InvalidFormat);
     REQUIRE(read_movie_author() == "old author");
 }
 
@@ -1318,7 +1318,7 @@ TEST_CASE_METHOD(VcrFixture, "description_longer_than_256_returns_invalid_format
 
     const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::nullopt, std::string(257, 'b'));
 
-    REQUIRE(result == VCR_InvalidFormat);
+    REQUIRE(result == CoreResult::VCR_InvalidFormat);
     REQUIRE(read_movie_description() == "old description");
 }
 
@@ -1328,7 +1328,7 @@ TEST_CASE_METHOD(VcrFixture, "missing_file_returns_bad_file", "vcr_replace_autho
 
     const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string("new author"), std::nullopt);
 
-    REQUIRE(result == VCR_BadFile);
+    REQUIRE(result == CoreResult::VCR_BadFile);
 }
 
 #pragma endregion

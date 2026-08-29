@@ -126,8 +126,8 @@ class CoreResult : public QObject
     };
     Q_ENUM(Value)
 
-    static Value from_core(::core_result result) { return (Value)(int)result; }
-    static ::core_result to_core(Value value) { return (::core_result)(int)value; }
+    static Value from_core(::CoreResult result) { return (Value)(int)result; }
+    static ::CoreResult to_core(Value value) { return (::CoreResult)(int)value; }
 
     Q_INVOKABLE QJSValue message(Value value);
 };

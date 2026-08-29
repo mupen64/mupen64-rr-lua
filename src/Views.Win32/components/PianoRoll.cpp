@@ -450,7 +450,7 @@ static void apply_input_buffer(bool push_to_history = true)
         const auto inputs = g_main_ctx.core_ctx->vcr_get_inputs();
 
         g_main_ctx.dispatcher->invoke([=] {
-            if (result == Res_Ok)
+            if (result == CoreResult::Res_Ok)
             {
                 if (push_to_history)
                 {

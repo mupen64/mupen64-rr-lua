@@ -35,7 +35,7 @@ static int do_file(lua_State *L)
                         return;
                     }
                     lua_pushcallback(L, callback);
-                    lua_pushinteger(L, info.result);
+                    lua_pushinteger(L, static_cast<lua_Integer>(info.result));
                     lua_pushlstring(L, (const char *)buf.data(), buf.size());
                     lua_pcall(L, 2, 0, 0);
                 });
@@ -64,7 +64,7 @@ static int do_slot(lua_State *L)
                         return;
                     }
                     lua_pushcallback(L, callback);
-                    lua_pushinteger(L, info.result);
+                    lua_pushinteger(L, static_cast<lua_Integer>(info.result));
                     lua_pushlstring(L, (const char *)buf.data(), buf.size());
                     lua_pcall(L, 2, 0, 0);
                 });
@@ -95,7 +95,7 @@ static int do_memory(lua_State *L)
                         return;
                     }
                     lua_pushcallback(L, callback);
-                    lua_pushinteger(L, info.result);
+                    lua_pushinteger(L, static_cast<lua_Integer>(info.result));
                     lua_pushlstring(L, (const char *)buf.data(), buf.size());
                     lua_pcall(L, 2, 0, 0);
                 });

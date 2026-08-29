@@ -77,7 +77,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         break;
         case IDC_SEEKER_START: {
             const auto result = g_main_ctx.core_ctx->vcr_begin_seek(g_config.seeker_value, true);
-            if (result != Res_Ok)
+            if (result != CoreResult::Res_Ok)
             {
                 const auto [_, error] = CoreUtils::get_error_message_for_result(result);
                 EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), FALSE);

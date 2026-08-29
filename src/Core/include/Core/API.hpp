@@ -364,7 +364,7 @@ extern "C"
          * \return The operation result.
          * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
          */
-        std::function<core_result(std::filesystem::path path)> vr_start_rom;
+        std::function<CoreResult(std::filesystem::path path)> vr_start_rom;
 
         /**
          * \brief Stops the emulator.
@@ -372,7 +372,7 @@ extern "C"
          * restart, this needs to be false. \return The operation result. \remarks This function must be called from a
          * thread that isn't interlocked with the emulator thread.
          */
-        std::function<core_result(bool stop_vcr)> vr_close_rom;
+        std::function<CoreResult(bool stop_vcr)> vr_close_rom;
 
         /**
          * \brief Resets the emulator.
@@ -381,7 +381,7 @@ extern "C"
          * restart, this needs to be false. \return The operation result. \remarks This function must be called from a
          * thread that isn't interlocked with the emulator thread.
          */
-        std::function<core_result(bool reset_save_data, bool stop_vcr)> vr_reset_rom;
+        std::function<CoreResult(bool reset_save_data, bool stop_vcr)> vr_reset_rom;
 
         /**
          * \brief Starts frame advancing the specified amount of frames.
@@ -477,7 +477,7 @@ extern "C"
          * \param header The header to fill
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path, CoreVCRMovieHeader *header)> vcr_parse_header;
+        std::function<CoreResult(std::filesystem::path path, CoreVCRMovieHeader *header)> vcr_parse_header;
 
         /**
          * \brief Reads the inputs from a movie
@@ -485,14 +485,14 @@ extern "C"
          * \param inputs The button collection to fill
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path, std::vector<CoreButtons> &inputs)> vcr_read_movie_inputs;
+        std::function<CoreResult(std::filesystem::path path, std::vector<CoreButtons> &inputs)> vcr_read_movie_inputs;
 
         /**
          * \brief Starts playing back a movie
          * \param path The movie's path
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path)> vcr_start_playback;
+        std::function<CoreResult(std::filesystem::path path)> vcr_start_playback;
 
         /**
          * \brief Starts recording a movie
@@ -502,7 +502,7 @@ extern "C"
          * \param description The movie's description
          * \return The operation result
          */
-        std::function<core_result(
+        std::function<CoreResult(
             std::filesystem::path path, uint16_t flags, std::string author, std::string description)>
             vcr_start_record;
 
@@ -510,7 +510,7 @@ extern "C"
          * \brief Continues recording a movie.
          * \return The operation result
          */
-        std::function<core_result()> vcr_continue_recording;
+        std::function<CoreResult()> vcr_continue_recording;
 
         /**
          * \brief Replaces the author and description information of a movie
@@ -519,7 +519,7 @@ extern "C"
          * \param description The movie's description
          * \return The operation result
          */
-        std::function<core_result(const std::filesystem::path &path, std::optional<std::string> author,
+        std::function<CoreResult(const std::filesystem::path &path, std::optional<std::string> author,
             std::optional<std::string> description)>
             vcr_replace_author_info;
 
@@ -542,7 +542,7 @@ extern "C"
          *	"^n" - Sample n from the end
          *
          */
-        std::function<core_result(std::string str, bool pause_at_end)> vcr_begin_seek;
+        std::function<CoreResult(std::string str, bool pause_at_end)> vcr_begin_seek;
 
         /**
          * \brief Stops the current seek operation
@@ -558,13 +558,13 @@ extern "C"
          * \brief Writes a backup of the current movie to the backup folder.
          * \return The operation result
          */
-        std::function<core_result()> vcr_write_backup;
+        std::function<CoreResult()> vcr_write_backup;
 
         /**
          * \brief Stops all running tasks
          * \return The operation result
          */
-        std::function<core_result()> vcr_stop_all;
+        std::function<CoreResult()> vcr_stop_all;
 
         /**
          * \brief Gets the current movie path. Only valid when task is not idle.
@@ -624,7 +624,7 @@ extern "C"
          * \param inputs The input buffer to use.
          * \return The operation result
          */
-        std::function<core_result(const std::vector<CoreButtons> &inputs)> vcr_begin_warp_modify;
+        std::function<CoreResult(const std::vector<CoreButtons> &inputs)> vcr_begin_warp_modify;
 
         /**
          * Gets the warp modify status
@@ -875,6 +875,6 @@ template <typename T> bool core_rdram_store(uint8_t *rdram, const uint32_t addr,
  * \brief Creates a core instance with the specified parameters.
  * \remark Only one core instance is currently supported.
  */
-core_result core_create(CoreParams *params, CoreCtx **ctx);
+CoreResult core_create(CoreParams *params, CoreCtx **ctx);
 
 #endif

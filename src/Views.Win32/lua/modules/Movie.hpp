@@ -16,7 +16,7 @@ static int play(lua_State *L)
     const auto path = lua_tostring(L, 1);
     if (!path)
     {
-        lua_pushinteger(L, VCR_BadFile);
+        lua_pushinteger(L, static_cast<lua_Integer>(CoreResult::VCR_BadFile));
         return 1;
     }
 
@@ -24,14 +24,14 @@ static int play(lua_State *L)
     Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
     ThreadPool::submit_task([=] { g_main_ctx.core_ctx->vcr_start_playback(path); });
 
-    lua_pushinteger(L, Res_Ok);
+    lua_pushinteger(L, static_cast<lua_Integer>(CoreResult::Res_Ok));
     return 1;
 }
 
 static int stop(lua_State *L)
 {
     const auto result = g_main_ctx.core_ctx->vcr_stop_all();
-    lua_pushinteger(L, result);
+    lua_pushinteger(L, static_cast<lua_Integer>(result));
     return 1;
 }
 
