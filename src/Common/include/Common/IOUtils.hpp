@@ -68,7 +68,7 @@ inline bool write_entire_file(const std::filesystem::path &path, std::span<const
 // Checks if two files are equal. Returns 0 if not equal, 1 if equal, and -1 on error.
 inline int file_contents_equal(const std::filesystem::path &path1, const std::filesystem::path &path2)
 {
-    constexpr size_t CHUNK_SIZE = 4096;
+    constexpr size_t chunk_size = 4096;
 
     std::ifstream file1(path1, std::ios::in | std::ios::binary);
     std::ifstream file2(path2, std::ios::in | std::ios::binary);
@@ -276,13 +276,13 @@ inline std::string rom_name_to_string(const char str[20])
     using namespace std::string_literals;
 
     // Windows-932 isn't *exactly* Shift-JIS, but it's close enough that it shouldn't matter.
-    constexpr UINT CP_SHIFT_JIS = 932;
+    constexpr UINT cp_shift_jis = 932;
 
     // return code
     int rc;
 
     // figure out how much space we need
-    rc = MultiByteToWideChar(CP_SHIFT_JIS, 0, str, 20, nullptr, 0);
+    rc = MultiByteToWideChar(cp_shift_jis, 0, str, 20, nullptr, 0);
     if (rc == 0)
     {
         // throw std::system_error(rc, std::system_category(), "invalid UTF-8");
@@ -294,7 +294,7 @@ inline std::string rom_name_to_string(const char str[20])
     std::wstring output;
     output.resize(static_cast<size_t>(rc), L'\0');
 
-    rc = MultiByteToWideChar(CP_SHIFT_JIS, 0, str, 20, output.data(), output.size());
+    rc = MultiByteToWideChar(cp_shift_jis, 0, str, 20, output.data(), output.size());
     if (rc == 0)
     {
         // throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");

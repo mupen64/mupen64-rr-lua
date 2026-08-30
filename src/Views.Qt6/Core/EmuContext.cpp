@@ -248,7 +248,7 @@ void EmuContext::setGSButton(bool pressed)
 // -> st_do_memory (to save slot)
 void EmuContext::saveSlot(uint32_t index)
 {
-    if (index >= NUM_SAVE_SLOTS) return;
+    if (index >= num_save_slots) return;
     // TODO implement based on config directories
 }
 
@@ -271,7 +271,7 @@ void EmuContext::saveFile(const QUrl &url)
 // -> st_do_memory (to save slot)
 void EmuContext::loadSlot(uint32_t index)
 {
-    if (index >= NUM_SAVE_SLOTS) return;
+    if (index >= num_save_slots) return;
     // TODO implement based on config directories
 }
 

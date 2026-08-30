@@ -21,7 +21,7 @@
 
 namespace CaptureManager
 {
-constexpr auto READSCREEN_MISSING_MSG = "The current video plugin doesn't support the current capture method.\nTry "
+constexpr auto readscreen_missing_msg = "The current video plugin doesn't support the current capture method.\nTry "
                                         "using another video plugin or switching the capture mode.";
 
 std::filesystem::path m_current_path;
@@ -207,7 +207,7 @@ static bool check_readscreen_available()
 {
     if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && !PluginUtil::mge_available())
     {
-        DialogService::show_dialog(READSCREEN_MISSING_MSG, "Capture", CoreMessageTone::Error);
+        DialogService::show_dialog(readscreen_missing_msg, "Capture", CoreMessageTone::Error);
         return false;
     }
 

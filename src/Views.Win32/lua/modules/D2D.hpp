@@ -211,7 +211,7 @@ static int clear(lua_State *L)
     if (g_config.presenter_type == (int32_t)t_config::PresenterType::DirectComposition)
         lua->rctx.d2d_render_target_stack.top()->Clear(color);
     else
-        lua->rctx.d2d_render_target_stack.top()->Clear(D2D1::ColorF(LuaRenderer::LUA_GDI_COLOR_MASK));
+        lua->rctx.d2d_render_target_stack.top()->Clear(D2D1::ColorF(LuaRenderer::lua_gdi_color_mask));
 
     return 0;
 }

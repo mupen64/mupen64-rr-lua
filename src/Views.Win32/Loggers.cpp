@@ -16,7 +16,7 @@ std::shared_ptr<spdlog::logger> g_audio_logger;
 std::shared_ptr<spdlog::logger> g_input_logger;
 std::shared_ptr<spdlog::logger> g_rsp_logger;
 
-static constexpr std::size_t MAX_LOG_FILES = 20;
+static constexpr std::size_t max_log_files = 20;
 
 static std::filesystem::path get_log_path()
 {
@@ -54,7 +54,7 @@ static void remove_old_logs(const std::filesystem::path &log_directory)
 
     std::sort(logs.begin(), logs.end(), [](const auto &left, const auto &right) { return left.first > right.first; });
 
-    const auto logs_to_keep = MAX_LOG_FILES > 0 ? MAX_LOG_FILES - 1 : 0;
+    const auto logs_to_keep = max_log_files > 0 ? max_log_files - 1 : 0;
     for (std::size_t index = logs_to_keep; index < logs.size(); ++index)
         std::filesystem::remove(logs[index].second, error);
 }

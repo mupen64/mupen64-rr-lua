@@ -48,7 +48,7 @@ t_main_context g_main_ctx{};
 bool g_frame_changed = true;
 static bool g_sdl_initialized = false;
 
-constexpr UINT_PTR SDL_TIMER_ID = 1;
+constexpr UINT_PTR sdl_timer_id = 1;
 MMRESULT g_ui_timer;
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
@@ -60,7 +60,7 @@ ULONG_PTR gdi_plus_token;
 // See App.hpp
 HWND g_main_hwnd;
 
-constexpr auto WND_CLASS = "myWindowClass";
+constexpr auto wnd_class = "myWindowClass";
 
 BetterEmulationLock::BetterEmulationLock()
 {
@@ -706,10 +706,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         PianoRoll::init();
         LuaDialog::init();
         LuaRenderer::init();
-        SetTimer(hwnd, SDL_TIMER_ID, 1000 / 60, sdl_timer_proc);
+        SetTimer(hwnd, sdl_timer_id, 1000 / 60, sdl_timer_proc);
         return TRUE;
     case WM_DESTROY:
-        KillTimer(hwnd, SDL_TIMER_ID);
+        KillTimer(hwnd, sdl_timer_id);
         PostQuitMessage(0);
         return 0;
     case WM_PREDESTROY:
@@ -1196,7 +1196,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     wc.hIcon = LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_M64ICONBIG));
     wc.hIconSm = LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_M64ICONSMALL));
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.lpszClassName = WND_CLASS;
+    wc.lpszClassName = wnd_class;
     wc.lpfnWndProc = WndProc;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClassEx(&wc);
@@ -1204,7 +1204,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y,
         g_config.window_width, g_config.window_height);
 
-    CreateWindowEx(WS_EX_ACCEPTFILES, WND_CLASS, get_titlebar_text().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x,
+    CreateWindowEx(WS_EX_ACCEPTFILES, wnd_class, get_titlebar_text().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x,
         g_config.window_y, g_config.window_width, g_config.window_height, NULL, NULL, g_main_ctx.hinst, NULL);
     ShowWindow(g_main_ctx.hwnd, nShowCmd);
 

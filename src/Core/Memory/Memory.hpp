@@ -13,7 +13,7 @@
 #define Sh16 1
 
 int32_t init_memory();
-constexpr uint32_t ADDR_MASK = 0x7FFFFF;
+constexpr uint32_t addr_mask = 0x7FFFFF;
 #define read_word_in_memory() readmem[address >> 16]()
 #define read_byte_in_memory() readmemb[address >> 16]()
 #define read_hword_in_memory() readmemh[address >> 16]()

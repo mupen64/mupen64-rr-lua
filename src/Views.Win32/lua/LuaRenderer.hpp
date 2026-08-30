@@ -11,7 +11,7 @@
  */
 namespace LuaRenderer
 {
-constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
+constexpr uint32_t lua_gdi_color_mask = RGB(255, 0, 255);
 
 /**
  * \brief Initializes the subsystem.

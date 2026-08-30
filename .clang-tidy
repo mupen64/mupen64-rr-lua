@@ -73,6 +73,10 @@ CheckOptions:
   - key: readability-identifier-naming.ConstantCase
     value: UPPER_CASE
 
+  # Constexpr variables (non-local); locals are covered by LocalConstexprVariableCase
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: lower_case
+
   # Local const variables
   - key: readability-identifier-naming.LocalConstantCase
     value: lower_case

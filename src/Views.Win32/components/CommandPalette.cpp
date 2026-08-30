@@ -677,9 +677,9 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
 
         // 2. Add resize anchors
         ResizeAnchor::add_anchors(hwnd, {
-                                            {g_ctx.text_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.edit_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.listbox_hwnd, ResizeAnchor::FULL_ANCHOR},
+                                            {g_ctx.text_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.edit_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.listbox_hwnd, ResizeAnchor::full_anchor},
                                         });
 
         // 3. Set a reasonable position and size for the dialog (centered horizontally, vertically top-justified)

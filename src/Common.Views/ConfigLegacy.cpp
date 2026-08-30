@@ -10,7 +10,7 @@
 #include <Common.Views/Hotkey.hpp>
 #include <nlohmann/json.hpp>
 
-constexpr auto FLAT_FIELD_KEY = "config";
+constexpr auto flat_field_key = "config";
 
 static std::string ini_cleanup_field(std::string field_name)
 {
@@ -27,11 +27,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[FLAT_FIELD_KEY].has(key))
+    if (!ini[flat_field_key].has(key))
     {
         return;
     }
-    *value = std::stoi(ini[FLAT_FIELD_KEY][key]);
+    *value = std::stoi(ini[flat_field_key][key]);
 }
 
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name, double *value)
@@ -40,11 +40,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[FLAT_FIELD_KEY].has(key))
+    if (!ini[flat_field_key].has(key))
     {
         return;
     }
-    *value = std::stod(ini[FLAT_FIELD_KEY][key]);
+    *value = std::stod(ini[flat_field_key][key]);
 }
 
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name, uint64_t *value)
@@ -53,11 +53,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[FLAT_FIELD_KEY].has(key))
+    if (!ini[flat_field_key].has(key))
     {
         return;
     }
-    *value = std::stoull(ini[FLAT_FIELD_KEY][key]);
+    *value = std::stoull(ini[flat_field_key][key]);
 }
 
 // !!!
@@ -69,11 +69,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[FLAT_FIELD_KEY].has(key))
+    if (!ini[flat_field_key].has(key))
     {
         return;
     }
-    value = ini[FLAT_FIELD_KEY][key];
+    value = ini[flat_field_key][key];
 }
 
 // !!!

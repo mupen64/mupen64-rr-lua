@@ -207,9 +207,9 @@ std::string cht_serialize()
     std::string str;
     for (const auto &cheat : host_cheats)
     {
-        constexpr auto CHEAT_FORMAT = "--{}\n"
+        constexpr auto cheat_format = "--{}\n"
                                       "{}\n";
-        std::format_to(std::back_inserter(str), CHEAT_FORMAT, cheat.name, cheat.code);
+        std::format_to(std::back_inserter(str), cheat_format, cheat.name, cheat.code);
     }
 
     return str;

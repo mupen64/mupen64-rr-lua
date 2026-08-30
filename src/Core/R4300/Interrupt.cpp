@@ -26,10 +26,10 @@ typedef struct _interrupt_queue
 static interrupt_queue *q = NULL;
 uint32_t last_vi_origin{};
 
-constexpr size_t POOL_SIZE = 128;
-constexpr size_t POOL_SENTINEL = SIZE_MAX - 1;
-static interrupt_queue g_pool[POOL_SIZE]{};
-static size_t g_pool_free_stack[POOL_SIZE];
+constexpr size_t pool_size = 128;
+constexpr size_t pool_sentinel = SIZE_MAX - 1;
+static interrupt_queue g_pool[pool_size]{};
+static size_t g_pool_free_stack[pool_size];
 static size_t g_pool_free_head = 0;
 
 static interrupt_queue *pool_alloc()
@@ -38,7 +38,7 @@ static interrupt_queue *pool_alloc()
 
     const size_t unused_index = g_pool_free_head;
     g_pool_free_head = g_pool_free_stack[unused_index];
-    g_pool_free_stack[unused_index] = POOL_SENTINEL;
+    g_pool_free_stack[unused_index] = pool_sentinel;
 
     return &g_pool[unused_index];
 }
@@ -47,7 +47,7 @@ static void pool_free(const interrupt_queue *ptr)
 {
     const size_t index_in_pool = ptr - g_pool;
     assert(index_in_pool < std::size(g_pool) && "Pointer outside of pool!");
-    assert(g_pool_free_stack[index_in_pool] == POOL_SENTINEL && "Double free or invalid free detected!");
+    assert(g_pool_free_stack[index_in_pool] == pool_sentinel && "Double free or invalid free detected!");
 
     g_pool_free_stack[index_in_pool] = g_pool_free_head;
     g_pool_free_head = index_in_pool;
@@ -55,13 +55,13 @@ static void pool_free(const interrupt_queue *ptr)
 
 static void pool_clear()
 {
-    const size_t pool_size = std::size(g_pool);
-    for (size_t i = 0; i < pool_size - 1; ++i)
+    const size_t pool_capacity = std::size(g_pool);
+    for (size_t i = 0; i < pool_capacity - 1; ++i)
     {
         g_pool_free_stack[i] = i + 1;
     }
 
-    g_pool_free_stack[pool_size - 1] = SIZE_MAX;
+    g_pool_free_stack[pool_capacity - 1] = SIZE_MAX;
     g_pool_free_head = 0;
 }
 

@@ -15,7 +15,7 @@
 #include <R4300/Rom.hpp>
 #include <R4300/VCR.hpp>
 
-constexpr auto RDRAM_DEVICE_MANUF_NEW_FIX_BIT = (1U << 31);
+constexpr auto rdram_device_manuf_new_fix_bit = (1U << 31);
 
 // st that comes from no delay fix mupen, it has some differences compared to new st:
 // - one frame of input is "embedded", that is the pif ram holds already fetched controller info.
@@ -73,9 +73,9 @@ void get_paths_for_task(const t_savestate_task &task, std::filesystem::path &st_
 void load_memory_from_buffer(uint8_t *p)
 {
     MiscHelpers::memread(&p, &rdram_register, sizeof(CoreRDRAMReg));
-    if (rdram_register.rdram_device_manuf & RDRAM_DEVICE_MANUF_NEW_FIX_BIT)
+    if (rdram_register.rdram_device_manuf & rdram_device_manuf_new_fix_bit)
     {
-        rdram_register.rdram_device_manuf &= ~RDRAM_DEVICE_MANUF_NEW_FIX_BIT; // remove the trick
+        rdram_register.rdram_device_manuf &= ~rdram_device_manuf_new_fix_bit; // remove the trick
         g_st_skip_dma = true;                                                 // tell dma.c to skip it
     }
     MiscHelpers::memread(&p, &MI_register, sizeof(CoreMIPSReg));

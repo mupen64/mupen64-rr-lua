@@ -203,11 +203,11 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
 
         // 2. Add resize anchors
         ResizeAnchor::add_anchors(hwnd, {
-                                            {g_ctx.header_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.subheader_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.secondary_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.combo_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.status_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
+                                            {g_ctx.header_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.subheader_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.secondary_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.combo_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.status_hwnd, ResizeAnchor::horizontal_anchor},
                                         });
 
         // 3. Set the focus to the edit control

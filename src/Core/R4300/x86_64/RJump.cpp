@@ -27,22 +27,22 @@
 // flip invalidates it (tracked by jump_thunk_need_map); identical bytes each time -> reentrancy-safe.
 
 // Bump-allocated, never freed (referenced by patched return addresses / cached per instruction).
-static constexpr size_t THUNK_MAX_SIZE = 64;         // largest thunk is 33 bytes
-static constexpr size_t THUNK_POOL_SIZE = 64 * 1024; // VirtualAlloc reservation granularity
+static constexpr size_t thunk_max_size = 64;         // largest thunk is 33 bytes
+static constexpr size_t thunk_pool_size = 64 * 1024; // VirtualAlloc reservation granularity
 
 static unsigned char *thunk_alloc()
 {
     static unsigned char *pool = nullptr;
     static size_t used = 0;
 
-    if (!pool || used + THUNK_MAX_SIZE > THUNK_POOL_SIZE)
+    if (!pool || used + thunk_max_size > thunk_pool_size)
     {
-        pool = (unsigned char *)malloc_exec(THUNK_POOL_SIZE);
+        pool = (unsigned char *)malloc_exec(thunk_pool_size);
         used = 0;
     }
 
     unsigned char *slot = pool + used;
-    used += THUNK_MAX_SIZE;
+    used += thunk_max_size;
     return slot;
 }
 

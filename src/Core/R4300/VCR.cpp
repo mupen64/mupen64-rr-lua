@@ -14,32 +14,32 @@
 
 using namespace std::string_view_literals;
 
-constexpr auto MOVIE_MAGIC = 0x1a34364d;
-constexpr auto LATEST_MOVIE_VERSION = 3;
-constexpr auto RAWDATA_WARNING_MESSAGE =
+constexpr auto movie_magic = 0x1a34364d;
+constexpr auto latest_movie_version = 3;
+constexpr auto rawdata_warning_message =
     "Warning: One of the active controllers of your input plugin is set to accept \"Raw Data\".\nThis can cause "
     "issues when recording and playing movies. Proceed?";
-constexpr auto ROM_NAME_WARNING_MESSAGE = "The movie was recorded on the rom '{}', but is being played back on "
+constexpr auto rom_name_warning_message = "The movie was recorded on the rom '{}', but is being played back on "
                                           "'{}'.\r\nPlayback might desynchronize. How do you want to continue?";
-constexpr auto ROM_COUNTRY_WARNING_MESSAGE = "The movie was recorded on a {} ROM, but is being played back on "
+constexpr auto rom_country_warning_message = "The movie was recorded on a {} ROM, but is being played back on "
                                              "{}.\r\nPlayback might desynchronize. How do you want to continue?";
-constexpr auto ROM_CRC_WARNING_MESSAGE = "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
+constexpr auto rom_crc_warning_message = "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
                                          "using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
                                          "might desynchronize. How do you want to continue?";
-constexpr auto OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE =
+constexpr auto old_movie_extended_section_nonzero_message =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
-constexpr auto CHEAT_ERROR_ASK_MESSAGE = "This movie has a cheat file associated with it, but it could not be "
+constexpr auto cheat_error_ask_message = "This movie has a cheat file associated with it, but it could not be "
                                          "loaded.\r\nPlayback might desynchronize. Are you sure you want to continue?";
-constexpr auto CONTROLLER_ON_OFF_MISMATCH =
+constexpr auto controller_on_off_mismatch =
     "Controller {} is enabled by the input plugin, but it is disabled in the movie.\nPlayback might desynchronize.\n";
-constexpr auto CONTROLLER_OFF_ON_MISMATCH =
+constexpr auto controller_off_on_mismatch =
     "Controller {} is disabled by the input plugin, but it is enabled in the movie.\nPlayback can't commence.\n";
-constexpr auto CONTROLLER_MEMPAK_MISMATCH =
+constexpr auto controller_mempak_mismatch =
     "Controller {} has a Memory Pak in the movie.\nPlayback might desynchronize.\n";
-constexpr auto CONTROLLER_RUMBLEPAK_MISMATCH =
+constexpr auto controller_rumblepak_mismatch =
     "Controller {} has a Rumble Pak in the movie.\nPlayback might desynchronize.\n";
-constexpr auto CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH =
+constexpr auto controller_mempak_rumblepak_mismatch =
     "Controller {} does not have a Memory or Rumble Pak in the movie.\nPlayback might desynchronize.\n";
 
 t_vcr_state vcr{};
@@ -217,9 +217,9 @@ CoreResult vcr_read_movie_header(std::vector<uint8_t> buf, CoreVCRMovieHeader *h
     CoreVCRMovieHeader new_header = {};
     memcpy(&new_header, buf.data(), old_header_size);
 
-    if (new_header.magic != MOVIE_MAGIC) return CoreResult::VCR_InvalidFormat;
+    if (new_header.magic != movie_magic) return CoreResult::VCR_InvalidFormat;
 
-    if (new_header.version <= 0 || new_header.version > LATEST_MOVIE_VERSION) return CoreResult::VCR_InvalidVersion;
+    if (new_header.version <= 0 || new_header.version > latest_movie_version) return CoreResult::VCR_InvalidVersion;
 
     // The extended version number can't exceed the latest one, obviously...
     if (new_header.extended_version > default_hdr.extended_version) return CoreResult::VCR_InvalidExtendedVersion;
@@ -362,7 +362,7 @@ void vcr_increment_rerecord_count()
 
 bool vcr_freeze(vcr_freeze_info &freeze)
 {
-    constexpr size_t FREEZE_MAX_SIZE = (UINT32_MAX - 20) / 4;
+    constexpr size_t freeze_max_size = (UINT32_MAX - 20) / 4;
 
     std::unique_lock lock(vcr_mtx);
 
@@ -372,7 +372,7 @@ bool vcr_freeze(vcr_freeze_info &freeze)
     }
 
     assert(vcr.inputs.size() >= vcr.hdr.length_samples);
-    assert(vcr.hdr.length_samples <= FREEZE_MAX_SIZE); // safety check
+    assert(vcr.hdr.length_samples <= freeze_max_size); // safety check
 
     freeze = {
         .size = static_cast<uint32_t>(sizeof(uint32_t) * 4 + sizeof(CoreButtons) * (vcr.hdr.length_samples + 1)),
@@ -1007,7 +1007,7 @@ CoreResult vcr_start_record(std::filesystem::path path, uint16_t flags, std::str
     {
         if (Present && RawData)
         {
-            bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, RAWDATA_WARNING_MESSAGE, "VCR", true);
+            bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, rawdata_warning_message, "VCR", true);
             if (!proceed)
             {
                 return CoreResult::Res_Cancelled;
@@ -1023,8 +1023,8 @@ CoreResult vcr_start_record(std::filesystem::path path, uint16_t flags, std::str
     memset(&vcr.hdr, 0, sizeof(CoreVCRMovieHeader));
     vcr.inputs = {};
 
-    vcr.hdr.magic = MOVIE_MAGIC;
-    vcr.hdr.version = LATEST_MOVIE_VERSION;
+    vcr.hdr.magic = movie_magic;
+    vcr.hdr.version = latest_movie_version;
 
     vcr.hdr.extended_version = default_hdr.extended_version;
     vcr.hdr.extended_flags.wii_vc = g_core->cfg->wii_vc_emulation;
@@ -1225,31 +1225,31 @@ bool show_controller_warning(const CoreVCRMovieHeader &header)
     {
         if (!g_core->controls[i].present && header.controller_flags & CONTROLLER_X_PRESENT(i))
         {
-            g_core->show_dialog(std::format(CONTROLLER_OFF_ON_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Error);
+            g_core->show_dialog(std::format(controller_off_on_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Error);
             return false;
         }
         if (g_core->controls[i].present && !(header.controller_flags & CONTROLLER_X_PRESENT(i)))
         {
-            g_core->show_notification(std::format(CONTROLLER_ON_OFF_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
+            g_core->show_notification(std::format(controller_on_off_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
         }
         else
         {
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::Mempak) &&
                 header.controller_flags & CONTROLLER_X_MEMPAK(i))
             {
-                g_core->show_notification(std::format(CONTROLLER_MEMPAK_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
+                g_core->show_notification(std::format(controller_mempak_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
             }
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::Rumblepak) &&
                 header.controller_flags & CONTROLLER_X_RUMBLE(i))
             {
                 g_core->show_notification(
-                    std::format(CONTROLLER_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
+                    std::format(controller_rumblepak_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
             }
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::None) &&
                 !(header.controller_flags & (CONTROLLER_X_MEMPAK(i) | CONTROLLER_X_RUMBLE(i))))
             {
                 g_core->show_notification(
-                    std::format(CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
+                    std::format(controller_mempak_rumblepak_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
             }
         }
     }
@@ -1424,7 +1424,7 @@ CoreResult vcr_start_playback(std::filesystem::path path)
     {
         if (!Present || !RawData) continue;
 
-        bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, RAWDATA_WARNING_MESSAGE, "VCR", true);
+        bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, rawdata_warning_message, "VCR", true);
         if (!proceed)
         {
             return CoreResult::Res_Cancelled;
@@ -1447,7 +1447,7 @@ CoreResult vcr_start_playback(std::filesystem::path path)
 
     // Suspicious! Someone shoved data where it didn't belong...
     if (header.extended_version == 0 && header.extended_flags.data != 0)
-        g_core->show_dialog(OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE, "VCR", CoreMessageTone::Warn);
+        g_core->show_dialog(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
 
     if (!warnings.empty())
     {
@@ -1464,7 +1464,7 @@ CoreResult vcr_start_playback(std::filesystem::path path)
 
     if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
     {
-        const auto ask_message = std::format(ROM_NAME_WARNING_MESSAGE, header.rom_name, (char *)ROM_HEADER.nom);
+        const auto ask_message = std::format(rom_name_warning_message, header.rom_name, (char *)ROM_HEADER.nom);
         const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_NAME_WARNING, ask_message, path);
         if (result.has_value()) return result.value();
     }
@@ -1475,13 +1475,13 @@ CoreResult vcr_start_playback(std::filesystem::path path)
             const auto source_country_name = g_ctx.vr_country_code_to_country_name(header.rom_country);
             const auto current_country_name = g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code);
             const auto ask_message =
-                std::format(ROM_COUNTRY_WARNING_MESSAGE, source_country_name, current_country_name);
+                std::format(rom_country_warning_message, source_country_name, current_country_name);
             const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CCODE_WARNING, ask_message, path);
             if (result.has_value()) return result.value();
         }
         else if (header.rom_crc1 != ROM_HEADER.CRC1)
         {
-            const auto ask_message = std::format(ROM_CRC_WARNING_MESSAGE, header.rom_crc1, ROM_HEADER.CRC1);
+            const auto ask_message = std::format(rom_crc_warning_message, header.rom_crc1, ROM_HEADER.CRC1);
             const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CRC_WARNING, ask_message, path);
             if (result.has_value()) return result.value();
         }
@@ -1499,7 +1499,7 @@ CoreResult vcr_start_playback(std::filesystem::path path)
         else
         {
             const auto proceed =
-                g_core->show_ask_dialog(CORE_DLG_VCR_CHEAT_LOAD_ERROR, CHEAT_ERROR_ASK_MESSAGE, "VCR", true);
+                g_core->show_ask_dialog(CORE_DLG_VCR_CHEAT_LOAD_ERROR, cheat_error_ask_message, "VCR", true);
 
             if (!proceed)
             {

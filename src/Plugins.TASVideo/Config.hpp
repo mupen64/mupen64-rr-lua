@@ -25,7 +25,7 @@ struct ResolutionPreset
     std::string description;
 };
 
-constexpr AspectMode DEFAULT_ASPECT_MODE = AspectMode::Widescreen;
+constexpr AspectMode default_aspect_mode = AspectMode::Widescreen;
 
 const std::vector<ResolutionPreset> RESOLUTION_PRESETS = {{320, 240, "320 x 240 (4:3)"}, {400, 300, "400 x 300 (4:3)"},
     {480, 360, "480 x 360 (4:3)"}, {640, 480, "640 x 480 (4:3)"}, {800, 600, "800 x 600 (4:3)"},
@@ -48,7 +48,7 @@ const std::vector<std::string> ASPECT_MODE_NAMES = {
 
 inline AspectMode to_aspect_mode(int value)
 {
-    if (value < 0 || value >= (int)ASPECT_MODE_NAMES.size()) return DEFAULT_ASPECT_MODE;
+    if (value < 0 || value >= (int)ASPECT_MODE_NAMES.size()) return default_aspect_mode;
     return (AspectMode)value;
 }
 

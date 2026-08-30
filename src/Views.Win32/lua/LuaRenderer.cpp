@@ -77,7 +77,7 @@ static void present_gdi_content(t_lua_environment *lua)
     bf.SourceConstantAlpha = 255;
     bf.AlphaFormat = 0;
     UpdateLayeredWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, &size, lua->rctx.gdi_back_dc, &src_pt,
-        LuaRenderer::LUA_GDI_COLOR_MASK, &bf, ULW_COLORKEY);
+        LuaRenderer::lua_gdi_color_mask, &bf, ULW_COLORKEY);
 }
 
 static void draw_lua(bool force)
@@ -279,7 +279,7 @@ void LuaRenderer::init()
     wndclass.lpszClassName = OVERLAY_CLASS;
     RegisterClass(&wndclass);
 
-    g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
+    g_alpha_mask_brush = CreateSolidBrush(lua_gdi_color_mask);
 
     Messenger::subscribe<Messenger::Message::SizeChanged>(
         [](const std::pair<int32_t, int32_t> &size) { resize(size.first, size.second); });
@@ -440,7 +440,7 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
     if (g_config.presenter_type != (int32_t)t_config::PresenterType::GDI)
         ctx->presenter = new DCompPresenter();
     else
-        ctx->presenter = new GDIPresenter(LUA_GDI_COLOR_MASK);
+        ctx->presenter = new GDIPresenter(lua_gdi_color_mask);
 
     if (!ctx->presenter->init(ctx->d2d_overlay_hwnd))
     {
@@ -497,6 +497,6 @@ void LuaRenderer::blit_all(HDC hdc)
         if (!lua->rctx.has_gdi_content) continue;
 
         TransparentBlt(hdc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0,
-            lua->rctx.dc_size.width, lua->rctx.dc_size.height, LuaRenderer::LUA_GDI_COLOR_MASK);
+            lua->rctx.dc_size.width, lua->rctx.dc_size.height, LuaRenderer::lua_gdi_color_mask);
     }
 }

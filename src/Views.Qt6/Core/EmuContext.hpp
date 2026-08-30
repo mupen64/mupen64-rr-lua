@@ -33,7 +33,7 @@ class EmuContext : public QObject
     // core_cfg properties
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
   public:
-    static constexpr size_t NUM_SAVE_SLOTS = 10;
+    static constexpr size_t num_save_slots = 10;
 
     EmuContext(QObject *parent = nullptr);
     virtual ~EmuContext();

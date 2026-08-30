@@ -16,7 +16,7 @@
 #define WM_EDIT_END (WM_USER + 3)
 #define WM_UPDATE_STATUS (WM_USER + 4)
 
-constexpr auto JOYSTICK_CONTROL_CLASS = "JoystickControl";
+constexpr auto joystick_control_class = "JoystickControl";
 
 enum class ComboTask
 {
@@ -638,7 +638,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
         const auto scale = GetDpiForWindow(hwnd) / 96.0;
 
-        ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, JOYSTICK_CONTROL_CLASS, "", WS_CHILD | WS_VISIBLE, 8, 4,
+        ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, joystick_control_class, "", WS_CHILD | WS_VISIBLE, 8, 4,
             131 * scale, 131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
 
         // It can take a bit until we receive the first GetKeys, so let's just show some basic default state in the
@@ -671,7 +671,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         ctx->hwnd = nullptr;
     }
     break;
-    case JoystickControl::WM_JOYSTICK_POSITION_CHANGED: {
+    case JoystickControl::wm_joystick_position_changed: {
         int x{}, y{};
         JoystickControl::get_position(ctx->joy_hwnd, &x, &y);
 
@@ -684,7 +684,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         }
         break;
     }
-    case JoystickControl::WM_JOYSTICK_DRAG_BEGIN:
+    case JoystickControl::wm_joystick_drag_begin:
         ctx->activate_emulator_window();
         break;
     case WM_CONTEXTMENU:
@@ -1229,7 +1229,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             MOUSE_RBUTTONREDEFINITION = VK_LBUTTON;
         }
 
-        JoystickControl::register_class(g_inst, JOYSTICK_CONTROL_CLASS);
+        JoystickControl::register_class(g_inst, joystick_control_class);
 
         save_config();
 

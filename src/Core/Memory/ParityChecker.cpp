@@ -26,7 +26,7 @@ void start(int32_t interval)
     if (g_ctx.active) return;
     g_ctx.active = true;
     g_ctx.interval = std::max(interval, 1);
-    g_ctx.running = FNV1A::FNV_OFFSET_BASIS;
+    g_ctx.running = FNV1A::fnv_offset_basis;
     g_ctx.checkpoints.clear();
     g_core->log_info(std::format("[ParityChecker] Started (interval={} samples)", g_ctx.interval));
 }

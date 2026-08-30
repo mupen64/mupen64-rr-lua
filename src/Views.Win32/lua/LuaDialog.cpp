@@ -274,9 +274,9 @@ static void create_placeholder_dialog(t_dialog_state &dlg)
     SetWindowPos(
         dlg.placeholder_hwnd, nullptr, dlg.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
     ResizeAnchor::add_anchors(
-        dlg.mgr_hwnd, {{dlg.placeholder_hwnd, ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
+        dlg.mgr_hwnd, {{dlg.placeholder_hwnd, ResizeAnchor::full_anchor | ResizeAnchor::invalidate_erase}});
     ResizeAnchor::add_anchors(dlg.placeholder_hwnd,
-        {{GetDlgItem(dlg.placeholder_hwnd, IDC_STATIC), ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
+        {{GetDlgItem(dlg.placeholder_hwnd, IDC_STATIC), ResizeAnchor::full_anchor | ResizeAnchor::invalidate_erase}});
     WinDarkMode::attach(dlg.placeholder_hwnd);
 }
 
@@ -338,9 +338,9 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
         PostMessage(hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
 
         ResizeAnchor::add_anchors(hwnd, {
-                                            {GetDlgItem(hwnd, IDC_PATH), ResizeAnchor::HORIZONTAL_ANCHOR},
+                                            {GetDlgItem(hwnd, IDC_PATH), ResizeAnchor::horizontal_anchor},
                                             {GetDlgItem(hwnd, IDC_BROWSE), ResizeAnchor::AnchorFlags::Right},
-                                            {GetDlgItem(hwnd, IDC_LOG), ResizeAnchor::FULL_ANCHOR},
+                                            {GetDlgItem(hwnd, IDC_LOG), ResizeAnchor::full_anchor},
                                         });
         WinDarkMode::attach(hwnd);
         break;

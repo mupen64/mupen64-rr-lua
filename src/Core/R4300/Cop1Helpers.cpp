@@ -12,12 +12,12 @@
 float largest_denormal_float = 1.1754942106924411e-38f;  // (1U << 23) - 1
 double largest_denormal_double = 2.225073858507201e-308; // (1ULL << 52) - 1
 
-constexpr auto FLOAT_EXCEPTION_MSG = "A floating point exception has occured in the core. This error is likely "
+constexpr auto float_exception_msg = "A floating point exception has occured in the core. This error is likely "
                                      "unrecoverable.\n\n{} (PC = {:#06x})\n\nHow would you like to proceed?";
 
 static void fail_float(std::string_view msg)
 {
-    const auto message = std::format(FLOAT_EXCEPTION_MSG, msg, interpcore ? interp_addr : PC->addr);
+    const auto message = std::format(float_exception_msg, msg, interpcore ? interp_addr : PC->addr);
     const auto choice = g_core->show_multiple_choice_dialog(
         CORE_DLG_FLOAT_EXCEPTION, {"Close ROM", "Continue"}, message.c_str(), "Core", CoreMessageTone::Error);
 

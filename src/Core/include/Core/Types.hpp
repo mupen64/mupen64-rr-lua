@@ -358,7 +358,7 @@ struct CoreCfg
 typedef std::common_type_t<std::chrono::duration<int64_t, std::ratio<1, 1000000000>>,
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>>>
     CoreTimerDelta;
-constexpr uint8_t CORE_TIMER_MAX_DELTAS = 60;
+constexpr uint8_t core_timer_max_deltas = 60;
 
 struct CoreRDRAMReg
 {

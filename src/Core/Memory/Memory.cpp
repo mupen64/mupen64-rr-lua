@@ -23,13 +23,13 @@ static int32_t frame;
 /**
  * The delay, in cycles, before the RSP signals task completion.
  */
-constexpr size_t SP_INT_DELAY = 1000;
+constexpr size_t sp_int_delay = 1000;
 
 /**
  * The delay, in cycles, before the RDP signals task completion when accurate_rdp_completion is enabled.
- * Only the ordering relative to SP_INT_DELAY is meaningful; the exact value is empirical.
+ * Only the ordering relative to sp_int_delay is meaningful; the exact value is empirical.
  */
-constexpr size_t DP_INT_ACCURATE_DELAY = 20000;
+constexpr size_t dp_int_accurate_delay = 20000;
 
 /* definitions of the rcp's structures and memory area */
 CoreRDRAMReg rdram_register;
@@ -1161,8 +1161,8 @@ void update_SP()
             // Signalling both at the same instant breaks games that chain several RSP tasks per frame: they
             // release their queue slot before the chain reaches the task that arms the display.
             // The legacy timing stays the default because changing it desynchronizes existing movies.
-            add_interrupt_event(SP_INT, SP_INT_DELAY);
-            add_interrupt_event(DP_INT, g_core->cfg->accurate_rdp_completion ? DP_INT_ACCURATE_DELAY : SP_INT_DELAY);
+            add_interrupt_event(SP_INT, sp_int_delay);
+            add_interrupt_event(DP_INT, g_core->cfg->accurate_rdp_completion ? dp_int_accurate_delay : sp_int_delay);
 
             g_core->callbacks.frame();
 
