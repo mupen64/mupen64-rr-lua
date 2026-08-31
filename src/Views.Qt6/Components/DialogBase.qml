@@ -6,41 +6,15 @@ Dialog {
     popupType: Popup.Window
     modal: true
 
-    width: {
-        function updateWidth(curr, item) {
-            if (item != null && item.implicitWidth > curr)
-                return item.implicitWidth;
-            else
-                return curr;
-        }
-        return [dialog.header, dialog.contentItem, dialog.footer]
-            .reduce(updateWidth, minimumWidth);
-    }
-    height: {
-        function updateHeight(curr, item) {
-            if (item != null)
-                return curr + item.implicitHeight;
-            else
-                return curr;
-        }
-        return [dialog.header, dialog.contentItem, dialog.footer]
-            .reduce(updateHeight, minimumHeight);
-    }
-
-    property int minimumWidth: 0
-    property int minimumHeight: 0
-
-    property bool windowResizable: true
+    property bool windowResizable
 
     Connections {
-        enabled: contentItem != null
-        target: contentItem
+        enabled: dialog.contentItem != null
+        target: dialog.contentItem
 
         function onVisibleChanged() {
-            let window = contentItem.Window.window;
-            if (!contentItem.visible || window == null) return;
-
-            console.log(`fire in the hole ${window}`);
+            let window = dialog.contentItem.Window.window;
+            if (!dialog.contentItem.visible || window == null) return;
 
             window.minimumWidth = dialog.width;
             window.minimumHeight = dialog.height;

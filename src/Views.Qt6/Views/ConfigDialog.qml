@@ -7,9 +7,14 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Qt.labs.qmlmodels
+
+import Components
 
 DialogBase {
     id: dialog
+    popupType: Popup.Window
+    modal: true
 
     header: TabBar {
         id: tabs
@@ -18,15 +23,35 @@ DialogBase {
         }
     }
 
-    minimumWidth: 300
-    minimumHeight: 400
+    windowResizable: true
+
+    padding: 10
 
     StackLayout {
-        id: root
-        currentIndex: tabs.currentIndex
+        anchors.fill: parent
 
-        ColumnLayout {
-            // TODO: OPTIONS
+        ScrollView {
+            id: scroll
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            ColumnLayout {
+                id: pageRoot
+                width: Math.max(scroll.width, 300)
+
+                ConfigRow {
+                    name: "Core type"
+                    tooltip: "amogus shmamogus"
+                    ComboBox {
+                        Layout.preferredWidth: 160
+                        model: [
+                            "Cached Interpreter",
+                            "Dynamic Recompiler",
+                            "Pure Interpreter"
+                        ]
+                    }
+                }
+            }
         }
     }
 }
