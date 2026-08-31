@@ -39,6 +39,9 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --build build
 
+      - name: Delete PDB files
+        run: Get-ChildItem build/out -Recurse -Filter *.pdb | Remove-Item -Force
+
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
@@ -67,6 +70,9 @@ jobs:
       - name: CMake build
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --build build
+
+      - name: Delete PDB files
+        run: rm -f $(find build/out -name '*.pdb')
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
