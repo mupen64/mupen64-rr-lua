@@ -186,7 +186,8 @@ CoreButtons GamepadManager::get_input(const size_t i)
         int32_t buttons_x = buttons.x;
         int32_t buttons_y = buttons.y;
         float stick_mag = sqrtf(static_cast<float>(buttons.x * buttons.x + buttons.y * buttons.y));
-        if (stick_mag > 0.0f && controller_config.mag1_val < 127) {
+        // if magnitude is 128, this is the maximum magnitude along an axis, so treat it as a special case and don't scale it down
+        if (stick_mag > 0.0f && controller_config.mag1_val < 128) {
             buttons.x = static_cast<int8_t>(static_cast<float>(buttons.x) * controller_config.mag1_val / stick_mag);
             buttons.y = static_cast<int8_t>(static_cast<float>(buttons.y) * controller_config.mag1_val / stick_mag);
         }
@@ -194,7 +195,7 @@ CoreButtons GamepadManager::get_input(const size_t i)
 
     if (is_button_held(controller_config.mag2) && !is_button_held(controller_config.mag1)) {
         float stick_mag = sqrtf(static_cast<float>(buttons.x * buttons.x + buttons.y * buttons.y));
-        if (stick_mag > 0.0f && controller_config.mag2_val < 127) {
+        if (stick_mag > 0.0f && controller_config.mag2_val < 128) {
             buttons.x = static_cast<int8_t>(static_cast<float>(buttons.x) * controller_config.mag2_val / stick_mag);
             buttons.y = static_cast<int8_t>(static_cast<float>(buttons.y) * controller_config.mag2_val / stick_mag);
         }

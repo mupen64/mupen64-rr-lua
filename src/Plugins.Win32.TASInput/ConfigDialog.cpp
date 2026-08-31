@@ -474,7 +474,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 GetDlgItemText(g_ctx.hwnd, LOWORD(wparam), str, std::size(str));
                 try
                 {
-                    controller_config->mag1_val = static_cast<uint32_t>(std::clamp(std::stol(str), 0l, 127l));
+                    controller_config->mag1_val = static_cast<uint32_t>(std::clamp(std::stol(str), 0l, 128l));
                 }
                 catch (...)
                 {
@@ -495,7 +495,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 GetDlgItemText(g_ctx.hwnd, LOWORD(wparam), str, std::size(str));
                 try
                 {
-                    controller_config->mag2_val = static_cast<uint32_t>(std::clamp(std::stol(str), 0l, 127l));
+                    controller_config->mag2_val = static_cast<uint32_t>(std::clamp(std::stol(str), 0l, 128l));
                 }
                 catch (...)
                 {
