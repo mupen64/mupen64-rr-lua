@@ -182,6 +182,20 @@ CoreButtons GamepadManager::get_input(const size_t i)
     buttons.x = static_cast<int8_t>(buttons.x * controller_config.x_scale);
     buttons.y = static_cast<int8_t>(buttons.y * controller_config.y_scale);
 
+    if (is_button_held(controller_config.mag1)) {
+        int32_t buttons_x = buttons.x;
+        int32_t buttons_y = buttons.y;
+        float stick_mag = sqrtf(static_cast<float>(buttons.x * buttons.x + buttons.y * buttons.y));
+        buttons.x = static_cast<int8_t>(static_cast<float>(buttons.x) * controller_config.mag1_val / stick_mag);
+        buttons.y = static_cast<int8_t>(static_cast<float>(buttons.y) * controller_config.mag1_val / stick_mag);
+    }
+
+    if (is_button_held(controller_config.mag2) && !is_button_held(controller_config.mag1)) {
+        float stick_mag = sqrtf(static_cast<float>(buttons.x * buttons.x + buttons.y * buttons.y));
+        buttons.x = static_cast<int8_t>(static_cast<float>(buttons.x) * controller_config.mag2_val / stick_mag);
+        buttons.y = static_cast<int8_t>(static_cast<float>(buttons.y) * controller_config.mag2_val / stick_mag);
+    }
+    
     return buttons;
 }
 
