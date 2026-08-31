@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 add_subdirectory(Utils)
 add_subdirectory(Components)
+add_subdirectory(Config)
 add_subdirectory(Core)
 
 qt_add_executable(Mupen64RR_Views_Qt6 "Main.cpp")
@@ -26,6 +27,7 @@ target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE
     Mupen64RR_Views_Qt6_Utils
     Mupen64RR_Views_Qt6_Utilsplugin
     Mupen64RR_Views_Qt6_Componentsplugin
+    Mupen64RR_Views_Qt6_Configplugin
     Mupen64RR_Views_Qt6_Core
     Mupen64RR_Views_Qt6_Coreplugin
 

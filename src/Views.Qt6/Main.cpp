@@ -14,8 +14,10 @@
 #include <QSettings>
 #include <QtQml/QQmlExtensionPlugin>
 
-Q_IMPORT_QML_PLUGIN(UtilsPlugin)
 Q_IMPORT_QML_PLUGIN(CorePlugin)
+Q_IMPORT_QML_PLUGIN(ComponentsPlugin)
+Q_IMPORT_QML_PLUGIN(ConfigPlugin)
+Q_IMPORT_QML_PLUGIN(UtilsPlugin)
 
 namespace  {
     using namespace Qt::Literals;
