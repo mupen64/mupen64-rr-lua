@@ -468,28 +468,42 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             HANDLE_EDIT_BEGIN(IDC_B_MAG1, IDC_E_MAG1, &controller_config->mag1)
             HANDLE_EDIT_BEGIN(IDC_B_MAG2, IDC_E_MAG2, &controller_config->mag2)
         case IDC_E_MAG1_VALUE: {
-            if (HIWORD(wparam) != EN_CHANGE) break;
-            char str[16]{};
-            GetDlgItemText(g_ctx.hwnd, LOWORD(wparam), str, std::size(str));
-            try
+            if (HIWORD(wparam) == EN_CHANGE)
             {
-                controller_config->mag1_val = std::stoul(str);
+                char str[16]{};
+                GetDlgItemText(g_ctx.hwnd, LOWORD(wparam), str, std::size(str));
+                try
+                {
+                    controller_config->mag1_val = static_cast<uint32_t>(std::clamp(std::stol(str), 0l, 127l));
+                }
+                catch (...)
+                {
+                }
             }
-            catch (...)
+            else if (HIWORD(wparam) == EN_KILLFOCUS)
             {
+                // Only reformat the displayed text once the user's done editing, so a clamp
+                // mid-typing doesn't yank the text out from under them.
+                SetDlgItemText(g_ctx.hwnd, LOWORD(wparam), std::to_string(controller_config->mag1_val).c_str());
             }
         }
         break;
         case IDC_E_MAG2_VALUE: {
-            if (HIWORD(wparam) != EN_CHANGE) break;
-            char str[16]{};
-            GetDlgItemText(g_ctx.hwnd, LOWORD(wparam), str, std::size(str));
-            try
+            if (HIWORD(wparam) == EN_CHANGE)
             {
-                controller_config->mag2_val = std::stoul(str);
+                char str[16]{};
+                GetDlgItemText(g_ctx.hwnd, LOWORD(wparam), str, std::size(str));
+                try
+                {
+                    controller_config->mag2_val = static_cast<uint32_t>(std::clamp(std::stol(str), 0l, 127l));
+                }
+                catch (...)
+                {
+                }
             }
-            catch (...)
+            else if (HIWORD(wparam) == EN_KILLFOCUS)
             {
+                SetDlgItemText(g_ctx.hwnd, LOWORD(wparam), std::to_string(controller_config->mag2_val).c_str());
             }
         }
         break;
