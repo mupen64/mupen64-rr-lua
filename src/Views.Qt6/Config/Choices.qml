@@ -7,10 +7,11 @@
 import QtQuick
 import QtQuick.Controls
 
+// Pre-baked ComboBox with a few extra niceties.
 ComboBox {
     id: control
-    property alias value: priv.dummy
-    required value
+    property alias target: priv.dummy
+    required target
 
     required property var choices
 
@@ -30,6 +31,6 @@ ComboBox {
     }
 
     model: priv.keyList
-    currentIndex: priv.valueIndices[value]
-    onActivated: (index) => value = priv.valueList[index]
+    currentIndex: priv.valueIndices[target]
+    onActivated: (index) => target = priv.valueList[index]
 }

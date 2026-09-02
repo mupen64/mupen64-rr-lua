@@ -7,10 +7,7 @@
 import QtQuick
 import QtQuick.Controls
 
-import Config as Config
-
-// Pre-baked Switch with assignment implemented.
-Switch {
+SpinBox {
     property alias target: priv.dummy
     required target
 
@@ -19,6 +16,6 @@ Switch {
         property var dummy: null
     }
 
-    checked: target
-    onClicked: target = checked
+    value: target
+    onValueModified: target = value
 }

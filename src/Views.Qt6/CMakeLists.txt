@@ -45,16 +45,27 @@ set(qml_singleton_sources
     "Views/SettingsCore.qml"
     "Views/SettingsPaths.qml"
 )
-# mark sources as singletons *before* qt_add_qml_module as
-# generation of qmldir happens there
-set_source_files_properties(
-    ${qml_singleton_sources}
-    PROPERTIES
+set(qml_config_pages
+    "Views/Config/EmulationPage.qml"
+)
+# mark singletons
+set_source_files_properties(${qml_singleton_sources} PROPERTIES
     QT_QML_SINGLETON_TYPE TRUE
 )
+foreach(item IN LISTS qml_config_pages)
+    string(REGEX REPLACE "Views/Config/(.+)\\.qml" "Config\\1" page_typename "${item}")
+    # message(STATUS "${item} -> ${page_typename}")
+    set_source_files_properties("${item}" PROPERTIES
+        QT_QML_SOURCE_TYPENAME "${page_typename}"
+    )
+endforeach()
+
 qt_add_qml_module(Mupen64RR_Views_Qt6
     URI "Views"
-    QML_FILES ${qml_sources} ${qml_singleton_sources}
+    QML_FILES
+        ${qml_sources}
+        ${qml_singleton_sources}
+        ${qml_config_pages}
 )
 
 

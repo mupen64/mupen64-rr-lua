@@ -12,6 +12,6 @@ Label {
 
     HoverHandler { id: hoverHandler }
 
-    ToolTip.visible: hoverHandler.hovered
+    ToolTip.visible: tooltip && hoverHandler.hovered
     ToolTip.text: tooltip
 }

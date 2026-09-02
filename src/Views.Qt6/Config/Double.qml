@@ -7,10 +7,11 @@
 import QtQuick
 import QtQuick.Controls
 
-import Config as Config
+import Components as Components
 
-// Pre-baked Switch with assignment implemented.
-Switch {
+// Qt 6.11 introduces a native DoubleSpinBox. However, we use a custom implementation by Maxim Paperno
+// to allow compilation with older versions.
+Components.DoubleSpinBox {
     property alias target: priv.dummy
     required target
 
@@ -19,6 +20,6 @@ Switch {
         property var dummy: null
     }
 
-    checked: target
-    onClicked: target = checked
+    value: target
+    onValueModified: target = value
 }

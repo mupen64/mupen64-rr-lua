@@ -10,12 +10,13 @@ import QtQuick.Layouts
 
 import Config as Config
 
+// Scrollable column.
 ScrollView {
     id: root
 
     Layout.fillWidth: true
     Layout.fillHeight: true
-    Layout.minimumWidth: 300
+    Layout.minimumWidth: 400
 
     default property list<Config.Row> rows
 
