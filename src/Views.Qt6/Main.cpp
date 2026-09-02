@@ -46,9 +46,6 @@ static int qt_main(int argc, char *argv[])
     QGuiApplication::setApplicationVersion(CURRENT_VERSION);
     QGuiApplication::setApplicationDisplayName(DISPLAY_NAME);
 
-    QSettings set;
-    std::println("settings path: {}", set.fileName().toStdString());
-
     QQmlApplicationEngine engine;
 
     // Close if object creation fails

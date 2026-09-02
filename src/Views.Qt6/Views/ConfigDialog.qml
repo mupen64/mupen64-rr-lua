@@ -17,6 +17,9 @@ DialogBase {
     header: TabBar {
         id: tabs
         TabButton {
+            text: qsTr("Emulation")
+        }
+        TabButton {
             text: qsTr("Folders")
         }
     }
@@ -27,7 +30,9 @@ DialogBase {
 
     StackLayout {
         anchors.fill: parent
+        currentIndex: tabs.currentIndex
 
         ConfigEmulationPage {}
+        ConfigFoldersPage {}
     }
 }

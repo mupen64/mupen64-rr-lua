@@ -18,7 +18,7 @@ ScrollView {
     Layout.fillHeight: true
     Layout.minimumWidth: 400
 
-    default property list<Config.Row> rows
+    default property list<Item> rows
 
     ColumnLayout {
         id: pageRoot

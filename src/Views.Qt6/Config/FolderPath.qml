@@ -9,6 +9,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs as Dialogs
 
+import Utils
+
 GroupBox {
     id: root
 
@@ -17,7 +19,7 @@ GroupBox {
 
     property alias target: priv.dummy
     required target
-    default required property Dialogs.FileDialog dialog
+    default required property Dialogs.FolderDialog dialog
 
     QtObject {
         id: priv
@@ -26,6 +28,8 @@ GroupBox {
 
     RowLayout {
         anchors.fill: parent
+
+        // onWidthChanged: console.log(`width: ${width}`)
         TextField {
             Layout.fillWidth: true
             readOnly: true
@@ -38,14 +42,14 @@ GroupBox {
     }
 
     onDialogChanged: {
-        dialog.parentWindow = root.Window.window;
+        dialog.parentWindow = root.Window.window
     }
 
     Connections {
         enabled: root.dialog != null
         target: root.dialog
         function onAccepted() {
-            root.target = Paths.toLocalFile(root.dialog.selectedFile);
+            root.target = Paths.toLocalFile(root.dialog.selectedFolder);
         }
     }
 }

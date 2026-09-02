@@ -47,6 +47,7 @@ set(qml_singleton_sources
 )
 set(qml_config_pages
     "Views/Config/EmulationPage.qml"
+    "Views/Config/FoldersPage.qml"
 )
 # mark singletons
 set_source_files_properties(${qml_singleton_sources} PROPERTIES
