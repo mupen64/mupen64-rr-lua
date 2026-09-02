@@ -263,7 +263,6 @@ static void update_visuals()
     update_editbox(IDC_E_MAG1, controller_config.mag1);
     update_editbox(IDC_E_MAG2, controller_config.mag2);
 
-    // Show value of magnitude when not editing
     if (GetFocus() != GetDlgItem(g_ctx.hwnd, IDC_E_MAG1_VALUE))
     {
         SetDlgItemText(g_ctx.hwnd, IDC_E_MAG1_VALUE, std::to_string(controller_config.mag1_val).c_str());
@@ -482,8 +481,6 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             }
             else if (HIWORD(wparam) == EN_KILLFOCUS)
             {
-                // Only reformat the displayed text once the user's done editing, so a clamp
-                // mid-typing doesn't yank the text out from under them.
                 SetDlgItemText(g_ctx.hwnd, LOWORD(wparam), std::to_string(controller_config->mag1_val).c_str());
             }
         }
