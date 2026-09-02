@@ -1,9 +1,20 @@
 /*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+/*
+    This file is derived from Maxim Paperno's QML-based DoubleSpinBox implementation, with minimal
+    changes. Permalink to the source file is here:
+	https://github.com/mpaperno/maxLibQt/blob/b903e7a755b241313b7acdea0258ee17cbd8fc04/src/quick/maxLibQt/controls/MLDoubleSpinBox.qml
+
+    Maxim's license header is provided below.
+    ===============================================================================================
+
 	MLDoubleSpinBox
 	https://github.com/mpaperno/maxLibQt
 
-	Permalink to this version:
-	https://github.com/mpaperno/maxLibQt/blob/b903e7a755b241313b7acdea0258ee17cbd8fc04/src/quick/maxLibQt/controls/MLDoubleSpinBox.qml
 
 	COPYRIGHT: (c)2018 Maxim Paperno; All Right Reserved.
 	Contact: http://www.WorldDesign.com/contact
