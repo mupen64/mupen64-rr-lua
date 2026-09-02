@@ -4,7 +4,7 @@
   "configurePresets": [
     {
       "name": "common",
-      "$comment": "Platform-agnostic common settings.",
+      "description": "Platform-agnostic common settings.",
 
       "hidden": true,
       "generator": "Ninja",

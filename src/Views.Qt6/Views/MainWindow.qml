@@ -7,10 +7,10 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs as Dialogs
 import QtQuick.Layouts
 
 import Core
+import Views
 
 ApplicationWindow {
     id: mainWindow
@@ -30,6 +30,13 @@ ApplicationWindow {
         when: core.launched && mainWindow.minimumWidth > 0 && mainWindow.minimumHeight > 0
         mainWindow.maximumWidth: mainWindow.minimumWidth
         mainWindow.maximumHeight: mainWindow.minimumHeight
+    }
+
+    // INITIALIZATION
+    // =====================================
+    Component.onCompleted: {
+        SettingsCore.sync();
+        SettingsPaths.sync();
     }
 
     // MENU BAR
@@ -57,12 +64,12 @@ ApplicationWindow {
                 anchors.centerIn: parent
                 text: "MessageBox test"
                 onClicked: {
-                    dialogService.queueInfoDialog(null, "Title", "Content", CoreDialogType.Error);
+                    dialogService.queueInfoDialog(null, "Hello there.", "General Kenobi! You are a bold one.", CoreDialogType.Error)
                 }
             }
         }
         Item {
-            // All children in the game view will be fixed in size. 
+            // All children in the game view will be fixed in size.
             // Use their bounding box as the minimum size.
             implicitWidth: childrenRect.width
             implicitHeight: childrenRect.height
@@ -91,6 +98,32 @@ ApplicationWindow {
         onOpenInfoDialog: dialogService.queueInfoDialog
         onOpenAskDialog: dialogService.queueAskDialog
         onOpenMultiDialog: dialogService.queueMultiDialog
+
+        // config options
+        options.coreType: SettingsCore.coreType
+        options.stUndoLoad: SettingsCore.stUndoLoad
+        options.maxLag: SettingsCore.maxLag
+        options.wiiVCEmulation: SettingsCore.wiiVCEmulation
+        options.rcpLagEmulation: SettingsCore.rcpLagEmulation
+        options.cpuCF: SettingsCore.cpuCF
+        options.rcpLagFactor: SettingsCore.rcpLagFactor
+        options.floatExceptionEmulation: SettingsCore.floatExceptionEmulation
+        options.useSummercart: SettingsCore.useSummercart
+        options.stScreenshot: SettingsCore.stScreenshot
+        options.stLZ4: SettingsCore.stLZ4
+        options.romCacheSize: SettingsCore.romCacheSize
+        options.audioDelayEnabled: SettingsCore.audioDelayEnabled
+        options.compiledJumpEnabled: SettingsCore.compiledJumpEnabled
+        options.ceqsNaNAccurate: SettingsCore.ceqsNaNAccurate
+        options.accurateRDPCompletion: SettingsCore.accurateRDPCompletion
+        options.vcrBackups: SettingsCore.vcrBackups
+        options.vcrWriteExtendedFormat: SettingsCore.vcrWriteExtendedFormat
+
+        // config paths
+        paths.romDir: SettingsPaths.romDir
+        paths.saveDir: SettingsPaths.saveDir
+        paths.screenshotDir: SettingsPaths.screenshotDir
+        paths.backupDir: SettingsPaths.backupDir
     }
 
     // invalidateVisuals() must be called on each UI frame to
@@ -100,10 +133,13 @@ ApplicationWindow {
         onTriggered: core.invalidateVisuals()
     }
 
-    // AUXILIARY OBJECTS
+    // Auxiliary dialogs
     // =====================================
 
     DialogService {
         id: dialogService
+    }
+    ConfigDialog {
+        id: diaConfig
     }
 }

@@ -6,7 +6,6 @@
 
 #pragma once
 
-
 #include <Common/VersionNameHelpers.hpp>
 #include <m64rr/API.hpp>
 #include <m64rr/Plugin.hpp>

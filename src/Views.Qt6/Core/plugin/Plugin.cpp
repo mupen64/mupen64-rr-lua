@@ -6,7 +6,6 @@
 
 #include "Plugin.hpp"
 
-
 #include <decan.hpp>
 
 #include "EmuContext.hpp"

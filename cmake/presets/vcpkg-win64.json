@@ -7,7 +7,7 @@
   "configurePresets": [
     {
       "name": "common-vcpkg-win64",
-      "$comment": "Common settings for Windows (x64) + vcpkg",
+      "description": "Common settings for Windows (x64) + vcpkg",
 
       "inherits": "common",
       "hidden": true,

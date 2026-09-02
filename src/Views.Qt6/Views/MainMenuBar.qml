@@ -114,7 +114,6 @@ MenuBar {
                 root.core.frameAdvance(1);
             }
         }
-        // TODO: multi-frame advance
         Action {
             id: actMultiFrameAdvance
             property int frameCount: 0
@@ -249,8 +248,16 @@ MenuBar {
             }
         }
     }
+    Menu {
+        title: qsTr("Options")
 
-    // Dialogs for actions
+        Action {
+            text: qsTr("Settings...")
+            onTriggered: diaConfig.open()
+        }
+    }
+
+    // File dialogs
     Dialogs.FileDialog {
         id: diaOpenRom
         title: qsTr("Open ROM...")
@@ -280,13 +287,19 @@ MenuBar {
         }
     }
 
+    // Other dialogs
+    ConfigDialog {
+        id: diaConfig
+        title: "Settings"
+    }
+
     Binding {
         // Pause the core if we're interacting with the menu or its items
         root.core.paused: [
             actPause.checked,
             // menu interactions
-            root.opened, 
-            diaLoadState.visible, 
+            root.opened,
+            diaLoadState.visible,
             diaSaveState.visible
         ].some(value => value)
         // Tie GS button state to the GSButton item
