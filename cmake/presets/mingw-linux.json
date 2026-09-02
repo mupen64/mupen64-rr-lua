@@ -7,7 +7,7 @@
   "configurePresets": [
     {
       "name": "common-mingw-linux",
-      "$comment": "Common settings for Linux cross-compiling to MinGW Windows",
+      "description": "Common settings for Linux cross-compiling to MinGW Windows",
 
       "hidden": true,
       "generator": "Ninja",
