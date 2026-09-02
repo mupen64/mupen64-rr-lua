@@ -121,6 +121,12 @@ struct t_controller_config
     float x_scale = 1.0f;
     float y_scale = 1.0f;
 
+    t_button_mapping mag1{};
+    t_button_mapping mag2{};
+
+    uint32_t mag1_val = 54;
+    uint32_t mag2_val = 16;
+
     static t_controller_config gamepad_config()
     {
         t_controller_config config{};
@@ -140,6 +146,8 @@ struct t_controller_config
         config.c_right = {};
         config.x = {.axis = SDL_GAMEPAD_AXIS_LEFTX};
         config.y = {.axis = SDL_GAMEPAD_AXIS_LEFTY};
+        config.mag1 = {};
+        config.mag2 = {};
         return config;
     }
 
@@ -162,6 +170,8 @@ struct t_controller_config
         config.c_right = {.key = VK_RIGHT};
         config.x = {.key_negative = 'A', .key_positive = 'D'};
         config.y = {.key_negative = 'W', .key_positive = 'S'};
+        config.mag1 = {.key = 'M'};
+        config.mag2 = {.key = 'C'};
         return config;
     }
 
@@ -187,6 +197,10 @@ struct t_controller_config
             TASINPUT_FIELD(y),
             TASINPUT_FIELD(x_scale),
             TASINPUT_FIELD(y_scale),
+            TASINPUT_FIELD(mag1),
+            TASINPUT_FIELD(mag2),
+            TASINPUT_FIELD(mag1_val),
+            TASINPUT_FIELD(mag2_val),
         });
 #undef TASINPUT_FIELD
     }
@@ -213,6 +227,10 @@ struct t_controller_config
             TASINPUT_FIELD(y),
             TASINPUT_FIELD(x_scale),
             TASINPUT_FIELD(y_scale),
+            TASINPUT_FIELD(mag1),
+            TASINPUT_FIELD(mag2),
+            TASINPUT_FIELD(mag1_val),
+            TASINPUT_FIELD(mag2_val),
         };
 #undef TASINPUT_FIELD
     }

@@ -12,11 +12,11 @@
 
 const auto editbox_ids = {IDC_E_A, IDC_E_B, IDC_E_START, IDC_E_ZTRIG, IDC_E_LTRIG, IDC_E_RTRIG, IDC_E_DPLEFT,
     IDC_E_DPRIGHT, IDC_E_DPUP, IDC_E_DPDOWN, IDC_E_CLEFT, IDC_E_CRIGHT, IDC_E_CUP, IDC_E_CDOWN, IDC_EAS_UP,
-    IDC_EAS_RIGHT, IDC_EAS_LEFT, IDC_EAS_DOWN};
+    IDC_EAS_RIGHT, IDC_EAS_LEFT, IDC_EAS_DOWN, IDC_E_MAG1, IDC_E_MAG2};
 
 const auto button_ids = {IDC_B_A, IDC_B_B, IDC_B_START, IDC_B_ZTRIG, IDC_B_LTRIG, IDC_B_RTRIG, IDC_B_DPLEFT,
     IDC_B_DPRIGHT, IDC_B_DPUP, IDC_B_DPDOWN, IDC_B_CLEFT, IDC_B_CRIGHT, IDC_B_CUP, IDC_B_CDOWN, IDC_BAS_UP,
-    IDC_BAS_RIGHT, IDC_BAS_LEFT, IDC_BAS_DOWN};
+    IDC_BAS_RIGHT, IDC_BAS_LEFT, IDC_BAS_DOWN, IDC_B_MAG1, IDC_B_MAG2};
 
 struct config_dialog_context
 {
@@ -260,6 +260,18 @@ static void update_visuals()
     update_editbox(IDC_EAS_LEFT, IDC_EAS_RIGHT, controller_config.x);
     update_editbox(IDC_EAS_UP, IDC_EAS_DOWN, controller_config.y);
 
+    update_editbox(IDC_E_MAG1, controller_config.mag1);
+    update_editbox(IDC_E_MAG2, controller_config.mag2);
+
+    if (GetFocus() != GetDlgItem(g_ctx.hwnd, IDC_E_MAG1_VALUE))
+    {
+        SetDlgItemText(g_ctx.hwnd, IDC_E_MAG1_VALUE, std::to_string(controller_config.mag1_val).c_str());
+    }
+    if (GetFocus() != GetDlgItem(g_ctx.hwnd, IDC_E_MAG2_VALUE))
+    {
+        SetDlgItemText(g_ctx.hwnd, IDC_E_MAG2_VALUE, std::to_string(controller_config.mag2_val).c_str());
+    }
+
     CheckDlgButton(g_ctx.hwnd, IDC_CHECKACTIVE, new_config.controller_active[g_ctx.selected_controller]);
     CheckDlgButton(g_ctx.hwnd, IDC_CHECKMEMPAK, new_config.controller_mempak[g_ctx.selected_controller]);
 }
@@ -452,6 +464,46 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             HANDLE_EDIT_BEGIN(IDC_B_CRIGHT, IDC_E_CRIGHT, &controller_config->c_right)
             HANDLE_EDIT_BEGIN(IDC_B_CUP, IDC_E_CUP, &controller_config->c_up)
             HANDLE_EDIT_BEGIN(IDC_B_CDOWN, IDC_E_CDOWN, &controller_config->c_down)
+            HANDLE_EDIT_BEGIN(IDC_B_MAG1, IDC_E_MAG1, &controller_config->mag1)
+            HANDLE_EDIT_BEGIN(IDC_B_MAG2, IDC_E_MAG2, &controller_config->mag2)
+        case IDC_E_MAG1_VALUE: {
+            if (HIWORD(wparam) == EN_CHANGE)
+            {
+                char str[16]{};
+                GetDlgItemText(g_ctx.hwnd, LOWORD(wparam), str, std::size(str));
+                try
+                {
+                    controller_config->mag1_val = static_cast<uint32_t>(std::clamp(std::stol(str), 0l, 128l));
+                }
+                catch (...)
+                {
+                }
+            }
+            else if (HIWORD(wparam) == EN_KILLFOCUS)
+            {
+                SetDlgItemText(g_ctx.hwnd, LOWORD(wparam), std::to_string(controller_config->mag1_val).c_str());
+            }
+        }
+        break;
+        case IDC_E_MAG2_VALUE: {
+            if (HIWORD(wparam) == EN_CHANGE)
+            {
+                char str[16]{};
+                GetDlgItemText(g_ctx.hwnd, LOWORD(wparam), str, std::size(str));
+                try
+                {
+                    controller_config->mag2_val = static_cast<uint32_t>(std::clamp(std::stol(str), 0l, 128l));
+                }
+                catch (...)
+                {
+                }
+            }
+            else if (HIWORD(wparam) == EN_KILLFOCUS)
+            {
+                SetDlgItemText(g_ctx.hwnd, LOWORD(wparam), std::to_string(controller_config->mag2_val).c_str());
+            }
+        }
+        break;
         case IDC_BAS_LEFT:
             begin_edit(IDC_EAS_LEFT, &controller_config->x);
             g_ctx.positive_target_axis = false;
