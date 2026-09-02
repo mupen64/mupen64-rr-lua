@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
-  "version": 10,
+  "version": 9,
   "include": [
     "common.json"
   ],

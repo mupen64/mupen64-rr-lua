@@ -34,12 +34,14 @@ struct RSPMessage
 
 struct RSPInfo
 {
-    std::unique_ptr<std::jthread> thread;
     std::mutex mutex;
     std::condition_variable msg_available;
+    std::unique_ptr<std::jthread> thread;
     std::deque<RSPMessage> messages;
 
     u32 PC[18], PCi, busy, halt, close, DList, uc_start, uc_dstart, cmd, nextCmd, count;
+
+    ~RSPInfo();
 };
 
 extern RSPInfo RSP;
