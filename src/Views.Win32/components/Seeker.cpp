@@ -79,6 +79,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_TIMER: {
         if (!g_main_ctx.core_ctx->vcr_is_seeking())
         {
+            SetDlgItemText(hwnd, IDC_SEEKER_ETA, "");
             break;
         }
         const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();

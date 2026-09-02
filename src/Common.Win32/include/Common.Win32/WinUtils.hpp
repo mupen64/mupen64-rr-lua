@@ -298,7 +298,7 @@ inline std::string format_duration(size_t seconds)
     if (hours > 0) std::format_to(std::back_inserter(str), "{} hour{} ", hours, hours == 1 ? "" : "s");
     if (hours > 0 || minutes > 0)
         std::format_to(std::back_inserter(str), "{} minute{} ", minutes, minutes == 1 ? "" : "s");
-    std::format_to(std::back_inserter(str), "{} second{} remaining", seconds_rem, seconds_rem == 1 ? "" : "s");
+    std::format_to(std::back_inserter(str), "{} second{}", seconds_rem, seconds_rem == 1 ? "" : "s");
     return str;
 }
 
