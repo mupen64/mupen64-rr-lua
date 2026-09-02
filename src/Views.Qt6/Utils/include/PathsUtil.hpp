@@ -11,12 +11,14 @@
 #include <QVariant>
 #include <qqmlintegration.h>
 
-class PathsUtil : public QObject {
+class PathsUtil : public QObject
+{
     Q_OBJECT
     QML_NAMED_ELEMENT(Paths)
     QML_SINGLETON
-public:
-    Q_INVOKABLE QVariant toLocalFile(QUrl url) {
-        return (url.isLocalFile())? QVariant(url.toLocalFile()) : QVariant();
+  public:
+    Q_INVOKABLE QVariant toLocalFile(QUrl url)
+    {
+        return (url.isLocalFile()) ? QVariant(url.toLocalFile()) : QVariant();
     }
 };
