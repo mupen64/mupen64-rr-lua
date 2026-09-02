@@ -16,7 +16,7 @@ ScrollView {
 
     Layout.fillWidth: true
     Layout.fillHeight: true
-    Layout.minimumWidth: 400
+    Layout.minimumWidth: 350
 
     default property list<Item> rows
 
