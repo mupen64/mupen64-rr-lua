@@ -30,7 +30,7 @@ static void set_core_instance(EmuContext *ptr)
 
 EmuContext::EmuContext(QObject *parent)
     : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
-      m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this))
+      m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this)), m_paths(new EmuPaths(this))
 {
     set_core_instance(this);
 
@@ -40,17 +40,9 @@ EmuContext::EmuContext(QObject *parent)
     m_core_params->submit_task = [&](const std::function<void()> &cb) { m_task_pool.start(cb); };
 
 #pragma region Directories
-    m_core_params->get_saves_directory = [] {
-        static auto s_save_path = IOUtils::exe_path().parent_path() / "saves";
-        if (!std::filesystem::is_directory(s_save_path)) std::filesystem::create_directories(s_save_path);
-        return s_save_path;
-    };
-    m_core_params->get_backups_directory = [] {
-        static auto s_backups_path = IOUtils::exe_path().parent_path() / "backups";
-        if (!std::filesystem::is_directory(s_backups_path)) std::filesystem::create_directories(s_backups_path);
-        return s_backups_path;
-    };
-    m_core_params->get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
+    m_core_params->get_saves_directory = [this] { return m_paths->saveDirStdPath(); };
+    m_core_params->get_backups_directory = [this] { return m_paths->backupDirStdPath(); };
+    m_core_params->get_summercart_path = [this]() { return m_paths->saveDirStdPath() / "cart.vhd"; };
 #pragma endregion
 
 #pragma region Logging
@@ -310,6 +302,11 @@ void EmuContext::setSpeedModifier(int32_t valueIn)
 EmuOptions *EmuContext::options()
 {
     return m_options;
+}
+
+EmuPaths *EmuContext::paths()
+{
+    return m_paths;
 }
 
 void EmuContext::readVideoOutput(QImage &image)

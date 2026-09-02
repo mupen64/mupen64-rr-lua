@@ -118,6 +118,12 @@ ApplicationWindow {
         options.accurateRDPCompletion: SettingsCore.accurateRDPCompletion
         options.vcrBackups: SettingsCore.vcrBackups
         options.vcrWriteExtendedFormat: SettingsCore.vcrWriteExtendedFormat
+
+        // config paths
+        paths.romDir: SettingsPaths.romDir
+        paths.saveDir: SettingsPaths.saveDir
+        paths.screenshotDir: SettingsPaths.screenshotDir
+        paths.backupDir: SettingsPaths.backupDir
     }
 
     // invalidateVisuals() must be called on each UI frame to

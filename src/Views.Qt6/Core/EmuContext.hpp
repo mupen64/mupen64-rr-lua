@@ -16,6 +16,7 @@
 #include "CoreEnums.hpp"
 
 class EmuOptions;
+class EmuPaths;
 
 /**
  * @brief QML-owned singleton holding the core and related objects.
@@ -39,6 +40,7 @@ class EmuContext : public QObject
 
     // extra properties
     Q_PROPERTY(EmuOptions *options READ options)
+    Q_PROPERTY(EmuPaths *paths READ paths)
   public:
     static constexpr size_t NUM_SAVE_SLOTS = 10;
 
@@ -120,6 +122,12 @@ class EmuContext : public QObject
      * This contains many config options that don't make sense being in the main object.
      */
     Q_INVOKABLE EmuOptions *options();
+
+    /**
+     * @brief Gets the EmuOptions object associated with this context.
+     * This contains many config options that don't make sense being in the main object.
+     */
+    Q_INVOKABLE EmuPaths *paths();
 
     /**
      * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
@@ -218,6 +226,7 @@ class EmuContext : public QObject
     QThreadPool m_task_pool;
 
     EmuOptions *m_options;
+    EmuPaths *m_paths;
 };
 
 /**
@@ -402,6 +411,66 @@ class EmuOptions : public QObject
 
   private:
     EmuContext *m_context;
+};
+
+class EmuPaths : public QObject
+{
+    Q_OBJECT
+    QML_ANONYMOUS
+
+    Q_PROPERTY(QString romDir READ romDir WRITE setRomDir NOTIFY romDirChanged)
+    Q_PROPERTY(QString saveDir READ saveDir WRITE setSaveDir NOTIFY saveDirChanged)
+    Q_PROPERTY(QString screenshotDir READ screenshotDir WRITE setScreenshotDir NOTIFY screenshotDirChanged)
+    Q_PROPERTY(QString backupDir READ backupDir WRITE setBackupDir NOTIFY backupDirChanged)
+  public:
+    EmuPaths(QObject *parent = nullptr) : QObject(parent) {}
+    virtual ~EmuPaths() {}
+
+    QString romDir() const { return QString(m_rom_dir.u16string()); }
+    QString saveDir() const { return QString(m_save_dir.u16string()); }
+    QString screenshotDir() const { return QString(m_screenshot_dir.u16string()); }
+    QString backupDir() const { return QString(m_backup_dir.u16string()); }
+
+    std::filesystem::path romDirStdPath() const { return m_rom_dir; }
+    std::filesystem::path saveDirStdPath() const { return m_save_dir; }
+    std::filesystem::path screenshotDirStdPath() const { return m_screenshot_dir; }
+    std::filesystem::path backupDirStdPath() const { return m_backup_dir; }
+
+    void setRomDir(const QString &value)
+    {
+        if (value.toStdU16String() == m_rom_dir) return;
+        m_rom_dir = value.toStdU16String();
+        romDirChanged();
+    }
+    void setSaveDir(const QString &value)
+    {
+        if (value.toStdU16String() == m_save_dir) return;
+        m_save_dir = value.toStdU16String();
+        saveDirChanged();
+    }
+    void setScreenshotDir(const QString &value)
+    {
+        if (value.toStdU16String() == m_screenshot_dir) return;
+        m_screenshot_dir = value.toStdU16String();
+        screenshotDirChanged();
+    }
+    void setBackupDir(const QString &value)
+    {
+        if (value.toStdU16String() == m_backup_dir) return;
+        m_backup_dir = value.toStdU16String();
+        backupDirChanged();
+    }
+  signals:
+    void romDirChanged();
+    void saveDirChanged();
+    void screenshotDirChanged();
+    void backupDirChanged();
+
+  private:
+    std::filesystem::path m_rom_dir;
+    std::filesystem::path m_save_dir;
+    std::filesystem::path m_screenshot_dir;
+    std::filesystem::path m_backup_dir;
 };
 
 namespace CoreUtil
