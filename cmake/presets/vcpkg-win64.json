@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
-  "version": 10,
+  "version": 9,
   "include": [
     "common.json"
   ],
   "configurePresets": [
     {
       "name": "common-vcpkg-win64",
-      "$comment": "Common settings for Windows (x64) + vcpkg",
+      "description": "Common settings for Windows (x64) + vcpkg",
 
       "inherits": "common",
       "hidden": true,

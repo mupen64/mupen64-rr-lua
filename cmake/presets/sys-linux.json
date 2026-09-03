@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
-  "version": 10,
+  "version": 9,
   "include": [
     "common.json"
   ],
@@ -13,7 +13,9 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "MUPEN64RR_BUILD_QT6": true
+        "MUPEN64RR_BUILD_QT6": true,
+        "QT_QML_GENERATE_QMLLS_INI": true,
+        "QT_QML_GENERATE_QMLLS_INI_NO_CMAKE_CALLS": true
       },
       "condition": {
         "type": "equals",

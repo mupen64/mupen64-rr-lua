@@ -1,10 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
-  "version": 10,
+  "version": 9,
   "configurePresets": [
     {
       "name": "common",
-      "$comment": "Platform-agnostic common settings.",
+      "description": "Platform-agnostic common settings.",
 
       "hidden": true,
       "generator": "Ninja",

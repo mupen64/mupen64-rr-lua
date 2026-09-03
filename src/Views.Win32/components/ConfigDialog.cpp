@@ -517,8 +517,8 @@ std::vector<OptionGroup> get_static_option_groups()
 #define RPROP(T, x) OptionItem::ReadableProp([] { return Config::default_config().x; })
 
 #define RWPROP(T, x, c)                                                                                                \
-    OptionItem::WritableProp([] { return g_config.x; },                                                    \
-        [](const OptionItem::DataVariant &value) {                                                                \
+    OptionItem::WritableProp([] { return g_config.x; },                                                                \
+        [](const OptionItem::DataVariant &value) {                                                                     \
             g_config.x = std::get<T>(value);                                                                           \
             do                                                                                                         \
             {                                                                                                          \
@@ -1475,11 +1475,8 @@ std::vector<OptionGroup> ConfigDialog::get_option_groups()
                 .group_id = group.id,
                 .name = action,
                 .current_value = OptionItem::WritableProp([=] { return g_config.hotkeys.at(action); },
-                    [=](const OptionItem::DataVariant &value) {
-                        g_config.hotkeys[action] = std::get<Hotkey>(value);
-                    }),
-                .default_value =
-                    OptionItem::ReadableProp([=] { return g_config.inital_hotkeys.at(action); }),
+                    [=](const OptionItem::DataVariant &value) { g_config.hotkeys[action] = std::get<Hotkey>(value); }),
+                .default_value = OptionItem::ReadableProp([=] { return g_config.inital_hotkeys.at(action); }),
             };
 
             group.items.emplace_back(item);

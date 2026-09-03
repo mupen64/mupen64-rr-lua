@@ -4,34 +4,29 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "QtIconImageProvider.hpp"
+#include <Common/VersionNameHelpers.hpp>
 #include <Common.Views/App.hpp>
 
 #include <print>
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QSettings>
 #include <QtQml/QQmlExtensionPlugin>
 
-Q_IMPORT_QML_PLUGIN(UtilsPlugin)
 Q_IMPORT_QML_PLUGIN(CorePlugin)
+Q_IMPORT_QML_PLUGIN(ComponentsPlugin)
+Q_IMPORT_QML_PLUGIN(ConfigPlugin)
+Q_IMPORT_QML_PLUGIN(UtilsPlugin)
 
-static int cli_main(int argc, char *argv[])
+namespace
 {
-    using namespace std::literals;
-    if (argc != 2)
-    {
-        std::println("usage: {} [path to ROM]", argv[0]);
-        return 1;
-    }
-
-    // auto context =
-
-    // auto res1 = Core::context()->vr_start_rom(argv[1]);
-    // std::println("result: {}", (int)res1);
-    // std::this_thread::sleep_for(10s);
-    // Core::context()->vr_close_rom(true);
-    return 0;
-}
+using namespace Qt::Literals;
+constexpr QLatin1StringView ORG_DOMAIN = "mupen64.com"_L1;
+constexpr QLatin1StringView ORG_NAME = "Mupen64"_L1;
+constexpr QLatin1StringView DESKTOP_FILE_NAME = "mupen64-rr-lua"_L1;
+constexpr QLatin1StringView DISPLAY_NAME = "Mupen64"_L1;
+} // namespace
 
 static int qt_main(int argc, char *argv[])
 {
@@ -44,8 +39,14 @@ static int qt_main(int argc, char *argv[])
         qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
     }
 #endif
-
+    // TODO: provide and package .desktop file for Linux
     QGuiApplication app(argc, argv);
+    QGuiApplication::setOrganizationDomain(ORG_DOMAIN);
+    QGuiApplication::setOrganizationName(ORG_NAME);
+    QGuiApplication::setApplicationName(DESKTOP_FILE_NAME);
+    QGuiApplication::setApplicationVersion(CURRENT_VERSION);
+    QGuiApplication::setApplicationDisplayName(DISPLAY_NAME);
+
     QQmlApplicationEngine engine;
 
     // Close if object creation fails

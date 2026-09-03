@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
@@ -13,7 +14,7 @@ Item {
         id: priv
         property list<var> dialogQueue: []
         property var currDialog: null
-        
+
         function showNextDialog() {
             // no more dialogs left; clear currDialog
             if (dialogQueue.length === 0) {
@@ -91,15 +92,14 @@ Item {
     MessageBox {
         id: diaServiceInfo
         standardButtons: Dialog.Ok
-        onAccepted: priv.dialogClosed()
+        onClosed: priv.dialogClosed()
     }
 
     MessageBox {
         id: diaServiceAsk
         standardButtons: Dialog.Yes | Dialog.No
 
-        onAccepted: priv.dialogClosed(true)
-        onRejected: priv.dialogClosed(false)
+        onClosed: priv.dialogClosed(result == Dialog.Accepted)
     }
 
     MessageBox {
@@ -121,6 +121,6 @@ Item {
             }
         }
 
-        onAccepted: priv.dialogClosed(lastSelected)
+        onClosed: priv.dialogClosed(lastSelected)
     }
 }

@@ -5,7 +5,11 @@
  */
 #pragma once
 
+#include <cmath>
 #include <filesystem>
+#include <format>
+#include <iterator>
+#include <string>
 
 #include <Common.Win32/Common.hpp>
 #include <spdlog/spdlog.h>
@@ -275,6 +279,26 @@ inline std::string format_duration(size_t seconds)
 {
     char str[480] = {};
     sprintf(str, "%02zu:%02zu:%02zu", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+    return str;
+}
+
+/**
+ * \brief Formats an estimated duration into a friendly sentence.
+ * \param seconds The estimated duration in seconds.
+ * \return The formatted ETA.
+ */
+[[nodiscard]] inline std::string format_eta(double seconds)
+{
+    const auto total_seconds = std::lround(seconds);
+    const auto hours = total_seconds / 3600;
+    const auto minutes = (total_seconds / 60) % 60;
+    const auto seconds_rem = total_seconds % 60;
+
+    std::string str = "Estimated time remaining: ";
+    if (hours > 0) std::format_to(std::back_inserter(str), "{} hour{} ", hours, hours == 1 ? "" : "s");
+    if (hours > 0 || minutes > 0)
+        std::format_to(std::back_inserter(str), "{} minute{} ", minutes, minutes == 1 ? "" : "s");
+    std::format_to(std::back_inserter(str), "{} second{}", seconds_rem, seconds_rem == 1 ? "" : "s");
     return str;
 }
 

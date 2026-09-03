@@ -6,7 +6,6 @@
 
 #pragma once
 
-
 #include <Common/VersionNameHelpers.hpp>
 #include <Core/Plugin.hpp>
 

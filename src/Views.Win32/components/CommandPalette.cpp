@@ -137,8 +137,7 @@ t_listbox_item t_listbox_item::make_action(const std::string &action, const std:
     return item;
 }
 
-t_listbox_item t_listbox_item::make_option(
-    OptionItem *options_item, const OptionGroup &group)
+t_listbox_item t_listbox_item::make_option(OptionItem *options_item, const OptionGroup &group)
 {
     t_listbox_item item{};
     item.data = t_option_data{.item = options_item};
@@ -474,9 +473,7 @@ static void add_options()
 
     for (auto &group : g_ctx.option_groups)
     {
-        std::erase_if(group.items, [&](OptionItem &item) {
-            return item.type == OptionItem::Type::Hotkey;
-        });
+        std::erase_if(group.items, [&](OptionItem &item) { return item.type == OptionItem::Type::Hotkey; });
 
         if (group.items.empty())
         {

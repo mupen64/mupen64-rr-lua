@@ -12,7 +12,6 @@
 
 #define SPDLOG_LEVEL_NAMES {"🔍", "🪲", "ℹ️", "⚠️", "❌", "💥", ""}
 
-
 #include <Core/API.hpp>
 
 #pragma warning(push, 0)

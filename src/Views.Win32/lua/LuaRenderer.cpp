@@ -21,8 +21,7 @@ const auto OVERLAY_CLASS = "lua_overlay";
 static bool g_detached_overlays{};
 static HBRUSH g_alpha_mask_brush;
 
-static std::thread draw_thread;
-static std::atomic<bool> draw_thread_running{false};
+static std::jthread s_draw_thread;
 
 static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds = std::nullopt);
 
@@ -134,9 +133,9 @@ static void draw_lua(bool force)
     }
 }
 
-static void draw_clock_proc()
+static void draw_clock_proc(std::stop_token stop_token)
 {
-    while (draw_thread_running)
+    while (!stop_token.stop_requested())
     {
         g_main_ctx.dispatcher->invoke([]() { draw_lua(false); });
 
@@ -149,14 +148,12 @@ static void draw_clock_proc()
 
 static void stop_draw_clock()
 {
-    draw_thread_running = false;
-    if (draw_thread.joinable()) draw_thread.join();
+    s_draw_thread.request_stop();
 }
 
 static void start_draw_clock()
 {
-    draw_thread_running = true;
-    draw_thread = std::thread(draw_clock_proc);
+    s_draw_thread = std::jthread(draw_clock_proc);
 }
 
 static void create_loadscreen(t_lua_rendering_context *ctx)
