@@ -13,7 +13,7 @@
  */
 namespace RomBrowser
 {
-struct t_simple_rom_info
+struct SimpleROMInfo
 {
     std::string path;
     size_t size;
@@ -54,6 +54,6 @@ std::vector<std::filesystem::path> find_available_roms(const std::function<bool(
  * \brief Gets the list of discovered ROMs. This list is cached and updated when the rombrowser is built.
  * \return The discovered ROMs.
  */
-std::vector<t_simple_rom_info> get_discovered_roms();
+std::vector<SimpleROMInfo> get_discovered_roms();
 
 } // namespace RomBrowser

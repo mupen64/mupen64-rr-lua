@@ -8,7 +8,7 @@
 
 #include <Core/API.hpp>
 
-struct t_vcr_state
+struct VCRState
 {
     std::filesystem::path movie_path{};
     CoreVCRTask task = CoreVCRTask::Idle;
@@ -57,7 +57,7 @@ struct SyncData
     std::optional<double> rcp_lag_factor;
 };
 
-extern t_vcr_state vcr;
+extern VCRState vcr;
 extern std::mutex vcr_mtx;
 
 /**

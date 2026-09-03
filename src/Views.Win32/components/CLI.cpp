@@ -17,7 +17,7 @@
 #include <components/Dispatcher.hpp>
 #include <lua/LuaDialog.hpp>
 
-struct t_cli_params
+struct CLIParams
 {
     std::filesystem::path rom{};
     std::filesystem::path lua{};
@@ -30,7 +30,7 @@ struct t_cli_params
     int32_t parity_check_interval{10};
 };
 
-struct t_cli_state
+struct CLIState
 {
     bool rom_is_movie{};
     bool is_movie_from_start{};
@@ -38,10 +38,10 @@ struct t_cli_state
     bool first_emu_launched = true;
 };
 
-static t_cli_params cli_params{};
-static t_cli_state cli_state{};
+static CLIParams cli_params{};
+static CLIState cli_state{};
 
-static void log_cli_params(const t_cli_params &params)
+static void log_cli_params(const CLIParams &params)
 {
     g_view_logger->trace("log_cli_params:");
     g_view_logger->trace("  rom: {}", params.rom.string());
@@ -126,7 +126,7 @@ static void start_capture()
     }
 
     CaptureManager::start_capture(
-        cli_params.avi.string().c_str(), static_cast<t_config::EncoderType>(g_config.encoder_type), false);
+        cli_params.avi.string().c_str(), static_cast<Config::EncoderType>(g_config.encoder_type), false);
 }
 
 static void on_movie_playback_stop()

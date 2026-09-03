@@ -56,7 +56,7 @@ const std::string FRAGMENT_SHADER = R"(
     }
     )";
 
-struct t_mge_context
+struct MgeContext
 {
     int32_t last_width{};
     int32_t last_height{};
@@ -77,7 +77,7 @@ struct t_mge_context
     ComPtr<ID3D11PixelShader> ps;
 };
 
-static t_mge_context mge_context{};
+static MgeContext mge_context{};
 
 static void create_d3d(const HWND hwnd)
 {

@@ -211,14 +211,14 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
     }
 }
 
-void Config::Legacy::handle_config_ini(mINI::INIStructure &ini)
+void AppConfig::Legacy::handle_config_ini(mINI::INIStructure &ini)
 {
 #define HANDLE_P_VALUE(x) ini_handle_config_value(ini, #x, &g_config.x);
 #define HANDLE_VALUE(x) ini_handle_config_value(ini, #x, g_config.x);
 
     // We need to fill the config with latest default values first, because some "new" fields might not exist in the
     // ini
-    g_config = Config::default_config();
+    g_config = AppConfig::default_config();
 
     HANDLE_VALUE(ignored_version)
     HANDLE_P_VALUE(theme)
@@ -311,7 +311,7 @@ void Config::Legacy::handle_config_ini(mINI::INIStructure &ini)
 /**
  * \brief Migrates old values from the specified config to new ones if possible.
  */
-void Config::Legacy::migrate_config_ini(t_config &config, const mINI::INIStructure &ini)
+void AppConfig::Legacy::migrate_config_ini(Config &config, const mINI::INIStructure &ini)
 {
     // no migrations currently
 }

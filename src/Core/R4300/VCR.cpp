@@ -42,7 +42,7 @@ constexpr auto controller_rumblepak_mismatch =
 constexpr auto controller_mempak_rumblepak_mismatch =
     "Controller {} does not have a Memory or Rumble Pak in the movie.\nPlayback might desynchronize.\n";
 
-t_vcr_state vcr{};
+VCRState vcr{};
 std::mutex vcr_mtx{};
 
 class vcr_anti_lock

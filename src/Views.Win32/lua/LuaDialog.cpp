@@ -11,35 +11,35 @@
 #include <lua/LuaManager.hpp>
 #include <lua/LuaDialog.hpp>
 
-// wParam: either nullptr, or a pointer to a t_instance_context whose running state has changed
+// wParam: either nullptr, or a pointer to a InstanceContext whose running state has changed
 #define MUPM_RUNNING_STATE_CHANGED (WM_USER + 24)
 
 #define MUPM_REBUILD_INSTANCE_LIST (WM_USER + 25)
 
-struct t_instance_context
+struct InstanceContext
 {
     HWND hwnd{};
     std::filesystem::path typed_path{};
     std::string logs{};
-    t_lua_environment *env{};
+    LuaEnvironment *env{};
 
     [[nodiscard]] bool trusted() const { return g_config.trusted_lua_paths.contains(typed_path.string()); }
 };
 
-struct t_dialog_state
+struct DialogState
 {
     HWND mgr_hwnd{};
     HWND lv_hwnd{};
     HWND inst_hwnd{};
     HWND placeholder_hwnd{};
     RECT initial_rect{};
-    std::vector<std::shared_ptr<t_instance_context>> stored_contexts{};
+    std::vector<std::shared_ptr<InstanceContext>> stored_contexts{};
 };
 
-static t_dialog_state g_dlg{};
-static std::vector<std::shared_ptr<t_instance_context>> g_lua_instance_wnd_ctxs{};
+static DialogState g_dlg{};
+static std::vector<std::shared_ptr<InstanceContext>> g_lua_instance_wnd_ctxs{};
 
-static t_instance_context *get_instance_context(const t_lua_environment *env)
+static InstanceContext *get_instance_context(const LuaEnvironment *env)
 {
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
     {
@@ -71,7 +71,7 @@ static void update_config_paths()
 /**
  * \brief Selects the specified instance in the manager dialog.
  */
-static void select_instance(const t_instance_context &ctx)
+static void select_instance(const InstanceContext &ctx)
 {
     if (!IsWindow(g_dlg.mgr_hwnd))
     {
@@ -85,7 +85,7 @@ static void select_instance(const t_instance_context &ctx)
 /**
  * \brief Prints text to an instance.
  */
-static void print(t_instance_context &ctx, const std::string &text)
+static void print(InstanceContext &ctx, const std::string &text)
 {
     constexpr auto max_buffer = 0x7000;
 
@@ -118,7 +118,7 @@ static void print(t_instance_context &ctx, const std::string &text)
 /**
  * \brief Stops the Lua environment associated with the given context if it exists.
  */
-static void stop(t_instance_context &ctx)
+static void stop(InstanceContext &ctx)
 {
     if (!ctx.env)
     {
@@ -132,13 +132,13 @@ static void stop(t_instance_context &ctx)
 /**
  * \brief Starts a Lua environment for the given context using the specified script path.
  */
-static void start(t_instance_context &ctx, const std::filesystem::path &path)
+static void start(InstanceContext &ctx, const std::filesystem::path &path)
 {
     stop(ctx);
 
     const auto result = LuaManager::create_environment(
         path,
-        [](const t_lua_environment *env) {
+        [](const LuaEnvironment *env) {
             const auto ctx = get_instance_context(env);
 
             if (ctx)
@@ -149,7 +149,7 @@ static void start(t_instance_context &ctx, const std::filesystem::path &path)
 
             PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
         },
-        [](const t_lua_environment *env, const std::string &text) {
+        [](const LuaEnvironment *env, const std::string &text) {
             const auto ctx = get_instance_context(env);
             if (!ctx)
             {
@@ -184,9 +184,9 @@ static void start(t_instance_context &ctx, const std::filesystem::path &path)
 /**
  * \brief Inserts an instance to the front of the list of Lua instances, and returns a pointer to the context.
  */
-static std::shared_ptr<t_instance_context> add_instance(const std::filesystem::path &path)
+static std::shared_ptr<InstanceContext> add_instance(const std::filesystem::path &path)
 {
-    const auto ctx = std::make_shared<t_instance_context>();
+    const auto ctx = std::make_shared<InstanceContext>();
     ctx->typed_path = path;
 
     g_lua_instance_wnd_ctxs.insert(g_lua_instance_wnd_ctxs.begin(), ctx);
@@ -217,7 +217,7 @@ static void add_instances(const std::vector<std::filesystem::path> &paths)
  * \brief Performs the same operation as `add_instance`, but also selects the newly added instance in the manager
  * dialog.
  */
-static std::shared_ptr<t_instance_context> add_and_select_instance(const std::filesystem::path &path)
+static std::shared_ptr<InstanceContext> add_and_select_instance(const std::filesystem::path &path)
 {
     const auto ctx = add_instance(path);
 
@@ -249,7 +249,7 @@ static void move_instance_in_list(size_t from, size_t to)
 /**
  * \brief Destroys the placeholder dialog if it exists, removing its anchors from the manager dialog.
  */
-static void destroy_placeholder_dialog(t_dialog_state &dlg)
+static void destroy_placeholder_dialog(DialogState &dlg)
 {
     if (!IsWindow(dlg.placeholder_hwnd))
     {
@@ -265,7 +265,7 @@ static void destroy_placeholder_dialog(t_dialog_state &dlg)
  * \brief Creates the placeholder dialog that is shown when no Lua instance is selected, destroying any existing
  * placeholder dialog first.
  */
-static void create_placeholder_dialog(t_dialog_state &dlg)
+static void create_placeholder_dialog(DialogState &dlg)
 {
     destroy_placeholder_dialog(dlg);
 
@@ -308,7 +308,7 @@ static void add_and_start(const std::filesystem::path &path)
     start(*ctx, path);
 }
 
-static bool instance_context_alive(const t_instance_context *ctx)
+static bool instance_context_alive(const InstanceContext *ctx)
 {
     return ctx && std::ranges::any_of(g_lua_instance_wnd_ctxs, [&](const auto &c) { return c.get() == ctx; });
 }
@@ -320,7 +320,7 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
         SetWindowLongPtr(hwnd, GWLP_USERDATA, lparam);
     }
 
-    auto ctx = (t_instance_context *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    auto ctx = (InstanceContext *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
     if (!instance_context_alive(ctx))
     {
@@ -743,7 +743,7 @@ void LuaDialog::load_running_scripts()
     g_dlg.stored_contexts.clear();
 }
 
-void LuaDialog::print(const t_lua_environment &ctx, const std::string &text)
+void LuaDialog::print(const LuaEnvironment &ctx, const std::string &text)
 {
     // Find the context for the given Lua environment
     for (const auto &wnd_ctx : g_lua_instance_wnd_ctxs)

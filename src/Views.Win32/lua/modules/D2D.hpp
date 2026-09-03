@@ -23,7 +23,7 @@ typedef struct
     int vertical_alignment;
     float width;
     float height;
-} t_text_layout_params;
+} TextLayoutParams;
 
 typedef struct
 {
@@ -32,7 +32,7 @@ typedef struct
     float font_size;
     float max_width;
     float max_height;
-} t_text_measure_params;
+} TextMeasureParams;
 
 typedef struct
 {
@@ -40,16 +40,16 @@ typedef struct
     float g;
     float b;
     float a;
-} t_d2d_color;
+} D2DColor;
 
 typedef struct
 {
     ID2D1Bitmap *bmp;
     D2D1_RECT_F destination_rectangle;
     D2D1_RECT_F source_rectangle;
-    t_d2d_color color;
+    D2DColor color;
     int interpolation;
-} t_draw_image_params;
+} DrawImageParams;
 
 #define D2D_GET_RECT(L, idx)                                                                                           \
     D2D1::RectF(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                  \
@@ -75,11 +75,11 @@ typedef struct
 #define D2D_GET_ROUNDED_RECT(L, idx)                                                                                   \
     D2D1_ROUNDED_RECT(D2D_GET_RECT(L, idx), luaL_checknumber(L, idx + 5), luaL_checknumber(L, idx + 6))
 
-static t_draw_image_params check_draw_image_params(lua_State *L, int index)
+static DrawImageParams check_draw_image_params(lua_State *L, int index)
 {
     luaL_checktype(L, index, LUA_TTABLE);
 
-    t_draw_image_params params{};
+    DrawImageParams params{};
 
     lua_getfield(L, index, "identifier");
     params.bmp = (ID2D1Bitmap *)luaL_checkinteger(L, -1);
@@ -208,7 +208,7 @@ static int clear(lua_State *L)
 
     // COMPAT: This is really what this did! It just ignores the specified color and uses the mask!
     // We should probably do something about this hahaha
-    if (g_config.presenter_type == (int32_t)t_config::PresenterType::DirectComposition)
+    if (g_config.presenter_type == (int32_t)Config::PresenterType::DirectComposition)
         lua->rctx.d2d_render_target_stack.top()->Clear(color);
     else
         lua->rctx.d2d_render_target_stack.top()->Clear(D2D1::ColorF(LuaRenderer::lua_gdi_color_mask));
@@ -303,7 +303,7 @@ static int draw_text(lua_State *L)
     uint64_t font_name_hash = xxh64::hash(font_name.data(), font_name.size(), 0);
     uint64_t text_hash = xxh64::hash(text.data(), text.size(), 0);
 
-    t_text_layout_params params = {
+    TextLayoutParams params = {
         .text_hash = text_hash,
         .font_name_hash = font_name_hash,
         .font_weight = font_weight,
@@ -388,7 +388,7 @@ static int measure_text(lua_State *L)
     uint64_t font_name_hash = xxh64::hash(font_name.data(), font_name.size(), 0);
     uint64_t text_hash = xxh64::hash((char *)text.data(), text.size() * sizeof(wchar_t), 0);
 
-    t_text_measure_params params = {
+    TextMeasureParams params = {
         .text_hash = text_hash,
         .font_name_hash = font_name_hash,
         .font_size = font_size,

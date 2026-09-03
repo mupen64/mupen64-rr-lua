@@ -66,7 +66,7 @@ static LRESULT CALLBACK main_window_subclass_proc(
     return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
-static void present_gdi_content(t_lua_environment *lua)
+static void present_gdi_content(LuaEnvironment *lua)
 {
     SIZE size = {(LONG)lua->rctx.dc_size.width, (LONG)lua->rctx.dc_size.height};
     POINT src_pt = {0, 0};
@@ -83,7 +83,7 @@ static void draw_lua(bool force)
 {
     const auto now = std::chrono::steady_clock::now();
 
-    std::vector<t_lua_environment *> to_destroy;
+    std::vector<LuaEnvironment *> to_destroy;
     for (const auto &lua : g_lua_environments)
     {
         const auto time_since_last_render =
@@ -156,7 +156,7 @@ static void start_draw_clock()
     s_draw_thread = std::jthread(draw_clock_proc);
 }
 
-static void create_loadscreen(t_lua_rendering_context *ctx)
+static void create_loadscreen(LuaRenderingContext *ctx)
 {
     if (ctx->loadscreen_dc)
     {
@@ -169,7 +169,7 @@ static void create_loadscreen(t_lua_rendering_context *ctx)
     ReleaseDC(g_main_ctx.hwnd, gdi_dc);
 }
 
-static void destroy_loadscreen(t_lua_rendering_context *ctx)
+static void destroy_loadscreen(LuaRenderingContext *ctx)
 {
     if (!ctx->loadscreen_dc)
     {
@@ -292,9 +292,9 @@ void LuaRenderer::stop()
     DeleteObject(g_alpha_mask_brush);
 }
 
-t_lua_rendering_context LuaRenderer::default_rendering_context()
+LuaRenderingContext LuaRenderer::default_rendering_context()
 {
-    t_lua_rendering_context ctx{};
+    LuaRenderingContext ctx{};
     ctx.brush = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
     ctx.pen = static_cast<HPEN>(GetStockObject(BLACK_PEN));
     ctx.font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
@@ -309,7 +309,7 @@ void LuaRenderer::repaint_visuals()
     draw_lua(true);
 }
 
-void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environment *env)
+void LuaRenderer::create_renderer(LuaRenderingContext *ctx, LuaEnvironment *env)
 {
     if (ctx->gdi_back_dc != nullptr || ctx->ignore_create_renderer)
     {
@@ -375,13 +375,13 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     create_loadscreen(ctx);
 }
 
-void LuaRenderer::pre_destroy_renderer(t_lua_rendering_context *ctx)
+void LuaRenderer::pre_destroy_renderer(LuaRenderingContext *ctx)
 {
     g_view_logger->info("Pre-destroying Lua renderer...");
     ctx->ignore_create_renderer = true;
 }
 
-void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
+void LuaRenderer::destroy_renderer(LuaRenderingContext *ctx)
 {
     g_view_logger->info("Destroying Lua renderer...");
 
@@ -422,7 +422,7 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
     }
 }
 
-void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
+void LuaRenderer::ensure_d2d_renderer_created(LuaRenderingContext *ctx)
 {
     if (ctx->presenter || ctx->ignore_create_renderer)
     {
@@ -434,7 +434,7 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
     DWriteCreateFactory(
         DWRITE_FACTORY_TYPE_SHARED, __uuidof(ctx->dw_factory), reinterpret_cast<IUnknown **>(&ctx->dw_factory));
 
-    if (g_config.presenter_type != (int32_t)t_config::PresenterType::GDI)
+    if (g_config.presenter_type != (int32_t)Config::PresenterType::GDI)
         ctx->presenter = new DCompPresenter();
     else
         ctx->presenter = new GDIPresenter(lua_gdi_color_mask);
@@ -452,18 +452,18 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
     ctx->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
 }
 
-void LuaRenderer::mark_gdi_content_present(t_lua_rendering_context *ctx)
+void LuaRenderer::mark_gdi_content_present(LuaRenderingContext *ctx)
 {
     ctx->has_gdi_content = true;
 }
 
-void LuaRenderer::loadscreen_reset(t_lua_rendering_context *ctx)
+void LuaRenderer::loadscreen_reset(LuaRenderingContext *ctx)
 {
     destroy_loadscreen(ctx);
     create_loadscreen(ctx);
 }
 
-void LuaRenderer::set_target_fps(t_lua_rendering_context *rctx, std::optional<float> fps)
+void LuaRenderer::set_target_fps(LuaRenderingContext *rctx, std::optional<float> fps)
 {
     if (rctx->target_fps == fps) return;
     if (fps.has_value())

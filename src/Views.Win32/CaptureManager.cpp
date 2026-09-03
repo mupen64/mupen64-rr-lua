@@ -40,7 +40,7 @@ int32_t m_video_height;
 static Encoder::Params m_encoder_params;
 
 std::atomic m_capturing = false;
-t_config::EncoderType m_encoder_type;
+Config::EncoderType m_encoder_type;
 std::unique_ptr<Encoder> m_encoder;
 std::recursive_mutex m_mutex;
 
@@ -273,7 +273,7 @@ bool stop_capture_impl()
 }
 
 bool start_capture_impl(
-    std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings)
+    std::filesystem::path path, Config::EncoderType encoder_type, const bool ask_for_capture_settings)
 {
     if (!check_readscreen_available())
     {
@@ -294,10 +294,10 @@ bool start_capture_impl(
 
     switch (encoder_type)
     {
-    case t_config::EncoderType::VFW:
+    case Config::EncoderType::VFW:
         m_encoder = std::make_unique<WinVFWEncoder>();
         break;
-    case t_config::EncoderType::FFmpeg:
+    case Config::EncoderType::FFmpeg:
         m_encoder = std::make_unique<WinFFmpegEncoder>();
         break;
     default:
@@ -347,7 +347,7 @@ bool start_capture_impl(
     return true;
 }
 
-void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings,
+void start_capture(std::filesystem::path path, Config::EncoderType encoder_type, const bool ask_for_capture_settings,
     const std::function<void(bool)> &callback)
 {
     g_main_ctx.core_ctx->vr_wait_increment();

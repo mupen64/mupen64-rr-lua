@@ -18,7 +18,7 @@ static void prompt_plugin_change(HWND hwnd)
 
     if (result == 0)
     {
-        auto plugin_discovery_result = PluginUtil::discover_plugins(Config::plugin_directory());
+        auto plugin_discovery_result = PluginUtil::discover_plugins(AppConfig::plugin_directory());
 
         auto first_video_plugin = std::ranges::find_if(
             plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::Video; });

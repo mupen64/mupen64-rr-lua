@@ -15,7 +15,7 @@
         if (m_ctx.callback_count_map.at(key).load() == 0) return;                                                      \
     } while (false)
 
-struct t_atwindowmessage_context
+struct AtwindowmessageContext
 {
     HWND wnd;
     UINT msg;
@@ -35,8 +35,8 @@ struct LuaCallbacksContext
 };
 
 static LuaCallbacksContext m_ctx{};
-static t_atwindowmessage_context atwindowmessage_ctx{};
-static t_lua_key_event_args atkey_ctx{};
+static AtwindowmessageContext atwindowmessage_ctx{};
+static LuaKeyEventArgs atkey_ctx{};
 static LuaMouseEventArgs atmouse_ctx{};
 static int current_input_n = 0;
 
@@ -267,7 +267,7 @@ void LuaCallbacks::call_warp_modify_status_changed(const int32_t status)
     g_main_ctx.dispatcher->invoke([=] { invoke_callbacks_with_key_on_all_instances(REG_ATWARPMODIFYSTATUSCHANGED); });
 }
 
-void LuaCallbacks::call_atkey(const t_lua_key_event_args &args)
+void LuaCallbacks::call_atkey(const LuaKeyEventArgs &args)
 {
     RET_IF_NOT_REGISTERED(REG_ATKEY);
     atkey_ctx = args;
@@ -282,7 +282,7 @@ void LuaCallbacks::call_atmouse(const LuaMouseEventArgs &args)
 }
 
 bool invoke_callbacks_with_key_impl(
-    const t_lua_environment *lua, const std::function<int(lua_State *)> &function, LuaCallbacks::callback_key key)
+    const LuaEnvironment *lua, const std::function<int(lua_State *)> &function, LuaCallbacks::callback_key key)
 {
     NEED(is_on_gui_thread(), "not on GUI thread");
 
@@ -313,7 +313,7 @@ bool invoke_callbacks_with_key_impl(
     return true;
 }
 
-bool LuaCallbacks::invoke_callbacks_with_key(const t_lua_environment *lua, const callback_key key)
+bool LuaCallbacks::invoke_callbacks_with_key(const LuaEnvironment *lua, const callback_key key)
 {
     const auto func = get_function_for_callback(key);
     return invoke_callbacks_with_key_impl(lua, func, key);
@@ -323,7 +323,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(callback_key key)
 {
     // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone
     // the queue OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
-    static std::queue<t_lua_environment *> destruction_queue;
+    static std::queue<LuaEnvironment *> destruction_queue;
 
     assert(destruction_queue.empty());
 

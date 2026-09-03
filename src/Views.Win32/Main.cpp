@@ -43,7 +43,7 @@
 #define ASYNC_KEY_RESET_ROM (3)
 #define ASYNC_KEY_PLAY_MOVIE (4)
 
-t_main_context g_main_ctx{};
+MainContext g_main_ctx{};
 
 bool g_frame_changed = true;
 static bool g_sdl_initialized = false;
@@ -195,7 +195,7 @@ const char *get_status_text()
 
 std::filesystem::path get_summercart_path()
 {
-    return Config::save_directory() / "card.vhd";
+    return AppConfig::save_directory() / "card.vhd";
 }
 
 std::filesystem::path get_st_with_slot_path(const size_t slot)
@@ -203,7 +203,7 @@ std::filesystem::path get_st_with_slot_path(const size_t slot)
     const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
     const auto fname = std::format("{} {}.st{}", IOUtils::rom_name_to_string((const char *)hdr->nom),
         g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code), slot);
-    return Config::save_directory() / fname;
+    return AppConfig::save_directory() / fname;
 }
 
 void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8_t> &)
@@ -468,10 +468,10 @@ void on_config_loaded()
     WinDarkMode::set(theme);
 }
 
-void on_config_needs_patching(t_config &cfg)
+void on_config_needs_patching(Config &cfg)
 {
     // HACK: Wine doesn't implement DComp well enough yet, so force GDI
-    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
+    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)Config::PresenterType::GDI;
 }
 
 void on_seek_completed()
@@ -490,9 +490,9 @@ void on_emu_starting_changed(bool value)
     update_titlebar();
 }
 
-t_window_info get_window_info()
+WindowInfo get_window_info()
 {
-    t_window_info info;
+    WindowInfo info;
 
     RECT client_rect = {};
     GetClientRect(g_main_ctx.hwnd, &client_rect);
@@ -529,9 +529,9 @@ void open_console()
     SetConsoleCP(CP_UTF8);
 }
 
-static t_lua_key_event_args get_base_key_event_args()
+static LuaKeyEventArgs get_base_key_event_args()
 {
-    t_lua_key_event_args args;
+    LuaKeyEventArgs args;
     args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
     args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
     args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
@@ -593,7 +593,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYDOWN: {
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
 
-        t_lua_key_event_args args = get_base_key_event_args();
+        LuaKeyEventArgs args = get_base_key_event_args();
         args.keycode = wParam;
         args.pressed = true;
         args.repeat = repeat;
@@ -604,7 +604,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     }
     case WM_SYSKEYUP:
     case WM_KEYUP: {
-        t_lua_key_event_args args = get_base_key_event_args();
+        LuaKeyEventArgs args = get_base_key_event_args();
         args.keycode = wParam;
         args.pressed = false;
         args.repeat = false;
@@ -614,7 +614,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_CHAR: {
-        t_lua_key_event_args args = get_base_key_event_args();
+        LuaKeyEventArgs args = get_base_key_event_args();
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
         const auto chr = static_cast<char>(wParam);
 
@@ -720,7 +720,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
         if (!confirm_user_exit()) return 0;
 
-        Config::save();
+        AppConfig::save();
 
         ThreadPool::submit_task([=] {
             g_main_ctx.core_ctx->vr_close_rom(true);
@@ -927,8 +927,8 @@ static CoreResult init_core()
     g_main_ctx.core.load_plugins = PluginUtil::load_plugins;
     g_main_ctx.core.initiate_plugins = PluginUtil::initiate_plugins;
     g_main_ctx.core.submit_task = [](const auto cb) { ThreadPool::submit_task(cb); };
-    g_main_ctx.core.get_saves_directory = Config::save_directory;
-    g_main_ctx.core.get_backups_directory = Config::backup_directory;
+    g_main_ctx.core.get_saves_directory = AppConfig::save_directory;
+    g_main_ctx.core.get_backups_directory = AppConfig::backup_directory;
     g_main_ctx.core.get_summercart_path = get_summercart_path;
     g_main_ctx.core.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
                                                       const char *str, const char *title, CoreMessageTone type) {
@@ -1146,7 +1146,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     open_console();
 #endif
 
-    std::filesystem::create_directories(Config::logs_directory());
+    std::filesystem::create_directories(AppConfig::logs_directory());
 
     Loggers::init();
 
@@ -1156,15 +1156,15 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_main_ctx.hinst = hInstance;
     set_cwd();
 
-    Config::init();
-    Config::load();
+    AppConfig::init();
+    AppConfig::load();
     main_dispatcher_init();
 
-    std::filesystem::create_directories(Config::rom_directory());
-    std::filesystem::create_directories(Config::save_directory());
-    std::filesystem::create_directories(Config::screenshot_directory());
-    std::filesystem::create_directories(Config::plugin_directory());
-    std::filesystem::create_directories(Config::backup_directory());
+    std::filesystem::create_directories(AppConfig::rom_directory());
+    std::filesystem::create_directories(AppConfig::save_directory());
+    std::filesystem::create_directories(AppConfig::screenshot_directory());
+    std::filesystem::create_directories(AppConfig::plugin_directory());
+    std::filesystem::create_directories(AppConfig::backup_directory());
 
     const auto init_result = init_core();
     if (init_result != CoreResult::Res_Ok)

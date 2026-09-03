@@ -138,7 +138,7 @@ static void CALL dummy_capture_screen(char *)
     bhdr.bfReserved1 = bhdr.bfReserved2 = 0;
     bhdr.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
-    const auto path = Config::screenshot_directory() / std::format("screen{}.bmp", time(nullptr));
+    const auto path = AppConfig::screenshot_directory() / std::format("screen{}.bmp", time(nullptr));
 
     HANDLE hfile;
     hfile = CreateFile(path.string().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);

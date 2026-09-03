@@ -26,7 +26,7 @@ void stop();
 /**
  * \brief Creates a new rendering context with the default values.
  */
-t_lua_rendering_context default_rendering_context();
+LuaRenderingContext default_rendering_context();
 
 /**
  * \brief Forces an immediate repaint of all visual layers of all running Lua scripts.
@@ -37,39 +37,39 @@ void repaint_visuals();
 /**
  * \brief Initializes a Lua rendering context. Does nothing if the renderer is initialized.
  */
-void create_renderer(t_lua_rendering_context *, t_lua_environment *);
+void create_renderer(LuaRenderingContext *, LuaEnvironment *);
 
 /**
  * \brief Prepares a Lua rendering context for deinitialization. Does nothing if the renderer isn't initialized.
  */
-void pre_destroy_renderer(t_lua_rendering_context *);
+void pre_destroy_renderer(LuaRenderingContext *);
 
 /**
  * \brief Deinitializes a Lua rendering context. Does nothing if the renderer isn't initialized.
  */
-void destroy_renderer(t_lua_rendering_context *);
+void destroy_renderer(LuaRenderingContext *);
 
 /**
  * \brief Ensures that the D2D renderer is created for a Lua environment. Does nothing if the renderer already exists.
  */
-void ensure_d2d_renderer_created(t_lua_rendering_context *);
+void ensure_d2d_renderer_created(LuaRenderingContext *);
 
 /**
  * \brief Tells the renderer that GDI content is present in the rendering context.
  */
-void mark_gdi_content_present(t_lua_rendering_context *);
+void mark_gdi_content_present(LuaRenderingContext *);
 
 /**
  * \brief Resets the loadscreen graphics.
  */
-void loadscreen_reset(t_lua_rendering_context *);
+void loadscreen_reset(LuaRenderingContext *);
 
 /**
  * \brief Sets the target FPS.
  * \param rctx The lua rendering context.
  * \param fps The target FPS. If std::nullopt, an FPS equal to the monitor refresh rate will be used.
  */
-void set_target_fps(t_lua_rendering_context *rctx, std::optional<float> fps);
+void set_target_fps(LuaRenderingContext *rctx, std::optional<float> fps);
 
 /**
  * \brief Gets a brush containing a color that, when drawn to the GDI back dc, will be interpreted as an alpha mask by

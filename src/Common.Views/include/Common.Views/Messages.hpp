@@ -274,7 +274,7 @@ template <> struct MessageData<Message::ConfigLoaded>
 };
 template <> struct MessageData<Message::ConfigNeedsPatching>
 {
-    using type = t_config &;
+    using type = Config &;
 };
 template <> struct MessageData<Message::RerecordsChanged>
 {

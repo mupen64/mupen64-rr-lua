@@ -93,20 +93,20 @@ struct Status
      */
     HWND combo_edit_box = nullptr;
 
-    struct t_set_visuals_request
+    struct SetVisualsRequest
     {
         CoreButtons input;
         bool needs_processing;
     };
 
-    std::optional<t_set_visuals_request> pending_set_visuals_request{};
+    std::optional<SetVisualsRequest> pending_set_visuals_request{};
     std::mutex pending_visuals_mutex{};
 
     std::optional<std::string> pending_status{};
     bool status_message_pending{};
     std::mutex pending_status_mutex{};
 
-    std::vector<t_combo> combos{};
+    std::vector<Combo> combos{};
 
     bool last_lmb_down{};
     bool last_rmb_down{};
@@ -348,13 +348,13 @@ void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
     if (!ready) return;
 
     std::lock_guard lock(pending_visuals_mutex);
-    pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
+    pending_set_visuals_request = SetVisualsRequest{input, needs_processing};
 }
 
 void Status::set_visuals_if_needed()
 {
     if (!ready) return;
-    std::optional<t_set_visuals_request> request;
+    std::optional<SetVisualsRequest> request;
     {
         std::lock_guard lock(pending_visuals_mutex);
         request = pending_set_visuals_request;
@@ -1053,7 +1053,7 @@ void Status::save_combos()
         return;
     }
 
-    const auto serialized = t_combo::serialize_combos(combos);
+    const auto serialized = Combo::serialize_combos(combos);
 
     (void)fwrite(serialized.data(), sizeof(uint8_t), serialized.size(), f);
 
@@ -1071,7 +1071,7 @@ void Status::load_combos(const std::filesystem::path &path)
         return;
     }
 
-    combos = t_combo::deserialize_combos(buf);
+    combos = Combo::deserialize_combos(buf);
 
     ListBox_ResetContent(combo_listbox);
     for (const auto &combo : combos)
@@ -1088,7 +1088,7 @@ bool Status::show_context_menu(int x, int y)
 
     // HACK: disable topmost so menu doesnt appear under tasinput
     hmenu = CreatePopupMenu();
-#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_input_config, x), y)
+#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(InputConfig, x), y)
     ADD_ITEM(hmenu, relative_mode, "Relative");
     ADD_ITEM(hmenu, approach_mode, "Approach");
     ADD_ITEM(hmenu, wrap_joystick, "Wrap joystick");

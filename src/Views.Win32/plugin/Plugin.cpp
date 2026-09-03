@@ -228,7 +228,7 @@ void PluginUtil::init()
     Messenger::subscribe<Messenger::Message::EmuStopping>([] { stop_audio_thread(); });
 }
 
-t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
+PluginDiscoveryResult PluginUtil::discover_plugins(const std::filesystem::path &directory)
 {
     std::vector<std::unique_ptr<Plugin>> plugins;
     std::vector<std::pair<std::filesystem::path, std::string>> results;
@@ -304,7 +304,7 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
     std::stable_sort(plugins.begin(), plugins.end(),
         [&](const auto &lhs, const auto &rhs) { return plugin_priority(lhs) < plugin_priority(rhs); });
 
-    return t_plugin_discovery_result{
+    return PluginDiscoveryResult{
         .plugins = std::move(plugins),
         .results = results,
     };

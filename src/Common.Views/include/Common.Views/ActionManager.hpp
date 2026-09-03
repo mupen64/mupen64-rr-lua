@@ -61,7 +61,7 @@ using action_argument_map = std::unordered_map<std::string, std::string>;
 /**
  * \brief Represents an action parameter.
  */
-struct t_action_param
+struct ActionParam
 {
     /**
      * \brief The key of the parameter.
@@ -93,7 +93,7 @@ struct t_action_param
 /**
  * \brief Represents action creation parameters.
  */
-struct t_action_add_params
+struct ActionAddParams
 {
     /**
      * \brief The action's path.
@@ -103,7 +103,7 @@ struct t_action_add_params
     /**
      * \brief The action parameters.
      */
-    std::vector<t_action_param> params{};
+    std::vector<ActionParam> params{};
 
     /**
      * \brief The callback to be invoked when the action is pressed. If this action has parameters, they will be
@@ -147,7 +147,7 @@ struct t_action_add_params
  * C > D`), the operation will fail. To add the action, delete the original action (`A > B`) first. \param params The
  * action parameters. \return Whether the operation succeeded.
  */
-bool add(const t_action_add_params &params);
+bool add(const ActionAddParams &params);
 
 /**
  * \brief Removes actions matching the specified filter.
@@ -227,7 +227,7 @@ bool get_activatability(const action_path &path);
  * \param path A path.
  * \return The action's parameters.
  */
-std::vector<t_action_param> get_params(const action_path &path);
+std::vector<ActionParam> get_params(const action_path &path);
 
 /**
  * \brief Gets all action paths that match the specified filter.

@@ -7,12 +7,12 @@
 #include "Common.hpp"
 #include <components/TextEditDialog.hpp>
 
-struct t_text_edit_dialog_context
+struct TextEditDialogContext
 {
-    TextEditDialog::t_params params{};
+    TextEditDialog::Params params{};
 };
 
-static t_text_edit_dialog_context g_ctx{};
+static TextEditDialogContext g_ctx{};
 
 static INT_PTR CALLBACK about_dlg_proc(const HWND hwnd, const UINT message, const WPARAM w_param, LPARAM)
 {
@@ -49,7 +49,7 @@ static INT_PTR CALLBACK about_dlg_proc(const HWND hwnd, const UINT message, cons
     return TRUE;
 }
 
-std::optional<std::string> TextEditDialog::show(const t_params &params)
+std::optional<std::string> TextEditDialog::show(const Params &params)
 {
     g_ctx = {};
     g_ctx.params = params;

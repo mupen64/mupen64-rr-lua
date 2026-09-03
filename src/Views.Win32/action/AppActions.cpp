@@ -417,7 +417,7 @@ static void multi_frame_advance_decrement()
 
 static void multi_frame_advance_reset()
 {
-    g_config.multi_frame_advance_count = Config::default_config().multi_frame_advance_count;
+    g_config.multi_frame_advance_count = AppConfig::default_config().multi_frame_advance_count;
     Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
 }
 
@@ -728,7 +728,7 @@ static void show_piano_roll()
 
 static void screenshot()
 {
-    PluginUtil::screenshot(Config::screenshot_directory());
+    PluginUtil::screenshot(AppConfig::screenshot_directory());
 }
 
 static void start_capture_direct(const ActionManager::action_argument_map &params)
@@ -737,7 +737,7 @@ static void start_capture_direct(const ActionManager::action_argument_map &param
     const auto ask_preset = params.at("ask_preset") == "1";
 
     CaptureManager::start_capture(
-        path, (t_config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
+        path, (Config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
             if (result)
             {
                 Statusbar::post("Capture started...");
@@ -937,7 +937,7 @@ static void add_action(const std::string &path, const Hotkey &default_hotkey, co
 
 static void add_action(const std::string &path,
     const std::function<void(const ActionManager::action_argument_map &)> &callback,
-    const std::vector<ActionManager::t_action_param> &params, const std::function<bool()> &get_enabled = {},
+    const std::vector<ActionManager::ActionParam> &params, const std::function<bool()> &get_enabled = {},
     const std::function<bool()> &get_active = {}, const std::function<std::string()> &get_display_name = {})
 {
     bool success = ActionManager::add({
@@ -1024,7 +1024,7 @@ void AppActions::add()
     ActionManager::begin_batch_work();
 
     add_action(LOAD_ROM_DIRECT, load_rom_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::rom_path},
         });
     add_action(LOAD_ROM, Hotkey(*HotkeyUtils::vk_to_trigger('O'), true), load_rom);
@@ -1109,7 +1109,7 @@ void AppActions::add()
     add_action(SETTINGS, Hotkey(*HotkeyUtils::vk_to_trigger('S'), true), show_settings_dialog);
 
     add_action(START_MOVIE_RECORDING_DIRECT, start_movie_recording_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::nonempty},
             {.key = "start_flag", .name = "Start Flag", .validator = Validators::int32_t},
             {.key = "author", .name = "Author (optional)", .validator = Validators::none},
@@ -1119,7 +1119,7 @@ void AppActions::add()
     add_action(START_MOVIE_RECORDING, Hotkey(*HotkeyUtils::vk_to_trigger('R'), true, true), start_movie_recording,
         enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::existing_path},
             {.key = "author", .name = "Author (optional)", .validator = Validators::none},
             {.key = "description", .name = "Description (optional)", .validator = Validators::none},
@@ -1143,7 +1143,7 @@ void AppActions::add()
     add_action(PIANO_ROLL, Hotkey::make_empty(), show_piano_roll, enable_when_emu_launched);
     add_action(CHEATS, Hotkey::make_empty(), show_cheat_dialog, enable_when_emu_launched);
     add_action(SEEK_TO_DIRECT, seek_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "frame", .name = "Frame", .validator = Validators::seek_str},
         },
         enable_when_emu_launched_and_vcr_active);
@@ -1155,7 +1155,7 @@ void AppActions::add()
         enable_when_emu_launched_and_core_is_pure_interpreter);
     add_action(STOP_TRACE_LOGGER, Hotkey::make_empty(), stop_tracelog, enable_when_tracelog_active);
     add_action(VIDEO_CAPTURE_START_DIRECT, start_capture_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::nonempty},
             {.key = "ask_preset", .name = "Ask for preset?", .validator = Validators::boolean},
         },
@@ -1169,7 +1169,7 @@ void AppActions::add()
     add_action(ABOUT, Hotkey::make_empty(), show_about_dialog);
 
     add_action(LOAD_SCRIPT_DIRECT, load_script_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::existing_path},
         });
     add_action(SHOW_INSTANCES, Hotkey(*HotkeyUtils::vk_to_trigger('N'), true), show_lua_dialog);

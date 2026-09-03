@@ -13,7 +13,7 @@
 
 namespace LuaCore::Action
 {
-static std::pair<ActionManager::t_action_param, t_action_param_meta> check_action_param(lua_State *L, int index)
+static std::pair<ActionManager::ActionParam, ActionParamMeta> check_action_param(lua_State *L, int index)
 {
     if (lua_gettop(L) < 1 || !lua_istable(L, index))
     {
@@ -21,8 +21,8 @@ static std::pair<ActionManager::t_action_param, t_action_param_meta> check_actio
         std::unreachable();
     }
 
-    ActionManager::t_action_param param{};
-    t_action_param_meta meta{};
+    ActionManager::ActionParam param{};
+    ActionParamMeta meta{};
 
     lua_getfield(L, index, "key");
     param.key = luaL_checkstring(L, -1);
@@ -162,7 +162,7 @@ static ActionManager::action_argument_map check_action_param_list(lua_State *L, 
     return params;
 }
 
-static std::pair<ActionManager::t_action_add_params, std::vector<t_action_param_meta>> check_action_add_params(
+static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> check_action_add_params(
     lua_State *L, int index)
 {
     if (lua_gettop(L) < 1 || !lua_istable(L, index))
@@ -171,14 +171,14 @@ static std::pair<ActionManager::t_action_add_params, std::vector<t_action_param_
         std::unreachable();
     }
 
-    ActionManager::t_action_add_params params{};
+    ActionManager::ActionAddParams params{};
 
     lua_getfield(L, 1, "path");
     params.path = luaL_checkstring(L, -1);
     lua_pop(L, 1);
 
     lua_getfield(L, 1, "params");
-    std::vector<t_action_param_meta> params_metas{};
+    std::vector<ActionParamMeta> params_metas{};
     if (!lua_isnil(L, -1))
     {
         if (!lua_istable(L, -1))

@@ -9,119 +9,119 @@
 #include <Common.Views/Messages.hpp>
 #include <components/Statusbar.hpp>
 
-struct t_segment
+struct Segment
 {
     std::vector<Statusbar::Section> sections;
     size_t width;
 };
 
-struct t_segment_layout
+struct SegmentLayout
 {
-    std::vector<t_segment> emu_parts;
-    std::vector<t_segment> idle_parts;
+    std::vector<Segment> emu_parts;
+    std::vector<Segment> idle_parts;
 };
 
-const std::unordered_map<t_config::StatusbarLayout, t_segment_layout>
+const std::unordered_map<Config::StatusbarLayout, SegmentLayout>
     LAYOUT_MAP =
-        {{t_config::StatusbarLayout::Classic,
-             t_segment_layout{
+        {{Config::StatusbarLayout::Classic,
+             SegmentLayout{
                  .emu_parts =
                      {
-                         t_segment{
+                         Segment{
                              .sections = {Statusbar::Section::VCR, Statusbar::Section::Notification},
                              .width = 260,
                          },
-                         t_segment{
+                         Segment{
                              .sections = {Statusbar::Section::FPS},
                              .width = 70,
                          },
-                         t_segment{
+                         Segment{
                              .sections = {Statusbar::Section::VIs},
                              .width = 70,
                          },
-                         t_segment{
+                         Segment{
                              .sections = {Statusbar::Section::Input},
                              .width = 140,
                          },
                      },
                  .idle_parts = {},
              }},
-            {t_config::StatusbarLayout::Modern,
-                t_segment_layout{
+            {Config::StatusbarLayout::Modern,
+                SegmentLayout{
                     .emu_parts =
                         {
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::Notification, Statusbar::Section::Readonly},
                                 .width = 200,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::VCR},
                                 .width = 180,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::Input},
                                 .width = 80,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::Rerecords},
                                 .width = 70,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::FPS},
                                 .width = 80,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::VIs},
                                 .width = 80,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::Slot},
                                 .width = 50,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::MultiFrameAdvanceCount},
                                 .width = 60,
                             },
                         },
                     .idle_parts = {},
                 }},
-            {t_config::StatusbarLayout::ModernWithReadOnly,
-                t_segment_layout{
+            {Config::StatusbarLayout::ModernWithReadOnly,
+                SegmentLayout{
                     .emu_parts =
                         {
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::Notification},
                                 .width = 150,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::VCR},
                                 .width = 160,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::Readonly},
                                 .width = 80,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::Input},
                                 .width = 80,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::Rerecords},
                                 .width = 70,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::FPS},
                                 .width = 80,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::VIs},
                                 .width = 80,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::Slot},
                                 .width = 50,
                             },
-                            t_segment{
+                            Segment{
                                 .sections = {Statusbar::Section::MultiFrameAdvanceCount},
                                 .width = 60,
                             },
@@ -131,9 +131,9 @@ const std::unordered_map<t_config::StatusbarLayout, t_segment_layout>
 
 static HWND statusbar_hwnd;
 
-static std::vector<t_segment> get_current_parts()
+static std::vector<Segment> get_current_parts()
 {
-    const t_segment_layout layout = LAYOUT_MAP.at(static_cast<t_config::StatusbarLayout>(g_config.statusbar_layout));
+    const SegmentLayout layout = LAYOUT_MAP.at(static_cast<Config::StatusbarLayout>(g_config.statusbar_layout));
     return (g_main_ctx.core_ctx->vr_get_launched()) ? layout.emu_parts : layout.idle_parts;
 }
 

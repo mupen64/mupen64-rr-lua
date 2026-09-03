@@ -26,7 +26,7 @@
 #define VIEW_DLG_RAMSTART "VIEW_DLG_RAMSTART"
 #define VIEW_DLG_ABOUT "VIEW_DLG_ABOUT"
 
-struct t_main_context
+struct MainContext
 {
     CoreParams core{};
     CoreCtx *core_ctx{};
@@ -57,14 +57,14 @@ struct BetterEmulationLock
     ~BetterEmulationLock();
 };
 
-struct t_window_info
+struct WindowInfo
 {
     long width;
     long height;
     long statusbar_height;
 };
 
-extern t_main_context g_main_ctx;
+extern MainContext g_main_ctx;
 
 static bool task_is_playback(const CoreVCRTask task)
 {
@@ -86,7 +86,7 @@ std::string get_mupen_name(bool simple = false);
 /**
  * \return Information about the current window size.
  */
-t_window_info get_window_info();
+WindowInfo get_window_info();
 
 /**
  * \brief Demands user confirmation for an exit action

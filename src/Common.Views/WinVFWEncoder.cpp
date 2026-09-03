@@ -176,8 +176,8 @@ bool WinVFWEncoder::append_video(uint8_t *image)
 {
     const auto hash = shortHash(image, m_params.width * m_params.height * 4);
 
-    if (g_config.synchronization_mode == static_cast<int>(t_config::Sync::Video) ||
-        g_config.synchronization_mode == static_cast<int>(t_config::Sync::None))
+    if (g_config.synchronization_mode == static_cast<int>(Config::Sync::Video) ||
+        g_config.synchronization_mode == static_cast<int>(Config::Sync::None))
     {
         g_view_logger->trace("video buffer hash {:08X}", hash);
 

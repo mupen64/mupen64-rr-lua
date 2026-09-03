@@ -9,7 +9,7 @@
 #include <ini.h>
 #include <Common.Views/Config.hpp>
 
-namespace Config::Legacy
+namespace AppConfig::Legacy
 {
 
 /**
@@ -20,6 +20,6 @@ void handle_config_ini(mINI::INIStructure &ini);
 /**
  * \brief Migrates old values from the specified config to new ones if possible.
  */
-void migrate_config_ini(t_config &config, const mINI::INIStructure &ini);
+void migrate_config_ini(Config &config, const mINI::INIStructure &ini);
 
-} // namespace Config::Legacy
+} // namespace AppConfig::Legacy

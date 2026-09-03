@@ -6,12 +6,12 @@
 
 #include "Common.hpp"
 
-struct t_lua_helper_context
+struct LuaHelperContext
 {
     std::unordered_map<void *, bool> valid_callback_tokens;
 };
 
-static t_lua_helper_context g_ctx;
+static LuaHelperContext g_ctx;
 
 uintptr_t *lua_optcallback(lua_State *L, int i)
 {

@@ -418,7 +418,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
 {
     struct seek_test_params
     {
-        t_vcr_state vcr{};
+        VCRState vcr{};
         std::string str{};
         size_t expected_frame{};
     };
@@ -571,7 +571,7 @@ TEST_CASE_METHOD(VcrFixture, "out_freeze_is_correct", "vcr_freeze")
 {
     struct freeze_test_params
     {
-        t_vcr_state vcr{};
+        VCRState vcr{};
         vcr_freeze_info expected_freeze{};
     };
 

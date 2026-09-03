@@ -169,7 +169,7 @@ typedef struct
      */
     std::vector<std::pair<std::filesystem::path, std::string>> results;
 
-} t_plugin_discovery_result;
+} PluginDiscoveryResult;
 
 /**
  * \brief A module providing utility functions related to plugins.
@@ -186,7 +186,7 @@ void init();
  * \param directory The directory to search for plugins in.
  * \return The plugin discovery result.
  */
-t_plugin_discovery_result discover_plugins(const std::filesystem::path &directory);
+PluginDiscoveryResult discover_plugins(const std::filesystem::path &directory);
 
 /**
  * \return Whether MGE functionality is currently available.

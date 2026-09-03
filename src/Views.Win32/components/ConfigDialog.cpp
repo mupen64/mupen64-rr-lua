@@ -22,18 +22,18 @@
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)
 
-t_plugin_discovery_result plugin_discovery_result;
+PluginDiscoveryResult plugin_discovery_result;
 std::vector<OptionGroup> g_option_groups;
 std::vector<OptionItem> g_option_items;
 static std::vector<OptionGroup> g_static_option_groups;
-t_config g_prev_config;
+Config g_prev_config;
 
 std::thread g_plugin_discovery_thread;
 
 // Whether a plugin rescan is needed. Set when modifying the plugin path.
 bool g_plugin_discovery_rescan = false;
 
-struct t_tab_context
+struct TabContext
 {
     size_t tab_index;
 
@@ -188,7 +188,7 @@ Plugin *get_selected_plugin(const HWND hwnd, const int id)
 static void start_plugin_discovery(const HWND hwnd)
 {
     g_view_logger->trace("[ConfigDialog] start_plugin_discovery");
-    plugin_discovery_result = PluginUtil::discover_plugins(Config::plugin_directory());
+    plugin_discovery_result = PluginUtil::discover_plugins(AppConfig::plugin_directory());
 
     PostMessage(hwnd, WM_PLUGIN_DISCOVERY_FINISHED, 0, 0);
 }
@@ -238,10 +238,10 @@ static void update_plugin_buttons_enabled_state(HWND hwnd)
 }
 
 // Compares two configs, ignoring the settings_tab field because it's changed while in the settings dialog.
-static bool weak_compare(const t_config &a, const t_config &b)
+static bool weak_compare(const Config &a, const Config &b)
 {
-    t_config lhs = a;
-    t_config rhs = b;
+    Config lhs = a;
+    Config rhs = b;
 
     lhs.settings_tab = 0;
     rhs.settings_tab = 0;
@@ -514,7 +514,7 @@ std::vector<OptionGroup> get_static_option_groups()
 
     OptionGroup debug_group = {.id = id++, .name = "Debug"};
 
-#define RPROP(T, x) OptionItem::ReadableProp([] { return Config::default_config().x; })
+#define RPROP(T, x) OptionItem::ReadableProp([] { return AppConfig::default_config().x; })
 
 #define RWPROP(T, x, c)                                                                                                \
     OptionItem::WritableProp([] { return g_config.x; },                                                                \
@@ -588,9 +588,9 @@ std::vector<OptionGroup> get_static_option_groups()
                    "are shown in the statusbar.\nDialog - Toasts are shown in modal dialogs.",
         GENPROPS(int32_t, toast_mode),
         .possible_values = {
-            std::make_pair("Window", (int32_t)t_config::ToastMode::Window),
-            std::make_pair("Statusbar", (int32_t)t_config::ToastMode::Statusbar),
-            std::make_pair("Dialog", (int32_t)t_config::ToastMode::Dialog),
+            std::make_pair("Window", (int32_t)Config::ToastMode::Window),
+            std::make_pair("Statusbar", (int32_t)Config::ToastMode::Statusbar),
+            std::make_pair("Dialog", (int32_t)Config::ToastMode::Dialog),
         }});
     interface_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = interface_group.id,
@@ -611,9 +611,9 @@ std::vector<OptionGroup> get_static_option_groups()
                    "additional information\nModern+ - The new layout, but with a section for read-only status",
         GENPROPS(int32_t, statusbar_layout),
         .possible_values = {
-            std::make_pair("Classic", (int32_t)t_config::StatusbarLayout::Classic),
-            std::make_pair("Modern", (int32_t)t_config::StatusbarLayout::Modern),
-            std::make_pair("Modern+", (int32_t)t_config::StatusbarLayout::ModernWithReadOnly),
+            std::make_pair("Classic", (int32_t)Config::StatusbarLayout::Classic),
+            std::make_pair("Modern", (int32_t)Config::StatusbarLayout::Modern),
+            std::make_pair("Modern+", (int32_t)Config::StatusbarLayout::ModernWithReadOnly),
         }});
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
@@ -693,8 +693,8 @@ std::vector<OptionGroup> get_static_option_groups()
         GENPROPS(int32_t, encoder_type),
         .possible_values =
             {
-                std::make_pair("VFW", (int32_t)t_config::EncoderType::VFW),
-                std::make_pair("FFmpeg", (int32_t)t_config::EncoderType::FFmpeg),
+                std::make_pair("VFW", (int32_t)Config::EncoderType::VFW),
+                std::make_pair("FFmpeg", (int32_t)Config::EncoderType::FFmpeg),
             },
         .get_readonly_reason = readonly_when_capturing,
     });
@@ -888,8 +888,8 @@ std::vector<OptionGroup> get_static_option_groups()
         GENPROPS(int32_t, presenter_type),
         .possible_values =
             {
-                std::make_pair("DirectComposition", (int32_t)t_config::PresenterType::DirectComposition),
-                std::make_pair("GDI", (int32_t)t_config::PresenterType::GDI),
+                std::make_pair("DirectComposition", (int32_t)Config::PresenterType::DirectComposition),
+                std::make_pair("GDI", (int32_t)Config::PresenterType::GDI),
             },
         .get_readonly_reason = readonly_when_lua_active,
     });
@@ -996,7 +996,7 @@ void advance_listview_selection(HWND lvhwnd)
 INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
 {
     const auto lpnmhdr = reinterpret_cast<LPNMHDR>(l_param);
-    auto ctx = (t_tab_context *)GetProp(hwnd, "tab_context");
+    auto ctx = (TabContext *)GetProp(hwnd, "tab_context");
 
     const auto base_result = base_pageproc(hwnd, message, w_param, l_param);
     if (base_result) return base_result;
@@ -1007,7 +1007,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         const auto ps = (PROPSHEETPAGE *)l_param;
         SetProp(hwnd, "tab_context", (HANDLE)ps->lParam);
 
-        ctx = (t_tab_context *)GetProp(hwnd, "tab_context");
+        ctx = (TabContext *)GetProp(hwnd, "tab_context");
         ctx->hwnd = hwnd;
         WinDarkMode::attach(hwnd);
         return TRUE;
@@ -1151,7 +1151,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             RECT grid_rect{};
             GetClientRect(hwnd, &grid_rect);
 
-            std::vector<SettingsListView::t_group> groups;
+            std::vector<SettingsListView::Group> groups;
             for (const auto &wanted_group : ctx->groups)
             {
                 auto it = std::find_if(g_option_groups.begin(), g_option_groups.end(),
@@ -1162,7 +1162,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                 }
             }
 
-            std::vector<SettingsListView::t_item> items;
+            std::vector<SettingsListView::Item> items;
             for (size_t i = 0; i < g_option_items.size(); ++i)
             {
                 const auto &item = g_option_items[i];
@@ -1373,7 +1373,7 @@ void ConfigDialog::show_app_settings()
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
         .pszTitle = "Folders",
         .pfnDlgProc = generic_tab_proc,
-        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {"Folders"}}),
+        .lParam = (LPARAM) new TabContext({.tab_index = psp.size(), .groups = {"Folders"}}),
     });
 
     psp.push_back({
@@ -1381,28 +1381,28 @@ void ConfigDialog::show_app_settings()
         .pszTitle = "Visual",
         .pfnDlgProc = generic_tab_proc,
         .lParam =
-            (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {"Interface", "Statusbar", "Piano Roll"}}),
+            (LPARAM) new TabContext({.tab_index = psp.size(), .groups = {"Interface", "Statusbar", "Piano Roll"}}),
     });
 
     psp.push_back({
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
         .pszTitle = "Emulation",
         .pfnDlgProc = generic_tab_proc,
-        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {"Core", "VCR", "Seek", "Debug"}}),
+        .lParam = (LPARAM) new TabContext({.tab_index = psp.size(), .groups = {"Core", "VCR", "Seek", "Debug"}}),
     });
 
     psp.push_back({
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
         .pszTitle = "Capture",
         .pfnDlgProc = generic_tab_proc,
-        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {"Capture"}}),
+        .lParam = (LPARAM) new TabContext({.tab_index = psp.size(), .groups = {"Capture"}}),
     });
 
     psp.push_back({
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
         .pszTitle = "Lua",
         .pfnDlgProc = generic_tab_proc,
-        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {"Lua"}}),
+        .lParam = (LPARAM) new TabContext({.tab_index = psp.size(), .groups = {"Lua"}}),
     });
 
     std::vector<std::string> hotkey_groups;
@@ -1412,7 +1412,7 @@ void ConfigDialog::show_app_settings()
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
         .pszTitle = "Hotkeys",
         .pfnDlgProc = generic_tab_proc,
-        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = hotkey_groups}),
+        .lParam = (LPARAM) new TabContext({.tab_index = psp.size(), .groups = hotkey_groups}),
     });
 
     for (auto &page : psp)
@@ -1442,7 +1442,7 @@ void ConfigDialog::show_app_settings()
         g_config = g_prev_config;
     }
 
-    Config::apply_and_save();
+    AppConfig::apply_and_save();
     Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 }
 

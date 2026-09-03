@@ -10,7 +10,7 @@
 #include <Common.Views/Hotkey.hpp>
 #include <map>
 
-struct t_config
+struct Config
 {
     /**
      * \brief Synchronization modes the capture manager can abide by
@@ -371,12 +371,12 @@ struct t_config
     /// </summary>
     std::map<std::string, Hotkey> inital_hotkeys;
 
-    bool operator==(const t_config &) const = default;
+    bool operator==(const Config &) const = default;
 };
 
-extern t_config g_config;
+extern Config g_config;
 
-namespace Config
+namespace AppConfig
 {
 
 /**
@@ -402,7 +402,7 @@ void load();
 /**
  * \brief Gets the default config.
  */
-const t_config &default_config();
+const Config &default_config();
 
 /**
  * \brief Gets the path to the ROM directory based on the current configuration.

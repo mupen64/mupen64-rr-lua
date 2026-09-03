@@ -227,15 +227,15 @@ void show(const ToastData &data)
     g_view_logger->info("Toast: title={}; content={}; tone={}; ttl={}", data.title.value_or(""), data.content,
         static_cast<uint8_t>(data.tone), data.ttl.count());
 
-    switch ((t_config::ToastMode)g_config.toast_mode)
+    switch ((Config::ToastMode)g_config.toast_mode)
     {
-    case t_config::ToastMode::Window:
+    case Config::ToastMode::Window:
         g_main_ctx.dispatcher->invoke([&] { show_impl(data); });
         return;
-    case t_config::ToastMode::Statusbar:
+    case Config::ToastMode::Statusbar:
         Statusbar::post(data.content, Statusbar::Section::Notification);
         return;
-    case t_config::ToastMode::Dialog:
+    case Config::ToastMode::Dialog:
         DialogService::show_dialog(data.content, data.title, data.tone);
         return;
     }

@@ -10,16 +10,16 @@
 #include <Common.Views/IDialogService.hpp>
 #include <components/FilePicker.hpp>
 
-struct t_movie_dialog_context
+struct MovieDialogContext
 {
-    MovieDialog::t_result user_result{};
-    std::function<bool(const MovieDialog::t_result &)> on_confirm{};
+    MovieDialog::Result user_result{};
+    std::function<bool(const MovieDialog::Result &)> on_confirm{};
     bool is_readonly{};
     HWND grid_hwnd{};
     bool is_closing{};
 };
 
-static t_movie_dialog_context g_ctx{};
+static MovieDialogContext g_ctx{};
 
 static size_t count_button_presses(const std::vector<CoreButtons> &buttons, const int mask)
 {
@@ -365,7 +365,7 @@ static std::filesystem::path get_default_movie_path(bool readonly)
     return g_config.recent_movie_paths[0];
 }
 
-MovieDialog::t_result MovieDialog::show(bool readonly, const std::function<bool(const t_result &)> &on_confirm)
+MovieDialog::Result MovieDialog::show(bool readonly, const std::function<bool(const Result &)> &on_confirm)
 {
     g_ctx.is_readonly = readonly;
     g_ctx.on_confirm = on_confirm;

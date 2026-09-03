@@ -24,7 +24,7 @@ bool g_st_old;
 bool g_st_skip_dma{};
 
 /// Represents a task to be performed by the savestate system.
-struct t_savestate_task
+struct SavestateTask
 {
     /// The job to perform.
     CoreSTJob job;
@@ -48,7 +48,7 @@ struct t_savestate_task
 std::recursive_mutex g_task_mutex;
 
 // The task vector, which contains the task queue to be performed by the savestate system.
-std::vector<t_savestate_task> g_tasks;
+std::vector<SavestateTask> g_tasks;
 
 // Demarcator for new screenshot section
 char screen_section[] = "SCR";
@@ -64,7 +64,7 @@ uint8_t g_first_block[0xA02BB4 - 32]{};
 
 // The undo savestate buffer.
 std::vector<uint8_t> g_undo_savestate;
-void get_paths_for_task(const t_savestate_task &task, std::filesystem::path &st_path, std::filesystem::path &sd_path)
+void get_paths_for_task(const SavestateTask &task, std::filesystem::path &st_path, std::filesystem::path &sd_path)
 {
     sd_path = g_core->get_saves_directory() / IOUtils::rom_name_to_path_component((const char *)ROM_HEADER.nom);
     sd_path.replace_extension(".vhd");
@@ -236,7 +236,7 @@ static std::vector<uint8_t> generate_savestate(bool pure)
     return b;
 }
 
-void savestates_save_immediate_impl(const t_savestate_task &task)
+void savestates_save_immediate_impl(const SavestateTask &task)
 {
     // TODO: Reimplement timing
 
@@ -278,7 +278,7 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
     g_core->callbacks.save_state();
 }
 
-void savestates_load_immediate_impl(const t_savestate_task &task)
+void savestates_load_immediate_impl(const SavestateTask &task)
 {
     // This might have been set previously by a save operation. Keeping it breaks loading because we might skip DMA when
     // it's not needed.
@@ -640,7 +640,7 @@ void savestates_create_undo_point()
     }
 
     bool queue_contains_load =
-        std::ranges::any_of(g_tasks, [](const t_savestate_task &task) { return task.job == CoreSTJob::Load; });
+        std::ranges::any_of(g_tasks, [](const SavestateTask &task) { return task.job == CoreSTJob::Load; });
 
     if (!queue_contains_load)
     {
@@ -650,7 +650,7 @@ void savestates_create_undo_point()
 
     g_core->log_trace("[ST] Inserting undo point creation into task queue...");
 
-    const t_savestate_task task = {
+    const SavestateTask task = {
         .job = CoreSTJob::Save,
         .medium = CoreSTMedium::Memory,
         .callback =
@@ -747,7 +747,7 @@ bool st_do_file(
         }
     };
 
-    const t_savestate_task task = {
+    const SavestateTask task = {
         .job = job,
         .medium = CoreSTMedium::Path,
         .callback = internal_callback_wrapper,
@@ -786,7 +786,7 @@ bool st_do_memory(
         }
     };
 
-    const t_savestate_task task = {
+    const SavestateTask task = {
         .job = job,
         .medium = CoreSTMedium::Memory,
         .callback = internal_callback_wrapper,
@@ -816,7 +816,7 @@ bool st_sync_hash(const std::function<void(uint64_t hash)> &callback)
         callback(hash);
     };
 
-    const t_savestate_task task = {.job = CoreSTJob::Save,
+    const SavestateTask task = {.job = CoreSTJob::Save,
         .medium = CoreSTMedium::Memory,
         .callback = internal_callback_wrapper,
         .params = {},

@@ -12,15 +12,15 @@
 
 #include <Common.Views/Config.hpp>
 
-using t_action_param = ActionManager::t_action_param;
-using t_action_add_params = ActionManager::t_action_add_params;
+using ActionParam = ActionManager::ActionParam;
+using ActionAddParams = ActionManager::ActionAddParams;
 using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
 using action_argument_map = ActionManager::action_argument_map;
 
-struct t_action
+struct Action
 {
-    t_action_add_params add_params{};
+    ActionAddParams add_params{};
 
     std::string raw_name{};
     std::vector<std::string> segments{};
@@ -32,24 +32,24 @@ struct t_action
     bool pressed{};
 };
 
-struct t_action_manager
+struct ActionManagerContext
 {
-    std::vector<t_action> actions{};
+    std::vector<Action> actions{};
     bool batched_work{};
     bool work_happened{};
     bool lock_hotkeys{};
     MicroLRU::Cache<action_filter, std::vector<std::string>> segment_cache{
         256, [](const std::vector<std::string> &) {}};
-    MicroLRU::Cache<action_filter, std::vector<t_action *>> filter_result_cache{
-        256, [](const std::vector<t_action *> &) {}};
+    MicroLRU::Cache<action_filter, std::vector<Action *>> filter_result_cache{
+        256, [](const std::vector<Action *> &) {}};
 };
 
-static t_action_manager g_mgr{};
+static ActionManagerContext g_mgr{};
 
 /**
  * \brief Finds all actions using the given filter.
  */
-static std::vector<t_action *> get_action_ptrs_matching_filter(const action_filter &filter)
+static std::vector<Action *> get_action_ptrs_matching_filter(const action_filter &filter)
 {
     if (g_mgr.filter_result_cache.contains(filter))
     {
@@ -57,7 +57,7 @@ static std::vector<t_action *> get_action_ptrs_matching_filter(const action_filt
     }
 
     const auto normalized_filter = ActionManager::normalize_filter(filter);
-    std::vector<t_action *> result;
+    std::vector<Action *> result;
 
     // Special case: pure wildcard filter, matches everything.
     if (normalized_filter == "*")
@@ -124,7 +124,7 @@ static std::vector<t_action *> get_action_ptrs_matching_filter(const action_filt
 /**
  * \brief Tries to resolve a fully-qualified action path to a single action pointer.
  */
-static t_action *get_single_action_ptr_matching_path(const action_path &path)
+static Action *get_single_action_ptr_matching_path(const action_path &path)
 {
     if (path.contains("*"))
     {
@@ -171,7 +171,7 @@ static bool validate_action_path(const std::string &path)
 /**
  * \brief Creates of action paths from one of action pointers.
  */
-static std::vector<std::string> map_action_ptrs_to_paths(const std::vector<t_action *> &actions)
+static std::vector<std::string> map_action_ptrs_to_paths(const std::vector<Action *> &actions)
 {
     std::vector<std::string> paths;
     paths.reserve(actions.size());
@@ -187,7 +187,7 @@ static std::vector<std::string> map_action_ptrs_to_paths(const std::vector<t_act
 /**
  * \brief Updates the display names of the specified actions and returns the actions mapped to action paths.
  */
-static std::vector<std::string> update_display_names(const std::vector<t_action *> &actions)
+static std::vector<std::string> update_display_names(const std::vector<Action *> &actions)
 {
     for (auto &action : actions)
     {
@@ -224,7 +224,7 @@ static std::vector<std::string> update_display_names(const std::vector<t_action 
 /**
  * \brief Updates the enabled states of the specified actions and returns the actions mapped to action paths.
  */
-static std::vector<std::string> update_enabled_states(const std::vector<t_action *> &actions)
+static std::vector<std::string> update_enabled_states(const std::vector<Action *> &actions)
 {
     for (auto &action : actions)
     {
@@ -236,7 +236,7 @@ static std::vector<std::string> update_enabled_states(const std::vector<t_action
 /**
  * \brief Notifies about the active state of actions changing.
  */
-static std::vector<std::string> update_active_states(const std::vector<t_action *> &actions)
+static std::vector<std::string> update_active_states(const std::vector<Action *> &actions)
 {
     for (auto &action : actions)
     {
@@ -253,7 +253,7 @@ static void notify_action_registry_changed()
     Messenger::broadcast<Messenger::Message::ActionRegistryChanged>();
 }
 
-bool ActionManager::add(const t_action_add_params &params)
+bool ActionManager::add(const ActionAddParams &params)
 {
     const auto normalized_path = normalize_filter(params.path);
 
@@ -298,7 +298,7 @@ bool ActionManager::add(const t_action_add_params &params)
         }
     }
 
-    t_action action{};
+    Action action{};
     action.add_params = params;
     action.add_params.path = normalized_path;
     action.segments = segments;
@@ -355,7 +355,7 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     for (const auto &action_to_be_removed : actions)
     {
         std::erase_if(g_mgr.actions,
-            [&](const t_action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
+            [&](const Action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
     }
 
     g_mgr.filter_result_cache.clear();
@@ -371,7 +371,7 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
 
 bool ActionManager::associate_hotkey(const action_path &path, const Hotkey &hotkey, bool overwrite_existing)
 {
-    t_action *action = get_single_action_ptr_matching_path(path);
+    Action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
     {
@@ -447,7 +447,7 @@ std::string ActionManager::get_display_name(const action_filter &filter, bool ig
 
 bool ActionManager::get_enabled(const action_path &path)
 {
-    t_action *action = get_single_action_ptr_matching_path(path);
+    Action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
     {
@@ -465,7 +465,7 @@ bool ActionManager::get_enabled(const action_path &path)
 
 bool ActionManager::get_active(const action_path &path)
 {
-    t_action *action = get_single_action_ptr_matching_path(path);
+    Action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
     {
@@ -483,7 +483,7 @@ bool ActionManager::get_active(const action_path &path)
 
 bool ActionManager::get_activatability(const action_path &path)
 {
-    t_action *action = get_single_action_ptr_matching_path(path);
+    Action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
     {
@@ -494,9 +494,9 @@ bool ActionManager::get_activatability(const action_path &path)
     return action->add_params.get_active != nullptr;
 }
 
-std::vector<t_action_param> ActionManager::get_params(const action_path &path)
+std::vector<ActionParam> ActionManager::get_params(const action_path &path)
 {
-    t_action *action = get_single_action_ptr_matching_path(path);
+    Action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
     {
@@ -583,7 +583,7 @@ ActionManager::action_filter ActionManager::normalize_filter(const action_filter
  * \param params The parameters to validate.
  * \return Whether the parameters are valid.
  */
-static bool validate_params(const t_action &action, const action_argument_map &params)
+static bool validate_params(const Action &action, const action_argument_map &params)
 {
     // Fast path: no parameters needed, we ignore any supplied parameters.
     if (action.add_params.params.empty())
@@ -631,7 +631,7 @@ static bool validate_params(const t_action &action, const action_argument_map &p
 void ActionManager::invoke(
     const action_path &path, const bool up, const bool release_on_repress, const action_argument_map &params)
 {
-    t_action *action = get_single_action_ptr_matching_path(path);
+    Action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
     {

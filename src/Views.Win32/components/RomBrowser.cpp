@@ -14,14 +14,14 @@
 namespace RomBrowser
 {
 
-struct t_rombrowser_context
+struct RombrowserContext
 {
     HWND hwnd{};
-    std::vector<t_simple_rom_info> discovered_roms;
+    std::vector<SimpleROMInfo> discovered_roms;
     std::mutex mutex;
 };
 
-static t_rombrowser_context g_ctx{};
+static RombrowserContext g_ctx{};
 
 std::vector<std::filesystem::path> discover_roms()
 {
@@ -231,7 +231,7 @@ static void build_impl()
     g_ctx.discovered_roms.clear();
     const auto rom_paths = discover_roms();
 
-    std::vector<t_simple_rom_info> results(rom_paths.size());
+    std::vector<SimpleROMInfo> results(rom_paths.size());
 
     auto worker = [&](size_t begin, size_t end) {
         for (size_t j = begin; j < end; ++j)
@@ -245,7 +245,7 @@ static void build_impl()
             size_t len = ftell(f);
             fseek(f, 0, SEEK_SET);
 
-            t_simple_rom_info entry{};
+            SimpleROMInfo entry{};
             entry.path = path.string();
             entry.size = len;
 
@@ -357,7 +357,7 @@ notify(LPARAM lparam)
     case LVN_GETDISPINFOA:
     case LVN_GETDISPINFOW: {
         auto fill = [&](auto *plvdi) {
-            const t_simple_rom_info &rombrowser_entry = g_ctx.discovered_roms[plvdi->item.lParam];
+            const SimpleROMInfo &rombrowser_entry = g_ctx.discovered_roms[plvdi->item.lParam];
             std::string text;
             switch (plvdi->item.iSubItem)
             {
@@ -485,7 +485,7 @@ std::vector<std::filesystem::path> find_available_roms(const std::function<bool(
     return matching_roms;
 }
 
-std::vector<t_simple_rom_info> get_discovered_roms()
+std::vector<SimpleROMInfo> get_discovered_roms()
 {
     return g_ctx.discovered_roms;
 }
