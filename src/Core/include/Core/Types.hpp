@@ -10,7 +10,7 @@
 /**
  * An enum containing results that can be returned by the core.
  */
-typedef enum
+enum class CoreResult
 {
 
     // Generic
@@ -109,8 +109,7 @@ typedef enum
 
     // The core params are missing a critical component.
     IN_MissingComponent,
-
-} core_result;
+};
 
 /**
  * \brief Represents an extension for a controller.
@@ -203,7 +202,7 @@ enum class CoreSpeedMode
     UltraFastForward = 2
 };
 
-struct core_cfg
+struct CoreCfg
 {
     /// <summary>
     /// Statistic - Amount of state loads during recording
@@ -350,7 +349,7 @@ struct core_cfg
     /// </summary>
     int32_t render_throttling = 1;
 
-    bool operator==(const core_cfg &) const = default;
+    bool operator==(const CoreCfg &) const = default;
 };
 
 // #pragma region Emulator
@@ -358,10 +357,10 @@ struct core_cfg
 
 typedef std::common_type_t<std::chrono::duration<int64_t, std::ratio<1, 1000000000>>,
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>>>
-    core_timer_delta;
+    CoreTimerDelta;
 constexpr uint8_t core_timer_max_deltas = 60;
 
-typedef struct
+struct CoreRDRAMReg
 {
     uint32_t rdram_config;
     uint32_t rdram_device_id;
@@ -373,9 +372,9 @@ typedef struct
     uint32_t rdram_min_interval;
     uint32_t rdram_addr_select;
     uint32_t rdram_device_manuf;
-} core_rdram_reg;
+};
 
-typedef struct
+struct CoreSPReg
 {
     uint32_t sp_mem_addr_reg;
     uint32_t sp_dram_addr_reg;
@@ -401,15 +400,15 @@ typedef struct
     uint32_t sp_dma_full_reg;
     uint32_t sp_dma_busy_reg;
     uint32_t sp_semaphore_reg;
-} core_sp_reg;
+};
 
-typedef struct
+struct CoreRSPReg
 {
     uint32_t rsp_pc;
     uint32_t rsp_ibist;
-} core_rsp_reg;
+};
 
-typedef struct
+struct CoreDPCReg
 {
     uint32_t dpc_start;
     uint32_t dpc_end;
@@ -431,17 +430,17 @@ typedef struct
     uint32_t dpc_bufbusy;
     uint32_t dpc_pipebusy;
     uint32_t dpc_tmem;
-} core_dpc_reg;
+};
 
-typedef struct
+struct CoreDPSReg
 {
     uint32_t dps_tbist;
     uint32_t dps_test_mode;
     uint32_t dps_buftest_addr;
     uint32_t dps_buftest_data;
-} core_dps_reg;
+};
 
-typedef struct
+struct CoreMIPSReg
 {
     uint32_t w_mi_init_mode_reg;
     uint32_t mi_init_mode_reg;
@@ -459,9 +458,9 @@ typedef struct
     char VI_intr_mask;
     char PI_intr_mask;
     char DP_intr_mask;
-} core_mips_reg;
+};
 
-typedef struct
+struct CoreVIReg
 {
     uint32_t vi_status;
     uint32_t vi_origin;
@@ -478,9 +477,9 @@ typedef struct
     uint32_t vi_x_scale;
     uint32_t vi_y_scale;
     uint32_t vi_delay;
-} core_vi_reg;
+};
 
-typedef struct
+struct CoreAIReg
 {
     uint32_t ai_dram_addr;
     // source address (in rdram) of sound sample to be played
@@ -495,9 +494,9 @@ typedef struct
     uint32_t next_len;
     uint32_t current_delay;
     uint32_t current_len;
-} core_ai_reg;
+};
 
-typedef struct
+struct CorePIReg
 {
     uint32_t pi_dram_addr_reg;
     uint32_t pi_cart_addr_reg;
@@ -512,9 +511,9 @@ typedef struct
     uint32_t pi_bsd_dom2_pwd_reg;
     uint32_t pi_bsd_dom2_pgs_reg;
     uint32_t pi_bsd_dom2_rls_reg;
-} core_pi_reg;
+};
 
-typedef struct
+struct CoreRIReg
 {
     uint32_t ri_mode;
     uint32_t ri_config;
@@ -524,15 +523,15 @@ typedef struct
     uint32_t ri_latency;
     uint32_t ri_error;
     uint32_t ri_werror;
-} core_ri_reg;
+};
 
-typedef struct
+struct CoreSIReg
 {
     uint32_t si_dram_addr;
     uint32_t si_pif_addr_rd64b;
     uint32_t si_pif_addr_wr64b;
     uint32_t si_status;
-} core_si_reg;
+};
 
 /**
  * \brief Represents a system type.
@@ -543,7 +542,7 @@ enum class CoreSystemType
     PAL,
 };
 
-typedef struct
+struct CoreROMHeader
 {
     uint8_t init_PI_BSB_DOM1_LAT_REG;
     uint8_t init_PI_BSB_DOM1_PGS_REG;
@@ -561,7 +560,7 @@ typedef struct
     uint16_t Cartridge_ID;
     uint16_t Country_code;
     uint32_t Boot_Code[1008];
-} core_rom_header;
+};
 
 #pragma endregion
 
@@ -583,7 +582,7 @@ enum
 /**
  * The movie flag bitfield for extended movies.
  */
-typedef union ExtendedMovieFlags {
+union CoreVCRExtendedMovieFlags {
     uint8_t data;
 
     struct
@@ -608,12 +607,12 @@ typedef union ExtendedMovieFlags {
         bool unused_6 : 1;
         bool unused_7 : 1;
     };
-} core_vcr_extended_movie_flags;
+};
 
 /**
  * Additional data for extended movies. Must be 32 bytes large.
  */
-typedef struct ExtendedMovieData
+struct CoreVCRExtendedMovieData
 {
     /**
      * Special authorship information, such as the program which created the movie.
@@ -642,7 +641,7 @@ typedef struct ExtendedMovieData
     double rcp_lag_factor;
 
     uint32_t unused_3;
-} t_extended_movie_data;
+};
 
 /**
  * \brief
@@ -697,7 +696,7 @@ typedef struct CoreVCRMovieHeader
     /**
      * The extended movie flags. Only valid if <c>extended_version != 0</c>.
      */
-    core_vcr_extended_movie_flags extended_flags;
+    CoreVCRExtendedMovieFlags extended_flags;
 
     /**
      * \brief Amount of input samples in the movie, ideally equal to <c>(file_length - 1024) / 4</c>
@@ -708,7 +707,7 @@ typedef struct CoreVCRMovieHeader
      * \brief What state the movie is expected to start from
      * \remarks vcr.hpp:32
      */
-    uint16_t startFlags;
+    uint16_t start_flags;
 
     uint16_t reserved2;
 
@@ -721,7 +720,7 @@ typedef struct CoreVCRMovieHeader
     /**
      * The extended movie data. Only valid if <c>extended_version != 0</c>.
      */
-    t_extended_movie_data extended_data{};
+    CoreVCRExtendedMovieData extended_data{};
 
     /**
      * \brief The name of the movie's author
@@ -781,28 +780,31 @@ typedef struct CoreVCRMovieHeader
      * \brief A description of what the movie is about as a UTF-8 string
      */
     char description[256];
-} core_vcr_movie_header;
+} CoreVCRMovieHeader;
 #pragma pack(pop)
 
-static_assert(sizeof(core_vcr_extended_movie_flags) == 1);
-static_assert(sizeof(t_extended_movie_data) == 32);
-static_assert(sizeof(core_vcr_movie_header) == 1024);
+static_assert(sizeof(CoreVCRExtendedMovieFlags) == 1);
+static_assert(sizeof(CoreVCRExtendedMovieData) == 32);
+static_assert(sizeof(CoreVCRMovieHeader) == 1024);
 
-typedef enum
+/**
+ * \brief Represents a VCR task.
+ */
+enum class CoreVCRTask
 {
-    task_idle,
-    task_start_recording_from_reset,
-    task_start_recording_from_snapshot,
-    task_recording,
-    task_start_playback_from_reset,
-    task_start_playback_from_snapshot,
-    task_playback
-} core_vcr_task;
+    Idle,
+    StartRecordingFromReset,
+    StartRecordingFromSnapshot,
+    Recording,
+    StartPlaybackFromReset,
+    StartPlaybackFromSnapshot,
+    Playback,
+};
 
 /**
  * \brief Represents information about a seek operation.
  */
-struct core_vcr_seek_info
+struct CoreVCRSeekInfo
 {
     /**
      * \brief The current sample.
@@ -823,7 +825,7 @@ struct core_vcr_seek_info
 /**
  * \brief Represents the paths of files generated by the VCR engine when starting a recording.
  */
-struct core_vcr_generated_file_info
+struct CoreVCRGeneratedFileInfo
 {
     /**
      * \brief The path of the generated movie file.
@@ -846,13 +848,13 @@ struct core_vcr_generated_file_info
 // #pragma region Debugger
 // ==========================================
 
-typedef struct
+struct CoreDbgCPUState
 {
     uintptr_t address;
     uint32_t opcode;
-} core_dbg_cpu_state;
+};
 
-using CoreBreakpointCallback = std::function<void(const core_dbg_cpu_state &state)>;
+using CoreBreakpointCallback = std::function<void(const CoreDbgCPUState &state)>;
 using CoreBreakpointId = size_t;
 
 #pragma endregion
@@ -863,7 +865,7 @@ using CoreBreakpointId = size_t;
 /**
  * \brief Represents a cheat.
  */
-typedef struct CoreCheat
+struct CoreCheat
 {
     // The script's name. FIXME: This should be read from the script
     std::string name = "Unnamed Cheat";
@@ -877,49 +879,49 @@ typedef struct CoreCheat
     // The cheat's instructions. The pair's 1st element tells us whether instruction is a conditional, which is required
     // for special handling of buggy kaze blj anywhere code
     std::vector<std::tuple<bool, std::function<bool()>>> instructions;
-} core_cheat;
+};
 
 #pragma endregion
 
 // #pragma region Savestates
 // ==========================================
 
-typedef enum
+enum class CoreSTJob
 {
     // A save operation
-    core_st_job_save,
+    Save,
     // A load operation
-    core_st_job_load
-} core_st_job;
+    Load
+};
 
-typedef enum
+enum class CoreSTMedium
 {
     // The target medium is a file with a path.
-    core_st_medium_path,
+    Path,
     // The target medium is in-memory.
-    core_st_medium_memory,
-} core_st_medium;
+    Memory,
+};
 
-struct core_st_job_params
+struct CoreSTJobParams
 {
     /// The path to the savestate file.
-    /// Valid if the task's medium is <see cref="e_st_medium::path"/>.
+    /// Valid if the task's medium is <see cref="CoreSTMedium::path"/>.
     std::filesystem::path path{};
 
     /// The buffer containing the savestate data.
-    /// Valid if the task's medium is <see cref="e_st_medium::memory"/> and the job is <see cref="e_st_job::load"/>.
+    /// Valid if the task's medium is <see cref="CoreSTMedium::memory"/> and the job is <see cref="CoreSTJob::load"/>.
     std::vector<uint8_t> buffer{};
 };
 
-struct core_st_callback_info
+struct CoreSTCallbackInfo
 {
-    core_result result{};
-    core_st_job job{};
-    core_st_medium medium{};
-    core_st_job_params params{};
+    CoreResult result{};
+    CoreSTJob job{};
+    CoreSTMedium medium{};
+    CoreSTJobParams params{};
 };
 
-using core_st_callback = std::function<void(const core_st_callback_info &, const std::vector<uint8_t> &)>;
+using CoreSTCallback = std::function<void(const CoreSTCallbackInfo &, const std::vector<uint8_t> &)>;
 
 #pragma endregion
 
@@ -927,13 +929,16 @@ using core_st_callback = std::function<void(const core_st_callback_info &, const
 // ==========================================
 
 /**
- * The tone of a dialog.
+ * The tone of a message.
  */
-typedef enum
+enum class CoreMessageTone
 {
-    fsvc_error,
-    fsvc_warning,
-    fsvc_information
-} core_dialog_type;
+    // The message is an error.
+    Error,
+    // The message is a warning.
+    Warn,
+    // The message is purely informational.
+    Info
+};
 
 #pragma endregion

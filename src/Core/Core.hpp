@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 
-extern core_params *g_core;
-extern core_ctx g_ctx;
+extern CoreParams *g_core;
+extern CoreCtx g_ctx;
 extern std::atomic<int32_t> g_wait_counter;

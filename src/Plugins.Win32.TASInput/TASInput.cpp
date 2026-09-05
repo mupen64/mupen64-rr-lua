@@ -16,7 +16,7 @@
 #define WM_EDIT_END (WM_USER + 3)
 #define WM_UPDATE_STATUS (WM_USER + 4)
 
-constexpr auto JOYSTICK_CONTROL_CLASS = "JoystickControl";
+constexpr auto joystick_control_class = "JoystickControl";
 
 enum class ComboTask
 {
@@ -93,20 +93,20 @@ struct Status
      */
     HWND combo_edit_box = nullptr;
 
-    struct t_set_visuals_request
+    struct SetVisualsRequest
     {
         CoreButtons input;
         bool needs_processing;
     };
 
-    std::optional<t_set_visuals_request> pending_set_visuals_request{};
+    std::optional<SetVisualsRequest> pending_set_visuals_request{};
     std::mutex pending_visuals_mutex{};
 
     std::optional<std::string> pending_status{};
     bool status_message_pending{};
     std::mutex pending_status_mutex{};
 
-    std::vector<t_combo> combos{};
+    std::vector<Combo> combos{};
 
     bool last_lmb_down{};
     bool last_rmb_down{};
@@ -181,7 +181,7 @@ struct Status
 static std::atomic<int64_t> frame_counter{};
 static std::atomic<bool> new_frame{};
 static std::atomic<bool> rom_open{};
-static std::atomic<bool> s_event_watch_attached{};
+static std::atomic<bool> g_event_watch_attached{};
 static HMENU hmenu{};
 static HFONT icon_font{};
 static Status status[NUMBER_OF_CONTROLS]{};
@@ -197,8 +197,8 @@ static bool event_watch(void *, SDL_Event *event)
 
 static void attach_event_watch()
 {
-    if (s_event_watch_attached) return;
-    s_event_watch_attached = true;
+    if (g_event_watch_attached) return;
+    g_event_watch_attached = true;
 
     SDL_AddEventWatch(event_watch, nullptr);
 }
@@ -348,13 +348,13 @@ void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
     if (!ready) return;
 
     std::lock_guard lock(pending_visuals_mutex);
-    pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
+    pending_set_visuals_request = SetVisualsRequest{input, needs_processing};
 }
 
 void Status::set_visuals_if_needed()
 {
     if (!ready) return;
-    std::optional<t_set_visuals_request> request;
+    std::optional<SetVisualsRequest> request;
     {
         std::lock_guard lock(pending_visuals_mutex);
         request = pending_set_visuals_request;
@@ -638,7 +638,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
         const auto scale = GetDpiForWindow(hwnd) / 96.0;
 
-        ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, JOYSTICK_CONTROL_CLASS, "", WS_CHILD | WS_VISIBLE, 8, 4,
+        ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, joystick_control_class, "", WS_CHILD | WS_VISIBLE, 8, 4,
             131 * scale, 131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
 
         // It can take a bit until we receive the first GetKeys, so let's just show some basic default state in the
@@ -671,7 +671,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         ctx->hwnd = nullptr;
     }
     break;
-    case JoystickControl::WM_JOYSTICK_POSITION_CHANGED: {
+    case JoystickControl::wm_joystick_position_changed: {
         int x{}, y{};
         JoystickControl::get_position(ctx->joy_hwnd, &x, &y);
 
@@ -684,7 +684,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         }
         break;
     }
-    case JoystickControl::WM_JOYSTICK_DRAG_BEGIN:
+    case JoystickControl::wm_joystick_drag_begin:
         ctx->activate_emulator_window();
         break;
     case WM_CONTEXTMENU:
@@ -1053,7 +1053,7 @@ void Status::save_combos()
         return;
     }
 
-    const auto serialized = t_combo::serialize_combos(combos);
+    const auto serialized = Combo::serialize_combos(combos);
 
     (void)fwrite(serialized.data(), sizeof(uint8_t), serialized.size(), f);
 
@@ -1071,7 +1071,7 @@ void Status::load_combos(const std::filesystem::path &path)
         return;
     }
 
-    combos = t_combo::deserialize_combos(buf);
+    combos = Combo::deserialize_combos(buf);
 
     ListBox_ResetContent(combo_listbox);
     for (const auto &combo : combos)
@@ -1088,7 +1088,7 @@ bool Status::show_context_menu(int x, int y)
 
     // HACK: disable topmost so menu doesnt appear under tasinput
     hmenu = CreatePopupMenu();
-#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_input_config, x), y)
+#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(InputConfig, x), y)
     ADD_ITEM(hmenu, relative_mode, "Relative");
     ADD_ITEM(hmenu, approach_mode, "Approach");
     ADD_ITEM(hmenu, wrap_joystick, "Wrap joystick");
@@ -1229,7 +1229,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             MOUSE_RBUTTONREDEFINITION = VK_LBUTTON;
         }
 
-        JoystickControl::register_class(g_inst, JOYSTICK_CONTROL_CLASS);
+        JoystickControl::register_class(g_inst, joystick_control_class);
 
         save_config();
 
@@ -1243,10 +1243,10 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             icon_font = {};
         }
 
-        if (s_event_watch_attached)
+        if (g_event_watch_attached)
         {
             SDL_RemoveEventWatch(event_watch, nullptr);
-            s_event_watch_attached = false;
+            g_event_watch_attached = false;
         }
 
         break;

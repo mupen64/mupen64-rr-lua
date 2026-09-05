@@ -12,7 +12,7 @@
 #include <Common.Views/Messages.hpp>
 #include "ParameterPalette.hpp"
 
-struct t_parameter_palette_context
+struct ParameterPaletteContext
 {
     HWND hwnd{};
     HWND header_hwnd{};
@@ -26,7 +26,7 @@ struct t_parameter_palette_context
 
     ActionManager::action_path action_path{};
     size_t param_index{};
-    std::vector<ActionManager::t_action_param> ref_params{};
+    std::vector<ActionManager::ActionParam> ref_params{};
     ActionManager::action_argument_map filled_params{};
 
     std::vector<std::function<void()>> unsubscribe_funcs{};
@@ -41,7 +41,7 @@ enum class NextParamResult
     Finished = 2
 };
 
-static t_parameter_palette_context g_ctx{};
+static ParameterPaletteContext g_ctx{};
 
 static bool try_apply_parameter();
 
@@ -251,11 +251,11 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
 
         // 2. Add resize anchors
         ResizeAnchor::add_anchors(hwnd, {
-                                            {g_ctx.header_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.subheader_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.secondary_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.combo_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.status_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
+                                            {g_ctx.header_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.subheader_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.secondary_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.combo_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.status_hwnd, ResizeAnchor::horizontal_anchor},
                                             {g_ctx.back_hwnd, ResizeAnchor::AnchorFlags::Left},
                                             {g_ctx.next_hwnd, ResizeAnchor::AnchorFlags::Right},
                                         });

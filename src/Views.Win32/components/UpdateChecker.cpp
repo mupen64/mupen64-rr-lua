@@ -155,7 +155,7 @@ void show_connectivity_error(bool manual)
     if (manual)
     {
         DialogService::show_notification(
-            "Failed to fetch update information. Please try again later.", "Update Error", fsvc_error);
+            "Failed to fetch update information. Please try again later.", "Update Error", CoreMessageTone::Error);
     }
 }
 
@@ -209,7 +209,7 @@ void check(bool manual)
     {
         if (manual)
         {
-            DialogService::show_notification("You are already up-to-date.", "Already up-to-date", fsvc_information);
+            DialogService::show_notification("You are already up-to-date.", "Already up-to-date", CoreMessageTone::Info);
         }
 
         return;
@@ -219,7 +219,7 @@ show_prompt:
 
     const auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_UPDATE_DIALOG,
         {"Update Now", "Show Changelog", "Skip Version", "Remind Me Later"},
-        std::format("Mupen64 {} is available for download.", version), "Update Available", fsvc_information);
+        std::format("Mupen64 {} is available for download.", version), "Update Available", CoreMessageTone::Info);
 
     switch (result)
     {

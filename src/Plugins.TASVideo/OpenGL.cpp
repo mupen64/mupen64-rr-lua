@@ -19,8 +19,8 @@ GLInfo OGL{};
 
 void *gCapturedPixels; // pointer to buffer to fill
 
-static SDL_Window *s_sdl_window;
-static SDL_GLContext s_sdl_context;
+static SDL_Window *g_sdl_window;
+static SDL_GLContext g_sdl_context;
 
 void OGL_ReadPixels()
 {
@@ -184,28 +184,28 @@ bool OGL_InitContext()
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
     }
 
-    s_sdl_window =
+    g_sdl_window =
         SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-    SDL_assert_release(s_sdl_window);
+    SDL_assert_release(g_sdl_window);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
-    s_sdl_context = SDL_GL_CreateContext(s_sdl_window);
-    OGL.isGLES = (s_sdl_context != nullptr);
+    g_sdl_context = SDL_GL_CreateContext(g_sdl_window);
+    OGL.isGLES = (g_sdl_context != nullptr);
 
-    if (!s_sdl_context)
+    if (!g_sdl_context)
     {
         g_plugin->log_info("OpenGL ES 2.0 context unavailable; falling back to desktop OpenGL.");
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-        s_sdl_context = SDL_GL_CreateContext(s_sdl_window);
+        g_sdl_context = SDL_GL_CreateContext(g_sdl_window);
     }
-    SDL_assert_release(s_sdl_context);
+    SDL_assert_release(g_sdl_context);
 
-    SDL_assert_release(SDL_GL_MakeCurrent(s_sdl_window, s_sdl_context));
+    SDL_assert_release(SDL_GL_MakeCurrent(g_sdl_window, g_sdl_context));
 
     int multisample_buffers = 0;
     int multisample_samples = 0;
@@ -233,13 +233,13 @@ bool OGL_InitContext()
 
 bool OGL_DestroyContext()
 {
-    SDL_GL_MakeCurrent(s_sdl_window, nullptr);
+    SDL_GL_MakeCurrent(g_sdl_window, nullptr);
 
-    SDL_GL_DestroyContext(s_sdl_context);
-    s_sdl_context = nullptr;
+    SDL_GL_DestroyContext(g_sdl_context);
+    g_sdl_context = nullptr;
 
-    SDL_DestroyWindow(s_sdl_window);
-    s_sdl_window = nullptr;
+    SDL_DestroyWindow(g_sdl_window);
+    g_sdl_window = nullptr;
 
     OGL.context_initialized = FALSE;
 

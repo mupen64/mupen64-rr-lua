@@ -14,11 +14,11 @@ static void prompt_plugin_change(HWND hwnd)
 {
     auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_PLUGIN_LOAD_ERROR,
         {"Choose Default Plugins", "Change Plugins", "Cancel"},
-        "One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", "Core", fsvc_error, hwnd);
+        "One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", "Core", CoreMessageTone::Error, hwnd);
 
     if (result == 0)
     {
-        auto plugin_discovery_result = PluginUtil::discover_plugins(Config::plugin_directory());
+        auto plugin_discovery_result = PluginUtil::discover_plugins(AppConfig::plugin_directory());
 
         auto first_video_plugin = std::ranges::find_if(
             plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::Video; });
@@ -62,9 +62,9 @@ static void prompt_plugin_change(HWND hwnd)
     }
 }
 
-std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core_result result)
+std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(CoreResult result)
 {
-    if (result == Res_Ok || result == Res_Cancelled || result == VCR_InvalidControllers)
+    if (result == CoreResult::Res_Ok || result == CoreResult::Res_Cancelled || result == CoreResult::VCR_InvalidControllers)
     {
         return {};
     }
@@ -75,99 +75,99 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
     switch (result)
     {
 #pragma region VCR
-    case VCR_InvalidFormat:
+    case CoreResult::VCR_InvalidFormat:
         module = "VCR";
         error = "The provided data has an invalid format.";
         break;
-    case VCR_BadFile:
+    case CoreResult::VCR_BadFile:
         module = "VCR";
         error = "The provided file is inaccessible or does not exist.";
         break;
-    case VCR_InvalidSavestate:
+    case CoreResult::VCR_InvalidSavestate:
         module = "VCR";
         error = "The movie's savestate is missing or invalid.";
         break;
-    case VCR_InvalidFrame:
+    case CoreResult::VCR_InvalidFrame:
         module = "VCR";
         error = "The resulting frame is outside the bounds of the movie.";
         break;
-    case VCR_NoMatchingRom:
+    case CoreResult::VCR_NoMatchingRom:
         module = "VCR";
         error = "There is no rom which matches this movie.";
         break;
-    case VCR_Idle:
+    case CoreResult::VCR_Idle:
         module = "VCR";
         error = "The VCR engine is idle, but must be active to complete this operation.";
         break;
-    case VCR_NotFromThisMovie:
+    case CoreResult::VCR_NotFromThisMovie:
         module = "VCR";
         error = "The provided freeze buffer is not from the currently active movie.";
         break;
-    case VCR_InvalidVersion:
+    case CoreResult::VCR_InvalidVersion:
         module = "VCR";
         error = "The movie's version is invalid.";
         break;
-    case VCR_InvalidExtendedVersion:
+    case CoreResult::VCR_InvalidExtendedVersion:
         module = "VCR";
         error = "The movie's extended version is invalid. It might be too new for this version of the emulator.";
         break;
-    case VCR_NeedsPlaybackOrRecording:
+    case CoreResult::VCR_NeedsPlaybackOrRecording:
         module = "VCR";
         error = "The operation requires a playback or recording task.";
         break;
-    case VCR_NeedsPlayback:
+    case CoreResult::VCR_NeedsPlayback:
         module = "VCR";
         error = "The operation requires a playback task.";
         break;
-    case VCR_InvalidStartType:
+    case CoreResult::VCR_InvalidStartType:
         module = "VCR";
         error = "The provided start type is invalid.";
         break;
-    case VCR_WarpModifyAlreadyRunning:
+    case CoreResult::VCR_WarpModifyAlreadyRunning:
         module = "VCR";
         error = "Another warp modify operation is already running.";
         break;
-    case VCR_WarpModifyNeedsRecordingTask:
+    case CoreResult::VCR_WarpModifyNeedsRecordingTask:
         module = "VCR";
         error = "Warp modifications can only be performed during recording.";
         break;
-    case VCR_WarpModifyEmptyInputBuffer:
+    case CoreResult::VCR_WarpModifyEmptyInputBuffer:
         module = "VCR";
         error = "The provided input buffer is empty.";
         break;
-    case VCR_SeekSavestateLoadFailed:
+    case CoreResult::VCR_SeekSavestateLoadFailed:
         module = "VCR";
         error = "The seek operation could not be initiated due to a savestate not being loaded successfully.";
         break;
-    case VCR_SeekSavestateIntervalZero:
+    case CoreResult::VCR_SeekSavestateIntervalZero:
         module = "VCR";
         error = "The seek operation can't be initiated because the seek savestate interval is 0.";
         break;
-    case VCR_SeekStringMalformed:
+    case CoreResult::VCR_SeekStringMalformed:
         module = "VCR";
         error = "The seek string is malformed.";
         break;
 #pragma endregion
 #pragma region VR
-    case VR_NoMatchingRom:
+    case CoreResult::VR_NoMatchingRom:
         module = "Core";
         error = "The ROM couldn't be loaded.\r\nCouldn't find an appropriate ROM.";
         break;
-    case VR_PluginError:
+    case CoreResult::VR_PluginError:
         module = "Core";
         error = "One or more plugins couldn't be loaded.\r\nVerify that you have selected all four plugins.";
         break;
-    case VR_RomInvalid:
+    case CoreResult::VR_RomInvalid:
         module = "Core";
         error = "The ROM couldn't be loaded.\r\nVerify that the ROM is a valid N64 ROM.";
         break;
-    case VR_FileOpenFailed:
+    case CoreResult::VR_FileOpenFailed:
         module = "Core";
         error = "Failed to open streams to core files.\r\nVerify that Mupen is allowed disk access.";
         break;
 #pragma endregion
 #pragma region Init
-    case IN_MissingComponent:
+    case CoreResult::IN_MissingComponent:
         module = "Core";
         error = "The core params are missing a critical component.";
         break;
@@ -180,7 +180,7 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
     return {std::move(module), std::move(error)};
 }
 
-bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
+bool CoreUtils::show_error_dialog_for_result(CoreResult result, HWND hwnd)
 {
     g_view_logger->error(
         "CoreUtils::show_error_dialog_for_result({}, {})", static_cast<int32_t>(result), static_cast<void *>(hwnd));
@@ -188,14 +188,14 @@ bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
     const auto [module, error] = get_error_message_for_result(result);
     if (error.empty()) return false;
 
-    if (result == VR_PluginError)
+    if (result == CoreResult::VR_PluginError)
     {
         prompt_plugin_change(hwnd);
         return true;
     }
 
     const auto title = std::format("{} Error {}", module, static_cast<int32_t>(result));
-    DialogService::show_dialog(error, title, fsvc_error, hwnd);
+    DialogService::show_dialog(error, title, CoreMessageTone::Error, hwnd);
 
     return true;
 }

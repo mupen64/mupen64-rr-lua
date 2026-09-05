@@ -22,9 +22,9 @@ struct config_dialog_context
 {
     HWND hwnd{};
     HWND devices_hwnd{};
-    t_input_config prev_config{};
+    InputConfig prev_config{};
     size_t selected_controller{};
-    std::variant<std::monostate, t_button_mapping *, t_axis_mapping *> target_value{};
+    std::variant<std::monostate, ButtonMapping *, AxisMapping *> target_value{};
     bool positive_target_axis{};
 };
 
@@ -186,7 +186,7 @@ static std::string virtual_keycode_to_string(int k)
     return buf2;
 }
 
-static void update_editbox(int id, const t_button_mapping &mapping)
+static void update_editbox(int id, const ButtonMapping &mapping)
 {
     if (mapping.axis != SDL_GAMEPAD_AXIS_INVALID)
     {
@@ -209,7 +209,7 @@ static void update_editbox(int id, const t_button_mapping &mapping)
     }
 }
 
-static void update_editbox(int id_negative, int id_positive, const t_axis_mapping &mapping)
+static void update_editbox(int id_negative, int id_positive, const AxisMapping &mapping)
 {
     if (mapping.axis != SDL_GAMEPAD_AXIS_INVALID)
     {
@@ -297,14 +297,14 @@ static void pre_begin_edit(int edit_id)
     SetDlgItemText(g_ctx.hwnd, edit_id, "...");
 }
 
-static void begin_edit(int edit_id, t_button_mapping *ptr)
+static void begin_edit(int edit_id, ButtonMapping *ptr)
 {
     pre_begin_edit(edit_id);
 
     g_ctx.target_value = ptr;
 }
 
-static void begin_edit(int edit_id, t_axis_mapping *ptr)
+static void begin_edit(int edit_id, AxisMapping *ptr)
 {
     pre_begin_edit(edit_id);
 
@@ -336,14 +336,14 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(
     case WM_SYSKEYDOWN:
         if (new_config.preferred_device_guid.has_value()) break;
 
-        if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))
+        if (auto *mapping = std::get_if<ButtonMapping *>(&g_ctx.target_value))
         {
             (*mapping)->button = SDL_GAMEPAD_BUTTON_INVALID;
             (*mapping)->key = wparam;
             end_edit();
         }
 
-        if (auto *mapping = std::get_if<t_axis_mapping *>(&g_ctx.target_value))
+        if (auto *mapping = std::get_if<AxisMapping *>(&g_ctx.target_value))
         {
             (*mapping)->axis = SDL_GAMEPAD_AXIS_INVALID;
             if (g_ctx.positive_target_axis)
@@ -424,7 +424,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             EndDialog(hwnd, IDCANCEL);
             break;
         case IDC_B_CLEAR:
-            new_config = t_input_config{};
+            new_config = InputConfig{};
             update_visuals();
             break;
         case IDC_COMBOCONT: {
@@ -559,11 +559,11 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 switch (clicked)
                 {
                 case 1:
-                    new_config.controller_config[g_ctx.selected_controller] = t_controller_config::gamepad_config();
+                    new_config.controller_config[g_ctx.selected_controller] = ControllerConfig::gamepad_config();
                     update_visuals();
                     break;
                 case 2:
-                    new_config.controller_config[g_ctx.selected_controller] = t_controller_config::keyboard_config();
+                    new_config.controller_config[g_ctx.selected_controller] = ControllerConfig::keyboard_config();
                     update_visuals();
                     break;
                 case 4: {
@@ -591,7 +591,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                     const auto json = nlohmann::json::parse(json_str);
                     if (!json.is_object()) break;
 
-                    const auto controller_config = json.get<t_controller_config>();
+                    const auto controller_config = json.get<ControllerConfig>();
                     new_config.controller_config[g_ctx.selected_controller] = controller_config;
                     update_visuals();
                     break;
@@ -638,7 +638,7 @@ void ConfigDialog::on_sdl_event(const SDL_Event &e)
 
     if (e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN)
     {
-        if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))
+        if (auto *mapping = std::get_if<ButtonMapping *>(&g_ctx.target_value))
         {
             (*mapping)->button = e.gbutton.button;
             (*mapping)->key = 0;
@@ -652,7 +652,7 @@ void ConfigDialog::on_sdl_event(const SDL_Event &e)
 
         const auto moved = std::abs(axis_value) > AXIS_THRESHOLD;
 
-        if (auto *mapping = std::get_if<t_axis_mapping *>(&g_ctx.target_value))
+        if (auto *mapping = std::get_if<AxisMapping *>(&g_ctx.target_value))
         {
             if (moved)
             {
@@ -663,7 +663,7 @@ void ConfigDialog::on_sdl_event(const SDL_Event &e)
             }
         }
 
-        if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))
+        if (auto *mapping = std::get_if<ButtonMapping *>(&g_ctx.target_value))
         {
             if (moved)
             {

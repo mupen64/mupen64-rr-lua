@@ -5,9 +5,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR_Core_Headers INTERFACE
-    "include/m64rr/API.hpp"
-    "include/m64rr/Plugin.hpp"
-    "include/m64rr/Types.hpp"
+    "include/Core/API.hpp"
+    "include/Core/Plugin.hpp"
+    "include/Core/Types.hpp"
 )
 target_compile_features(Mupen64RR_Core_Headers INTERFACE cxx_std_26)
 target_include_directories(Mupen64RR_Core_Headers INTERFACE "include")

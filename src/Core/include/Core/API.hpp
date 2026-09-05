@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "m64rr/Types.hpp"
+#include <Core/Types.hpp>
 #include <optional>
 
 #ifdef __cplusplus
@@ -21,7 +21,7 @@ extern "C"
     /**
      * \brief Callbacks for the core to call into the host.
      */
-    struct core_callbacks
+    struct CoreCallbacks
     {
         std::function<void(bool new_present)> vi = [](const auto &...) {};
         std::function<void(CoreButtons *input, int index)> input = [](const auto &...) {};
@@ -46,7 +46,7 @@ extern "C"
         std::function<void(int32_t)> speed_modifier_changed = [](const auto &...) {};
         std::function<void(bool)> warp_modify_status_changed = [](const auto &...) {};
         std::function<void(int32_t)> current_sample_changed = [](const auto &...) {};
-        std::function<void(core_vcr_task)> task_changed = [](const auto &...) {};
+        std::function<void(CoreVCRTask)> task_changed = [](const auto &...) {};
         std::function<void(uint64_t)> rerecords_changed = [](const auto &...) {};
         std::function<void()> unfreeze_completed = [](const auto &...) {};
         std::function<void(size_t)> seek_savestate_changed = [](const auto &...) {};
@@ -74,12 +74,12 @@ extern "C"
     /**
      * \brief Represents parameters passed to the core when creating it.
      */
-    struct core_params
+    struct CoreParams
     {
         /**
          * \brief The core's configuration.
          */
-        core_cfg *cfg;
+        CoreCfg *cfg;
 
         /**
          * \brief The core's controller configuration. Can be written to by the host during `initiate_plugins`.
@@ -89,7 +89,7 @@ extern "C"
         /**
          * \brief Optional callbacks for the core to invoke during emulation.
          */
-        core_callbacks callbacks;
+        CoreCallbacks callbacks;
 
         /**
          * \brief Logs the specified message at the trace level.
@@ -160,7 +160,7 @@ extern "C"
          * again, this function will return the last choice.
          */
         std::function<size_t(std::string_view id, const std::vector<std::string> &choices, const char *str,
-            const char *title, core_dialog_type type)>
+            const char *title, CoreMessageTone type)>
             show_multiple_choice_dialog;
 
         /**
@@ -182,7 +182,7 @@ extern "C"
          * \param title The dialog title.
          * \param type The dialog's tone.
          */
-        std::function<void(const char *str, const char *title, core_dialog_type type)> show_dialog =
+        std::function<void(const char *str, const char *title, CoreMessageTone type)> show_dialog =
             [](const auto &...) {};
 
         /**
@@ -196,7 +196,7 @@ extern "C"
          * \param title The notification title.
          * \param tone The notification's tone.
          */
-        std::function<void(const char *str, const char *title, core_dialog_type tone)> show_notification =
+        std::function<void(const char *str, const char *title, CoreMessageTone tone)> show_notification =
             [](const auto &...) {};
 
         /**
@@ -216,7 +216,7 @@ extern "C"
          * \param predicate A predicate which determines if the rom matches.
          * \return The rom's path, or an empty string if no rom was found.
          */
-        std::function<std::filesystem::path(const std::function<bool(const core_rom_header &)> &predicate)>
+        std::function<std::filesystem::path(const std::function<bool(const CoreROMHeader &)> &predicate)>
             find_available_rom = [](const auto &...) { return std::filesystem::path(); };
 
         /**
@@ -246,8 +246,8 @@ extern "C"
          * \brief The savestate callback wrapper, which is invoked prior to individual savestate callbacks.
          * Can be used to display generic error information.
          */
-        std::function<void(const core_st_callback_info &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
-            [](const core_st_callback_info &, const std::vector<uint8_t> &) {};
+        std::function<void(const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
+            [](const CoreSTCallbackInfo &, const std::vector<uint8_t> &) {};
 
         std::function<void()> video_process_dlist;
         std::function<void()> video_process_rdp_list;
@@ -276,24 +276,24 @@ extern "C"
      * \brief The context of a core instance.
      * There currently can't be multiple core instances running simultaneously.
      */
-    struct core_ctx
+    struct CoreCtx
     {
         uint8_t *rom;
         uint32_t *rdram;
-        core_rdram_reg *rdram_register;
-        core_pi_reg *pi_register;
-        core_mips_reg *mi_register;
-        core_sp_reg *sp_register;
-        core_si_reg *si_register;
-        core_vi_reg *vi_register;
-        core_rsp_reg *rsp_register;
-        core_ri_reg *ri_register;
-        core_ai_reg *ai_register;
-        core_dpc_reg *dpc_register;
-        core_dps_reg *dps_register;
+        CoreRDRAMReg *rdram_register;
+        CorePIReg *pi_register;
+        CoreMIPSReg *mi_register;
+        CoreSPReg *sp_register;
+        CoreSIReg *si_register;
+        CoreVIReg *vi_register;
+        CoreRSPReg *rsp_register;
+        CoreRIReg *ri_register;
+        CoreAIReg *ai_register;
+        CoreDPCReg *dpc_register;
+        CoreDPSReg *dps_register;
         uint32_t *sp_dmem;
         uint32_t *sp_imem;
-        uint32_t *PIF_RAM;
+        uint32_t *pif_ram;
         size_t *rcp_counter;
 
 #pragma region Emulator
@@ -364,7 +364,7 @@ extern "C"
          * \return The operation result.
          * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
          */
-        std::function<core_result(std::filesystem::path path)> vr_start_rom;
+        std::function<CoreResult(std::filesystem::path path)> vr_start_rom;
 
         /**
          * \brief Stops the emulator.
@@ -372,7 +372,7 @@ extern "C"
          * restart, this needs to be false. \return The operation result. \remarks This function must be called from a
          * thread that isn't interlocked with the emulator thread.
          */
-        std::function<core_result(bool stop_vcr)> vr_close_rom;
+        std::function<CoreResult(bool stop_vcr)> vr_close_rom;
 
         /**
          * \brief Resets the emulator.
@@ -381,7 +381,7 @@ extern "C"
          * restart, this needs to be false. \return The operation result. \remarks This function must be called from a
          * thread that isn't interlocked with the emulator thread.
          */
-        std::function<core_result(bool reset_save_data, bool stop_vcr)> vr_reset_rom;
+        std::function<CoreResult(bool reset_save_data, bool stop_vcr)> vr_reset_rom;
 
         /**
          * \brief Starts frame advancing the specified amount of frames.
@@ -431,7 +431,7 @@ extern "C"
         /**
          * \breif Gets the rom header.
          */
-        std::function<core_rom_header *()> vr_get_rom_header;
+        std::function<CoreROMHeader *()> vr_get_rom_header;
 
         /**
          * \param country_code A rom's country code.
@@ -477,7 +477,7 @@ extern "C"
          * \param header The header to fill
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path, core_vcr_movie_header *header)> vcr_parse_header;
+        std::function<CoreResult(std::filesystem::path path, CoreVCRMovieHeader *header)> vcr_parse_header;
 
         /**
          * \brief Reads the inputs from a movie
@@ -485,14 +485,14 @@ extern "C"
          * \param inputs The button collection to fill
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path, std::vector<CoreButtons> &inputs)> vcr_read_movie_inputs;
+        std::function<CoreResult(std::filesystem::path path, std::vector<CoreButtons> &inputs)> vcr_read_movie_inputs;
 
         /**
          * \brief Starts playing back a movie
          * \param path The movie's path
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path)> vcr_start_playback;
+        std::function<CoreResult(std::filesystem::path path)> vcr_start_playback;
 
         /**
          * \brief Starts recording a movie
@@ -502,7 +502,7 @@ extern "C"
          * \param description The movie's description
          * \return The operation result
          */
-        std::function<core_result(
+        std::function<CoreResult(
             std::filesystem::path path, uint16_t flags, std::string author, std::string description)>
             vcr_start_record;
 
@@ -510,7 +510,7 @@ extern "C"
          * \brief Continues recording a movie.
          * \return The operation result
          */
-        std::function<core_result()> vcr_continue_recording;
+        std::function<CoreResult()> vcr_continue_recording;
 
         /**
          * \brief Replaces the author and description information of a movie
@@ -519,14 +519,14 @@ extern "C"
          * \param description The movie's description
          * \return The operation result
          */
-        std::function<core_result(const std::filesystem::path &path, std::optional<std::string> author,
+        std::function<CoreResult(const std::filesystem::path &path, std::optional<std::string> author,
             std::optional<std::string> description)>
             vcr_replace_author_info;
 
         /**
          * \brief Gets information about the current seek operation.
          */
-        std::function<core_vcr_seek_info()> vcr_get_seek_info;
+        std::function<CoreVCRSeekInfo()> vcr_get_seek_info;
 
         /**
          * \brief Begins seeking to a frame in the current movie.
@@ -542,7 +542,7 @@ extern "C"
          *	"^n" - Sample n from the end
          *
          */
-        std::function<core_result(std::string str, bool pause_at_end)> vcr_begin_seek;
+        std::function<CoreResult(std::string str, bool pause_at_end)> vcr_begin_seek;
 
         /**
          * \brief Stops the current seek operation
@@ -558,13 +558,13 @@ extern "C"
          * \brief Writes a backup of the current movie to the backup folder.
          * \return The operation result
          */
-        std::function<core_result()> vcr_write_backup;
+        std::function<CoreResult()> vcr_write_backup;
 
         /**
          * \brief Stops all running tasks
          * \return The operation result
          */
-        std::function<core_result()> vcr_stop_all;
+        std::function<CoreResult()> vcr_stop_all;
 
         /**
          * \brief Gets the current movie path. Only valid when task is not idle.
@@ -574,7 +574,7 @@ extern "C"
         /**
          * \brief Gets the current task
          */
-        std::function<core_vcr_task()> vcr_get_task;
+        std::function<CoreVCRTask()> vcr_get_task;
 
         /**
          * Gets the sample length of the current movie. If no movie is active, the function returns UINT32_MAX.
@@ -624,7 +624,7 @@ extern "C"
          * \param inputs The input buffer to use.
          * \return The operation result
          */
-        std::function<core_result(const std::vector<CoreButtons> &inputs)> vcr_begin_warp_modify;
+        std::function<CoreResult(const std::vector<CoreButtons> &inputs)> vcr_begin_warp_modify;
 
         /**
          * Gets the warp modify status
@@ -662,7 +662,7 @@ extern "C"
          * \param flags The start flags.
          * \return Information about the generated files.
          */
-        std::function<core_vcr_generated_file_info(const std::filesystem::path &movie_path, uint16_t flags)>
+        std::function<CoreVCRGeneratedFileInfo(const std::filesystem::path &movie_path, uint16_t flags)>
             vcr_get_generated_file_info;
 
 #pragma endregion
@@ -723,7 +723,7 @@ extern "C"
          * originating from the emu thread. \return Whether the operation was enqueued.
          */
         std::function<bool(
-            const std::filesystem::path &path, core_st_job job, const core_st_callback &callback, bool ignore_warnings)>
+            const std::filesystem::path &path, CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings)>
             st_do_file;
 
         /**
@@ -735,7 +735,7 @@ extern "C"
          * shown. \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are
          * originating from the emu thread. \return Whether the operation was enqueued.
          */
-        std::function<bool(const std::vector<uint8_t> &buffer, core_st_job job, const core_st_callback &callback,
+        std::function<bool(const std::vector<uint8_t> &buffer, CoreSTJob job, const CoreSTCallback &callback,
             bool ignore_warnings)>
             st_do_memory;
 
@@ -767,7 +767,7 @@ extern "C"
          * \param state The CPU state to disassemble.
          * \return The disassembled instruction as a string.
          */
-        std::function<std::string(const core_dbg_cpu_state &state)> dbg_disassemble;
+        std::function<std::string(const CoreDbgCPUState &state)> dbg_disassemble;
 
 #pragma endregion
 
@@ -779,25 +779,25 @@ extern "C"
          * \param cheat The compiled cheat. If the compilation fails, the cheat won't be mutated.
          * \return Whether the compilation was successful.
          */
-        std::function<bool(std::string_view code, core_cheat &cheat)> cht_compile;
+        std::function<bool(std::string_view code, CoreCheat &cheat)> cht_compile;
 
         /**
          * \brief Gets the cheat override stack.
          */
-        std::function<void(std::stack<std::vector<core_cheat>> &)> cht_get_override_stack;
+        std::function<void(std::stack<std::vector<CoreCheat>> &)> cht_get_override_stack;
 
         /**
          * \brief Gets the cheat list.
          * \remarks The returned cheat list may not be the one set via cht_set_list, as the core can apply cheat
          * overrides.
          */
-        std::function<void(std::vector<core_cheat> &)> cht_get_list;
+        std::function<void(std::vector<CoreCheat> &)> cht_get_list;
 
         /**
          * \brief Sets the cheat list.
          * \remarks If a core cheat override is active, cht_set_list will do nothing.
          */
-        std::function<void(const std::vector<core_cheat> &)> cht_set_list;
+        std::function<void(const std::vector<CoreCheat> &)> cht_set_list;
 
 #pragma endregion
     };
@@ -807,8 +807,8 @@ extern "C"
 
 #pragma region Helper Functions
 
-constexpr uint32_t CORE_ADDR_MASK = 0x7FFFFF;
-constexpr uint32_t CORE_RDRAM_SIZE = 0x800000;
+constexpr uint32_t core_addr_mask = 0x7FFFFF;
+constexpr uint32_t core_rdram_size = 0x800000;
 
 /**
  * \brief Converts an address for RDRAM operations with the specified size.
@@ -846,8 +846,8 @@ template <typename T> constexpr std::optional<T> core_rdram_load(uint8_t *rdram,
     const auto addr_opt = to_addr(addr, sizeof(T));
     if (!addr_opt) return std::nullopt;
 
-    const uint32_t addr_ = *addr_opt & CORE_ADDR_MASK;
-    if (addr_ + sizeof(T) > CORE_RDRAM_SIZE) return std::nullopt;
+    const uint32_t addr_ = *addr_opt & core_addr_mask;
+    if (addr_ + sizeof(T) > core_rdram_size) return std::nullopt;
     return *(T *)(rdram + addr_);
 }
 
@@ -863,8 +863,8 @@ template <typename T> bool core_rdram_store(uint8_t *rdram, const uint32_t addr,
     const auto addr_opt = to_addr(addr, sizeof(T));
     if (!addr_opt) return false;
 
-    const uint32_t addr_ = *addr_opt & CORE_ADDR_MASK;
-    if (addr_ + sizeof(T) > CORE_RDRAM_SIZE) return false;
+    const uint32_t addr_ = *addr_opt & core_addr_mask;
+    if (addr_ + sizeof(T) > core_rdram_size) return false;
     *(T *)(rdram + addr_) = value;
     return true;
 }
@@ -875,6 +875,6 @@ template <typename T> bool core_rdram_store(uint8_t *rdram, const uint32_t addr,
  * \brief Creates a core instance with the specified parameters.
  * \remark Only one core instance is currently supported.
  */
-core_result core_create(core_params *params, core_ctx **ctx);
+CoreResult core_create(CoreParams *params, CoreCtx **ctx);
 
 #endif

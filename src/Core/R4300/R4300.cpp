@@ -38,7 +38,7 @@ struct R4300Internal
     std::jthread emu_thread_handle;
 };
 
-R4300Internal s_r4300;
+R4300Internal g_r4300i;
 
 // Lock to prevent emu state change race conditions
 std::recursive_mutex g_emu_cs;
@@ -212,7 +212,7 @@ void critical_stop(std::string_view message)
 {
     const auto formatted =
         std::format("A critical emulation error has occured: {}.\n\nEmulation will now stop.", message);
-    g_core->show_dialog(formatted.c_str(), "Critical Error", fsvc_error);
+    g_core->show_dialog(formatted.c_str(), "Critical Error", CoreMessageTone::Error);
     g_core->submit_task([] { (void)g_ctx.vr_close_rom(true); });
 }
 
@@ -2073,13 +2073,13 @@ void emu_thread(std::stop_token stop_token)
     while (true)
     {
         {
-            std::unique_lock lock(s_r4300.emu_thread_mutex);
-            s_r4300.emu_thread_cv.wait(lock, stop_token, [] { return s_r4300.emu_thread_start_requested; });
+            std::unique_lock lock(g_r4300i.emu_thread_mutex);
+            g_r4300i.emu_thread_cv.wait(lock, stop_token, [] { return g_r4300i.emu_thread_start_requested; });
             if (stop_token.stop_requested())
             {
                 return;
             }
-            s_r4300.emu_thread_start_requested = false;
+            g_r4300i.emu_thread_start_requested = false;
         }
 
         const auto start_time = std::chrono::high_resolution_clock::now();
@@ -2109,18 +2109,18 @@ void emu_thread(std::stop_token stop_token)
             g_core->callbacks.emu_launched_changed(false);
         }
         {
-            std::lock_guard lock(s_r4300.emu_thread_mutex);
-            s_r4300.emu_session_stopped = true;
+            std::lock_guard lock(g_r4300i.emu_thread_mutex);
+            g_r4300i.emu_session_stopped = true;
         }
-        s_r4300.emu_thread_stopped_cv.notify_all();
+        g_r4300i.emu_thread_stopped_cv.notify_all();
     }
 }
 
-core_result vr_close_rom_impl(bool stop_vcr)
+CoreResult vr_close_rom_impl(bool stop_vcr)
 {
     if (!emu_launched)
     {
-        return VR_NotRunning;
+        return CoreResult::VR_NotRunning;
     }
 
     vr_resume_emu_impl(true);
@@ -2137,8 +2137,8 @@ core_result vr_close_rom_impl(bool stop_vcr)
     stop = 1;
 
     {
-        std::unique_lock lock(s_r4300.emu_thread_mutex);
-        s_r4300.emu_thread_stopped_cv.wait(lock, [] { return s_r4300.emu_session_stopped; });
+        std::unique_lock lock(g_r4300i.emu_thread_mutex);
+        g_r4300i.emu_thread_stopped_cv.wait(lock, [] { return g_r4300i.emu_session_stopped; });
     }
 
     fflush(g_eeprom_file);
@@ -2150,19 +2150,19 @@ core_result vr_close_rom_impl(bool stop_vcr)
     fclose(g_fram_file);
     fclose(g_mpak_file);
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vr_start_rom_impl(std::filesystem::path path)
+CoreResult vr_start_rom_impl(std::filesystem::path path)
 {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // If we get a movie instead of a rom, we try to search the available rom lists to find one matching the movie
     if (path.extension().compare(".m64") == 0)
     {
-        core_vcr_movie_header movie_header{};
+        CoreVCRMovieHeader movie_header{};
         const auto result = g_ctx.vcr_parse_header(path, &movie_header);
-        if (result != Res_Ok)
+        if (result != CoreResult::Res_Ok)
         {
             return result;
         }
@@ -2175,7 +2175,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
 
         if (matching_rom.empty())
         {
-            return VR_NoMatchingRom;
+            return CoreResult::VR_NoMatchingRom;
         }
 
         path = matching_rom;
@@ -2185,7 +2185,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     if (emu_launched)
     {
         auto result = vr_close_rom_impl(true);
-        if (result != Res_Ok)
+        if (result != CoreResult::Res_Ok)
         {
             g_core->log_info("[Core] Failed to close rom before starting rom.");
             return result;
@@ -2198,13 +2198,13 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     if (!g_core->load_plugins())
     {
         g_core->callbacks.emu_starting_changed(false);
-        return VR_PluginError;
+        return CoreResult::VR_PluginError;
     }
 
     if (!rom_load(path.string().c_str()))
     {
         g_core->callbacks.emu_starting_changed(false);
-        return VR_RomInvalid;
+        return CoreResult::VR_RomInvalid;
     }
 
     // Open all the save file streams
@@ -2214,7 +2214,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
         !open_core_file_stream(get_mempak_path(), &g_mpak_file))
     {
         g_core->callbacks.emu_starting_changed(false);
-        return VR_FileOpenFailed;
+        return CoreResult::VR_FileOpenFailed;
     }
 
     g_ctx.vr_on_speed_modifier_changed();
@@ -2225,51 +2225,51 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     emu_paused = false;
     emu_launched = true;
     {
-        std::lock_guard lock(s_r4300.emu_thread_mutex);
-        s_r4300.emu_session_stopped = false;
+        std::lock_guard lock(g_r4300i.emu_thread_mutex);
+        g_r4300i.emu_session_stopped = false;
     }
-    if (!s_r4300.emu_thread_handle.joinable())
+    if (!g_r4300i.emu_thread_handle.joinable())
     {
-        s_r4300.emu_thread_handle = std::jthread(emu_thread);
+        g_r4300i.emu_thread_handle = std::jthread(emu_thread);
     }
     {
-        std::lock_guard lock(s_r4300.emu_thread_mutex);
-        s_r4300.emu_thread_start_requested = true;
+        std::lock_guard lock(g_r4300i.emu_thread_mutex);
+        g_r4300i.emu_thread_start_requested = true;
     }
-    s_r4300.emu_thread_cv.notify_one();
+    g_r4300i.emu_thread_cv.notify_one();
 
     // We need to wait until the core is actually done and running before we can continue, because we release the lock
     // If we return too early (before core is ready to also be killed), then another start or close might come in during
     // the core initialization (catastrophe)
     while (!core_executing);
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vr_start_rom(std::filesystem::path path)
+CoreResult vr_start_rom(std::filesystem::path path)
 {
     std::lock_guard lock(g_emu_cs);
     return vr_start_rom_impl(path);
 }
 
-core_result vr_close_rom(bool stop_vcr)
+CoreResult vr_close_rom(bool stop_vcr)
 {
     std::lock_guard lock(g_emu_cs);
     return vr_close_rom_impl(stop_vcr);
 }
 
-core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check)
+CoreResult vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check)
 {
-    if (!emu_launched) return VR_NotRunning;
+    if (!emu_launched) return CoreResult::VR_NotRunning;
 
     // Special case:
     // If we're recording a movie and have reset recording enabled, we don't reset immediately, but let the VCR
     // handle the reset instead. This is to ensure that the movie file is properly closed and saved.
     const auto task = g_ctx.vcr_get_task();
-    if (g_core->cfg->is_reset_recording_enabled && !skip_reset_recording_check && task == task_recording)
+    if (g_core->cfg->is_reset_recording_enabled && !skip_reset_recording_check && task == CoreVCRTask::Recording)
     {
         vcr_request_reset();
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     }
 
     // why is it so damned difficult to reset the game?
@@ -2280,8 +2280,8 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     emu_resetting = true;
     vr_update_effective_speed_mode();
 
-    core_result result = g_ctx.vr_close_rom(stop_vcr);
-    if (result != Res_Ok)
+    CoreResult result = g_ctx.vr_close_rom(stop_vcr);
+    if (result != CoreResult::Res_Ok)
     {
         emu_resetting = false;
         g_core->callbacks.reset_completed();
@@ -2294,7 +2294,7 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     }
 
     result = g_ctx.vr_start_rom(rom_path);
-    if (result != Res_Ok)
+    if (result != CoreResult::Res_Ok)
     {
         emu_resetting = false;
         g_core->callbacks.reset_completed();
@@ -2303,10 +2303,10 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
 
     emu_resetting = false;
     g_core->callbacks.reset_completed();
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vr_reset_rom(bool reset_save_data, bool stop_vcr)
+CoreResult vr_reset_rom(bool reset_save_data, bool stop_vcr)
 {
     std::lock_guard lock(g_emu_cs);
     return vr_reset_rom_impl(reset_save_data, stop_vcr);

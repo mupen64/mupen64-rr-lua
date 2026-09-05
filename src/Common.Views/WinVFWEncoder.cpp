@@ -176,8 +176,8 @@ bool WinVFWEncoder::append_video(uint8_t *image)
 {
     const auto hash = shortHash(image, m_params.width * m_params.height * 4);
 
-    if (g_config.synchronization_mode == static_cast<int>(t_config::Sync::Video) ||
-        g_config.synchronization_mode == static_cast<int>(t_config::Sync::None))
+    if (g_config.synchronization_mode == static_cast<int>(Config::Sync::Video) ||
+        g_config.synchronization_mode == static_cast<int>(Config::Sync::None))
     {
         g_view_logger->trace("video buffer hash {:08X}", hash);
 
@@ -187,10 +187,10 @@ bool WinVFWEncoder::append_video(uint8_t *image)
     }
 
     const double drift = m_audio_frame - static_cast<double>(m_video_frame);
-    constexpr double DRIFT_THRESHOLD = 3.0;
+    constexpr double drift_threshold = 3.0;
 
     // Video is ahead of audio, drop frame
-    if (drift < -DRIFT_THRESHOLD)
+    if (drift < -drift_threshold)
     {
         return true;
     }
@@ -199,7 +199,7 @@ bool WinVFWEncoder::append_video(uint8_t *image)
     m_video_frame++;
 
     // Audio is ahead of video, duplicate frame
-    if (drift > DRIFT_THRESHOLD)
+    if (drift > drift_threshold)
     {
         if (!append_video_impl(image)) return false;
         m_video_frame++;
@@ -220,7 +220,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 {
     if (len <= 0) return true;
 
-    const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / SOUND_BUF_SIZE;
+    const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / sound_buf_size;
     NEED(fill_percentage <= 80, "Audio buffer overflowed");
 
     memcpy(m_sound_buf + sound_buf_pos, buf, len);
@@ -229,11 +229,11 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
     m_in_sample += len / m_sound_format.nBlockAlign;
     m_audio_frame = (double)m_in_sample * m_params.fps / m_params.arate;
 
-    int expected_len = Resampler::get_resample_len(RESAMPLED_FREQ, m_params.arate, bitrate, sound_buf_pos);
+    int expected_len = Resampler::get_resample_len(resampled_freq, m_params.arate, bitrate, sound_buf_pos);
 
     if (expected_len <= 0 || (expected_len % 8) != 0) return true;
 
-    int resampled_len = Resampler::resample(&m_resampled_sound, RESAMPLED_FREQ, reinterpret_cast<short *>(m_sound_buf),
+    int resampled_len = Resampler::resample(&m_resampled_sound, resampled_freq, reinterpret_cast<short *>(m_sound_buf),
         m_params.arate, bitrate, sound_buf_pos);
 
     if (resampled_len <= 0) return true;
@@ -248,7 +248,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
         DialogService::show_dialog("Audio output failure!\n"
                                    "A call to AVIStreamWrite failed.\n"
                                    "Perhaps you ran out of memory?",
-            "AVI Encoder", fsvc_error);
+            "AVI Encoder", CoreMessageTone::Error);
         return false;
     }
 
@@ -270,7 +270,7 @@ bool WinVFWEncoder::append_video_impl(uint8_t *image)
     {
         DialogService::show_dialog(
             "Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", "AVI Encoder",
-            fsvc_error);
+            CoreMessageTone::Error);
     }
 
     return ret == 0;

@@ -13,7 +13,7 @@
 
 const auto HOTKEY_TRACKER_CTX = "Mupen64_HotkeyTrackerContext";
 
-struct t_hotkey_tracker_context
+struct HotkeyTrackerContext
 {
     bool last_lmb{};
     bool last_rmb{};
@@ -65,7 +65,7 @@ static std::optional<bool> on_key(bool is_up, int32_t key)
 static LRESULT CALLBACK action_menu_wnd_subclass_proc(
     HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
 {
-    auto ctx = static_cast<t_hotkey_tracker_context *>(GetProp(hwnd, HOTKEY_TRACKER_CTX));
+    auto ctx = static_cast<HotkeyTrackerContext *>(GetProp(hwnd, HOTKEY_TRACKER_CTX));
 
     switch (msg)
     {
@@ -166,7 +166,7 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(
 
 bool HotkeyTracker::attach(const HWND hwnd)
 {
-    auto context = std::make_unique<t_hotkey_tracker_context>();
+    auto context = std::make_unique<HotkeyTrackerContext>();
 
     if (!SetProp(hwnd, HOTKEY_TRACKER_CTX, context.get()))
     {

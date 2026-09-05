@@ -26,10 +26,10 @@
 #define VIEW_DLG_RAMSTART "VIEW_DLG_RAMSTART"
 #define VIEW_DLG_ABOUT "VIEW_DLG_ABOUT"
 
-struct t_main_context
+struct MainContext
 {
-    core_params core{};
-    core_ctx *core_ctx{};
+    CoreParams core{};
+    CoreCtx *core_ctx{};
     // PlatformService io_service{};
     bool frame_changed{};
     int last_wheel_delta{};
@@ -57,24 +57,24 @@ struct BetterEmulationLock
     ~BetterEmulationLock();
 };
 
-struct t_window_info
+struct WindowInfo
 {
     long width;
     long height;
     long statusbar_height;
 };
 
-extern t_main_context g_main_ctx;
+extern MainContext g_main_ctx;
 
-static bool task_is_playback(const core_vcr_task task)
+static bool task_is_playback(const CoreVCRTask task)
 {
-    return task == task_playback || task == task_start_playback_from_reset || task == task_start_playback_from_snapshot;
+    return task == CoreVCRTask::Playback || task == CoreVCRTask::StartPlaybackFromReset || task == CoreVCRTask::StartPlaybackFromSnapshot;
 }
 
-static bool vcr_is_task_recording(const core_vcr_task task)
+static bool vcr_is_task_recording(const CoreVCRTask task)
 {
-    return task == task_recording || task == task_start_recording_from_reset ||
-           task == task_start_recording_from_snapshot;
+    return task == CoreVCRTask::Recording || task == CoreVCRTask::StartRecordingFromReset ||
+           task == CoreVCRTask::StartRecordingFromSnapshot;
 }
 
 /**
@@ -86,7 +86,7 @@ std::string get_mupen_name(bool simple = false);
 /**
  * \return Information about the current window size.
  */
-t_window_info get_window_info();
+WindowInfo get_window_info();
 
 /**
  * \brief Demands user confirmation for an exit action

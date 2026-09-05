@@ -82,7 +82,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             SetDlgItemText(hwnd, IDC_SEEKER_ETA, "");
             break;
         }
-        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+        const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
         const float effective_progress = MiscHelpers::remap(static_cast<float>(info.current_sample),
             static_cast<float>(info.seek_start_sample), static_cast<float>(info.seek_target_sample), 0.0f, 1.0f);
@@ -108,7 +108,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         break;
         case IDC_SEEKER_START: {
             const auto result = g_main_ctx.core_ctx->vcr_begin_seek(g_config.seeker_value, true);
-            if (result != Res_Ok)
+            if (result != CoreResult::Res_Ok)
             {
                 const auto [_, error] = CoreUtils::get_error_message_for_result(result);
                 EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), FALSE);

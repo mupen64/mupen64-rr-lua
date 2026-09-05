@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <string>
 #include <format>
-#include <m64rr/Plugin.hpp>
+#include <Core/Plugin.hpp>
 #include <Common.Views/Hotkey.hpp>
 #include <Common/Assert.hpp>
 

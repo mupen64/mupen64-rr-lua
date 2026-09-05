@@ -7,7 +7,7 @@
 #pragma once
 
 #include <Common.Win32/Common.hpp>
-#include <m64rr/Plugin.hpp>
+#include <Core/Plugin.hpp>
 #include <Common.Win32/WinFilePicker.hpp>
 #include <filesystem>
 

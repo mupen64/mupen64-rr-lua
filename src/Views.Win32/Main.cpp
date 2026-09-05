@@ -43,12 +43,12 @@
 #define ASYNC_KEY_RESET_ROM (3)
 #define ASYNC_KEY_PLAY_MOVIE (4)
 
-t_main_context g_main_ctx{};
+MainContext g_main_ctx{};
 
 bool g_frame_changed = true;
-static bool s_sdl_initialized = false;
+static bool g_sdl_initialized = false;
 
-constexpr UINT_PTR SDL_TIMER_ID = 1;
+constexpr UINT_PTR sdl_timer_id = 1;
 MMRESULT g_ui_timer;
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
@@ -60,7 +60,7 @@ ULONG_PTR gdi_plus_token;
 // See App.hpp
 HWND g_main_hwnd;
 
-constexpr auto WND_CLASS = "myWindowClass";
+constexpr auto wnd_class = "myWindowClass";
 
 BetterEmulationLock::BetterEmulationLock()
 {
@@ -151,7 +151,7 @@ const char *get_status_text()
     static char text[1024]{};
     memset(text, 0, sizeof(text));
 
-    const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
     const auto index_adjustment = g_config.vcr_0_index ? 1 : 0;
     const auto current_sample = info.current_sample;
@@ -165,7 +165,7 @@ const char *get_status_text()
         return text;
     }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_recording)
+    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording)
     {
         if (is_before_start)
         {
@@ -177,7 +177,7 @@ const char *get_status_text()
         }
     }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_playback)
+    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Playback)
     {
         if (is_before_start)
         {
@@ -195,7 +195,7 @@ const char *get_status_text()
 
 std::filesystem::path get_summercart_path()
 {
-    return Config::save_directory() / "card.vhd";
+    return AppConfig::save_directory() / "card.vhd";
 }
 
 std::filesystem::path get_st_with_slot_path(const size_t slot)
@@ -203,17 +203,17 @@ std::filesystem::path get_st_with_slot_path(const size_t slot)
     const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
     const auto fname = std::format("{} {}.st{}", IOUtils::rom_name_to_string((const char *)hdr->nom),
         g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code), slot);
-    return Config::save_directory() / fname;
+    return AppConfig::save_directory() / fname;
 }
 
-void st_callback_wrapper(const core_st_callback_info &info, const std::vector<uint8_t> &)
+void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8_t> &)
 {
-    if (info.medium == core_st_medium_memory)
+    if (info.medium == CoreSTMedium::Memory)
     {
         return;
     }
 
-    if (info.medium == core_st_medium_path)
+    if (info.medium == CoreSTMedium::Path)
     {
         const auto &fname = info.params.path.filename().string();
         const bool is_slot = fname.find(".st") != std::string::npos && std::isdigit(fname.back());
@@ -224,15 +224,15 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
 
             switch (info.result)
             {
-            case Res_Ok:
-                Statusbar::post(std::format("{} slot {}", info.job == core_st_job_save ? "Saved" : "Loaded", slot + 1));
+            case CoreResult::Res_Ok:
+                Statusbar::post(std::format("{} slot {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", slot + 1));
                 break;
-            case Res_Cancelled:
-                Statusbar::post(std::format("Cancelled {}", info.job == core_st_job_save ? "save" : "load"));
+            case CoreResult::Res_Cancelled:
+                Statusbar::post(std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
                 break;
             default:
                 Statusbar::post(
-                    std::format("Failed to {} slot {}", info.job == core_st_job_save ? "save" : "load", slot + 1));
+                    std::format("Failed to {} slot {}", info.job == CoreSTJob::Save ? "save" : "load", slot + 1));
                 break;
             }
             return;
@@ -240,19 +240,19 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
 
         switch (info.result)
         {
-        case Res_Ok:
+        case CoreResult::Res_Ok:
             Statusbar::post(std::format(
-                "{} {}", info.job == core_st_job_save ? "Saved" : "Loaded", info.params.path.filename().string()));
+                "{} {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", info.params.path.filename().string()));
             break;
-        case Res_Cancelled:
-            Statusbar::post(std::format("Cancelled {}", info.job == core_st_job_save ? "save" : "load"));
+        case CoreResult::Res_Cancelled:
+            Statusbar::post(std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
             break;
         default: {
             const auto message =
                 std::format("Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
-                    info.job == core_st_job_save ? "save" : "load", info.params.path.filename().string(),
+                    info.job == CoreSTJob::Save ? "save" : "load", info.params.path.filename().string(),
                     (int32_t)info.result);
-            DialogService::show_dialog(message, "Savestate", fsvc_error);
+            DialogService::show_dialog(message, "Savestate", CoreMessageTone::Error);
             break;
         }
         }
@@ -278,7 +278,7 @@ static std::string get_titlebar_text()
     if (g_main_ctx.core_ctx->vr_get_launched())
         text += std::format(" - {}", IOUtils::rom_name_to_string(g_main_ctx.core_ctx->vr_get_rom_header()->nom));
 
-    if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
+    if (g_main_ctx.core_ctx->vcr_get_task() != CoreVCRTask::Idle)
     {
         auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
         text += std::format(" - {}", vcr_filename.string());
@@ -308,7 +308,7 @@ void on_script_started(std::filesystem::path value)
     });
 }
 
-void on_task_changed(core_vcr_task value)
+void on_task_changed(CoreVCRTask value)
 {
     g_main_ctx.dispatcher->invoke([=] {
         static auto previous_value = value;
@@ -468,10 +468,10 @@ void on_config_loaded()
     WinDarkMode::set(theme);
 }
 
-void on_config_needs_patching(t_config &cfg)
+void on_config_needs_patching(Config &cfg)
 {
     // HACK: Wine doesn't implement DComp well enough yet, so force GDI
-    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
+    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)Config::PresenterType::GDI;
 }
 
 void on_seek_completed()
@@ -490,9 +490,9 @@ void on_emu_starting_changed(bool value)
     update_titlebar();
 }
 
-t_window_info get_window_info()
+WindowInfo get_window_info()
 {
-    t_window_info info;
+    WindowInfo info;
 
     RECT client_rect = {};
     GetClientRect(g_main_ctx.hwnd, &client_rect);
@@ -529,9 +529,9 @@ void open_console()
     SetConsoleCP(CP_UTF8);
 }
 
-static t_lua_key_event_args get_base_key_event_args()
+static LuaKeyEventArgs get_base_key_event_args()
 {
-    t_lua_key_event_args args;
+    LuaKeyEventArgs args;
     args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
     args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
     args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
@@ -541,7 +541,7 @@ static t_lua_key_event_args get_base_key_event_args()
 
 static void CALLBACK sdl_timer_proc(HWND, UINT, UINT_PTR, DWORD)
 {
-    if (!s_sdl_initialized) return;
+    if (!g_sdl_initialized) return;
 
     SDL_Event e{};
     while (SDL_PollEvent(&e));
@@ -580,7 +580,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             g_main_ctx.core_ctx->vr_wait_increment();
             ThreadPool::submit_task([=] {
                 g_main_ctx.core_ctx->vr_wait_decrement();
-                g_main_ctx.core_ctx->st_do_file(fname, core_st_job_load, nullptr, false);
+                g_main_ctx.core_ctx->st_do_file(fname, CoreSTJob::Load, nullptr, false);
             });
         }
         else if (extension == ".lua")
@@ -593,7 +593,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYDOWN: {
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
 
-        t_lua_key_event_args args = get_base_key_event_args();
+        LuaKeyEventArgs args = get_base_key_event_args();
         args.keycode = wParam;
         args.pressed = true;
         args.repeat = repeat;
@@ -604,7 +604,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     }
     case WM_SYSKEYUP:
     case WM_KEYUP: {
-        t_lua_key_event_args args = get_base_key_event_args();
+        LuaKeyEventArgs args = get_base_key_event_args();
         args.keycode = wParam;
         args.pressed = false;
         args.repeat = false;
@@ -614,7 +614,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_CHAR: {
-        t_lua_key_event_args args = get_base_key_event_args();
+        LuaKeyEventArgs args = get_base_key_event_args();
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
         const auto chr = static_cast<char>(wParam);
 
@@ -706,10 +706,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         PianoRoll::init();
         LuaDialog::init();
         LuaRenderer::init();
-        SetTimer(hwnd, SDL_TIMER_ID, 1000 / 60, sdl_timer_proc);
+        SetTimer(hwnd, sdl_timer_id, 1000 / 60, sdl_timer_proc);
         return TRUE;
     case WM_DESTROY:
-        KillTimer(hwnd, SDL_TIMER_ID);
+        KillTimer(hwnd, sdl_timer_id);
         PostQuitMessage(0);
         return 0;
     case WM_PREDESTROY:
@@ -720,7 +720,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
         if (!confirm_user_exit()) return 0;
 
-        Config::save();
+        AppConfig::save();
 
         ThreadPool::submit_task([=] {
             g_main_ctx.core_ctx->vr_close_rom(true);
@@ -806,7 +806,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
 
         if (CaptureManager::is_capturing())
         {
-            if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
+            if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Idle)
             {
                 Statusbar::post(std::format("{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
             }
@@ -837,7 +837,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
     }
 }
 
-static core_result init_core()
+static CoreResult init_core()
 {
     g_main_ctx.core.cfg = &g_config.core;
     // g_main_ctx.core.io_service = &g_main_ctx.io_service;
@@ -895,7 +895,7 @@ static core_result init_core()
     g_main_ctx.core.callbacks.current_sample_changed = [](int32_t value) {
         Messenger::broadcast<Messenger::Message::CurrentSampleChanged>(value);
     };
-    g_main_ctx.core.callbacks.task_changed = [](core_vcr_task value) {
+    g_main_ctx.core.callbacks.task_changed = [](CoreVCRTask value) {
         Messenger::broadcast<Messenger::Message::TaskChanged>(value);
     };
     g_main_ctx.core.callbacks.rerecords_changed = [](uint64_t value) {
@@ -927,22 +927,22 @@ static core_result init_core()
     g_main_ctx.core.load_plugins = PluginUtil::load_plugins;
     g_main_ctx.core.initiate_plugins = PluginUtil::initiate_plugins;
     g_main_ctx.core.submit_task = [](const auto cb) { ThreadPool::submit_task(cb); };
-    g_main_ctx.core.get_saves_directory = Config::save_directory;
-    g_main_ctx.core.get_backups_directory = Config::backup_directory;
+    g_main_ctx.core.get_saves_directory = AppConfig::save_directory;
+    g_main_ctx.core.get_backups_directory = AppConfig::backup_directory;
     g_main_ctx.core.get_summercart_path = get_summercart_path;
     g_main_ctx.core.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
-                                                      const char *str, const char *title, core_dialog_type type) {
+                                                      const char *str, const char *title, CoreMessageTone type) {
         return DialogService::show_multiple_choice_dialog(
             id, choices, str, title ? std::make_optional(title) : std::nullopt, type);
     };
     g_main_ctx.core.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {
         return DialogService::show_ask_dialog(id, str, title ? std::make_optional(title) : std::nullopt, warning);
     };
-    g_main_ctx.core.show_dialog = [](const char *str, const char *title, core_dialog_type type) {
+    g_main_ctx.core.show_dialog = [](const char *str, const char *title, CoreMessageTone type) {
         DialogService::show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
     };
     g_main_ctx.core.show_statusbar = [](const char *str) { DialogService::show_statusbar(str); };
-    g_main_ctx.core.show_notification = [](const char *str, const char *title, core_dialog_type tone) {
+    g_main_ctx.core.show_notification = [](const char *str, const char *title, CoreMessageTone tone) {
         DialogService::show_notification(str, title ? std::make_optional(title) : std::nullopt, tone);
     };
     g_main_ctx.core.update_screen = PluginUtil::update_screen;
@@ -1067,7 +1067,7 @@ std::optional<Hotkey> app_json_to_hotkey(const nlohmann::basic_json<> &hotkey_js
 
 void Main::init_sdl()
 {
-    if (!s_sdl_initialized)
+    if (!g_sdl_initialized)
     {
         g_main_ctx.dispatcher->invoke([] {
             NEED(
@@ -1146,7 +1146,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     open_console();
 #endif
 
-    std::filesystem::create_directories(Config::logs_directory());
+    std::filesystem::create_directories(AppConfig::logs_directory());
 
     Loggers::init();
 
@@ -1156,20 +1156,20 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_main_ctx.hinst = hInstance;
     set_cwd();
 
-    Config::init();
-    Config::load();
+    AppConfig::init();
+    AppConfig::load();
     main_dispatcher_init();
 
-    std::filesystem::create_directories(Config::rom_directory());
-    std::filesystem::create_directories(Config::save_directory());
-    std::filesystem::create_directories(Config::screenshot_directory());
-    std::filesystem::create_directories(Config::plugin_directory());
-    std::filesystem::create_directories(Config::backup_directory());
+    std::filesystem::create_directories(AppConfig::rom_directory());
+    std::filesystem::create_directories(AppConfig::save_directory());
+    std::filesystem::create_directories(AppConfig::screenshot_directory());
+    std::filesystem::create_directories(AppConfig::plugin_directory());
+    std::filesystem::create_directories(AppConfig::backup_directory());
 
-    const auto core_result = init_core();
-    if (core_result != Res_Ok)
+    const auto init_result = init_core();
+    if (init_result != CoreResult::Res_Ok)
     {
-        CoreUtils::show_error_dialog_for_result(core_result);
+        CoreUtils::show_error_dialog_for_result(init_result);
         return 1;
     }
 
@@ -1196,7 +1196,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     wc.hIcon = LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_M64ICONBIG));
     wc.hIconSm = LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_M64ICONSMALL));
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.lpszClassName = WND_CLASS;
+    wc.lpszClassName = wnd_class;
     wc.lpfnWndProc = WndProc;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClassEx(&wc);
@@ -1204,7 +1204,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y,
         g_config.window_width, g_config.window_height);
 
-    CreateWindowEx(WS_EX_ACCEPTFILES, WND_CLASS, get_titlebar_text().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x,
+    CreateWindowEx(WS_EX_ACCEPTFILES, wnd_class, get_titlebar_text().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x,
         g_config.window_y, g_config.window_width, g_config.window_height, NULL, NULL, g_main_ctx.hinst, NULL);
     ShowWindow(g_main_ctx.hwnd, nShowCmd);
 
@@ -1242,7 +1242,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     if (!g_ui_timer)
     {
         DialogService::show_dialog(
-            "timeSetEvent call failed. Verify that your system supports multimedia timers.", "Error", fsvc_error);
+            "timeSetEvent call failed. Verify that your system supports multimedia timers.", "Error", CoreMessageTone::Error);
         return -1;
     }
 
@@ -1268,7 +1268,7 @@ quit:
     timeKillEvent(g_ui_timer);
     Gdiplus::GdiplusShutdown(gdi_plus_token);
     CoUninitialize();
-    if (s_sdl_initialized) SDL_Quit();
+    if (g_sdl_initialized) SDL_Quit();
 
     return (int)msg.wParam;
 }

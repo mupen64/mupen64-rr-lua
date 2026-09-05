@@ -14,14 +14,14 @@
 #include <HotkeyUtils.hpp>
 #include "CommandPalette.hpp"
 
-struct t_listbox_item
+struct ListboxItem
 {
-    struct t_group_data
+    struct GroupData
     {
         std::string text;
     };
 
-    struct t_action_data
+    struct ActionData
     {
         std::string text;
         std::string path{};
@@ -33,23 +33,23 @@ struct t_listbox_item
         bool activatable{};
     };
 
-    struct t_option_data
+    struct OptionData
     {
         OptionItem *item{};
     };
 
-    struct t_rom_data
+    struct ROMData
     {
-        RomBrowser::t_simple_rom_info rom{};
+        RomBrowser::SimpleROMInfo rom{};
     };
 
-    std::variant<t_group_data, t_action_data, t_option_data, t_rom_data> data{};
+    std::variant<GroupData, ActionData, OptionData, ROMData> data{};
 
-    static t_listbox_item make_group(const std::string &group_name);
-    static t_listbox_item make_action(const std::string &action, const std::string &group);
-    static t_listbox_item make_option(OptionItem *item, const OptionGroup &group);
-    static t_listbox_item make_option_group(const OptionGroup &options_group);
-    static t_listbox_item make_rom(const RomBrowser::t_simple_rom_info &rom);
+    static ListboxItem make_group(const std::string &group_name);
+    static ListboxItem make_action(const std::string &action, const std::string &group);
+    static ListboxItem make_option(OptionItem *item, const OptionGroup &group);
+    static ListboxItem make_option_group(const OptionGroup &options_group);
+    static ListboxItem make_rom(const RomBrowser::SimpleROMInfo &rom);
 
     /**
      * \return Whether the item is selectable.
@@ -77,10 +77,10 @@ struct t_listbox_item
     [[nodiscard]] std::optional<std::string> get_secondary_text() const;
 
   private:
-    t_listbox_item() = default;
+    ListboxItem() = default;
 };
 
-struct t_command_palette_context
+struct CommandPaletteContext
 {
     HWND hwnd{};
     HWND text_hwnd{};
@@ -93,16 +93,16 @@ struct t_command_palette_context
     bool dont_close_on_focus_loss{};
 
     // All items, built once when the command palette is shown.
-    std::vector<t_listbox_item> all_items{};
+    std::vector<ListboxItem> all_items{};
     // Currently displayed items, filtered by search query.
-    std::vector<t_listbox_item> items{};
+    std::vector<ListboxItem> items{};
 
     std::string search_query{};
     std::vector<std::string> actions{};
     std::vector<OptionGroup> option_groups{};
 };
 
-static t_command_palette_context g_ctx{};
+static CommandPaletteContext g_ctx{};
 
 /**
  * \brief Normalizes a string for comparison.
@@ -114,20 +114,20 @@ static std::string normalize(std::string str)
     return str;
 }
 
-t_listbox_item t_listbox_item::make_group(const std::string &group_name)
+ListboxItem ListboxItem::make_group(const std::string &group_name)
 {
-    t_listbox_item item{};
-    item.data = t_group_data{group_name};
+    ListboxItem item{};
+    item.data = GroupData{group_name};
     return item;
 }
 
-t_listbox_item t_listbox_item::make_action(const std::string &action, const std::string &group)
+ListboxItem ListboxItem::make_action(const std::string &action, const std::string &group)
 {
     const auto hotkey = g_config.hotkeys.at(action);
     const auto hotkey_str = hotkey.is_empty() ? "" : hotkey.to_string();
 
-    t_listbox_item item{};
-    item.data = t_action_data{.text = ActionManager::get_display_name(action),
+    ListboxItem item{};
+    item.data = ActionData{.text = ActionManager::get_display_name(action),
         .path = action,
         .raw_display_name = ActionManager::get_display_name(action, true),
         .hotkey = hotkey_str,
@@ -137,74 +137,74 @@ t_listbox_item t_listbox_item::make_action(const std::string &action, const std:
     return item;
 }
 
-t_listbox_item t_listbox_item::make_option(OptionItem *options_item, const OptionGroup &group)
+ListboxItem ListboxItem::make_option(OptionItem *options_item, const OptionGroup &group)
 {
-    t_listbox_item item{};
-    item.data = t_option_data{.item = options_item};
+    ListboxItem item{};
+    item.data = OptionData{.item = options_item};
     return item;
 }
 
-t_listbox_item t_listbox_item::make_option_group(const OptionGroup &options_group)
+ListboxItem ListboxItem::make_option_group(const OptionGroup &options_group)
 {
-    t_listbox_item item{};
-    item.data = t_group_data{.text = options_group.name};
+    ListboxItem item{};
+    item.data = GroupData{.text = options_group.name};
     return item;
 }
 
-t_listbox_item t_listbox_item::make_rom(const RomBrowser::t_simple_rom_info &rom)
+ListboxItem ListboxItem::make_rom(const RomBrowser::SimpleROMInfo &rom)
 {
-    t_listbox_item item{};
-    item.data = t_rom_data{.rom = rom};
+    ListboxItem item{};
+    item.data = ROMData{.rom = rom};
     return item;
 }
 
-bool t_listbox_item::selectable() const
+bool ListboxItem::selectable() const
 {
     if (!this->enabled()) return false;
 
-    if (std::holds_alternative<t_group_data>(data))
+    if (std::holds_alternative<GroupData>(data))
     {
         return false;
     }
 
-    if (std::holds_alternative<t_action_data>(data))
+    if (std::holds_alternative<ActionData>(data))
     {
-        return std::get<t_action_data>(data).enabled;
+        return std::get<ActionData>(data).enabled;
     }
 
-    if (std::holds_alternative<t_option_data>(data))
+    if (std::holds_alternative<OptionData>(data))
     {
-        return !std::get<t_option_data>(data).item->get_readonly_reason().has_value();
+        return !std::get<OptionData>(data).item->get_readonly_reason().has_value();
     }
 
     return true;
 }
 
-bool t_listbox_item::matches_query(const std::string_view query) const
+bool ListboxItem::matches_query(const std::string_view query) const
 {
     if (query.empty())
     {
         return true;
     }
 
-    if (std::holds_alternative<t_group_data>(data))
+    if (std::holds_alternative<GroupData>(data))
     {
-        const auto &text = std::get<t_group_data>(data).text;
+        const auto &text = std::get<GroupData>(data).text;
         const auto normalized_text = normalize(text);
         return normalized_text.contains(query);
     }
 
-    if (std::holds_alternative<t_rom_data>(data))
+    if (std::holds_alternative<ROMData>(data))
     {
-        const auto &rom = std::get<t_rom_data>(data).rom;
+        const auto &rom = std::get<ROMData>(data).rom;
         const auto filename = std::filesystem::path(rom.path).filename().string();
         const auto normalized_filename = normalize(filename);
         return normalized_filename.contains(query);
     }
 
-    if (std::holds_alternative<t_action_data>(data))
+    if (std::holds_alternative<ActionData>(data))
     {
-        const auto &action = std::get<t_action_data>(data);
+        const auto &action = std::get<ActionData>(data);
         const auto normalized_text = normalize(action.text);
         const auto normalized_path = normalize(action.path);
         const auto normalized_display_name = normalize(action.raw_display_name);
@@ -213,9 +213,9 @@ bool t_listbox_item::matches_query(const std::string_view query) const
                normalized_path.contains(query);
     }
 
-    if (std::holds_alternative<t_option_data>(data))
+    if (std::holds_alternative<OptionData>(data))
     {
-        const auto &item = std::get<t_option_data>(data).item;
+        const auto &item = std::get<OptionData>(data).item;
         const auto display_name = item->get_name();
         const auto normalized_display_name = normalize(display_name);
         return normalized_display_name.contains(query);
@@ -226,61 +226,61 @@ bool t_listbox_item::matches_query(const std::string_view query) const
     return false;
 }
 
-std::optional<std::string> t_listbox_item::get_primary_text() const
+std::optional<std::string> ListboxItem::get_primary_text() const
 {
-    if (std::holds_alternative<t_group_data>(data))
+    if (std::holds_alternative<GroupData>(data))
     {
-        return std::get<t_group_data>(data).text;
+        return std::get<GroupData>(data).text;
     }
 
-    if (std::holds_alternative<t_rom_data>(data))
+    if (std::holds_alternative<ROMData>(data))
     {
-        const auto &rom = std::get<t_rom_data>(data).rom;
+        const auto &rom = std::get<ROMData>(data).rom;
         return std::filesystem::path(rom.path).filename().string();
     }
 
-    if (std::holds_alternative<t_action_data>(data))
+    if (std::holds_alternative<ActionData>(data))
     {
-        const auto &action = std::get<t_action_data>(data);
+        const auto &action = std::get<ActionData>(data);
         return action.text;
     }
 
-    if (std::holds_alternative<t_option_data>(data))
+    if (std::holds_alternative<OptionData>(data))
     {
-        const auto &item = std::get<t_option_data>(data).item;
+        const auto &item = std::get<OptionData>(data).item;
         return item->get_name();
     }
 
     return std::nullopt;
 }
 
-std::optional<std::string> t_listbox_item::get_secondary_text() const
+std::optional<std::string> ListboxItem::get_secondary_text() const
 {
-    if (std::holds_alternative<t_action_data>(data))
+    if (std::holds_alternative<ActionData>(data))
     {
-        const auto &action = std::get<t_action_data>(data);
+        const auto &action = std::get<ActionData>(data);
         return action.hotkey;
     }
 
-    if (std::holds_alternative<t_option_data>(data))
+    if (std::holds_alternative<OptionData>(data))
     {
-        const auto &item = std::get<t_option_data>(data).item;
+        const auto &item = std::get<OptionData>(data).item;
         return item->get_value_name();
     }
 
     return std::nullopt;
 }
 
-bool t_listbox_item::enabled() const
+bool ListboxItem::enabled() const
 {
-    if (std::holds_alternative<t_action_data>(data))
+    if (std::holds_alternative<ActionData>(data))
     {
-        return std::get<t_action_data>(data).enabled;
+        return std::get<ActionData>(data).enabled;
     }
 
-    if (std::holds_alternative<t_option_data>(data))
+    if (std::holds_alternative<OptionData>(data))
     {
-        return !std::get<t_option_data>(data).item->get_readonly_reason().has_value();
+        return !std::get<OptionData>(data).item->get_readonly_reason().has_value();
     }
 
     return true;
@@ -296,11 +296,11 @@ static bool try_invoke(int32_t i)
         return false;
     }
 
-    const auto item = reinterpret_cast<t_listbox_item *>(ListBox_GetItemData(g_ctx.listbox_hwnd, i));
+    const auto item = reinterpret_cast<ListboxItem *>(ListBox_GetItemData(g_ctx.listbox_hwnd, i));
 
-    if (std::holds_alternative<t_listbox_item::t_action_data>(item->data))
+    if (std::holds_alternative<ListboxItem::ActionData>(item->data))
     {
-        const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
+        const auto &action = std::get<ListboxItem::ActionData>(item->data);
         const auto params = ActionManager::get_params(action.path);
 
         // If the action has parameters, we enter the parameter supplying flow.
@@ -316,9 +316,9 @@ static bool try_invoke(int32_t i)
         return true;
     }
 
-    if (std::holds_alternative<t_listbox_item::t_option_data>(item->data))
+    if (std::holds_alternative<ListboxItem::OptionData>(item->data))
     {
-        const auto &option = std::get<t_listbox_item::t_option_data>(item->data);
+        const auto &option = std::get<ListboxItem::OptionData>(item->data);
 
         // HACK: We want to keep the command palette open (in case the user cancels and wants to keep looking through
         // the command palette) while editing the option, but we also want to prevent it from closing
@@ -330,7 +330,7 @@ static bool try_invoke(int32_t i)
 
         if (confirmed)
         {
-            Config::apply_and_save();
+            AppConfig::apply_and_save();
             Messenger::broadcast<Messenger::Message::ConfigLoaded>();
             SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
             return true;
@@ -338,9 +338,9 @@ static bool try_invoke(int32_t i)
         return false;
     }
 
-    if (std::holds_alternative<t_listbox_item::t_rom_data>(item->data))
+    if (std::holds_alternative<ListboxItem::ROMData>(item->data))
     {
-        const auto &rom = std::get<t_listbox_item::t_rom_data>(item->data);
+        const auto &rom = std::get<ListboxItem::ROMData>(item->data);
         SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
         AppActions::load_rom_from_path(rom.rom.path);
         return true;
@@ -359,16 +359,16 @@ static bool try_change_hotkey(int32_t i)
         return false;
     }
 
-    const auto item = reinterpret_cast<t_listbox_item *>(ListBox_GetItemData(g_ctx.listbox_hwnd, i));
+    const auto item = reinterpret_cast<ListboxItem *>(ListBox_GetItemData(g_ctx.listbox_hwnd, i));
 
     if (!item->selectable())
     {
         return false;
     }
 
-    if (std::holds_alternative<t_listbox_item::t_action_data>(item->data))
+    if (std::holds_alternative<ListboxItem::ActionData>(item->data))
     {
-        const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
+        const auto &action = std::get<ListboxItem::ActionData>(item->data);
 
         Hotkey hotkey = g_config.hotkeys.at(action.path);
         HotkeyUtils::show_prompt(g_main_ctx.hwnd, std::format("Choose a hotkey for {}", action.text), hotkey);
@@ -455,11 +455,11 @@ static void add_actions(const std::string_view query)
             continue;
         }
 
-        g_ctx.all_items.emplace_back(t_listbox_item::make_group(name));
+        g_ctx.all_items.emplace_back(ListboxItem::make_group(name));
 
         for (const auto &action : actions)
         {
-            g_ctx.all_items.emplace_back(t_listbox_item::make_action(action, group));
+            g_ctx.all_items.emplace_back(ListboxItem::make_action(action, group));
         }
     }
 }
@@ -480,11 +480,11 @@ static void add_options()
             continue;
         }
 
-        g_ctx.all_items.emplace_back(t_listbox_item::make_option_group(group));
+        g_ctx.all_items.emplace_back(ListboxItem::make_option_group(group));
 
         for (auto &item : group.items)
         {
-            g_ctx.all_items.emplace_back(t_listbox_item::make_option(&item, group));
+            g_ctx.all_items.emplace_back(ListboxItem::make_option(&item, group));
         }
     }
 }
@@ -494,11 +494,11 @@ static void add_options()
  */
 static void add_roms()
 {
-    g_ctx.all_items.emplace_back(t_listbox_item::make_group("ROMs"));
+    g_ctx.all_items.emplace_back(ListboxItem::make_group("ROMs"));
 
     for (const auto &rom : RomBrowser::get_discovered_roms())
     {
-        g_ctx.all_items.emplace_back(t_listbox_item::make_rom(rom));
+        g_ctx.all_items.emplace_back(ListboxItem::make_rom(rom));
     }
 }
 
@@ -527,13 +527,13 @@ static void refresh_listbox()
     {
         const auto &item = g_ctx.all_items[i];
 
-        if (!std::holds_alternative<t_listbox_item::t_group_data>(item.data)) continue;
+        if (!std::holds_alternative<ListboxItem::GroupData>(item.data)) continue;
 
-        std::vector<t_listbox_item> matching_children;
+        std::vector<ListboxItem> matching_children;
         for (size_t j = i + 1; j < g_ctx.all_items.size(); j++)
         {
             const auto &child_item = g_ctx.all_items[j];
-            if (std::holds_alternative<t_listbox_item::t_group_data>(child_item.data)) break;
+            if (std::holds_alternative<ListboxItem::GroupData>(child_item.data)) break;
             if (child_item.matches_query(normalized_query)) matching_children.emplace_back(child_item);
         }
 
@@ -583,7 +583,7 @@ static void adjust_listbox_selection(const int32_t by)
             break;
         }
 
-        const auto item = reinterpret_cast<t_listbox_item *>(ListBox_GetItemData(g_ctx.listbox_hwnd, new_index));
+        const auto item = reinterpret_cast<ListboxItem *>(ListBox_GetItemData(g_ctx.listbox_hwnd, new_index));
 
         if (item->selectable())
         {
@@ -674,9 +674,9 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
 
         // 2. Add resize anchors
         ResizeAnchor::add_anchors(hwnd, {
-                                            {g_ctx.text_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.edit_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.listbox_hwnd, ResizeAnchor::FULL_ANCHOR},
+                                            {g_ctx.text_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.edit_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.listbox_hwnd, ResizeAnchor::full_anchor},
                                         });
 
         // 3. Set a reasonable position and size for the dialog (centered horizontally, vertically top-justified)
@@ -770,7 +770,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         {
         case ODA_SELECT:
         case ODA_DRAWENTIRE: {
-            const auto item = reinterpret_cast<t_listbox_item *>(ListBox_GetItemData(g_ctx.listbox_hwnd, pdis->itemID));
+            const auto item = reinterpret_cast<ListboxItem *>(ListBox_GetItemData(g_ctx.listbox_hwnd, pdis->itemID));
 
             const auto enabled = item->enabled();
 
@@ -797,12 +797,12 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             FillRect(pdis->hDC, &pdis->rcItem, bg_brush);
 
             // 2. Draw the checkbox if applicable
-            const auto has_checkbox = std::holds_alternative<t_listbox_item::t_action_data>(item->data) &&
-                                      std::get<t_listbox_item::t_action_data>(item->data).activatable;
+            const auto has_checkbox = std::holds_alternative<ListboxItem::ActionData>(item->data) &&
+                                      std::get<ListboxItem::ActionData>(item->data).activatable;
             int checkbox_width = 0;
             if (has_checkbox)
             {
-                const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
+                const auto &action = std::get<ListboxItem::ActionData>(item->data);
                 int32_t state_id;
                 if (enabled)
                 {
@@ -834,7 +834,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             {
                 base_rc.left += checkbox_width + 4;
             }
-            if (std::holds_alternative<t_listbox_item::t_group_data>(item->data))
+            if (std::holds_alternative<ListboxItem::GroupData>(item->data))
             {
                 base_rc.left = 4;
             }
@@ -860,9 +860,9 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                     DT_RIGHT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
             }
 
-            if (std::holds_alternative<t_listbox_item::t_group_data>(item->data))
+            if (std::holds_alternative<ListboxItem::GroupData>(item->data))
             {
-                const auto group = std::get<t_listbox_item::t_group_data>(item->data);
+                const auto group = std::get<ListboxItem::GroupData>(item->data);
                 HPEN pen = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
                 HGDIOBJ prev_obj = SelectObject(pdis->hDC, pen);
 

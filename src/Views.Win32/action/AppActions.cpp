@@ -39,8 +39,8 @@ bool confirm_user_exit()
     }
 
     const std::tuple<bool, std::string_view> messages[] = {
-        {g_main_ctx.core_ctx->vcr_get_task() == task_recording, "Recording"},
-        {g_main_ctx.core_ctx->vcr_get_task() == task_playback, "Playback"}, {CaptureManager::is_capturing(), "Capture"},
+        {g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording, "Recording"},
+        {g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Playback, "Playback"}, {CaptureManager::is_capturing(), "Capture"},
         {g_main_ctx.core_ctx->tl_active(), "Trace logging"}};
 
     std::vector<std::string_view> active_messages;
@@ -99,7 +99,7 @@ void AppActions::load_rom_from_path(const std::filesystem::path &path)
 
 static void stub()
 {
-    DialogService::show_dialog("ActionManager::stub", "Stub", fsvc_error);
+    DialogService::show_dialog("ActionManager::stub", "Stub", CoreMessageTone::Error);
 }
 
 #pragma region File
@@ -153,7 +153,7 @@ static void close_rom()
 static void reset_rom()
 {
     const bool reset_will_continue_recording =
-        g_config.core.is_reset_recording_enabled && g_main_ctx.core_ctx->vcr_get_task() == task_recording;
+        g_config.core.is_reset_recording_enabled && g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording;
 
     if (!reset_will_continue_recording && !confirm_user_exit()) return;
 
@@ -312,7 +312,7 @@ static void save_slot()
     }
     ThreadPool::submit_task([=] {
         g_main_ctx.core_ctx->vr_wait_decrement();
-        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_save, nullptr, false);
+        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), CoreSTJob::Save, nullptr, false);
     });
 }
 
@@ -321,7 +321,7 @@ static void load_slot()
     g_main_ctx.core_ctx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         g_main_ctx.core_ctx->vr_wait_decrement();
-        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_load, nullptr, false);
+        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), CoreSTJob::Load, nullptr, false);
     });
 }
 
@@ -338,7 +338,7 @@ static void save_state_as()
     g_main_ctx.core_ctx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         g_main_ctx.core_ctx->vr_wait_decrement();
-        (void)g_main_ctx.core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
+        (void)g_main_ctx.core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
     });
 }
 
@@ -356,7 +356,7 @@ static void load_state_as()
     g_main_ctx.core_ctx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         g_main_ctx.core_ctx->vr_wait_decrement();
-        (void)g_main_ctx.core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
+        (void)g_main_ctx.core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
     });
 }
 
@@ -376,15 +376,15 @@ static void undo_load_state()
         }
 
         (void)g_main_ctx.core_ctx->st_do_memory(
-            buf, core_st_job_load,
-            [](const core_st_callback_info &info, auto) {
-                if (info.result == Res_Ok)
+            buf, CoreSTJob::Load,
+            [](const CoreSTCallbackInfo &info, auto) {
+                if (info.result == CoreResult::Res_Ok)
                 {
                     Statusbar::post("Undid load");
                     return;
                 }
 
-                if (info.result == Res_Cancelled)
+                if (info.result == CoreResult::Res_Cancelled)
                 {
                     return;
                 }
@@ -417,7 +417,7 @@ static void multi_frame_advance_decrement()
 
 static void multi_frame_advance_reset()
 {
-    g_config.multi_frame_advance_count = Config::default_config().multi_frame_advance_count;
+    g_config.multi_frame_advance_count = AppConfig::default_config().multi_frame_advance_count;
     Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
 }
 
@@ -645,7 +645,7 @@ static void show_ram_start()
     const auto str = std::format("The RAM start is {}.\r\nHow would you like to proceed?", ram_start_str);
 
     const auto result = DialogService::show_multiple_choice_dialog(
-        VIEW_DLG_RAMSTART, {"Copy STROOP config line", "Close"}, str, "Core Information", fsvc_information);
+        VIEW_DLG_RAMSTART, {"Copy STROOP config line", "Close"}, str, "Core Information", CoreMessageTone::Info);
 
     if (result == 0)
     {
@@ -728,7 +728,7 @@ static void show_piano_roll()
 
 static void screenshot()
 {
-    PluginUtil::screenshot(Config::screenshot_directory());
+    PluginUtil::screenshot(AppConfig::screenshot_directory());
 }
 
 static void start_capture_direct(const ActionManager::action_argument_map &params)
@@ -737,7 +737,7 @@ static void start_capture_direct(const ActionManager::action_argument_map &param
     const auto ask_preset = params.at("ask_preset") == "1";
 
     CaptureManager::start_capture(
-        path, (t_config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
+        path, (Config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
             if (result)
             {
                 Statusbar::post("Capture started...");
@@ -813,7 +813,7 @@ static void show_about_dialog()
                      "\r\n"
                      "Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
     const auto result =
-        DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", fsvc_information);
+        DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", CoreMessageTone::Info);
 
     if (result == 0)
     {
@@ -877,14 +877,14 @@ static bool disable_when_emu_launched()
 
 static bool enable_when_emu_launched_and_vcr_active()
 {
-    return g_main_ctx.core_ctx->vr_get_launched() && g_main_ctx.core_ctx->vcr_get_task() != task_idle;
+    return g_main_ctx.core_ctx->vr_get_launched() && g_main_ctx.core_ctx->vcr_get_task() != CoreVCRTask::Idle;
 }
 
 static bool enable_during_playback()
 {
     const auto task = g_main_ctx.core_ctx->vcr_get_task();
-    return g_main_ctx.core_ctx->vr_get_launched() && (task == task_playback || task == task_start_playback_from_reset ||
-                                                         task == task_start_playback_from_snapshot);
+    return g_main_ctx.core_ctx->vr_get_launched() && (task == CoreVCRTask::Playback || task == CoreVCRTask::StartPlaybackFromReset ||
+                                                         task == CoreVCRTask::StartPlaybackFromSnapshot);
 }
 
 static bool enable_when_emu_launched_and_capturing()
@@ -937,7 +937,7 @@ static void add_action(const std::string &path, const Hotkey &default_hotkey, co
 
 static void add_action(const std::string &path,
     const std::function<void(const ActionManager::action_argument_map &)> &callback,
-    const std::vector<ActionManager::t_action_param> &params, const std::function<bool()> &get_enabled = {},
+    const std::vector<ActionManager::ActionParam> &params, const std::function<bool()> &get_enabled = {},
     const std::function<bool()> &get_active = {}, const std::function<std::string()> &get_display_name = {})
 {
     bool success = ActionManager::add({
@@ -1024,7 +1024,7 @@ void AppActions::add()
     ActionManager::begin_batch_work();
 
     add_action(LOAD_ROM_DIRECT, load_rom_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::rom_path},
         });
     add_action(LOAD_ROM, Hotkey(*HotkeyUtils::vk_to_trigger('O'), true), load_rom);
@@ -1064,7 +1064,7 @@ void AppActions::add()
         const int32_t save_key = i < 9 ? '1' + i : '0';
         const int32_t load_key = VK_F1 + i;
 
-        const auto do_work = [=](const core_st_job job) {
+        const auto do_work = [=](const CoreSTJob job) {
             g_main_ctx.core_ctx->vr_wait_increment();
 
             g_config.st_slot = i;
@@ -1076,9 +1076,9 @@ void AppActions::add()
             });
         };
 
-        const auto save = [=] { do_work(core_st_job_save); };
+        const auto save = [=] { do_work(CoreSTJob::Save); };
 
-        const auto load = [=] { do_work(core_st_job_load); };
+        const auto load = [=] { do_work(CoreSTJob::Load); };
 
         size_t visual_slot = i + 1;
         add_action(std::vformat(SAVE_SLOT_X, std::make_format_args(visual_slot)),
@@ -1109,7 +1109,7 @@ void AppActions::add()
     add_action(SETTINGS, Hotkey(*HotkeyUtils::vk_to_trigger('S'), true), show_settings_dialog);
 
     add_action(START_MOVIE_RECORDING_DIRECT, start_movie_recording_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::nonempty},
             {.key = "start_flag", .name = "Start Flag", .validator = Validators::int32_t},
             {.key = "author", .name = "Author (optional)", .validator = Validators::none},
@@ -1119,7 +1119,7 @@ void AppActions::add()
     add_action(START_MOVIE_RECORDING, Hotkey(*HotkeyUtils::vk_to_trigger('R'), true, true), start_movie_recording,
         enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::existing_path},
             {.key = "author", .name = "Author (optional)", .validator = Validators::none},
             {.key = "description", .name = "Description (optional)", .validator = Validators::none},
@@ -1143,7 +1143,7 @@ void AppActions::add()
     add_action(PIANO_ROLL, Hotkey::make_empty(), show_piano_roll, enable_when_emu_launched);
     add_action(CHEATS, Hotkey::make_empty(), show_cheat_dialog, enable_when_emu_launched);
     add_action(SEEK_TO_DIRECT, seek_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "frame", .name = "Frame", .validator = Validators::seek_str},
         },
         enable_when_emu_launched_and_vcr_active);
@@ -1155,7 +1155,7 @@ void AppActions::add()
         enable_when_emu_launched_and_core_is_pure_interpreter);
     add_action(STOP_TRACE_LOGGER, Hotkey::make_empty(), stop_tracelog, enable_when_tracelog_active);
     add_action(VIDEO_CAPTURE_START_DIRECT, start_capture_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::nonempty},
             {.key = "ask_preset", .name = "Ask for preset?", .validator = Validators::boolean},
         },
@@ -1169,7 +1169,7 @@ void AppActions::add()
     add_action(ABOUT, Hotkey::make_empty(), show_about_dialog);
 
     add_action(LOAD_SCRIPT_DIRECT, load_script_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::existing_path},
         });
     add_action(SHOW_INSTANCES, Hotkey(*HotkeyUtils::vk_to_trigger('N'), true), show_lua_dialog);

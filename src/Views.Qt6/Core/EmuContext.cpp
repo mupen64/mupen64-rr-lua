@@ -89,7 +89,7 @@ EmuContext::EmuContext(QObject *parent)
 #pragma region Dialog service
     m_core_params->show_multiple_choice_dialog = [&](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title,
-                                                     core_dialog_type type) -> size_t {
+                                                     CoreMessageTone type) -> size_t {
         std::promise<size_t> promise;
         auto future = promise.get_future();
 
@@ -121,7 +121,7 @@ EmuContext::EmuContext(QObject *parent)
 
         return future.get();
     };
-    m_core_params->show_dialog = [&](const char *str, const char *title, core_dialog_type type) {
+    m_core_params->show_dialog = [&](const char *str, const char *title, CoreMessageTone type) {
         std::promise<void> promise;
         auto future = promise.get_future();
 
@@ -242,7 +242,7 @@ void EmuContext::setGSButton(bool pressed)
 // -> st_do_memory (to save slot)
 void EmuContext::saveSlot(uint32_t index)
 {
-    if (index >= NUM_SAVE_SLOTS) return;
+    if (index >= num_save_slots) return;
     // TODO implement based on config directories
 }
 
@@ -258,14 +258,14 @@ void EmuContext::saveFile(const QUrl &url)
     m_core_ctx->vr_wait_increment();
     m_task_pool.start([=, this] {
         m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
+        m_core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
     });
 }
 
 // -> st_do_memory (to save slot)
 void EmuContext::loadSlot(uint32_t index)
 {
-    if (index >= NUM_SAVE_SLOTS) return;
+    if (index >= num_save_slots) return;
     // TODO implement based on config directories
 }
 
@@ -277,7 +277,7 @@ void EmuContext::loadFile(const QUrl &url)
     m_core_ctx->vr_wait_increment();
     m_task_pool.start([=, this] {
         m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
+        m_core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
     });
 }
 

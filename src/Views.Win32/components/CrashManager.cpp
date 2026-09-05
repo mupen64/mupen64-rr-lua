@@ -11,9 +11,9 @@
 typedef struct StacktraceInfo
 {
     void *rtl_stacktrace[32]{};
-} t_stacktrace_info;
+};
 
-static t_stacktrace_info stacktrace_info;
+static StacktraceInfo stacktrace_info;
 
 #define E(x) {x, #x}
 const std::unordered_map<int, std::string> EXCEPTION_NAMES = {

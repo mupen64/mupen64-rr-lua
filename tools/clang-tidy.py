@@ -15,6 +15,8 @@ from pathlib import Path
 
 CLANG_TIDY = "clang-tidy"
 BUILD_DIR = Path("build")
+CHECKS = "-*,readability-identifier-naming"
+IGNORED_DIRS = ("vendor",)
 
 
 def project_root() -> Path:
@@ -38,6 +40,8 @@ def load_compile_commands(db_path: Path, source_root: Path) -> list[dict]:
         if not file_path.is_absolute():
             file_path = Path(entry["directory"]) / file_path
         file_path = file_path.resolve()
+        if any(part in IGNORED_DIRS for part in file_path.parts):
+            continue
         if source_root in file_path.parents:
             filtered.append(
                 {
@@ -62,6 +66,10 @@ def run_clang_tidy(
     cmd = [
         CLANG_TIDY,
         f"--p={build_dir}",
+        f"--checks={CHECKS}",
+        "--header-filter=" + ",".join(
+            f"-{dir}/.*" for dir in IGNORED_DIRS
+        ),
         "--format-style=file",
         entry["file"],
     ]

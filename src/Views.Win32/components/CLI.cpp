@@ -17,7 +17,7 @@
 #include <components/Dispatcher.hpp>
 #include <lua/LuaDialog.hpp>
 
-struct t_cli_params
+struct CLIParams
 {
     std::filesystem::path rom{};
     std::filesystem::path lua{};
@@ -30,7 +30,7 @@ struct t_cli_params
     int32_t parity_check_interval{10};
 };
 
-struct t_cli_state
+struct CLIState
 {
     bool rom_is_movie{};
     bool is_movie_from_start{};
@@ -38,10 +38,10 @@ struct t_cli_state
     bool first_emu_launched = true;
 };
 
-static t_cli_params cli_params{};
-static t_cli_state cli_state{};
+static CLIParams cli_params{};
+static CLIState cli_state{};
 
-static void log_cli_params(const t_cli_params &params)
+static void log_cli_params(const CLIParams &params)
 {
     g_view_logger->trace("log_cli_params:");
     g_view_logger->trace("  rom: {}", params.rom.string());
@@ -96,7 +96,7 @@ static void load_st()
         return;
     }
 
-    g_main_ctx.core_ctx->st_do_file(cli_params.st.c_str(), core_st_job_load, nullptr, false);
+    g_main_ctx.core_ctx->st_do_file(cli_params.st.c_str(), CoreSTJob::Load, nullptr, false);
 }
 
 static void start_lua()
@@ -126,7 +126,7 @@ static void start_capture()
     }
 
     CaptureManager::start_capture(
-        cli_params.avi.string().c_str(), static_cast<t_config::EncoderType>(g_config.encoder_type), false);
+        cli_params.avi.string().c_str(), static_cast<Config::EncoderType>(g_config.encoder_type), false);
 }
 
 static void on_movie_playback_stop()
@@ -152,7 +152,7 @@ static void on_movie_playback_stop()
     }
 }
 
-static void on_task_changed(core_vcr_task value)
+static void on_task_changed(CoreVCRTask value)
 {
     static auto previous_value = value;
 
@@ -259,7 +259,7 @@ void CLI::init()
     {
         DialogService::show_dialog(
             "Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", "CLI",
-            fsvc_error);
+            CoreMessageTone::Error);
         cli_params.st.clear();
     }
 
@@ -267,7 +267,7 @@ void CLI::init()
     {
         DialogService::show_dialog(
             "Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.",
-            "CLI", fsvc_warning);
+            "CLI", CoreMessageTone::Warn);
         g_config.core.is_movie_loop_enabled = false;
     }
 
@@ -278,9 +278,9 @@ void CLI::init()
     const auto movie_path = (cli_params.rom.extension().compare(".m64") == 0) ? cli_params.rom : cli_params.m64;
     if (!movie_path.empty())
     {
-        core_vcr_movie_header hdr{};
+        CoreVCRMovieHeader hdr{};
         g_main_ctx.core_ctx->vcr_parse_header(movie_path, &hdr);
-        cli_state.is_movie_from_start = hdr.startFlags & MOVIE_START_FROM_NOTHING;
+        cli_state.is_movie_from_start = hdr.start_flags & MOVIE_START_FROM_NOTHING;
     }
 
     cli_state.rom_is_movie = cli_params.rom.extension().compare(".m64") == 0;

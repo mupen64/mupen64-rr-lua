@@ -18,7 +18,7 @@ struct ToastData
 {
     std::string content;
     std::optional<std::string> title = std::nullopt;
-    core_dialog_type tone = fsvc_warning;
+    CoreMessageTone tone = CoreMessageTone::Warn;
     std::chrono::milliseconds ttl = std::chrono::seconds(5);
 };
 

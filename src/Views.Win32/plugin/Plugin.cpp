@@ -32,7 +32,7 @@ static std::shared_ptr<Plugin> audio_plugin;
 static std::shared_ptr<Plugin> input_plugin;
 static std::shared_ptr<Plugin> rsp_plugin;
 
-static std::jthread s_audio_thread;
+static std::jthread g_audio_thread;
 
 // These are embedded now, old ones are probably just stale and we want to ignore them.
 static const std::vector<std::string> excluded_plugin_names = {
@@ -71,9 +71,9 @@ static void audio_thread_proc(std::stop_token st)
 
 static void stop_audio_thread()
 {
-    if (!s_audio_thread.joinable()) return;
-    s_audio_thread.request_stop();
-    s_audio_thread = {};
+    if (!g_audio_thread.joinable()) return;
+    g_audio_thread.request_stop();
+    g_audio_thread = {};
 }
 
 static void start_audio_thread()
@@ -87,8 +87,8 @@ static void start_audio_thread()
     }
 
     g_view_logger->info("Starting audio thread...");
-    if (s_audio_thread.joinable()) stop_audio_thread();
-    s_audio_thread = std::jthread(audio_thread_proc);
+    if (g_audio_thread.joinable()) stop_audio_thread();
+    g_audio_thread = std::jthread(audio_thread_proc);
 }
 
 ZESpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module)
@@ -195,7 +195,7 @@ Plugin::~Plugin()
 {
     if (m_module && !FreeLibrary(m_module))
     {
-        DialogService::show_dialog(std::format("Failed to free library {}.", (void *)m_module), "Core", fsvc_error);
+        DialogService::show_dialog(std::format("Failed to free library {}.", (void *)m_module), "Core", CoreMessageTone::Error);
     }
 }
 
@@ -228,7 +228,7 @@ void PluginUtil::init()
     Messenger::subscribe<Messenger::Message::EmuStopping>([] { stop_audio_thread(); });
 }
 
-t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
+PluginDiscoveryResult PluginUtil::discover_plugins(const std::filesystem::path &directory)
 {
     std::vector<std::unique_ptr<Plugin>> plugins;
     std::vector<std::pair<std::filesystem::path, std::string>> results;
@@ -304,7 +304,7 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
     std::stable_sort(plugins.begin(), plugins.end(),
         [&](const auto &lhs, const auto &rhs) { return plugin_priority(lhs) < plugin_priority(rhs); });
 
-    return t_plugin_discovery_result{
+    return PluginDiscoveryResult{
         .plugins = std::move(plugins),
         .results = results,
     };

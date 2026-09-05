@@ -10,7 +10,7 @@
 #include <QUrl>
 #include <qqmlintegration.h>
 
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include "plugin/Plugin.hpp"
 
 #include "CoreEnums.hpp"
@@ -42,7 +42,7 @@ class EmuContext : public QObject
     Q_PROPERTY(EmuOptions *options READ options)
     Q_PROPERTY(EmuPaths *paths READ paths)
   public:
-    static constexpr size_t NUM_SAVE_SLOTS = 10;
+    static constexpr size_t num_save_slots = 10;
 
     EmuContext(QObject *parent = nullptr);
     virtual ~EmuContext();
@@ -216,8 +216,8 @@ class EmuContext : public QObject
     void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
 
   private:
-    core_cfg *m_core_cfg;
-    core_params *m_core_params;
+    CoreCfg *m_core_cfg;
+    CoreParams *m_core_params;
     core_ctx *m_core_ctx;
 
     std::optional<PluginSet> m_plugins;

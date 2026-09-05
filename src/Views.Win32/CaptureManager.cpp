@@ -21,7 +21,7 @@
 
 namespace CaptureManager
 {
-constexpr auto READSCREEN_MISSING_MSG = "The current video plugin doesn't support the current capture method.\nTry "
+constexpr auto readscreen_missing_msg = "The current video plugin doesn't support the current capture method.\nTry "
                                         "using another video plugin or switching the capture mode.";
 
 std::filesystem::path m_current_path;
@@ -40,7 +40,7 @@ int32_t m_video_height;
 static Encoder::Params m_encoder_params;
 
 std::atomic m_capturing = false;
-t_config::EncoderType m_encoder_type;
+Config::EncoderType m_encoder_type;
 std::unique_ptr<Encoder> m_encoder;
 std::recursive_mutex m_mutex;
 
@@ -207,7 +207,7 @@ static bool check_readscreen_available()
 {
     if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && !PluginUtil::mge_available())
     {
-        DialogService::show_dialog(READSCREEN_MISSING_MSG, "Capture", fsvc_error);
+        DialogService::show_dialog(readscreen_missing_msg, "Capture", CoreMessageTone::Error);
         return false;
     }
 
@@ -243,7 +243,7 @@ bool stop_capture_impl()
 
     if (!m_encoder->stop())
     {
-        DialogService::show_dialog("Failed to stop capturing.", "Capture", fsvc_error);
+        DialogService::show_dialog("Failed to stop capturing.", "Capture", CoreMessageTone::Error);
         return false;
     }
 
@@ -273,7 +273,7 @@ bool stop_capture_impl()
 }
 
 bool start_capture_impl(
-    std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings)
+    std::filesystem::path path, Config::EncoderType encoder_type, const bool ask_for_capture_settings)
 {
     if (!check_readscreen_available())
     {
@@ -294,10 +294,10 @@ bool start_capture_impl(
 
     switch (encoder_type)
     {
-    case t_config::EncoderType::VFW:
+    case Config::EncoderType::VFW:
         m_encoder = std::make_unique<WinVFWEncoder>();
         break;
-    case t_config::EncoderType::FFmpeg:
+    case Config::EncoderType::FFmpeg:
         m_encoder = std::make_unique<WinFFmpegEncoder>();
         break;
     default:
@@ -333,7 +333,7 @@ bool start_capture_impl(
         const auto &str = result.value();
         if (!str.empty())
         {
-            DialogService::show_dialog(str, "Capture", fsvc_error);
+            DialogService::show_dialog(str, "Capture", CoreMessageTone::Error);
         }
         return false;
     }
@@ -347,7 +347,7 @@ bool start_capture_impl(
     return true;
 }
 
-void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings,
+void start_capture(std::filesystem::path path, Config::EncoderType encoder_type, const bool ask_for_capture_settings,
     const std::function<void(bool)> &callback)
 {
     g_main_ctx.core_ctx->vr_wait_increment();
@@ -400,7 +400,7 @@ void input()
         if (!m_encoder->append_video(m_video_buf))
         {
             DialogService::show_dialog(
-                "Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture", fsvc_error);
+                "Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture", CoreMessageTone::Error);
             stop_capture();
             return;
         }
@@ -430,7 +430,7 @@ void ai_len_changed()
 
     if (!m_encoder->append_audio(reinterpret_cast<uint8_t *>(buf), ai_len, m_audio_bitrate))
     {
-        DialogService::show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture", fsvc_error);
+        DialogService::show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture", CoreMessageTone::Error);
         stop_capture();
     }
 }
@@ -481,7 +481,7 @@ void core_executing_changed(bool value)
     {
         DialogService::show_dialog(
             "Changed to a ROM from a different region during capture.\r\nThe capture will be stopped.", "Capture",
-            fsvc_error);
+            CoreMessageTone::Error);
         stop_capture();
     }
 }

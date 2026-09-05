@@ -12,7 +12,7 @@
 namespace LuaCore::Debugger
 {
 
-static void push_cpu_state(lua_State *L, const core_dbg_cpu_state &state)
+static void push_cpu_state(lua_State *L, const CoreDbgCPUState &state)
 {
     lua_newtable(L);
     lua_pushinteger(L, state.address);
@@ -28,7 +28,7 @@ static int add_breakpoint(lua_State *L)
     const uintptr_t address = luaL_checkinteger(L, 1);
     const auto callback = lua_optcallback(L, 2);
 
-    const auto functor = [=](const core_dbg_cpu_state &state) {
+    const auto functor = [=](const CoreDbgCPUState &state) {
         if (!callback || !LuaManager::get_environment_for_state(L)) return;
         lua_pushcallback(L, callback, false);
         push_cpu_state(L, state);
@@ -36,7 +36,7 @@ static int add_breakpoint(lua_State *L)
     };
 
     const auto id = g_main_ctx.core_ctx->dbg_add_breakpoint(
-        address, [=](const core_dbg_cpu_state &state) { g_main_ctx.dispatcher->invoke([=] { functor(state); }); });
+        address, [=](const CoreDbgCPUState &state) { g_main_ctx.dispatcher->invoke([=] { functor(state); }); });
 
     env->active_breakpoints.emplace_back(std::make_pair(id, callback));
 

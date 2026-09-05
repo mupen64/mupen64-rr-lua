@@ -10,7 +10,7 @@
 #include <QJSValue>
 #include <qqmlintegration.h>
 
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 
 class CoreResult : public QObject
 {
@@ -21,7 +21,7 @@ class CoreResult : public QObject
     /**
      * @brief Result returned by the core.
      *
-     * Copied directly from `m64rr/Types.hpp`; allowing it to be used directly from Qt.
+     * Copied directly from `Core/Types.hpp`; allowing it to be used directly from Qt.
      */
     enum Value
     {
@@ -126,8 +126,8 @@ class CoreResult : public QObject
     };
     Q_ENUM(Value)
 
-    static Value from_core(::core_result result) { return (Value)(int)result; }
-    static ::core_result to_core(Value value) { return (::core_result)(int)value; }
+    static Value from_core(::CoreResult result) { return (Value)(int)result; }
+    static ::CoreResult to_core(Value value) { return (::CoreResult)(int)value; }
 
     Q_INVOKABLE QJSValue message(Value value);
 };
@@ -139,18 +139,18 @@ QML_ELEMENT
 
 enum Value
 {
-    Error = fsvc_error,
-    Warning = fsvc_warning,
-    Information = fsvc_information,
+    Error = CoreMessageTone::Error,
+    Warning = CoreMessageTone::Warn,
+    Information = CoreMessageTone::Info,
 };
 Q_ENUM_NS(Value)
 
-inline Value from_core(::core_dialog_type result)
+inline Value from_core(::CoreMessageTone result)
 {
     return (Value)(int)result;
 }
-inline ::core_dialog_type to_core(Value value)
+inline ::CoreMessageTone to_core(Value value)
 {
-    return (::core_dialog_type)(int)value;
+    return (::CoreMessageTone)(int)value;
 }
 } // namespace CoreDialogType

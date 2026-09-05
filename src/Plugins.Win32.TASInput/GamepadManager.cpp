@@ -108,7 +108,7 @@ void GamepadManager::on_sdl_event(const SDL_Event &e)
     }
 }
 
-static bool is_button_held(const t_button_mapping &mapping)
+static bool is_button_held(const ButtonMapping &mapping)
 {
     if (mapping.axis != SDL_GAMEPAD_AXIS_INVALID)
     {
@@ -130,7 +130,7 @@ static bool is_button_held(const t_button_mapping &mapping)
     return false;
 }
 
-static int32_t get_axis(const t_axis_mapping &mapping)
+static int32_t get_axis(const AxisMapping &mapping)
 {
     if (mapping.axis == SDL_GAMEPAD_AXIS_INVALID)
     {

@@ -7,13 +7,13 @@
 #include "Common.hpp"
 #include <Combo.hpp>
 
-bool t_combo::uses_joystick() const
+bool Combo::uses_joystick() const
 {
     return std::any_of(
         samples.begin(), samples.end(), [](const CoreButtons sample) { return sample.x != 0 || sample.y != 0; });
 }
 
-std::vector<uint8_t> t_combo::serialize() const
+std::vector<uint8_t> Combo::serialize() const
 {
     // 1. Write the name of the combo as a null-terminated string.
     std::vector<uint8_t> buffer{};
@@ -37,9 +37,9 @@ std::vector<uint8_t> t_combo::serialize() const
     return buffer;
 }
 
-std::variant<t_combo, std::string> t_combo::deserialize(const std::span<uint8_t> &data)
+std::variant<Combo, std::string> Combo::deserialize(const std::span<uint8_t> &data)
 {
-    t_combo result{};
+    Combo result{};
 
     size_t offset = 0;
 
@@ -80,7 +80,7 @@ std::variant<t_combo, std::string> t_combo::deserialize(const std::span<uint8_t>
     return result;
 }
 
-std::vector<uint8_t> t_combo::serialize_combos(const std::vector<t_combo> &combos)
+std::vector<uint8_t> Combo::serialize_combos(const std::vector<Combo> &combos)
 {
     std::vector<uint8_t> buffer{};
     for (const auto &combo : combos)
@@ -91,9 +91,9 @@ std::vector<uint8_t> t_combo::serialize_combos(const std::vector<t_combo> &combo
     return buffer;
 }
 
-std::vector<t_combo> t_combo::deserialize_combos(const std::span<uint8_t> &data)
+std::vector<Combo> Combo::deserialize_combos(const std::span<uint8_t> &data)
 {
-    std::vector<t_combo> combos{};
+    std::vector<Combo> combos{};
 
     size_t offset = 0;
     while (offset < data.size())
@@ -104,7 +104,7 @@ std::vector<t_combo> t_combo::deserialize_combos(const std::span<uint8_t> &data)
             return {};
         }
 
-        combos.emplace_back(std::get<t_combo>(result));
+        combos.emplace_back(std::get<Combo>(result));
         offset += combos.back().serialize().size();
     }
 

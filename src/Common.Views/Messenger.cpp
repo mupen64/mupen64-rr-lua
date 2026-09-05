@@ -35,7 +35,7 @@ struct Context
     std::atomic<int32_t> subscribing;
 };
 
-static Context s_ctx;
+static Context g_ctx;
 
 } // namespace Messenger
 
@@ -53,12 +53,12 @@ namespace Messenger
 {
 void wait_for_broadcast_end()
 {
-    while (s_ctx.broadcasting > 0) std::this_thread::yield();
+    while (g_ctx.broadcasting > 0) std::this_thread::yield();
 }
 
 void wait_for_subscribe_end()
 {
-    while (s_ctx.subscribing > 0) std::this_thread::yield();
+    while (g_ctx.subscribing > 0) std::this_thread::yield();
 }
 
 /**
@@ -66,11 +66,11 @@ void wait_for_subscribe_end()
  */
 void rebuild_subscriber_cache()
 {
-    s_ctx.subscriber_cache.clear();
+    g_ctx.subscriber_cache.clear();
 
-    for (const auto &[key, subscriber] : s_ctx.subscribers)
+    for (const auto &[key, subscriber] : g_ctx.subscribers)
     {
-        s_ctx.subscriber_cache[key].push_back(subscriber.cb);
+        g_ctx.subscriber_cache[key].push_back(subscriber.cb);
     }
 }
 
@@ -80,14 +80,14 @@ void broadcast_impl(const MessageKey key, std::any data)
 {
     wait_for_subscribe_end();
 
-    ++s_ctx.broadcasting;
+    ++g_ctx.broadcasting;
 
-    for (const auto &subscriber : s_ctx.subscriber_cache[key])
+    for (const auto &subscriber : g_ctx.subscriber_cache[key])
     {
         subscriber(data);
     }
 
-    --s_ctx.broadcasting;
+    --g_ctx.broadcasting;
 }
 
 std::function<void()> subscribe_impl(MessageKey key, AnyCallback callback)
@@ -95,25 +95,25 @@ std::function<void()> subscribe_impl(MessageKey key, AnyCallback callback)
     wait_for_broadcast_end();
     wait_for_subscribe_end();
 
-    ++s_ctx.subscribing;
+    ++g_ctx.subscribing;
 
-    Subscriber subscriber = {s_ctx.uid_accumulator++, std::move(callback)};
+    Subscriber subscriber = {g_ctx.uid_accumulator++, std::move(callback)};
 
-    s_ctx.subscribers.emplace_back(key, subscriber);
+    g_ctx.subscribers.emplace_back(key, subscriber);
     rebuild_subscriber_cache();
 
-    --s_ctx.subscribing;
+    --g_ctx.subscribing;
 
     return [=] {
         wait_for_broadcast_end();
         wait_for_subscribe_end();
 
-        ++s_ctx.subscribing;
+        ++g_ctx.subscribing;
 
-        std::erase_if(s_ctx.subscribers, [=](const auto &pair) { return pair.second.uid == subscriber.uid; });
+        std::erase_if(g_ctx.subscribers, [=](const auto &pair) { return pair.second.uid == subscriber.uid; });
         rebuild_subscriber_cache();
 
-        --s_ctx.subscribing;
+        --g_ctx.subscribing;
     };
 }
 } // namespace detail

@@ -4,45 +4,45 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "m64rr/Types.hpp"
+#include <Core/Types.hpp>
 #include <Core.hpp>
 #include <Cheats.hpp>
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/VCR.hpp>
 
 using namespace std::string_view_literals;
 
-constexpr auto MOVIE_MAGIC = 0x1a34364d;
-constexpr auto LATEST_MOVIE_VERSION = 3;
-constexpr auto RAWDATA_WARNING_MESSAGE =
+constexpr auto movie_magic = 0x1a34364d;
+constexpr auto latest_movie_version = 3;
+constexpr auto rawdata_warning_message =
     "Warning: One of the active controllers of your input plugin is set to accept \"Raw Data\".\nThis can cause "
     "issues when recording and playing movies. Proceed?";
-constexpr auto ROM_NAME_WARNING_MESSAGE = "The movie was recorded on the rom '{}', but is being played back on "
+constexpr auto rom_name_warning_message = "The movie was recorded on the rom '{}', but is being played back on "
                                           "'{}'.\r\nPlayback might desynchronize. How do you want to continue?";
-constexpr auto ROM_COUNTRY_WARNING_MESSAGE = "The movie was recorded on a {} ROM, but is being played back on "
+constexpr auto rom_country_warning_message = "The movie was recorded on a {} ROM, but is being played back on "
                                              "{}.\r\nPlayback might desynchronize. How do you want to continue?";
-constexpr auto ROM_CRC_WARNING_MESSAGE = "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
+constexpr auto rom_crc_warning_message = "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
                                          "using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
                                          "might desynchronize. How do you want to continue?";
-constexpr auto OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE =
+constexpr auto old_movie_extended_section_nonzero_message =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
-constexpr auto CHEAT_ERROR_ASK_MESSAGE = "This movie has a cheat file associated with it, but it could not be "
+constexpr auto cheat_error_ask_message = "This movie has a cheat file associated with it, but it could not be "
                                          "loaded.\r\nPlayback might desynchronize. Are you sure you want to continue?";
-constexpr auto CONTROLLER_ON_OFF_MISMATCH =
+constexpr auto controller_on_off_mismatch =
     "Controller {} is enabled by the input plugin, but it is disabled in the movie.\nPlayback might desynchronize.\n";
-constexpr auto CONTROLLER_OFF_ON_MISMATCH =
+constexpr auto controller_off_on_mismatch =
     "Controller {} is disabled by the input plugin, but it is enabled in the movie.\nPlayback can't commence.\n";
-constexpr auto CONTROLLER_MEMPAK_MISMATCH =
+constexpr auto controller_mempak_mismatch =
     "Controller {} has a Memory Pak in the movie.\nPlayback might desynchronize.\n";
-constexpr auto CONTROLLER_RUMBLEPAK_MISMATCH =
+constexpr auto controller_rumblepak_mismatch =
     "Controller {} has a Rumble Pak in the movie.\nPlayback might desynchronize.\n";
-constexpr auto CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH =
+constexpr auto controller_mempak_rumblepak_mismatch =
     "Controller {} does not have a Memory or Rumble Pak in the movie.\nPlayback might desynchronize.\n";
 
-t_vcr_state vcr{};
+VCRState vcr{};
 std::mutex vcr_mtx{};
 
 class vcr_anti_lock
@@ -53,14 +53,14 @@ class vcr_anti_lock
     ~vcr_anti_lock() { vcr_mtx.lock(); }
 };
 
-bool vcr_is_task_recording(core_vcr_task task);
+bool vcr_is_task_recording(CoreVCRTask task);
 
 bool write_movie_impl(
-    const core_vcr_movie_header *hdr, const std::vector<CoreButtons> &inputs, const std::filesystem::path &path)
+    const CoreVCRMovieHeader *hdr, const std::vector<CoreButtons> &inputs, const std::filesystem::path &path)
 {
     g_core->log_info(std::format("[VCR] write_movie_impl to {}...", vcr.movie_path.string()));
 
-    core_vcr_movie_header hdr_copy = *hdr;
+    CoreVCRMovieHeader hdr_copy = *hdr;
 
     if (!g_core->cfg->vcr_write_extended_format)
     {
@@ -71,10 +71,10 @@ bool write_movie_impl(
         memset(&hdr_copy.extended_data, 0, sizeof(hdr_copy.extended_flags));
     }
 
-    std::vector<uint8_t> out_buf(sizeof(core_vcr_movie_header) + sizeof(CoreButtons) * hdr_copy.length_samples);
-    std::memcpy(out_buf.data(), &hdr_copy, sizeof(core_vcr_movie_header));
+    std::vector<uint8_t> out_buf(sizeof(CoreVCRMovieHeader) + sizeof(CoreButtons) * hdr_copy.length_samples);
+    std::memcpy(out_buf.data(), &hdr_copy, sizeof(CoreVCRMovieHeader));
     std::memcpy(
-        out_buf.data() + sizeof(core_vcr_movie_header), inputs.data(), sizeof(CoreButtons) * hdr_copy.length_samples);
+        out_buf.data() + sizeof(CoreVCRMovieHeader), inputs.data(), sizeof(CoreButtons) * hdr_copy.length_samples);
     const auto written = IOUtils::write_entire_file(path, out_buf);
 
     return written;
@@ -103,9 +103,9 @@ bool write_backup_impl()
     return write_movie_impl(&vcr.hdr, vcr.inputs, g_core->get_backups_directory() / filename);
 }
 
-bool is_task_playback(const core_vcr_task task)
+bool is_task_playback(const CoreVCRTask task)
 {
-    return task == task_start_playback_from_reset || task == task_start_playback_from_snapshot || task == task_playback;
+    return task == CoreVCRTask::StartPlaybackFromReset || task == CoreVCRTask::StartPlaybackFromSnapshot || task == CoreVCRTask::Playback;
 }
 
 uint64_t get_rerecord_count()
@@ -169,7 +169,7 @@ static std::filesystem::path find_accompanying_file_for_movie(
         path, std::span<const std::string_view>{extensions.begin(), extensions.size()});
 }
 
-static void set_rom_info(core_vcr_movie_header *header)
+static void set_rom_info(CoreVCRMovieHeader *header)
 {
     header->vis_per_second = g_ctx.vr_get_vis_per_second(g_ctx.vr_get_rom_header()->Country_code);
     header->controller_flags = 0;
@@ -207,22 +207,22 @@ static void set_rom_info(core_vcr_movie_header *header)
         header->video_plugin_name, header->audio_plugin_name, header->input_plugin_name, header->rsp_plugin_name);
 }
 
-core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_header *header)
+CoreResult vcr_read_movie_header(std::vector<uint8_t> buf, CoreVCRMovieHeader *header)
 {
-    const core_vcr_movie_header default_hdr{};
+    const CoreVCRMovieHeader default_hdr{};
     constexpr auto old_header_size = 512;
 
-    if (buf.size() < old_header_size) return VCR_InvalidFormat;
+    if (buf.size() < old_header_size) return CoreResult::VCR_InvalidFormat;
 
-    core_vcr_movie_header new_header = {};
+    CoreVCRMovieHeader new_header = {};
     memcpy(&new_header, buf.data(), old_header_size);
 
-    if (new_header.magic != MOVIE_MAGIC) return VCR_InvalidFormat;
+    if (new_header.magic != movie_magic) return CoreResult::VCR_InvalidFormat;
 
-    if (new_header.version <= 0 || new_header.version > LATEST_MOVIE_VERSION) return VCR_InvalidVersion;
+    if (new_header.version <= 0 || new_header.version > latest_movie_version) return CoreResult::VCR_InvalidVersion;
 
     // The extended version number can't exceed the latest one, obviously...
-    if (new_header.extended_version > default_hdr.extended_version) return VCR_InvalidExtendedVersion;
+    if (new_header.extended_version > default_hdr.extended_version) return CoreResult::VCR_InvalidExtendedVersion;
 
     if (new_header.version == 1 || new_header.version == 2)
     {
@@ -277,9 +277,9 @@ core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_heade
         std::memcpy(new_header.author, new_header.old_author_info, sizeof(new_header.old_author_info));
         std::memcpy(new_header.description, new_header.old_description, sizeof(new_header.old_description));
     }
-    if (new_header.version == 3 && buf.size() < sizeof(core_vcr_movie_header))
+    if (new_header.version == 3 && buf.size() < sizeof(CoreVCRMovieHeader))
     {
-        return VCR_InvalidFormat;
+        return CoreResult::VCR_InvalidFormat;
     }
     if (new_header.version == 3)
     {
@@ -288,7 +288,7 @@ core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_heade
 
         // Some movies have a higher length_samples than the actual input buffer size, so we patch the length_samples up
         // and emit a warning
-        const auto actual_sample_count = (buf.size() - sizeof(core_vcr_movie_header)) / sizeof(CoreButtons);
+        const auto actual_sample_count = (buf.size() - sizeof(CoreVCRMovieHeader)) / sizeof(CoreButtons);
 
         if (new_header.length_samples > actual_sample_count)
         {
@@ -301,24 +301,24 @@ core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_heade
 
     *header = new_header;
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *header)
+CoreResult vcr_parse_header(std::filesystem::path path, CoreVCRMovieHeader *header)
 {
     if (path.extension().compare(".m64") != 0)
     {
-        return VCR_InvalidFormat;
+        return CoreResult::VCR_InvalidFormat;
     }
 
-    core_vcr_movie_header new_header = {};
+    CoreVCRMovieHeader new_header = {};
     new_header.rom_country = -1;
     std::snprintf(new_header.rom_name, sizeof(new_header.rom_name), "%s", "(no ROM)");
 
     auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
     {
-        return VCR_BadFile;
+        return CoreResult::VCR_BadFile;
     }
 
     const auto result = vcr_read_movie_header(buf, &new_header);
@@ -327,31 +327,31 @@ core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *
     return result;
 }
 
-core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<CoreButtons> &inputs)
+CoreResult vcr_read_movie_inputs(std::filesystem::path path, std::vector<CoreButtons> &inputs)
 {
-    core_vcr_movie_header header = {};
+    CoreVCRMovieHeader header = {};
     const auto result = vcr_parse_header(path, &header);
-    if (result != Res_Ok)
+    if (result != CoreResult::Res_Ok)
     {
         return result;
     }
 
     auto buf = IOUtils::read_entire_file(path);
 
-    if (buf.size() < sizeof(core_vcr_movie_header) + sizeof(CoreButtons) * header.length_samples)
+    if (buf.size() < sizeof(CoreVCRMovieHeader) + sizeof(CoreButtons) * header.length_samples)
     {
-        return VCR_InvalidFormat;
+        return CoreResult::VCR_InvalidFormat;
     }
 
     inputs.resize(header.length_samples);
-    memcpy(inputs.data(), buf.data() + sizeof(core_vcr_movie_header), sizeof(CoreButtons) * header.length_samples);
+    memcpy(inputs.data(), buf.data() + sizeof(CoreVCRMovieHeader), sizeof(CoreButtons) * header.length_samples);
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
 void vcr_increment_rerecord_count()
 {
-    if (vcr.task != task_recording)
+    if (vcr.task != CoreVCRTask::Recording)
     {
         return;
     }
@@ -362,17 +362,17 @@ void vcr_increment_rerecord_count()
 
 bool vcr_freeze(vcr_freeze_info &freeze)
 {
-    constexpr size_t FREEZE_MAX_SIZE = (UINT32_MAX - 20) / 4;
+    constexpr size_t freeze_max_size = (UINT32_MAX - 20) / 4;
 
     std::unique_lock lock(vcr_mtx);
 
-    if (vcr.task == task_idle)
+    if (vcr.task == CoreVCRTask::Idle)
     {
         return false;
     }
 
     assert(vcr.inputs.size() >= vcr.hdr.length_samples);
-    assert(vcr.hdr.length_samples <= FREEZE_MAX_SIZE); // safety check
+    assert(vcr.hdr.length_samples <= freeze_max_size); // safety check
 
     freeze = {
         .size = static_cast<uint32_t>(sizeof(uint32_t) * 4 + sizeof(CoreButtons) * (vcr.hdr.length_samples + 1)),
@@ -394,45 +394,45 @@ bool vcr_freeze(vcr_freeze_info &freeze)
     return true;
 }
 
-core_result vcr_unfreeze(const vcr_freeze_info &freeze)
+CoreResult vcr_unfreeze(const vcr_freeze_info &freeze)
 {
     std::unique_lock lock(vcr_mtx);
 
     // Unfreezing isn't valid during idle state
-    if (vcr.task == task_idle)
+    if (vcr.task == CoreVCRTask::Idle)
     {
-        return VCR_NeedsPlaybackOrRecording;
+        return CoreResult::VCR_NeedsPlaybackOrRecording;
     }
 
     if (freeze.size <
         sizeof(vcr.hdr.uid) + sizeof(vcr.current_sample) + sizeof(vcr.current_vi) + sizeof(vcr.hdr.length_samples))
     {
-        return VCR_InvalidFormat;
+        return CoreResult::VCR_InvalidFormat;
     }
 
     const uint32_t space_needed = sizeof(CoreButtons) * (freeze.length_samples + 1);
 
-    if (freeze.uid != vcr.hdr.uid) return VCR_NotFromThisMovie;
+    if (freeze.uid != vcr.hdr.uid) return CoreResult::VCR_NotFromThisMovie;
 
     // This means playback desync in read-only mode, but in read-write mode it's fine, as the input buffer will be
     // copied and grown from st.
-    if (freeze.current_sample > freeze.length_samples && g_core->cfg->vcr_readonly) return VCR_InvalidFrame;
+    if (freeze.current_sample > freeze.length_samples && g_core->cfg->vcr_readonly) return CoreResult::VCR_InvalidFrame;
 
-    if (space_needed > freeze.size) return VCR_InvalidFormat;
+    if (space_needed > freeze.size) return CoreResult::VCR_InvalidFormat;
 
     vcr.current_sample = (int32_t)freeze.current_sample;
     vcr.current_vi = (int32_t)freeze.current_vi;
 
-    const core_vcr_task last_task = vcr.task;
+    const CoreVCRTask last_task = vcr.task;
 
     // When starting playback in RW mode, we don't want overwrite the movie savestate which we're currently unfreezing
     // from...
     const bool is_task_starting_playback =
-        vcr.task == task_start_playback_from_reset || vcr.task == task_start_playback_from_snapshot;
+        vcr.task == CoreVCRTask::StartPlaybackFromReset || vcr.task == CoreVCRTask::StartPlaybackFromSnapshot;
 
     // When unfreezing during a seek while recording, we don't want to overwrite the input buffer.
     // Instead, we'll just update the current sample.
-    if (vcr.task == task_recording && vcr.seek_to_frame.has_value())
+    if (vcr.task == CoreVCRTask::Recording && vcr.seek_to_frame.has_value())
     {
         goto finish;
     }
@@ -442,10 +442,10 @@ core_result vcr_unfreeze(const vcr_freeze_info &freeze)
         // here, we are going to take the input data from the savestate
         // and make it the input data for the current movie, then continue
         // writing new input data at the currentFrame pointer
-        vcr.task = task_recording;
+        vcr.task = CoreVCRTask::Recording;
 
         // update header with new ROM info
-        if (last_task == task_playback) set_rom_info(&vcr.hdr);
+        if (last_task == CoreVCRTask::Playback) set_rom_info(&vcr.hdr);
 
         vcr_increment_rerecord_count();
 
@@ -473,7 +473,7 @@ core_result vcr_unfreeze(const vcr_freeze_info &freeze)
         // with the on-disk recording data, but it's easily solved
         // by loading another savestate or playing the movie from the beginning
         write_movie();
-        vcr.task = task_playback;
+        vcr.task = CoreVCRTask::Playback;
     }
 
 finish: {
@@ -484,13 +484,13 @@ finish: {
     g_core->callbacks.frame();
     g_core->callbacks.unfreeze_completed();
 }
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vcr_write_backup()
+CoreResult vcr_write_backup()
 {
     const auto result = write_backup_impl();
-    return result ? Res_Ok : VCR_BadFile;
+    return result ? CoreResult::Res_Ok : CoreResult::VCR_BadFile;
 }
 
 void vcr_create_n_frame_savestate(size_t frame)
@@ -529,14 +529,14 @@ void vcr_create_n_frame_savestate(size_t frame)
 
     g_core->log_info(std::format("[VCR] Creating seek savestate at frame {}...", frame));
     g_ctx.st_do_memory(
-        {}, core_st_job_save,
-        [frame](const core_st_callback_info &info, const auto &buf) {
+        {}, CoreSTJob::Save,
+        [frame](const CoreSTCallbackInfo &info, const auto &buf) {
             std::unique_lock lock(vcr_mtx);
 
-            if (info.result != Res_Ok)
+            if (info.result != CoreResult::Res_Ok)
             {
                 g_core->show_notification(
-                    std::format("Failed to save seek savestate at frame {}.", frame).c_str(), "VCR", fsvc_error);
+                    std::format("Failed to save seek savestate at frame {}.", frame).c_str(), "VCR", CoreMessageTone::Error);
                 return;
             }
 
@@ -553,9 +553,9 @@ void vcr_create_n_frame_savestate(size_t frame)
 
 void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
 {
-    if (vcr.task == task_start_recording_from_reset)
+    if (vcr.task == CoreVCRTask::StartRecordingFromReset)
     {
-        bool clear_eeprom = !(vcr.hdr.startFlags & MOVIE_START_FROM_EEPROM);
+        bool clear_eeprom = !(vcr.hdr.start_flags & MOVIE_START_FROM_EEPROM);
         vcr.reset_pending = true;
         g_core->submit_task([clear_eeprom] {
             const auto result = vr_reset_rom(clear_eeprom, false);
@@ -563,11 +563,11 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
             std::unique_lock lock(vcr_mtx);
             vcr.reset_pending = false;
 
-            if (result != Res_Ok)
+            if (result != CoreResult::Res_Ok)
             {
                 g_core->show_dialog(
                     "Failed to reset the rom when initiating a from-start recording.\nRecording will be stopped.",
-                    "VCR", fsvc_error);
+                    "VCR", CoreMessageTone::Error);
                 {
                     vcr_anti_lock bypass;
                     g_ctx.vcr_stop_all();
@@ -577,7 +577,7 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
 
             vcr.current_sample = 0;
             vcr.current_vi = 0;
-            vcr.task = task_recording;
+            vcr.task = CoreVCRTask::Recording;
 
             {
                 vcr_anti_lock bypass;
@@ -588,9 +588,9 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
         });
     }
 
-    if (vcr.task == task_start_playback_from_reset)
+    if (vcr.task == CoreVCRTask::StartPlaybackFromReset)
     {
-        bool clear_eeprom = !(vcr.hdr.startFlags & MOVIE_START_FROM_EEPROM);
+        bool clear_eeprom = !(vcr.hdr.start_flags & MOVIE_START_FROM_EEPROM);
         vcr.reset_pending = true;
         g_core->submit_task([clear_eeprom] {
             const auto result = vr_reset_rom(clear_eeprom, false);
@@ -598,11 +598,11 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
             std::unique_lock lock(vcr_mtx);
             vcr.reset_pending = false;
 
-            if (result != Res_Ok)
+            if (result != CoreResult::Res_Ok)
             {
                 g_core->show_dialog(
                     "Failed to reset the rom when playing back a from-start movie.\nPlayback will be stopped.", "VCR",
-                    fsvc_error);
+                    CoreMessageTone::Error);
                 {
                     vcr_anti_lock bypass;
                     g_ctx.vcr_stop_all();
@@ -612,7 +612,7 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
 
             vcr.current_sample = 0;
             vcr.current_vi = 0;
-            vcr.task = task_playback;
+            vcr.task = CoreVCRTask::Playback;
 
             {
                 vcr_anti_lock bypass;
@@ -626,7 +626,7 @@ void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
 
 void vcr_handle_recording(int32_t index, CoreButtons *input)
 {
-    if (vcr.task != task_recording)
+    if (vcr.task != CoreVCRTask::Recording)
     {
         return;
     }
@@ -669,7 +669,7 @@ void vcr_handle_recording(int32_t index, CoreButtons *input)
 
     // The VCR state might have changed while the mutex was unlocked. Account for that here.
     // FIXME: Is this enough?
-    if (vcr.task != task_recording)
+    if (vcr.task != CoreVCRTask::Recording)
     {
         return;
     }
@@ -687,7 +687,7 @@ void vcr_handle_recording(int32_t index, CoreButtons *input)
         vcr.reset_requested = false;
         vcr.reset_pending = true;
         g_core->submit_task([] {
-            core_result result;
+            CoreResult result;
             {
                 std::lock_guard lock(g_emu_cs);
                 result = vr_reset_rom_impl(false, false, true);
@@ -697,9 +697,9 @@ void vcr_handle_recording(int32_t index, CoreButtons *input)
 
             vcr.reset_pending = false;
 
-            if (result != Res_Ok)
+            if (result != CoreResult::Res_Ok)
             {
-                g_core->show_dialog("Failed to reset the rom following a user-invoked reset.", "VCR", fsvc_error);
+                g_core->show_dialog("Failed to reset the rom following a user-invoked reset.", "VCR", CoreMessageTone::Error);
             }
         });
     }
@@ -709,7 +709,7 @@ void vcr_handle_recording(int32_t index, CoreButtons *input)
 
 void vcr_handle_playback(int32_t index, CoreButtons *input)
 {
-    if (vcr.task != task_playback)
+    if (vcr.task != CoreVCRTask::Playback)
     {
         return;
     }
@@ -771,11 +771,11 @@ void vcr_handle_playback(int32_t index, CoreButtons *input)
 
             std::unique_lock lock(vcr_mtx);
 
-            if (result != Res_Ok)
+            if (result != CoreResult::Res_Ok)
             {
                 g_core->show_dialog(
                     "Failed to reset the rom following a movie-invoked reset.\nRecording will be stopped.", "VCR",
-                    fsvc_error);
+                    CoreMessageTone::Error);
                 {
                     vcr_anti_lock bypass;
                     g_ctx.vcr_stop_all();
@@ -808,13 +808,13 @@ void vcr_stop_seek_if_needed()
         return;
     }
 
-    assert(vcr.task != task_idle);
+    assert(vcr.task != CoreVCRTask::Idle);
 
     if (vcr.current_sample > vcr.seek_to_frame.value())
     {
         g_core->show_dialog("Seek frame exceeded without seek having been stopped!\nThis incident has been logged, "
                             "please report this issue along with the log file.",
-            "VCR", fsvc_error);
+            "VCR", CoreMessageTone::Error);
     }
 
     if (vcr.current_sample >= vcr.seek_to_frame.value())
@@ -847,7 +847,7 @@ bool vcr_allows_core_pause()
 
 bool vcr_allows_core_unpause()
 {
-    if (g_core->cfg->wait_at_movie_end && vcr.task == task_playback && vcr.current_sample >= vcr.hdr.length_samples - 1)
+    if (g_core->cfg->wait_at_movie_end && vcr.task == CoreVCRTask::Playback && vcr.current_sample >= vcr.hdr.length_samples - 1)
     {
         return false;
     }
@@ -862,7 +862,7 @@ void vcr_request_reset()
 
 void vcr_create_seek_savestates()
 {
-    if (vcr.task == task_idle || g_core->cfg->seek_savestate_interval == 0)
+    if (vcr.task == CoreVCRTask::Idle || g_core->cfg->seek_savestate_interval == 0)
     {
         return;
     }
@@ -893,7 +893,7 @@ void vcr_on_controller_poll(int32_t index, CoreButtons *input)
         return;
     }
 
-    if (vcr.task == task_idle)
+    if (vcr.task == CoreVCRTask::Idle)
     {
         g_core->input_get_keys(index, input);
 
@@ -950,13 +950,13 @@ std::filesystem::path get_path_for_new_movie(std::filesystem::path path, std::st
     return path;
 }
 
-core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description)
+CoreResult vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description)
 {
     std::unique_lock lock(vcr_mtx);
 
     if (flags != MOVIE_START_FROM_SNAPSHOT && flags != MOVIE_START_FROM_NOTHING && flags != MOVIE_START_FROM_EEPROM)
     {
-        return VCR_InvalidStartType;
+        return CoreResult::VCR_InvalidStartType;
     }
 
     if (author.empty())
@@ -981,19 +981,19 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
         if (!file)
         {
             g_core->log_error("core_vcr_start_record cheat std::wofstream failed");
-            return VCR_CheatWriteFailed;
+            return CoreResult::VCR_CheatWriteFailed;
         }
         file << cheat_data;
         if (file.fail())
         {
             g_core->log_error("core_vcr_start_record cheat write failed");
-            return VCR_CheatWriteFailed;
+            return CoreResult::VCR_CheatWriteFailed;
         }
         file.close();
         if (file.bad())
         {
             g_core->log_error("core_vcr_start_record file bad");
-            return VCR_CheatWriteFailed;
+            return CoreResult::VCR_CheatWriteFailed;
         }
     }
 
@@ -1007,10 +1007,10 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     {
         if (Present && RawData)
         {
-            bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, RAWDATA_WARNING_MESSAGE, "VCR", true);
+            bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, rawdata_warning_message, "VCR", true);
             if (!proceed)
             {
-                return Res_Cancelled;
+                return CoreResult::Res_Cancelled;
             }
             break;
         }
@@ -1019,12 +1019,12 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     // FIXME: Do we want to reset this every time?
     g_core->cfg->vcr_readonly = 0;
 
-    const core_vcr_movie_header default_hdr{};
-    memset(&vcr.hdr, 0, sizeof(core_vcr_movie_header));
+    const CoreVCRMovieHeader default_hdr{};
+    memset(&vcr.hdr, 0, sizeof(CoreVCRMovieHeader));
     vcr.inputs = {};
 
-    vcr.hdr.magic = MOVIE_MAGIC;
-    vcr.hdr.version = LATEST_MOVIE_VERSION;
+    vcr.hdr.magic = movie_magic;
+    vcr.hdr.version = latest_movie_version;
 
     vcr.hdr.extended_version = default_hdr.extended_version;
     vcr.hdr.extended_flags.wii_vc = g_core->cfg->wii_vc_emulation;
@@ -1040,23 +1040,23 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     vcr.hdr.length_samples = 0;
 
     set_rerecord_count(0);
-    vcr.hdr.startFlags = flags;
+    vcr.hdr.start_flags = flags;
 
     if (flags & MOVIE_START_FROM_SNAPSHOT)
     {
         // save state
         g_core->log_info("[VCR] Saving state...");
-        vcr.task = task_start_recording_from_snapshot;
+        vcr.task = CoreVCRTask::StartRecordingFromSnapshot;
         g_ctx.st_do_file(
-            file_info.st_path, core_st_job_save,
-            [](const core_st_callback_info &info, auto &&...) {
+            file_info.st_path, CoreSTJob::Save,
+            [](const CoreSTCallbackInfo &info, auto &&...) {
                 std::unique_lock lock(vcr_mtx);
 
-                if (info.result != Res_Ok)
+                if (info.result != CoreResult::Res_Ok)
                 {
                     g_core->show_dialog(
                         "Failed to save savestate while starting recording.\nRecording will be stopped.", "VCR",
-                        fsvc_error);
+                        CoreMessageTone::Error);
 
                     {
                         vcr_anti_lock bypass;
@@ -1067,7 +1067,7 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
                 }
 
                 g_core->log_info("[VCR] Starting recording from snapshot...");
-                vcr.task = task_recording;
+                vcr.task = CoreVCRTask::Recording;
                 // FIXME: Doesn't this need a message broadcast?
                 // TODO: Also, what about clearing the input on first frame
             },
@@ -1075,23 +1075,23 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     }
     else
     {
-        vcr.task = task_start_recording_from_reset;
+        vcr.task = CoreVCRTask::StartRecordingFromReset;
     }
 
     set_rom_info(&vcr.hdr);
 
-    memset(vcr.hdr.author, 0, sizeof(core_vcr_movie_header::author));
-    if (author.size() > sizeof(core_vcr_movie_header::author))
+    memset(vcr.hdr.author, 0, sizeof(CoreVCRMovieHeader::author));
+    if (author.size() > sizeof(CoreVCRMovieHeader::author))
     {
-        author.resize(sizeof(core_vcr_movie_header::author));
+        author.resize(sizeof(CoreVCRMovieHeader::author));
     }
     author.copy(vcr.hdr.author, sizeof(vcr.hdr.author));
     // strncpy_s(vcr.hdr.author, sizeof(vcr.hdr.author), author.data(), author.size());
 
-    memset(vcr.hdr.description, 0, sizeof(core_vcr_movie_header::description));
-    if (description.size() > sizeof(core_vcr_movie_header::description))
+    memset(vcr.hdr.description, 0, sizeof(CoreVCRMovieHeader::description));
+    if (description.size() > sizeof(CoreVCRMovieHeader::description))
     {
-        description.resize(sizeof(core_vcr_movie_header::description));
+        description.resize(sizeof(CoreVCRMovieHeader::description));
     }
     description.copy(vcr.hdr.description, sizeof(vcr.hdr.description));
     // strncpy_s(vcr.hdr.description, sizeof(vcr.hdr.description), description.data(), description.size());
@@ -1107,17 +1107,17 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
         g_core->callbacks.readonly_changed((bool)g_core->cfg->vcr_readonly);
     }
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vcr_continue_recording()
+CoreResult vcr_continue_recording()
 {
     std::unique_lock lock(vcr_mtx);
 
-    if (vcr.task != task_playback && vcr.task != task_start_playback_from_reset &&
-        vcr.task != task_start_playback_from_snapshot)
+    if (vcr.task != CoreVCRTask::Playback && vcr.task != CoreVCRTask::StartPlaybackFromReset &&
+        vcr.task != CoreVCRTask::StartPlaybackFromSnapshot)
     {
-        return VCR_NeedsPlayback;
+        return CoreResult::VCR_NeedsPlayback;
     }
 
     if (g_core->cfg->vcr_backups)
@@ -1125,7 +1125,7 @@ core_result vcr_continue_recording()
         write_backup_impl();
     }
 
-    vcr.task = task_recording;
+    vcr.task = CoreVCRTask::Recording;
     vcr.inputs.resize(vcr.current_sample);
     vcr.hdr.length_samples = vcr.inputs.size();
     vcr.hdr.length_vis = vcr.current_vi;
@@ -1137,18 +1137,18 @@ core_result vcr_continue_recording()
         g_core->callbacks.task_changed(vcr.task);
     }
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vcr_replace_author_info(
+CoreResult vcr_replace_author_info(
     const std::filesystem::path &path, std::optional<std::string> author, std::optional<std::string> description)
 {
-    if (!author && !description) return Res_Ok;
+    if (!author && !description) return CoreResult::Res_Ok;
 
     // 0. validate lengths
     if ((author && author->size() > 222) || (description && description->size() > 256))
     {
-        return VCR_InvalidFormat;
+        return CoreResult::VCR_InvalidFormat;
     }
 
     // 1. Read movie header
@@ -1156,13 +1156,13 @@ core_result vcr_replace_author_info(
 
     if (buf.empty())
     {
-        return VCR_BadFile;
+        return CoreResult::VCR_BadFile;
     }
 
-    core_vcr_movie_header hdr{};
+    CoreVCRMovieHeader hdr{};
     auto result = vcr_read_movie_header(buf, &hdr);
 
-    if (result != Res_Ok)
+    if (result != CoreResult::Res_Ok)
     {
         return result;
     }
@@ -1174,7 +1174,7 @@ core_result vcr_replace_author_info(
     if (!author_changed && !description_changed)
     {
         g_core->log_info("[VCR] Movie author or description didn't change, returning early...");
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     }
 
     // 3. prepare padded buffers for output
@@ -1193,7 +1193,7 @@ core_result vcr_replace_author_info(
         std::fstream file(path, std::ios::in | std::ios::out | std::ios::binary);
         if (!file.is_open())
         {
-            return VCR_BadFile;
+            return CoreResult::VCR_BadFile;
         }
 
         file.seekg(0x222, std::ios::beg);
@@ -1203,14 +1203,14 @@ core_result vcr_replace_author_info(
         file.write(description_out.data(), description_out.size());
     }
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_vcr_seek_info vcr_get_seek_info()
+CoreVCRSeekInfo vcr_get_seek_info()
 {
     std::unique_lock lock(vcr_mtx);
 
-    core_vcr_seek_info info{};
+    CoreVCRSeekInfo info{};
 
     info.current_sample = vcr.current_sample;
     info.seek_start_sample = vcr.seek_to_frame.has_value() ? vcr.seek_start_sample : SIZE_MAX;
@@ -1219,37 +1219,37 @@ core_vcr_seek_info vcr_get_seek_info()
     return info;
 }
 
-bool show_controller_warning(const core_vcr_movie_header &header)
+bool show_controller_warning(const CoreVCRMovieHeader &header)
 {
     for (int32_t i = 0; i < 4; ++i)
     {
         if (!g_core->controls[i].present && header.controller_flags & CONTROLLER_X_PRESENT(i))
         {
-            g_core->show_dialog(std::format(CONTROLLER_OFF_ON_MISMATCH, i + 1).c_str(), "VCR", fsvc_error);
+            g_core->show_dialog(std::format(controller_off_on_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Error);
             return false;
         }
         if (g_core->controls[i].present && !(header.controller_flags & CONTROLLER_X_PRESENT(i)))
         {
-            g_core->show_notification(std::format(CONTROLLER_ON_OFF_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
+            g_core->show_notification(std::format(controller_on_off_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
         }
         else
         {
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::Mempak) &&
                 header.controller_flags & CONTROLLER_X_MEMPAK(i))
             {
-                g_core->show_notification(std::format(CONTROLLER_MEMPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
+                g_core->show_notification(std::format(controller_mempak_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
             }
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::Rumblepak) &&
                 header.controller_flags & CONTROLLER_X_RUMBLE(i))
             {
                 g_core->show_notification(
-                    std::format(CONTROLLER_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
+                    std::format(controller_rumblepak_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
             }
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::None) &&
                 !(header.controller_flags & (CONTROLLER_X_MEMPAK(i) | CONTROLLER_X_RUMBLE(i))))
             {
                 g_core->show_notification(
-                    std::format(CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
+                    std::format(controller_mempak_rumblepak_mismatch, i + 1).c_str(), "VCR", CoreMessageTone::Warn);
             }
         }
     }
@@ -1262,33 +1262,33 @@ bool show_controller_warning(const core_vcr_movie_header &header)
  * \param id The dialog ID.
  * \param message The message to show in the dialog.
  * \param movie_path The path of the movie being loaded.
- * \return A `core_result` indicating the user's choice, or `std::nullopt` if the user chose to play anyway.
+ * \return A `CoreResult` indicating the user's choice, or `std::nullopt` if the user chose to play anyway.
  */
-static std::optional<core_result> ask_user_rom_conflict(
+static std::optional<CoreResult> ask_user_rom_conflict(
     std::string_view id, const std::string &message, const std::filesystem::path &movie_path)
 {
     const auto choice = g_core->show_multiple_choice_dialog(
-        id, {"Switch ROM", "Play Anyway", "Cancel"}, message.c_str(), "VCR", core_dialog_type::fsvc_warning);
+        id, {"Switch ROM", "Play Anyway", "Cancel"}, message.c_str(), "VCR", CoreMessageTone::Warn);
 
     if (choice == 0)
     {
         g_core->submit_task([=] {
             const auto result = g_ctx.vr_start_rom(movie_path);
-            if (result != Res_Ok)
+            if (result != CoreResult::Res_Ok)
             {
                 g_core->log_error("vr_start_rom failed while switching ROM for movie playback");
                 return;
             }
             g_ctx.vcr_start_playback(movie_path);
         });
-        return Res_Cancelled;
+        return CoreResult::Res_Cancelled;
     }
-    if (choice == 2) return Res_Cancelled;
+    if (choice == 2) return CoreResult::Res_Cancelled;
 
     return std::nullopt;
 }
 
-std::optional<SyncData> vcr_get_sync_data_from_header(const core_vcr_movie_header &header)
+std::optional<SyncData> vcr_get_sync_data_from_header(const CoreVCRMovieHeader &header)
 {
     switch (header.extended_version)
     {
@@ -1381,7 +1381,7 @@ std::vector<std::string> vcr_get_sync_warnings(const SyncData &sync_data)
     return warnings;
 }
 
-core_result vcr_start_playback(std::filesystem::path path)
+CoreResult vcr_start_playback(std::filesystem::path path)
 {
     std::unique_lock lock(vcr_mtx);
 
@@ -1389,7 +1389,7 @@ core_result vcr_start_playback(std::filesystem::path path)
 
     if (movie_buf.empty())
     {
-        return VCR_BadFile;
+        return CoreResult::VCR_BadFile;
     }
 
     if (!core_executing)
@@ -1401,33 +1401,33 @@ core_result vcr_start_playback(std::filesystem::path path)
             vcr_anti_lock bypass;
             const auto result = g_ctx.vr_start_rom(path);
 
-            if (result != Res_Ok)
+            if (result != CoreResult::Res_Ok)
             {
                 return result;
             }
         }
     }
 
-    core_vcr_movie_header header{};
+    CoreVCRMovieHeader header{};
     const auto result = vcr_read_movie_header(movie_buf, &header);
-    if (result != Res_Ok)
+    if (result != CoreResult::Res_Ok)
     {
         return result;
     }
 
     std::vector<CoreButtons> movie_inputs{};
     movie_inputs.resize(header.length_samples);
-    memcpy(movie_inputs.data(), movie_buf.data() + sizeof(core_vcr_movie_header),
+    memcpy(movie_inputs.data(), movie_buf.data() + sizeof(CoreVCRMovieHeader),
         sizeof(CoreButtons) * header.length_samples);
 
     for (auto &[Present, RawData, Plugin] : g_core->controls)
     {
         if (!Present || !RawData) continue;
 
-        bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, RAWDATA_WARNING_MESSAGE, "VCR", true);
+        bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, rawdata_warning_message, "VCR", true);
         if (!proceed)
         {
-            return Res_Cancelled;
+            return CoreResult::Res_Cancelled;
         }
 
         break;
@@ -1435,19 +1435,19 @@ core_result vcr_start_playback(std::filesystem::path path)
 
     if (!show_controller_warning(header))
     {
-        return VCR_InvalidControllers;
+        return CoreResult::VCR_InvalidControllers;
     }
 
     g_core->log_info(std::format("[VCR] Movie has extended version {}", header.extended_version));
 
     const auto sync_data = vcr_get_sync_data_from_header(header);
-    if (!sync_data) return VCR_InvalidExtendedVersion;
+    if (!sync_data) return CoreResult::VCR_InvalidExtendedVersion;
 
     const auto warnings = vcr_get_sync_warnings(*sync_data);
 
     // Suspicious! Someone shoved data where it didn't belong...
     if (header.extended_version == 0 && header.extended_flags.data != 0)
-        g_core->show_dialog(OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE, "VCR", fsvc_warning);
+        g_core->show_dialog(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
 
     if (!warnings.empty())
     {
@@ -1458,13 +1458,13 @@ core_result vcr_start_playback(std::filesystem::path path)
         }
         warning += "Playback might desynchronize. Do you want to continue?";
         const auto result =
-            g_core->show_ask_dialog(CORE_DLG_VCR_GENERAL_SYNC_WARNING, warning.c_str(), "VCR", fsvc_warning);
-        if (!result) return Res_Cancelled;
+            g_core->show_ask_dialog(CORE_DLG_VCR_GENERAL_SYNC_WARNING, warning.c_str(), "VCR", true);
+        if (!result) return CoreResult::Res_Cancelled;
     }
 
     if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
     {
-        const auto ask_message = std::format(ROM_NAME_WARNING_MESSAGE, header.rom_name, (char *)ROM_HEADER.nom);
+        const auto ask_message = std::format(rom_name_warning_message, header.rom_name, (char *)ROM_HEADER.nom);
         const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_NAME_WARNING, ask_message, path);
         if (result.has_value()) return result.value();
     }
@@ -1475,13 +1475,13 @@ core_result vcr_start_playback(std::filesystem::path path)
             const auto source_country_name = g_ctx.vr_country_code_to_country_name(header.rom_country);
             const auto current_country_name = g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code);
             const auto ask_message =
-                std::format(ROM_COUNTRY_WARNING_MESSAGE, source_country_name, current_country_name);
+                std::format(rom_country_warning_message, source_country_name, current_country_name);
             const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CCODE_WARNING, ask_message, path);
             if (result.has_value()) return result.value();
         }
         else if (header.rom_crc1 != ROM_HEADER.CRC1)
         {
-            const auto ask_message = std::format(ROM_CRC_WARNING_MESSAGE, header.rom_crc1, ROM_HEADER.CRC1);
+            const auto ask_message = std::format(rom_crc_warning_message, header.rom_crc1, ROM_HEADER.CRC1);
             const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CRC_WARNING, ask_message, path);
             if (result.has_value()) return result.value();
         }
@@ -1491,7 +1491,7 @@ core_result vcr_start_playback(std::filesystem::path path)
 
     if (!cht_path.empty())
     {
-        std::vector<core_cheat> cheats;
+        std::vector<CoreCheat> cheats;
         if (cht_read_from_file(cht_path, cheats))
         {
             cht_layer_push(cheats);
@@ -1499,11 +1499,11 @@ core_result vcr_start_playback(std::filesystem::path path)
         else
         {
             const auto proceed =
-                g_core->show_ask_dialog(CORE_DLG_VCR_CHEAT_LOAD_ERROR, CHEAT_ERROR_ASK_MESSAGE, "VCR", true);
+                g_core->show_ask_dialog(CORE_DLG_VCR_CHEAT_LOAD_ERROR, cheat_error_ask_message, "VCR", true);
 
             if (!proceed)
             {
-                return Res_Cancelled;
+                return CoreResult::Res_Cancelled;
             }
         }
     }
@@ -1524,7 +1524,7 @@ core_result vcr_start_playback(std::filesystem::path path)
     vcr.inputs = movie_inputs;
     vcr.hdr = header;
 
-    if (header.startFlags & MOVIE_START_FROM_SNAPSHOT)
+    if (header.start_flags & MOVIE_START_FROM_SNAPSHOT)
     {
         g_core->log_info("[VCR] Loading state...");
 
@@ -1533,22 +1533,22 @@ core_result vcr_start_playback(std::filesystem::path path)
 
         if (st_path.empty())
         {
-            return VCR_InvalidSavestate;
+            return CoreResult::VCR_InvalidSavestate;
         }
 
-        vcr.task = task_start_playback_from_snapshot;
+        vcr.task = CoreVCRTask::StartPlaybackFromSnapshot;
 
         g_core->submit_task([=] {
             g_ctx.st_do_file(
-                st_path, core_st_job_load,
-                [](const core_st_callback_info &info, auto &&...) {
+                st_path, CoreSTJob::Load,
+                [](const CoreSTCallbackInfo &info, auto &&...) {
                     std::unique_lock lock(vcr_mtx);
 
-                    if (info.result != Res_Ok)
+                    if (info.result != CoreResult::Res_Ok)
                     {
                         g_core->show_dialog(
                             "Failed to load savestate while starting playback.\nRecording will be stopped.", "VCR",
-                            fsvc_error);
+                            CoreMessageTone::Error);
 
                         {
                             vcr_anti_lock bypass;
@@ -1559,7 +1559,7 @@ core_result vcr_start_playback(std::filesystem::path path)
                     }
 
                     g_core->log_info("[VCR] Starting playback from snapshot...");
-                    vcr.task = task_playback;
+                    vcr.task = CoreVCRTask::Playback;
 
                     {
                         vcr_anti_lock bypass;
@@ -1573,7 +1573,7 @@ core_result vcr_start_playback(std::filesystem::path path)
     }
     else
     {
-        vcr.task = task_start_playback_from_reset;
+        vcr.task = CoreVCRTask::StartPlaybackFromReset;
     }
 
     {
@@ -1584,7 +1584,7 @@ core_result vcr_start_playback(std::filesystem::path path)
         g_core->callbacks.play_movie();
     }
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
 static bool can_seek_to(size_t frame)
@@ -1621,9 +1621,9 @@ std::optional<size_t> vcr_try_resolve_seek_str(const std::string &str)
     return vcr_try_resolve_seek_str_impl(str);
 }
 
-core_vcr_generated_file_info vcr_get_generated_file_info(const std::filesystem::path &movie_path, const uint16_t flags)
+CoreVCRGeneratedFileInfo vcr_get_generated_file_info(const std::filesystem::path &movie_path, const uint16_t flags)
 {
-    core_vcr_generated_file_info info{};
+    CoreVCRGeneratedFileInfo info{};
 
     info.movie_path = movie_path;
 
@@ -1659,20 +1659,20 @@ size_t vcr_find_closest_savestate_before_frame(size_t frame)
     return lowest_distance_frame;
 }
 
-static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool resume, bool warp_modify)
+static CoreResult vcr_begin_seek_impl(std::string str, bool pause_at_end, bool resume, bool warp_modify)
 {
     // Queue of functions to call at the end of the function after the lock is released
     std::queue<std::function<void()>> post_unlock_callbacks{};
 
-    if (vcr.task == task_idle)
+    if (vcr.task == CoreVCRTask::Idle)
     {
-        return VCR_Idle;
+        return CoreResult::VCR_Idle;
     }
 
     const auto resolved_frame = vcr_try_resolve_seek_str_impl(str);
 
-    if (!resolved_frame.has_value()) return VCR_SeekStringMalformed;
-    if (!can_seek_to(resolved_frame.value())) return VCR_InvalidFrame;
+    if (!resolved_frame.has_value()) return CoreResult::VCR_SeekStringMalformed;
+    if (!can_seek_to(resolved_frame.value())) return CoreResult::VCR_InvalidFrame;
 
     auto frame = resolved_frame.value();
 
@@ -1683,7 +1683,7 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
 
         if (!can_seek_to(frame))
         {
-            return VCR_InvalidFrame;
+            return CoreResult::VCR_InvalidFrame;
         }
     }
 
@@ -1706,7 +1706,7 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
             g_ctx.vcr_stop_seek();
         }
 
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     }
 
     if (resume)
@@ -1721,7 +1721,7 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
         goto finish;
     }
 
-    if (vcr.task == task_playback)
+    if (vcr.task == CoreVCRTask::Playback)
     {
         // Fast path: use seek savestates
         // FIXME: Duplicated code, a bit ugly
@@ -1745,11 +1745,11 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
             // cause a deadlock.
             g_core->submit_task([=] {
                 g_ctx.st_do_memory(
-                    vcr.seek_savestates[closest_key], core_st_job_load,
-                    [=](const core_st_callback_info &info, auto &&...) {
-                        if (info.result != Res_Ok)
+                    vcr.seek_savestates[closest_key], CoreSTJob::Load,
+                    [=](const CoreSTCallbackInfo &info, auto &&...) {
+                        if (info.result != CoreResult::Res_Ok)
                         {
-                            g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR", fsvc_error);
+                            g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR", CoreMessageTone::Error);
                             vcr.seek_savestate_loading = false;
 
                             {
@@ -1771,13 +1771,13 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
 
         g_core->log_trace("[VCR] vcr_begin_seek_impl: playback, slow path");
 
-        core_result result;
+        CoreResult result;
         {
             vcr_anti_lock bypass;
             result = g_ctx.vcr_start_playback(vcr.movie_path);
         }
 
-        if (result != Res_Ok)
+        if (result != CoreResult::Res_Ok)
         {
             g_core->log_error(
                 std::format("[VCR] vcr_begin_seek_impl: core_vcr_start_playback failed with error code {}",
@@ -1795,15 +1795,15 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
         goto finish;
     }
 
-    if (vcr.task == task_recording)
+    if (vcr.task == CoreVCRTask::Recording)
     {
         if (g_core->cfg->seek_savestate_interval == 0)
         {
             // TODO: We can't backtrack using savestates, so we'd have to restart into recording mode while restoring
             // the buffer, leave it for the next release...
             g_core->show_dialog(
-                "The seek savestate interval can't be 0 when seeking backwards during recording.", "VCR", fsvc_error);
-            return VCR_SeekSavestateIntervalZero;
+                "The seek savestate interval can't be 0 when seeking backwards during recording.", "VCR", CoreMessageTone::Error);
+            return CoreResult::VCR_SeekSavestateIntervalZero;
         }
 
         const auto target_sample = warp_modify ? vcr.warp_modify_first_difference_frame : frame;
@@ -1841,11 +1841,11 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
         // deadlock.
         g_core->submit_task([=] {
             g_ctx.st_do_memory(
-                vcr.seek_savestates[closest_key], core_st_job_load,
-                [=](const core_st_callback_info &info, auto &&...) {
-                    if (info.result != Res_Ok)
+                vcr.seek_savestates[closest_key], CoreSTJob::Load,
+                [=](const CoreSTCallbackInfo &info, auto &&...) {
+                    if (info.result != CoreResult::Res_Ok)
                     {
-                        g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR", fsvc_error);
+                        g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR", CoreMessageTone::Error);
                         vcr.seek_savestate_loading = false;
 
                         {
@@ -1873,10 +1873,10 @@ finish: {
     g_core->callbacks.readonly_changed((bool)g_core->cfg->vcr_readonly);
     g_core->callbacks.seek_status_changed();
 }
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
-core_result vcr_begin_seek(std::string str, bool pause_at_end)
+CoreResult vcr_begin_seek(std::string str, bool pause_at_end)
 {
     std::unique_lock lock(vcr_mtx);
     return vcr_begin_seek_impl(str, pause_at_end, true, false);
@@ -1916,10 +1916,10 @@ bool vcr_is_seeking()
     return vcr.seek_to_frame.has_value();
 }
 
-bool vcr_is_task_recording(core_vcr_task task)
+bool vcr_is_task_recording(CoreVCRTask task)
 {
-    return task == task_recording || task == task_start_recording_from_reset ||
-           task == task_start_recording_from_snapshot;
+    return task == CoreVCRTask::Recording || task == CoreVCRTask::StartRecordingFromReset ||
+           task == CoreVCRTask::StartRecordingFromSnapshot;
 }
 
 static void vcr_clear_seek_savestates(std::queue<std::function<void()>> &post_unlock_callbacks)
@@ -1941,19 +1941,19 @@ static void vcr_clear_seek_savestates(std::queue<std::function<void()>> &post_un
     }
 }
 
-core_result vcr_stop_all()
+CoreResult vcr_stop_all()
 {
     std::unique_lock lock(vcr_mtx);
     std::queue<std::function<void()>> post_unlock_callbacks{};
 
-    const bool is_recording = vcr.task == task_start_recording_from_reset ||
-                              vcr.task == task_start_recording_from_snapshot || vcr.task == task_recording;
-    const bool is_playback = vcr.task == task_start_playback_from_reset ||
-                             vcr.task == task_start_playback_from_snapshot || vcr.task == task_playback;
+    const bool is_recording = vcr.task == CoreVCRTask::StartRecordingFromReset ||
+                              vcr.task == CoreVCRTask::StartRecordingFromSnapshot || vcr.task == CoreVCRTask::Recording;
+    const bool is_playback = vcr.task == CoreVCRTask::StartPlaybackFromReset ||
+                             vcr.task == CoreVCRTask::StartPlaybackFromSnapshot || vcr.task == CoreVCRTask::Playback;
 
     if (!is_recording && !is_playback)
     {
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     }
 
     vcr_clear_seek_savestates(post_unlock_callbacks);
@@ -1968,9 +1968,9 @@ core_result vcr_stop_all()
 
     if (is_recording)
     {
-        if (vcr.task == task_start_recording_from_reset)
+        if (vcr.task == CoreVCRTask::StartRecordingFromReset)
         {
-            vcr.task = task_idle;
+            vcr.task = CoreVCRTask::Idle;
             g_core->log_info("[VCR] Removing files (nothing recorded)");
 
             auto current_path = std::filesystem::path(vcr.movie_path);
@@ -1982,11 +1982,11 @@ core_result vcr_stop_all()
             std::filesystem::remove(current_path);
         }
 
-        if (vcr.task == task_recording)
+        if (vcr.task == CoreVCRTask::Recording)
         {
             write_movie();
 
-            vcr.task = task_idle;
+            vcr.task = CoreVCRTask::Idle;
 
             g_core->log_info(
                 std::format("[VCR] Recording stopped. Recorded %ld input samples", vcr.hdr.length_samples));
@@ -1998,12 +1998,12 @@ core_result vcr_stop_all()
             g_core->callbacks.task_changed(vcr.task);
         }
 
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     }
 
     if (is_playback)
     {
-        vcr.task = task_idle;
+        vcr.task = CoreVCRTask::Idle;
         cht_layer_pop();
 
         {
@@ -2013,10 +2013,10 @@ core_result vcr_stop_all()
             g_core->callbacks.stop_movie();
         }
 
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     }
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
 std::filesystem::path vcr_get_path()
@@ -2025,7 +2025,7 @@ std::filesystem::path vcr_get_path()
     return vcr.movie_path;
 }
 
-core_vcr_task vcr_get_task()
+CoreVCRTask vcr_get_task()
 {
     return vcr.task;
 }
@@ -2033,19 +2033,19 @@ core_vcr_task vcr_get_task()
 uint32_t vcr_get_length_samples()
 {
     std::unique_lock lock(vcr_mtx);
-    return vcr.task == task_idle ? UINT32_MAX : vcr.hdr.length_samples;
+    return vcr.task == CoreVCRTask::Idle ? UINT32_MAX : vcr.hdr.length_samples;
 }
 
 uint32_t vcr_get_length_vis()
 {
     std::unique_lock lock(vcr_mtx);
-    return vcr.task == task_idle ? UINT32_MAX : vcr.hdr.length_vis;
+    return vcr.task == CoreVCRTask::Idle ? UINT32_MAX : vcr.hdr.length_vis;
 }
 
 int32_t vcr_get_current_vi()
 {
     std::unique_lock lock(vcr_mtx);
-    return vcr.task == task_idle ? -1 : vcr.current_vi;
+    return vcr.task == CoreVCRTask::Idle ? -1 : vcr.current_vi;
 }
 
 std::vector<CoreButtons> vcr_get_inputs()
@@ -2080,23 +2080,23 @@ size_t vcr_find_first_input_difference(const std::vector<CoreButtons> &first, co
     return SIZE_MAX;
 }
 
-core_result vcr_begin_warp_modify(const std::vector<CoreButtons> &inputs)
+CoreResult vcr_begin_warp_modify(const std::vector<CoreButtons> &inputs)
 {
     std::unique_lock lock(vcr_mtx);
 
     if (vcr.warp_modify_active)
     {
-        return VCR_WarpModifyAlreadyRunning;
+        return CoreResult::VCR_WarpModifyAlreadyRunning;
     }
 
-    if (vcr.task != task_recording)
+    if (vcr.task != CoreVCRTask::Recording)
     {
-        return VCR_WarpModifyNeedsRecordingTask;
+        return CoreResult::VCR_WarpModifyNeedsRecordingTask;
     }
 
     if (inputs.empty())
     {
-        return VCR_WarpModifyEmptyInputBuffer;
+        return CoreResult::VCR_WarpModifyEmptyInputBuffer;
     }
 
     vcr.warp_modify_first_difference_frame = vcr_find_first_input_difference(vcr.inputs, inputs);
@@ -2112,7 +2112,7 @@ core_result vcr_begin_warp_modify(const std::vector<CoreButtons> &inputs)
             g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);
         }
 
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     }
 
     if (vcr.warp_modify_first_difference_frame > vcr.current_sample)
@@ -2133,7 +2133,7 @@ core_result vcr_begin_warp_modify(const std::vector<CoreButtons> &inputs)
             g_core->callbacks.rerecords_changed(get_rerecord_count());
         }
 
-        return Res_Ok;
+        return CoreResult::Res_Ok;
     }
 
     const auto target_sample = std::min(inputs.size(), (size_t)vcr.current_sample);
@@ -2141,7 +2141,7 @@ core_result vcr_begin_warp_modify(const std::vector<CoreButtons> &inputs)
     const auto result = vcr_begin_seek_impl(
         std::to_string(target_sample), emu_paused || g_r4300.frame_advance_outstanding != 0, false, true);
 
-    if (result != Res_Ok)
+    if (result != CoreResult::Res_Ok)
     {
         return result;
     }
@@ -2161,7 +2161,7 @@ core_result vcr_begin_warp_modify(const std::vector<CoreButtons> &inputs)
         g_core->callbacks.rerecords_changed(get_rerecord_count());
     }
 
-    return Res_Ok;
+    return CoreResult::Res_Ok;
 }
 
 bool vcr_get_warp_modify_status()
@@ -2202,5 +2202,5 @@ void vcr_on_vi()
 
     vcr.current_vi++;
 
-    if (vcr.task == task_recording && !vcr.warp_modify_active) vcr.hdr.length_vis = vcr.current_vi;
+    if (vcr.task == CoreVCRTask::Recording && !vcr.warp_modify_active) vcr.hdr.length_vis = vcr.current_vi;
 }

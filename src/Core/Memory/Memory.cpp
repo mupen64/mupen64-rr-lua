@@ -23,26 +23,26 @@ static int32_t frame;
 /**
  * The delay, in cycles, before the RSP signals task completion.
  */
-constexpr size_t SP_INT_DELAY = 1000;
+constexpr size_t sp_int_delay = 1000;
 
 /**
  * The delay, in cycles, before the RDP signals task completion when accurate_rdp_completion is enabled.
- * Only the ordering relative to SP_INT_DELAY is meaningful; the exact value is empirical.
+ * Only the ordering relative to sp_int_delay is meaningful; the exact value is empirical.
  */
-constexpr size_t DP_INT_ACCURATE_DELAY = 20000;
+constexpr size_t dp_int_accurate_delay = 20000;
 
 /* definitions of the rcp's structures and memory area */
-core_rdram_reg rdram_register;
-core_mips_reg MI_register;
-core_pi_reg pi_register;
-core_sp_reg sp_register;
-core_rsp_reg rsp_register;
-core_si_reg si_register;
-core_vi_reg vi_register;
-core_ri_reg ri_register;
-core_ai_reg ai_register;
-core_dpc_reg dpc_register;
-core_dps_reg dps_register;
+CoreRDRAMReg rdram_register;
+CoreMIPSReg MI_register;
+CorePIReg pi_register;
+CoreSPReg sp_register;
+CoreRSPReg rsp_register;
+CoreSIReg si_register;
+CoreVIReg vi_register;
+CoreRIReg ri_register;
+CoreAIReg ai_register;
+CoreDPCReg dpc_register;
+CoreDPSReg dps_register;
 uint32_t rdram[0x800000 / 4];
 uint8_t sram[0x8000];
 uint8_t flashram[0x20000];
@@ -1161,8 +1161,8 @@ void update_SP()
             // Signalling both at the same instant breaks games that chain several RSP tasks per frame: they
             // release their queue slot before the chain reaches the task that arms the display.
             // The legacy timing stays the default because changing it desynchronizes existing movies.
-            add_interrupt_event(SP_INT, SP_INT_DELAY);
-            add_interrupt_event(DP_INT, g_core->cfg->accurate_rdp_completion ? DP_INT_ACCURATE_DELAY : SP_INT_DELAY);
+            add_interrupt_event(SP_INT, sp_int_delay);
+            add_interrupt_event(DP_INT, g_core->cfg->accurate_rdp_completion ? dp_int_accurate_delay : sp_int_delay);
 
             g_core->callbacks.frame();
 
@@ -1275,7 +1275,7 @@ void update_DPC()
             (dpc_register.end_valid << 9) | (dpc_register.start_valid << 10));
 }
 
-bool check_register_validity(const core_si_reg *si_reg)
+bool check_register_validity(const CoreSIReg *si_reg)
 {
     return si_reg->si_dram_addr <= sizeof(rdram) - 64;
 }

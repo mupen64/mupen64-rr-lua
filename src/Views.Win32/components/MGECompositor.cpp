@@ -10,9 +10,9 @@
 #include <Common.Views/Messages.hpp>
 #include <lua/LuaCallbacks.hpp>
 
-constexpr auto CONTROL_CLASS_NAME = "game_control";
-constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;
-constexpr float CLEAR_COLOR[4] = {0, 0, 0, 1};
+constexpr auto control_class_name = "game_control";
+constexpr DXGI_FORMAT texture_format = DXGI_FORMAT_B8G8R8A8_UNORM;
+constexpr float clear_color[4] = {0, 0, 0, 1};
 
 const std::string VERTEX_SHADER = R"(
     cbuffer CB : register(b0) {}
@@ -56,7 +56,7 @@ const std::string FRAGMENT_SHADER = R"(
     }
     )";
 
-struct t_mge_context
+struct MgeContext
 {
     int32_t last_width{};
     int32_t last_height{};
@@ -77,7 +77,7 @@ struct t_mge_context
     ComPtr<ID3D11PixelShader> ps;
 };
 
-static t_mge_context mge_context{};
+static MgeContext mge_context{};
 
 static void create_d3d(const HWND hwnd)
 {
@@ -200,7 +200,7 @@ static void ensure_texture_exists_with_size(const int w, const int h)
     desc.Height = (UINT)h;
     desc.MipLevels = 1;
     desc.ArraySize = 1;
-    desc.Format = TEXTURE_FORMAT;
+    desc.Format = texture_format;
     desc.SampleDesc.Count = 1;
     desc.Usage = D3D11_USAGE_DEFAULT;
     desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -259,7 +259,7 @@ static void render_and_present()
     vp.MaxDepth = 1.0f;
     mge_context.context->RSSetViewports(1, &vp);
 
-    mge_context.context->ClearRenderTargetView(mge_context.rtv.Get(), CLEAR_COLOR);
+    mge_context.context->ClearRenderTargetView(mge_context.rtv.Get(), clear_color);
 
     // Bind SRV
     ID3D11ShaderResourceView *srvs[] = {mge_context.srv.Get()};
@@ -335,7 +335,7 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 void MGECompositor::create(HWND hwnd)
 {
     mge_context.hwnd = CreateWindow(
-        CONTROL_CLASS_NAME, "", WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr, g_main_ctx.hinst, nullptr);
+        control_class_name, "", WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr, g_main_ctx.hinst, nullptr);
 }
 
 void MGECompositor::init()
@@ -345,7 +345,7 @@ void MGECompositor::init()
     wndclass.lpfnWndProc = (WNDPROC)wndproc;
     wndclass.hInstance = g_main_ctx.hinst;
     wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wndclass.lpszClassName = CONTROL_CLASS_NAME;
+    wndclass.lpszClassName = control_class_name;
     RegisterClass(&wndclass);
 
     Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(

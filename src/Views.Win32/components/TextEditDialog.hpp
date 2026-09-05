@@ -14,7 +14,7 @@ namespace TextEditDialog
 /**
  * \brief Parameters for the text edit dialog.
  */
-struct t_params
+struct Params
 {
     /**
      * \brief The parent window of the dialog.
@@ -42,5 +42,5 @@ struct t_params
  * \param params The parameters for the text edit dialog.
  * \return The text if the user clicked OK, or std::nullopt if the user clicked Cancel.
  */
-std::optional<std::string> show(const t_params &params);
+std::optional<std::string> show(const Params &params);
 } // namespace TextEditDialog

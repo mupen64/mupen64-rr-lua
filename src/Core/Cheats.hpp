@@ -8,17 +8,17 @@
 
 void cht_execute();
 
-bool cht_compile(std::string_view code, core_cheat &cheat);
-void cht_get_override_stack(std::stack<std::vector<core_cheat>> &stack);
-void cht_get_list(std::vector<core_cheat> &list);
-void cht_set_list(const std::vector<core_cheat> &list);
+bool cht_compile(std::string_view code, CoreCheat &cheat);
+void cht_get_override_stack(std::stack<std::vector<CoreCheat>> &stack);
+void cht_get_list(std::vector<CoreCheat> &list);
+void cht_set_list(const std::vector<CoreCheat> &list);
 
 /**
  * \brief Pushes the specified cheat collection layer onto the execution stack.
  * This overrides the current execution list with the one provided until the cht_layer_pop function is called; the
  * topmost layer is always used.
  */
-void cht_layer_push(const std::vector<core_cheat> &);
+void cht_layer_push(const std::vector<CoreCheat> &);
 
 /**
  * \brief Pops the current cheat collection layer from the execution stack. If the stack is empty, the host-provided
@@ -32,7 +32,7 @@ void cht_layer_pop();
  * \param cheats The cheat vector to write the cheats into.
  * \return Whether the operation succeeded.
  */
-bool cht_read_from_file(const std::filesystem::path &path, std::vector<core_cheat> &cheats);
+bool cht_read_from_file(const std::filesystem::path &path, std::vector<CoreCheat> &cheats);
 
 /**
  * \brief Serializes the host-provided cheat collection to a string which can be understood by cht_read_from_file. If

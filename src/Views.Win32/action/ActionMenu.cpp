@@ -12,7 +12,7 @@
 
 const auto MANAGED_MENU_CTX = "Mupen64_ManagedMenuContext";
 
-struct t_menu_item
+struct MenuItem
 {
     uint16_t id{};
     size_t position_under_parent{};
@@ -21,46 +21,46 @@ struct t_menu_item
     bool has_menu{};
 
     std::string action_path{};
-    std::vector<t_menu_item> children{};
+    std::vector<MenuItem> children{};
 
   private:
     std::string m_path{};
     bool m_has_separator{};
 
   public:
-    explicit t_menu_item(const std::string &path);
+    explicit MenuItem(const std::string &path);
 
     /**
      * \brief Performs a depth-first iteration over the menu item tree, applying the given action to each item. The
      * action is also applied to the initial item itself.
      */
-    void iterate_children_and_self(const std::function<void(t_menu_item &item)> &action);
+    void iterate_children_and_self(const std::function<void(MenuItem &item)> &action);
 
     [[nodiscard]] const auto &raw_path() const { return m_path; }
 
     [[nodiscard]] const bool &has_separator() const { return m_has_separator; }
 };
 
-struct t_action_menu_context
+struct ActionMenuContext
 {
     HWND hwnd{};
     HMENU menu_bar{};
-    t_menu_item menu{"Root"};
+    MenuItem menu{"Root"};
     size_t menu_id_counter{};
     std::set<std::string> enabled_state_invalidated_actions{};
     std::set<std::string> active_state_invalidated_actions{};
     std::set<std::string> display_name_invalidated_actions{};
 };
 
-struct t_action_menu_global_context
+struct ActionMenuGlobalContext
 {
-    std::vector<t_action_menu_context *> active_contexts{};
+    std::vector<ActionMenuContext *> active_contexts{};
     std::vector<std::string> actions{};
 };
 
-static t_action_menu_global_context g_am_ctx{};
+static ActionMenuGlobalContext g_am_ctx{};
 
-t_menu_item::t_menu_item(const std::string &path)
+MenuItem::MenuItem(const std::string &path)
 {
     this->m_path = path;
 
@@ -68,7 +68,7 @@ t_menu_item::t_menu_item(const std::string &path)
     this->m_has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
 }
 
-void t_menu_item::iterate_children_and_self(const std::function<void(t_menu_item &item)> &action)
+void MenuItem::iterate_children_and_self(const std::function<void(MenuItem &item)> &action)
 {
     action(*this);
     for (auto &child : children)
@@ -81,11 +81,11 @@ void t_menu_item::iterate_children_and_self(const std::function<void(t_menu_item
  * \brief Walks the command tree to find the command item corresponding to the "Name" segment of the fully-qualified
  * action path.
  */
-static t_menu_item *find_item_by_path(t_action_menu_context &ctx, const std::string &path)
+static MenuItem *find_item_by_path(ActionMenuContext &ctx, const std::string &path)
 {
-    t_menu_item *found_item = nullptr;
+    MenuItem *found_item = nullptr;
 
-    ctx.menu.iterate_children_and_self([&](t_menu_item &item) {
+    ctx.menu.iterate_children_and_self([&](MenuItem &item) {
         if (item.raw_path() == path)
         {
             found_item = &item;
@@ -98,7 +98,7 @@ static t_menu_item *find_item_by_path(t_action_menu_context &ctx, const std::str
 /**
  * \brief Gets the effective display name for the given menu item, including any accelerator text if applicable.
  */
-static std::string get_display_name(const t_menu_item &item)
+static std::string get_display_name(const MenuItem &item)
 {
     auto display_name = ActionManager::get_display_name(item.raw_path());
 
@@ -118,7 +118,7 @@ static std::string get_display_name(const t_menu_item &item)
 /**
  * \brief Updates the display names of the specified menu items.
  */
-static void update_display_names(t_action_menu_context &ctx, const std::set<std::string> &actions)
+static void update_display_names(ActionMenuContext &ctx, const std::set<std::string> &actions)
 {
     MENUITEMINFO mii{};
     mii.cbSize = sizeof(MENUITEMINFO);
@@ -151,7 +151,7 @@ static void update_display_names(t_action_menu_context &ctx, const std::set<std:
 /**
  * \brief Updates the enabled states of the specified menu items.
  */
-static void update_enabled_states(t_action_menu_context &ctx, const std::set<std::string> &actions)
+static void update_enabled_states(ActionMenuContext &ctx, const std::set<std::string> &actions)
 {
     for (const auto &action : actions)
     {
@@ -169,7 +169,7 @@ static void update_enabled_states(t_action_menu_context &ctx, const std::set<std
 /**
  * \brief Updates the active states of the specified menu items.
  */
-static void update_active_states(t_action_menu_context &ctx, const std::set<std::string> &actions)
+static void update_active_states(ActionMenuContext &ctx, const std::set<std::string> &actions)
 {
     for (const auto &action : actions)
     {
@@ -184,10 +184,10 @@ static void update_active_states(t_action_menu_context &ctx, const std::set<std:
     }
 }
 
-static bool handle_menu_interaction(t_action_menu_context &ctx, const size_t id)
+static bool handle_menu_interaction(ActionMenuContext &ctx, const size_t id)
 {
     std::string found_action_path;
-    ctx.menu.iterate_children_and_self([&](const t_menu_item &item) {
+    ctx.menu.iterate_children_and_self([&](const MenuItem &item) {
         if (item.id == id)
         {
             found_action_path = item.action_path;
@@ -224,9 +224,9 @@ static bool is_visible_in_menu(const std::vector<std::string> &action_path_segme
 /**
  * \brief Builds the initial menu tree based on the registered actions' paths.
  */
-static void build_initial_menu_tree(t_action_menu_context &ctx)
+static void build_initial_menu_tree(ActionMenuContext &ctx)
 {
-    ctx.menu = t_menu_item("Root");
+    ctx.menu = MenuItem("Root");
 
     for (const auto &path : g_am_ctx.actions)
     {
@@ -239,14 +239,14 @@ static void build_initial_menu_tree(t_action_menu_context &ctx)
             continue;
         }
 
-        t_menu_item *current = &ctx.menu;
+        MenuItem *current = &ctx.menu;
 
         for (size_t i = 0; i < parts.size(); ++i)
         {
             path_up_to_here += parts[i];
 
             const auto it = std::ranges::find_if(
-                current->children, [&](const t_menu_item &item) { return item.raw_path() == path_up_to_here; });
+                current->children, [&](const MenuItem &item) { return item.raw_path() == path_up_to_here; });
 
             if (it != current->children.end())
             {
@@ -271,7 +271,7 @@ static void build_initial_menu_tree(t_action_menu_context &ctx)
 /**
  * \brief Adds menu items to the specified parent menu based on the command tree structure.
  */
-static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const HMENU parent_menu)
+static void add_menu_items(ActionMenuContext &ctx, MenuItem &item, const HMENU parent_menu)
 {
     ctx.menu_id_counter++;
     NEED(ctx.menu_id_counter <= IDM_RESERVED_END,
@@ -331,7 +331,7 @@ static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const 
 /**
  * \brief Deletes the current menu of the context's window and sets it to a new menu.
  */
-static void reset_menu(t_action_menu_context &ctx)
+static void reset_menu(ActionMenuContext &ctx)
 {
     const HMENU prev_menu = GetMenu(ctx.hwnd);
 
@@ -341,7 +341,7 @@ static void reset_menu(t_action_menu_context &ctx)
     if (IsMenu(prev_menu)) DestroyMenu(prev_menu);
 }
 
-static void build_menu(t_action_menu_context &ctx)
+static void build_menu(ActionMenuContext &ctx)
 {
     SetWindowRedraw(ctx.hwnd, false);
 
@@ -369,7 +369,7 @@ static void build_menu(t_action_menu_context &ctx)
 static LRESULT CALLBACK action_menu_wnd_subclass_proc(
     HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
 {
-    auto ctx = static_cast<t_action_menu_context *>(GetProp(hwnd, MANAGED_MENU_CTX));
+    auto ctx = static_cast<ActionMenuContext *>(GetProp(hwnd, MANAGED_MENU_CTX));
 
     switch (msg)
     {
@@ -450,7 +450,7 @@ void ActionMenu::init()
 
 bool ActionMenu::add_managed_menu(const HWND hwnd)
 {
-    auto context = new t_action_menu_context();
+    auto context = new ActionMenuContext();
     context->hwnd = hwnd;
     g_am_ctx.active_contexts.push_back(context);
 
