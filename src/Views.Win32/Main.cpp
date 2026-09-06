@@ -1137,7 +1137,9 @@ void Main::request_size(uint32_t width, uint32_t height)
     GetClientRect(g_main_ctx.hwnd, &wnd_rc);
     wnd_rc.right = width;
     wnd_rc.bottom = height + statusbar_rc.bottom;
-    AdjustWindowRect(&wnd_rc, GetWindowLong(g_main_ctx.hwnd, GWL_STYLE), GetMenu(g_main_ctx.hwnd) != NULL);
+
+    const auto window_style = GetWindowLong(g_main_ctx.hwnd, GWL_STYLE) & ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
+    AdjustWindowRect(&wnd_rc, window_style, GetMenu(g_main_ctx.hwnd) != NULL);
     SetWindowPos(g_main_ctx.hwnd, NULL, 0, 0, wnd_rc.right - wnd_rc.left, wnd_rc.bottom - wnd_rc.top,
         SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE | SWP_ASYNCWINDOWPOS);
 }
