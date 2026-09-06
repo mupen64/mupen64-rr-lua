@@ -641,8 +641,8 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
         const auto scale = GetDpiForWindow(hwnd) / 96.0;
 
-        ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, joystick_control_class, "", WS_CHILD | WS_VISIBLE, 8, 4,
-            131 * scale, 131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
+        ctx->joy_hwnd = CreateWindowEx(0, joystick_control_class, "", WS_CHILD | WS_VISIBLE, 8, 4, 131 * scale,
+            131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
 
         // It can take a bit until we receive the first GetKeys, so let's just show some basic default state in the
         // meanwhile
