@@ -55,6 +55,21 @@ struct Context
 
 using Mode = Context::Mode;
 
+inline Gdiplus::Color contrastize(const Gdiplus::Color &color, int amount, bool dark_background)
+{
+    const auto contrastize_component = [](BYTE component, int amount, bool dark_background) {
+        if (dark_background)
+        {
+            return static_cast<BYTE>(component + (255 - component) * amount / 100);
+        }
+        return static_cast<BYTE>(component - component * amount / 100);
+    };
+
+    return Gdiplus::Color(color.GetAlpha(), contrastize_component(color.GetRed(), amount, dark_background),
+        contrastize_component(color.GetGreen(), amount, dark_background),
+        contrastize_component(color.GetBlue(), amount, dark_background));
+}
+
 inline void get_cursor_to_joystick_position(const HWND hwnd, int &x, int &y)
 {
     RECT rc{};
@@ -311,15 +326,7 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         const auto luminance = 0.299 * ctx->clear_color.GetRed() + 0.587 * ctx->clear_color.GetGreen() +
                                0.114 * ctx->clear_color.GetBlue();
         const bool dark_background = luminance < 128.0;
-        const auto contrastize = [dark_background](BYTE component, int amount) {
-            if (dark_background)
-            {
-                return static_cast<BYTE>(component + (255 - component) * amount / 100);
-            }
-            return static_cast<BYTE>(component - component * amount / 100);
-        };
-        const Gdiplus::Color border_color(255, contrastize(ctx->clear_color.GetRed(), 25),
-            contrastize(ctx->clear_color.GetGreen(), 25), contrastize(ctx->clear_color.GetBlue(), 25));
+        const Gdiplus::Color border_color = contrastize(ctx->clear_color, 25, dark_background);
         const auto ellipse_color = dark_background ? Gdiplus::Color::Black : Gdiplus::Color::White;
 
         ctx->border_pen->SetColor(border_color);
