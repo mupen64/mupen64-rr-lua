@@ -12,11 +12,11 @@
 
 #include <Core/Types.hpp>
 
-class CoreResult : public QObject
+class QtCoreResult : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
     QML_SINGLETON
+    QML_NAMED_ELEMENT(CoreResult)
   public:
     /**
      * @brief Result returned by the core.
@@ -139,9 +139,9 @@ QML_ELEMENT
 
 enum Value
 {
-    Error = CoreMessageTone::Error,
-    Warning = CoreMessageTone::Warn,
-    Information = CoreMessageTone::Info,
+    Error = static_cast<int>(::CoreMessageTone::Error),
+    Warning = static_cast<int>(::CoreMessageTone::Warn),
+    Information = static_cast<int>(::CoreMessageTone::Info),
 };
 Q_ENUM_NS(Value)
 

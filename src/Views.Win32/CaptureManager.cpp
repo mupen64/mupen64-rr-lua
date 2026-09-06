@@ -264,7 +264,7 @@ bool stop_capture_impl()
 
     m_capturing = false;
     g_config.core.render_throttling = true;
-    g_main_ctx.core_ctx->vr_on_render_throttling_changed();
+    g_main_ctx.CoreCtx->vr_on_render_throttling_changed();
 
     Messenger::broadcast<Messenger::Message::CapturingChanged>(false);
 
@@ -320,7 +320,7 @@ bool start_capture_impl(
         .path = m_current_path,
         .width = (uint32_t)m_video_width,
         .height = (uint32_t)m_video_height,
-        .fps = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code),
+        .fps = g_main_ctx.CoreCtx->vr_get_vis_per_second(g_main_ctx.CoreCtx->vr_get_rom_header()->Country_code),
         .arate = (uint32_t)m_audio_freq,
         .ask_for_capture_settings = ask_for_capture_settings,
     };
@@ -340,7 +340,7 @@ bool start_capture_impl(
 
     m_capturing = true;
     g_config.core.render_throttling = false;
-    g_main_ctx.core_ctx->vr_on_render_throttling_changed();
+    g_main_ctx.CoreCtx->vr_on_render_throttling_changed();
 
     Messenger::broadcast<Messenger::Message::CapturingChanged>(true);
 
@@ -350,27 +350,27 @@ bool start_capture_impl(
 void start_capture(std::filesystem::path path, Config::EncoderType encoder_type, const bool ask_for_capture_settings,
     const std::function<void(bool)> &callback)
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         const auto result = start_capture_impl(path, encoder_type, ask_for_capture_settings);
         if (callback)
         {
             callback(result);
         }
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
     });
 }
 
 void stop_capture(const std::function<void(bool)> &callback)
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         const auto result = stop_capture_impl();
         if (callback)
         {
             callback(result);
         }
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
     });
 }
 
@@ -415,11 +415,11 @@ void ai_len_changed()
     std::lock_guard lock(m_mutex);
 
     const auto p = reinterpret_cast<short *>(
-        (char *)g_main_ctx.core_ctx->rdram + (g_main_ctx.core_ctx->ai_register->ai_dram_addr & 0xFFFFFF));
+        (char *)g_main_ctx.CoreCtx->rdram + (g_main_ctx.CoreCtx->ai_register->ai_dram_addr & 0xFFFFFF));
     const auto buf = (char *)p;
-    const int ai_len = (int)g_main_ctx.core_ctx->ai_register->ai_len;
+    const int ai_len = (int)g_main_ctx.CoreCtx->ai_register->ai_len;
 
-    m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
+    m_audio_bitrate = (int)g_main_ctx.CoreCtx->ai_register->ai_bitrate + 1;
 
     if (!m_capturing)
     {
@@ -438,15 +438,15 @@ void ai_len_changed()
 
 void ai_dacrate_changed(CoreSystemType type)
 {
-    m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
+    m_audio_bitrate = (int)g_main_ctx.CoreCtx->ai_register->ai_bitrate + 1;
 
     switch (type)
     {
     case CoreSystemType::NTSC:
-        m_audio_freq = (int)(48681812 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
+        m_audio_freq = (int)(48681812 / (g_main_ctx.CoreCtx->ai_register->ai_dacrate + 1));
         break;
     case CoreSystemType::PAL:
-        m_audio_freq = (int)(49656530 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
+        m_audio_freq = (int)(49656530 / (g_main_ctx.CoreCtx->ai_register->ai_dacrate + 1));
         break;
     default:
         assert(false);
@@ -476,7 +476,7 @@ void core_executing_changed(bool value)
 
     if (!value || !m_capturing) return;
 
-    const auto vis = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+    const auto vis = g_main_ctx.CoreCtx->vr_get_vis_per_second(g_main_ctx.CoreCtx->vr_get_rom_header()->Country_code);
 
     if (vis != m_encoder_params.fps)
     {

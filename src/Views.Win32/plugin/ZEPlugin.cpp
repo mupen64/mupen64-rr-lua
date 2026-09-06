@@ -280,33 +280,33 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         gfx_info.main_hwnd = g_main_ctx.hwnd;
         gfx_info.statusbar_hwnd = g_config.is_statusbar_enabled ? Statusbar::hwnd() : nullptr;
         gfx_info.byteswapped = 1;
-        gfx_info.rom = g_main_ctx.core_ctx->rom;
-        gfx_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-        gfx_info.dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
-        gfx_info.imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
-        gfx_info.mi_intr_reg = &g_main_ctx.core_ctx->mi_register->mi_intr_reg;
-        gfx_info.dpc_start_reg = &g_main_ctx.core_ctx->dpc_register->dpc_start;
-        gfx_info.dpc_end_reg = &g_main_ctx.core_ctx->dpc_register->dpc_end;
-        gfx_info.dpc_current_reg = &g_main_ctx.core_ctx->dpc_register->dpc_current;
-        gfx_info.dpc_status_reg = &g_main_ctx.core_ctx->dpc_register->dpc_status;
-        gfx_info.dpc_clock_reg = &g_main_ctx.core_ctx->dpc_register->dpc_clock;
-        gfx_info.dpc_bufbusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_bufbusy;
-        gfx_info.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
-        gfx_info.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
-        gfx_info.vi_status_reg = &g_main_ctx.core_ctx->vi_register->vi_status;
-        gfx_info.vi_origin_reg = &g_main_ctx.core_ctx->vi_register->vi_origin;
-        gfx_info.vi_width_reg = &g_main_ctx.core_ctx->vi_register->vi_width;
-        gfx_info.vi_intr_reg = &g_main_ctx.core_ctx->vi_register->vi_v_intr;
-        gfx_info.vi_v_current_line_reg = &g_main_ctx.core_ctx->vi_register->vi_current;
-        gfx_info.vi_timing_reg = &g_main_ctx.core_ctx->vi_register->vi_burst;
-        gfx_info.vi_v_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_v_sync;
-        gfx_info.vi_h_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_h_sync;
-        gfx_info.vi_leap_reg = &g_main_ctx.core_ctx->vi_register->vi_leap;
-        gfx_info.vi_h_start_reg = &g_main_ctx.core_ctx->vi_register->vi_h_start;
-        gfx_info.vi_v_start_reg = &g_main_ctx.core_ctx->vi_register->vi_v_start;
-        gfx_info.vi_v_burst_reg = &g_main_ctx.core_ctx->vi_register->vi_v_burst;
-        gfx_info.vi_x_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_x_scale;
-        gfx_info.vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
+        gfx_info.rom = g_main_ctx.CoreCtx->rom;
+        gfx_info.rdram = (uint8_t *)g_main_ctx.CoreCtx->rdram;
+        gfx_info.dmem = (uint8_t *)g_main_ctx.CoreCtx->sp_dmem;
+        gfx_info.imem = (uint8_t *)g_main_ctx.CoreCtx->sp_imem;
+        gfx_info.mi_intr_reg = &g_main_ctx.CoreCtx->mi_register->mi_intr_reg;
+        gfx_info.dpc_start_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_start;
+        gfx_info.dpc_end_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_end;
+        gfx_info.dpc_current_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_current;
+        gfx_info.dpc_status_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_status;
+        gfx_info.dpc_clock_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_clock;
+        gfx_info.dpc_bufbusy_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_bufbusy;
+        gfx_info.dpc_pipebusy_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_pipebusy;
+        gfx_info.dpc_tmem_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_tmem;
+        gfx_info.vi_status_reg = &g_main_ctx.CoreCtx->vi_register->vi_status;
+        gfx_info.vi_origin_reg = &g_main_ctx.CoreCtx->vi_register->vi_origin;
+        gfx_info.vi_width_reg = &g_main_ctx.CoreCtx->vi_register->vi_width;
+        gfx_info.vi_intr_reg = &g_main_ctx.CoreCtx->vi_register->vi_v_intr;
+        gfx_info.vi_v_current_line_reg = &g_main_ctx.CoreCtx->vi_register->vi_current;
+        gfx_info.vi_timing_reg = &g_main_ctx.CoreCtx->vi_register->vi_burst;
+        gfx_info.vi_v_sync_reg = &g_main_ctx.CoreCtx->vi_register->vi_v_sync;
+        gfx_info.vi_h_sync_reg = &g_main_ctx.CoreCtx->vi_register->vi_h_sync;
+        gfx_info.vi_leap_reg = &g_main_ctx.CoreCtx->vi_register->vi_leap;
+        gfx_info.vi_h_start_reg = &g_main_ctx.CoreCtx->vi_register->vi_h_start;
+        gfx_info.vi_v_start_reg = &g_main_ctx.CoreCtx->vi_register->vi_v_start;
+        gfx_info.vi_v_burst_reg = &g_main_ctx.CoreCtx->vi_register->vi_v_burst;
+        gfx_info.vi_x_scale_reg = &g_main_ctx.CoreCtx->vi_register->vi_x_scale;
+        gfx_info.vi_y_scale_reg = &g_main_ctx.CoreCtx->vi_register->vi_y_scale;
         gfx_info.check_interrupts = dummy_void;
 
         initiate_gfx(gfx_info);
@@ -358,17 +358,17 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         audio_info.main_hwnd = g_main_ctx.hwnd;
         audio_info.hinst = g_main_ctx.hinst;
         audio_info.byteswapped = 1;
-        audio_info.rom = g_main_ctx.core_ctx->rom;
-        audio_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-        audio_info.dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
-        audio_info.imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
+        audio_info.rom = g_main_ctx.CoreCtx->rom;
+        audio_info.rdram = (uint8_t *)g_main_ctx.CoreCtx->rdram;
+        audio_info.dmem = (uint8_t *)g_main_ctx.CoreCtx->sp_dmem;
+        audio_info.imem = (uint8_t *)g_main_ctx.CoreCtx->sp_imem;
         audio_info.mi_intr_reg = &dummy_dw;
-        audio_info.ai_dram_addr_reg = &g_main_ctx.core_ctx->ai_register->ai_dram_addr;
-        audio_info.ai_len_reg = &g_main_ctx.core_ctx->ai_register->ai_len;
-        audio_info.ai_control_reg = &g_main_ctx.core_ctx->ai_register->ai_control;
+        audio_info.ai_dram_addr_reg = &g_main_ctx.CoreCtx->ai_register->ai_dram_addr;
+        audio_info.ai_len_reg = &g_main_ctx.CoreCtx->ai_register->ai_len;
+        audio_info.ai_control_reg = &g_main_ctx.CoreCtx->ai_register->ai_control;
         audio_info.ai_status_reg = &dummy_dw;
-        audio_info.ai_dacrate_reg = &g_main_ctx.core_ctx->ai_register->ai_dacrate;
-        audio_info.ai_bitrate_reg = &g_main_ctx.core_ctx->ai_register->ai_bitrate;
+        audio_info.ai_dacrate_reg = &g_main_ctx.CoreCtx->ai_register->ai_dacrate;
+        audio_info.ai_bitrate_reg = &g_main_ctx.CoreCtx->ai_register->ai_bitrate;
 
         audio_info.check_interrupts = dummy_void;
 
@@ -402,7 +402,7 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         control_info.main_hwnd = g_main_ctx.hwnd;
         control_info.hinst = g_main_ctx.hinst;
         control_info.byteswapped = 1;
-        control_info.header = g_main_ctx.core_ctx->rom;
+        control_info.header = g_main_ctx.CoreCtx->rom;
 
         std::array<ZESpec::Controller, 4> tmp_controllers{};
         control_info.controllers = tmp_controllers.data();
@@ -428,27 +428,27 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         FUNC(funcs.rsp_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
 
         rsp_info.byteswapped = 1;
-        rsp_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-        rsp_info.dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
-        rsp_info.imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
-        rsp_info.mi_intr_reg = &g_main_ctx.core_ctx->mi_register->mi_intr_reg;
-        rsp_info.sp_mem_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_mem_addr_reg;
-        rsp_info.sp_dram_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_dram_addr_reg;
-        rsp_info.sp_rd_len_reg = &g_main_ctx.core_ctx->sp_register->sp_rd_len_reg;
-        rsp_info.sp_wr_len_reg = &g_main_ctx.core_ctx->sp_register->sp_wr_len_reg;
-        rsp_info.sp_status_reg = &g_main_ctx.core_ctx->sp_register->sp_status_reg;
-        rsp_info.sp_dma_full_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_full_reg;
-        rsp_info.sp_dma_busy_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_busy_reg;
-        rsp_info.sp_pc_reg = &g_main_ctx.core_ctx->rsp_register->rsp_pc;
-        rsp_info.sp_semaphore_reg = &g_main_ctx.core_ctx->sp_register->sp_semaphore_reg;
-        rsp_info.dpc_start_reg = &g_main_ctx.core_ctx->dpc_register->dpc_start;
-        rsp_info.dpc_end_reg = &g_main_ctx.core_ctx->dpc_register->dpc_end;
-        rsp_info.dpc_current_reg = &g_main_ctx.core_ctx->dpc_register->dpc_current;
-        rsp_info.dpc_status_reg = &g_main_ctx.core_ctx->dpc_register->dpc_status;
-        rsp_info.dpc_clock_reg = &g_main_ctx.core_ctx->dpc_register->dpc_clock;
-        rsp_info.dpc_bufbusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_bufbusy;
-        rsp_info.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
-        rsp_info.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
+        rsp_info.rdram = (uint8_t *)g_main_ctx.CoreCtx->rdram;
+        rsp_info.dmem = (uint8_t *)g_main_ctx.CoreCtx->sp_dmem;
+        rsp_info.imem = (uint8_t *)g_main_ctx.CoreCtx->sp_imem;
+        rsp_info.mi_intr_reg = &g_main_ctx.CoreCtx->mi_register->mi_intr_reg;
+        rsp_info.sp_mem_addr_reg = &g_main_ctx.CoreCtx->sp_register->sp_mem_addr_reg;
+        rsp_info.sp_dram_addr_reg = &g_main_ctx.CoreCtx->sp_register->sp_dram_addr_reg;
+        rsp_info.sp_rd_len_reg = &g_main_ctx.CoreCtx->sp_register->sp_rd_len_reg;
+        rsp_info.sp_wr_len_reg = &g_main_ctx.CoreCtx->sp_register->sp_wr_len_reg;
+        rsp_info.sp_status_reg = &g_main_ctx.CoreCtx->sp_register->sp_status_reg;
+        rsp_info.sp_dma_full_reg = &g_main_ctx.CoreCtx->sp_register->sp_dma_full_reg;
+        rsp_info.sp_dma_busy_reg = &g_main_ctx.CoreCtx->sp_register->sp_dma_busy_reg;
+        rsp_info.sp_pc_reg = &g_main_ctx.CoreCtx->rsp_register->rsp_pc;
+        rsp_info.sp_semaphore_reg = &g_main_ctx.CoreCtx->sp_register->sp_semaphore_reg;
+        rsp_info.dpc_start_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_start;
+        rsp_info.dpc_end_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_end;
+        rsp_info.dpc_current_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_current;
+        rsp_info.dpc_status_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_status;
+        rsp_info.dpc_clock_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_clock;
+        rsp_info.dpc_bufbusy_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_bufbusy;
+        rsp_info.dpc_pipebusy_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_pipebusy;
+        rsp_info.dpc_tmem_reg = &g_main_ctx.CoreCtx->dpc_register->dpc_tmem;
         rsp_info.check_interrupts = dummy_void;
         rsp_info.process_dlist_list = funcs.video_process_dlist;
         rsp_info.process_alist_list = funcs.audio_process_alist;
@@ -469,7 +469,7 @@ void ZEPlugin::initiate_dummy()
     switch (m_type)
     {
     case Plugin::Type::Video: {
-        if (!g_main_ctx.core_ctx->vr_get_launched())
+        if (!g_main_ctx.CoreCtx->vr_get_launched())
         {
             // NOTE: Since olden days, dummy render target hwnd was the statusbar.
             dummy_video_info.main_hwnd = Statusbar::hwnd();
@@ -485,7 +485,7 @@ void ZEPlugin::initiate_dummy()
         break;
     }
     case Plugin::Type::Audio: {
-        if (!g_main_ctx.core_ctx->vr_get_launched())
+        if (!g_main_ctx.CoreCtx->vr_get_launched())
         {
             const auto initiate_audio = (ZESpec::INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
             if (initiate_audio && !initiate_audio(dummy_audio_info))
@@ -497,7 +497,7 @@ void ZEPlugin::initiate_dummy()
         break;
     }
     case Plugin::Type::Input: {
-        if (!g_main_ctx.core_ctx->vr_get_launched())
+        if (!g_main_ctx.CoreCtx->vr_get_launched())
         {
             if (m_version == 0x0101)
             {
@@ -518,7 +518,7 @@ void ZEPlugin::initiate_dummy()
         break;
     }
     case Plugin::Type::RSP: {
-        if (!g_main_ctx.core_ctx->vr_get_launched())
+        if (!g_main_ctx.CoreCtx->vr_get_launched())
         {
             auto initiateRSP = (ZESpec::INITIATERSP)GetProcAddress(m_module, "InitiateRSP");
             uint32_t i = 0;
@@ -534,7 +534,7 @@ void ZEPlugin::initiate_dummy()
 
 void ZEPlugin::deinitiate_dummy()
 {
-    if (g_main_ctx.core_ctx->vr_get_launched()) return;
+    if (g_main_ctx.CoreCtx->vr_get_launched()) return;
     const auto close_dll = (ZESpec::CLOSEDLL)GetProcAddress(m_module, "CloseDLL");
     if (close_dll) close_dll();
 }

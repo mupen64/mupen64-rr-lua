@@ -22,7 +22,7 @@ static int play(lua_State *L)
 
     g_config.core.vcr_readonly = true;
     Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
-    ThreadPool::submit_task([=] { g_main_ctx.core_ctx->vcr_start_playback(path); });
+    ThreadPool::submit_task([=] { g_main_ctx.CoreCtx->vcr_start_playback(path); });
 
     lua_pushinteger(L, static_cast<lua_Integer>(CoreResult::Res_Ok));
     return 1;
@@ -30,21 +30,21 @@ static int play(lua_State *L)
 
 static int stop(lua_State *L)
 {
-    const auto result = g_main_ctx.core_ctx->vcr_stop_all();
+    const auto result = g_main_ctx.CoreCtx->vcr_stop_all();
     lua_pushinteger(L, static_cast<lua_Integer>(result));
     return 1;
 }
 
 static int GetMovieFilename(lua_State *L)
 {
-    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Idle)
+    if (g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Idle)
     {
         luaL_error(L, "No movie is currently playing");
         lua_pushstring(L, "");
     }
     else
     {
-        lua_pushstring(L, g_main_ctx.core_ctx->vcr_get_path().string().c_str());
+        lua_pushstring(L, g_main_ctx.CoreCtx->vcr_get_path().string().c_str());
     }
     return 1;
 }
@@ -67,25 +67,25 @@ static int begin_seek(lua_State *L)
     auto str = std::string(lua_tostring(L, 1));
     bool pause_at_end = lua_toboolean(L, 2);
 
-    lua_pushinteger(L, static_cast<int32_t>(g_main_ctx.core_ctx->vcr_begin_seek(str, pause_at_end)));
+    lua_pushinteger(L, static_cast<int32_t>(g_main_ctx.CoreCtx->vcr_begin_seek(str, pause_at_end)));
     return 1;
 }
 
 static int stop_seek(lua_State *L)
 {
-    g_main_ctx.core_ctx->vcr_stop_seek();
+    g_main_ctx.CoreCtx->vcr_stop_seek();
     return 0;
 }
 
 static int is_seeking(lua_State *L)
 {
-    lua_pushboolean(L, g_main_ctx.core_ctx->vcr_is_seeking());
+    lua_pushboolean(L, g_main_ctx.CoreCtx->vcr_is_seeking());
     return 1;
 }
 
 static int get_seek_completion(lua_State *L)
 {
-    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
 
     lua_newtable(L);
     lua_pushinteger(L, info.current_sample);
@@ -203,7 +203,7 @@ static int begin_warp_modify(lua_State *L)
         lua_pop(L, 1);
     }
 
-    auto result = g_main_ctx.core_ctx->vcr_begin_warp_modify(inputs);
+    auto result = g_main_ctx.CoreCtx->vcr_begin_warp_modify(inputs);
 
     lua_pushinteger(L, static_cast<int32_t>(result));
     return 1;

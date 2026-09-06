@@ -61,7 +61,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         WinDarkMode::attach(hwnd);
         break;
     case WM_DESTROY:
-        g_main_ctx.core_ctx->vcr_stop_seek();
+        g_main_ctx.CoreCtx->vcr_stop_seek();
         KillTimer(hwnd, seeker.refresh_timer);
         EnableWindow(g_main_ctx.hwnd, TRUE);
         SetForegroundWindow(g_main_ctx.hwnd);
@@ -77,12 +77,12 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         KillTimer(hwnd, seeker.refresh_timer);
         break;
     case WM_TIMER: {
-        if (!g_main_ctx.core_ctx->vcr_is_seeking())
+        if (!g_main_ctx.CoreCtx->vcr_is_seeking())
         {
             SetDlgItemText(hwnd, IDC_SEEKER_ETA, "");
             break;
         }
-        const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
+        const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
 
         const float effective_progress = MiscHelpers::remap(static_cast<float>(info.current_sample),
             static_cast<float>(info.seek_start_sample), static_cast<float>(info.seek_target_sample), 0.0f, 1.0f);
@@ -107,7 +107,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         break;
         case IDC_SEEKER_START: {
-            const auto result = g_main_ctx.core_ctx->vcr_begin_seek(g_config.seeker_value, true);
+            const auto result = g_main_ctx.CoreCtx->vcr_begin_seek(g_config.seeker_value, true);
             if (result != CoreResult::Res_Ok)
             {
                 const auto [_, error] = CoreUtils::get_error_message_for_result(result);
@@ -116,7 +116,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 break;
             }
 
-            const bool is_seeking = g_main_ctx.core_ctx->vcr_is_seeking();
+            const bool is_seeking = g_main_ctx.CoreCtx->vcr_is_seeking();
             EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), is_seeking);
             if (is_seeking)
             {
@@ -129,7 +129,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             break;
         }
         case IDC_SEEKER_STOP:
-            g_main_ctx.core_ctx->vcr_stop_seek();
+            g_main_ctx.CoreCtx->vcr_stop_seek();
             break;
         case IDCANCEL:
             DestroyWindow(hwnd);

@@ -15,13 +15,13 @@ namespace LuaCore::Emu
 {
 static int GetVICount(lua_State *L)
 {
-    lua_pushinteger(L, g_main_ctx.core_ctx->vcr_get_current_vi());
+    lua_pushinteger(L, g_main_ctx.CoreCtx->vcr_get_current_vi());
     return 1;
 }
 
 static int GetSampleCount(lua_State *L)
 {
-    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
     lua_pushinteger(L, info.current_sample);
     return 1;
 }
@@ -155,18 +155,18 @@ static int EmuPause(lua_State *L)
 
     if (pause)
     {
-        g_main_ctx.core_ctx->vr_pause_emu();
+        g_main_ctx.CoreCtx->vr_pause_emu();
     }
     else
     {
-        g_main_ctx.core_ctx->vr_resume_emu();
+        g_main_ctx.CoreCtx->vr_resume_emu();
     }
     return 0;
 }
 
 static int GetEmuPause(lua_State *L)
 {
-    lua_pushboolean(L, g_main_ctx.core_ctx->vr_get_paused());
+    lua_pushboolean(L, g_main_ctx.CoreCtx->vr_get_paused());
     return 1;
 }
 
@@ -179,13 +179,13 @@ static int GetSpeed(lua_State *L)
 static int SetSpeed(lua_State *L)
 {
     g_config.core.fps_modifier = luaL_checkinteger(L, 1);
-    g_main_ctx.core_ctx->vr_on_speed_modifier_changed();
+    g_main_ctx.CoreCtx->vr_on_speed_modifier_changed();
     return 0;
 }
 
 static int get_speed_mode(lua_State *L)
 {
-    const auto mode = g_main_ctx.core_ctx->vr_get_speed_mode();
+    const auto mode = g_main_ctx.CoreCtx->vr_get_speed_mode();
     lua_pushinteger(L, (lua_Integer)mode);
     return 1;
 }
@@ -193,7 +193,7 @@ static int get_speed_mode(lua_State *L)
 static int set_speed_mode(lua_State *L)
 {
     const auto mode = (CoreSpeedMode)luaL_checkinteger(L, 1);
-    g_main_ctx.core_ctx->vr_set_speed_mode(mode);
+    g_main_ctx.CoreCtx->vr_set_speed_mode(mode);
     return 0;
 }
 
@@ -222,14 +222,14 @@ static int GetAddress(lua_State *L)
     {                                                                                                                  \
         x, n                                                                                                           \
     }
-    const NameAndVariable list[] = {A("rdram", g_main_ctx.core_ctx->rdram),
-        A("rdram_register", g_main_ctx.core_ctx->rdram_register), A("MI_register", g_main_ctx.core_ctx->mi_register),
-        A("pi_register", g_main_ctx.core_ctx->pi_register), A("sp_register", g_main_ctx.core_ctx->sp_register),
-        A("rsp_register", g_main_ctx.core_ctx->rsp_register), A("si_register", g_main_ctx.core_ctx->si_register),
-        A("vi_register", g_main_ctx.core_ctx->vi_register), A("ri_register", g_main_ctx.core_ctx->ri_register),
-        A("ai_register", g_main_ctx.core_ctx->ai_register), A("dpc_register", g_main_ctx.core_ctx->dpc_register),
-        A("dps_register", g_main_ctx.core_ctx->dps_register), B("SP_DMEM", g_main_ctx.core_ctx->sp_dmem),
-        B("PIF_RAM", g_main_ctx.core_ctx->pif_ram), {NULL, NULL}};
+    const NameAndVariable list[] = {A("rdram", g_main_ctx.CoreCtx->rdram),
+        A("rdram_register", g_main_ctx.CoreCtx->rdram_register), A("MI_register", g_main_ctx.CoreCtx->mi_register),
+        A("pi_register", g_main_ctx.CoreCtx->pi_register), A("sp_register", g_main_ctx.CoreCtx->sp_register),
+        A("rsp_register", g_main_ctx.CoreCtx->rsp_register), A("si_register", g_main_ctx.CoreCtx->si_register),
+        A("vi_register", g_main_ctx.CoreCtx->vi_register), A("ri_register", g_main_ctx.CoreCtx->ri_register),
+        A("ai_register", g_main_ctx.CoreCtx->ai_register), A("dpc_register", g_main_ctx.CoreCtx->dpc_register),
+        A("dps_register", g_main_ctx.CoreCtx->dps_register), B("SP_DMEM", g_main_ctx.CoreCtx->sp_dmem),
+        B("PIF_RAM", g_main_ctx.CoreCtx->pif_ram), {NULL, NULL}};
 #undef A
 #undef B
     const char *s = lua_tostring(L, 1);

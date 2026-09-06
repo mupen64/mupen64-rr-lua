@@ -67,7 +67,7 @@ void Plugin::init_common()
     m_process_event = (M64RRSpec::PtrProcessEvent)load_symbol("M64RRProcessEvent");
 }
 
-void Plugin::initiate(core_ctx *ctx, core_params &params, const std::function<void(M64RRSpec::PluginInit *)> &post_init)
+void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void(M64RRSpec::PluginInit *)> &post_init)
 {
     m_init_data.reset(new M64RRSpec::PluginInit);
 
@@ -118,7 +118,7 @@ void Plugin::initiate(core_ctx *ctx, core_params &params, const std::function<vo
     if (m_process_event) m_process_event(init_event);
 }
 
-void Plugin::bind_functions(core_params &params)
+void Plugin::bind_functions(CoreParams &params)
 {
     switch (m_type)
     {
@@ -170,31 +170,31 @@ PluginSet::PluginSet(Plugin &&video, Plugin &&audio, Plugin &&input, Plugin &&rs
 {
 }
 
-void PluginSet::initiate_plugins(core_ctx *core_ctx, core_params &core_params)
+void PluginSet::initiate_plugins(CoreCtx *CoreCtx, CoreParams &CoreParams)
 {
-    CoreUtil::clear_plugin_funcs(core_params);
+    CoreUtil::clear_plugin_funcs(CoreParams);
 
-    m_video.initiate(core_ctx, core_params, [](M64RRSpec::PluginInit *init) {
+    m_video.initiate(CoreCtx, CoreParams, [](M64RRSpec::PluginInit *init) {
         init->request_size = [](uint32_t width, uint32_t height) {
             // must be called on GUI thread!
             QMetaObject::invokeMethod(EmuContext::instance(), &EmuContext::gfxRequestSize, width, height);
         };
     });
-    m_audio.initiate(core_ctx, core_params);
-    m_input.initiate(core_ctx, core_params);
-    m_rsp.initiate(core_ctx, core_params, [&](M64RRSpec::PluginInit *init) {
+    m_audio.initiate(CoreCtx, CoreParams);
+    m_input.initiate(CoreCtx, CoreParams);
+    m_rsp.initiate(CoreCtx, CoreParams, [&](M64RRSpec::PluginInit *init) {
         init->process_dlist = (M64RRSpec::PtrProcessDList)m_video.load_symbol("M64RRProcessDList");
     });
 }
 
-void PluginSet::emu_started(core_params &core_params)
+void PluginSet::emu_started(CoreParams &CoreParams)
 {
     const auto opened_event = M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened};
 
-    m_video.bind_functions(core_params);
-    m_audio.bind_functions(core_params);
-    m_input.bind_functions(core_params);
-    m_rsp.bind_functions(core_params);
+    m_video.bind_functions(CoreParams);
+    m_audio.bind_functions(CoreParams);
+    m_input.bind_functions(CoreParams);
+    m_rsp.bind_functions(CoreParams);
 
     m_video.send_event(opened_event);
     m_audio.send_event(opened_event);
@@ -202,7 +202,7 @@ void PluginSet::emu_started(core_params &core_params)
     m_rsp.send_event(opened_event);
 }
 
-void PluginSet::emu_stopped(core_params &core_params)
+void PluginSet::emu_stopped(CoreParams &CoreParams)
 {
     const auto closed_event = M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed};
     const auto shutdown_event = M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown};
@@ -217,7 +217,7 @@ void PluginSet::emu_stopped(core_params &core_params)
     m_input.send_event(shutdown_event);
     m_rsp.send_event(shutdown_event);
 
-    CoreUtil::clear_plugin_funcs(core_params);
+    CoreUtil::clear_plugin_funcs(CoreParams);
 }
 
 void PluginSet::get_plugin_names(char *video, char *audio, char *input, char *rsp)

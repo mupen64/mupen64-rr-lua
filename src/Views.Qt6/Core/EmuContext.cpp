@@ -18,8 +18,8 @@
 
 static std::atomic<EmuContext *> g_core_instance = nullptr;
 
-static core_cfg g_core_cfg{};
-static core_params g_core_params{};
+static CoreCfg g_core_cfg{};
+static CoreParams g_core_params{};
 
 static void set_core_instance(EmuContext *ptr)
 {
@@ -172,20 +172,20 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-CoreResult::Value EmuContext::startROM(const QUrl &url)
+QtCoreResult::Value EmuContext::startROM(const QUrl &url)
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
-    return CoreResult::from_core(m_core_ctx->vr_start_rom(path));
+    return QtCoreResult::from_core(m_core_ctx->vr_start_rom(path));
 }
 
-CoreResult::Value EmuContext::closeROM(bool resetVCR)
+QtCoreResult::Value EmuContext::closeROM(bool resetVCR)
 {
-    return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
+    return QtCoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
 }
 
-CoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
+QtCoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
 {
-    return CoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
+    return QtCoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
 }
 
 void EmuContext::invalidateVisuals()
@@ -281,7 +281,7 @@ void EmuContext::loadFile(const QUrl &url)
     });
 }
 
-// core_cfg properties
+// CoreCfg properties
 // ==========================
 int32_t EmuContext::speedModifier()
 {
@@ -330,7 +330,7 @@ void EmuContext::readVideoOutput(QImage &image)
 // Internal utilities
 // ==========================
 
-void CoreUtil::clear_plugin_funcs(core_params &params)
+void CoreUtil::clear_plugin_funcs(CoreParams &params)
 {
     params.video_process_dlist = [](auto...) {};
     params.video_process_rdp_list = [](auto...) {};

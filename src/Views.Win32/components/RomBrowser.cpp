@@ -254,7 +254,7 @@ static void build_impl()
                 CoreROMHeader header{};
                 fread(&header, sizeof(header), 1, f);
 
-                g_main_ctx.core_ctx->vr_byteswap((uint8_t *)&header);
+                g_main_ctx.CoreCtx->vr_byteswap((uint8_t *)&header);
 
                 MiscHelpers::strtrim((char *)header.nom, sizeof(header.nom));
 
@@ -305,7 +305,7 @@ void build()
 
 void rombrowser_update_size()
 {
-    if (g_main_ctx.core_ctx->vr_get_launched()) return;
+    if (g_main_ctx.CoreCtx->vr_get_launched()) return;
     if (!IsWindow(g_ctx.hwnd)) return;
 
     // TODO: clean up this mess
@@ -387,7 +387,7 @@ notify(LPARAM lparam)
         break;
     }
     case LVN_KEYDOWN: {
-        if (g_main_ctx.core_ctx->vr_get_core_executing())
+        if (g_main_ctx.CoreCtx->vr_get_core_executing())
         {
             break;
         }
@@ -429,7 +429,7 @@ std::filesystem::path find_available_rom(const std::function<bool(const CoreROMH
             auto header = (CoreROMHeader *)malloc(sizeof(CoreROMHeader));
             fread(header, sizeof(CoreROMHeader), 1, f);
 
-            g_main_ctx.core_ctx->vr_byteswap((uint8_t *)header);
+            g_main_ctx.CoreCtx->vr_byteswap((uint8_t *)header);
 
             if (predicate(*header))
             {
@@ -469,7 +469,7 @@ std::vector<std::filesystem::path> find_available_roms(const std::function<bool(
             auto header = (CoreROMHeader *)malloc(sizeof(CoreROMHeader));
             fread(header, sizeof(CoreROMHeader), 1, f);
 
-            g_main_ctx.core_ctx->vr_byteswap((uint8_t *)header);
+            g_main_ctx.CoreCtx->vr_byteswap((uint8_t *)header);
 
             if (predicate(*header))
             {

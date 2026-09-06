@@ -91,7 +91,7 @@ extern "C"
         Platform platform;
         WindowHandle main_window;
 
-        // TODO: just a core_ctx pointer instead...
+        // TODO: just a CoreCtx pointer instead...
 
         uint8_t *rom;
         uint8_t *rdram;
@@ -141,7 +141,7 @@ extern "C"
         CoreSpeedMode (*get_effective_speed_mode)();
 
         /**
-         * \brief See `core_ctx::vr_get_frame_skipped`.
+         * \brief See `CoreCtx::vr_get_frame_skipped`.
          */
         bool (*frame_skipped)();
 

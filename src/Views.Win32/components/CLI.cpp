@@ -65,12 +65,12 @@ static void start_rom()
     ThreadPool::submit_task([] {
         if (!cli_state.rom_is_movie)
         {
-            const auto result = g_main_ctx.core_ctx->vr_start_rom(cli_params.rom);
+            const auto result = g_main_ctx.CoreCtx->vr_start_rom(cli_params.rom);
             CoreUtils::show_error_dialog_for_result(result);
             return;
         }
 
-        const auto result = g_main_ctx.core_ctx->vcr_start_playback(cli_params.rom);
+        const auto result = g_main_ctx.CoreCtx->vcr_start_playback(cli_params.rom);
         CoreUtils::show_error_dialog_for_result(result);
     });
 }
@@ -80,12 +80,12 @@ static void play_movie()
     if (cli_params.m64.empty()) return;
 
     g_config.core.vcr_readonly = true;
-    auto result = g_main_ctx.core_ctx->vcr_start_playback(cli_params.m64);
+    auto result = g_main_ctx.CoreCtx->vcr_start_playback(cli_params.m64);
     CoreUtils::show_error_dialog_for_result(result);
 
     if (cli_params.parity_check)
     {
-        g_main_ctx.core_ctx->pc_start(cli_params.parity_check_interval);
+        g_main_ctx.CoreCtx->pc_start(cli_params.parity_check_interval);
     }
 }
 
@@ -96,7 +96,7 @@ static void load_st()
         return;
     }
 
-    g_main_ctx.core_ctx->st_do_file(cli_params.st.c_str(), CoreSTJob::Load, nullptr, false);
+    g_main_ctx.CoreCtx->st_do_file(cli_params.st.c_str(), CoreSTJob::Load, nullptr, false);
 }
 
 static void start_lua()
@@ -147,7 +147,7 @@ static void on_movie_playback_stop()
 
     if (cli_params.parity_check)
     {
-        g_main_ctx.core_ctx->pc_stop();
+        g_main_ctx.CoreCtx->pc_stop();
         PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
     }
 }
@@ -279,7 +279,7 @@ void CLI::init()
     if (!movie_path.empty())
     {
         CoreVCRMovieHeader hdr{};
-        g_main_ctx.core_ctx->vcr_parse_header(movie_path, &hdr);
+        g_main_ctx.CoreCtx->vcr_parse_header(movie_path, &hdr);
         cli_state.is_movie_from_start = hdr.start_flags & MOVIE_START_FROM_NOTHING;
     }
 

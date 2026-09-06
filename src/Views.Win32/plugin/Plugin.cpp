@@ -138,19 +138,19 @@ void PluginUtil::update_screen()
 
 void PluginUtil::key_down(uint32_t wParam, int32_t lParam)
 {
-    if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
+    if (g_plugin_funcs.input_key_down && g_main_ctx.CoreCtx->vr_get_launched())
         g_plugin_funcs.input_key_down(wParam, lParam);
 }
 
 void PluginUtil::key_up(uint32_t wParam, int32_t lParam)
 {
-    if (g_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
+    if (g_plugin_funcs.input_key_up && g_main_ctx.CoreCtx->vr_get_launched())
         g_plugin_funcs.input_key_up(wParam, lParam);
 }
 
 void PluginUtil::move_screen(uint32_t wParam, int32_t lParam)
 {
-    if (g_main_ctx.core_ctx->vr_get_launched()) g_plugin_funcs.video_move_screen((int)wParam, lParam);
+    if (g_main_ctx.CoreCtx->vr_get_launched()) g_plugin_funcs.video_move_screen((int)wParam, lParam);
 }
 
 std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path, Type type)

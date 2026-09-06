@@ -17,7 +17,7 @@ Settings {
         PureInterpreter = 2
     }
 
-    // Win32 "core" -> core_cfg
+    // Win32 "core" -> CoreCfg
     property int coreType: SettingsCore.CoreType.DynamicRecompiler
     property bool stUndoLoad: true
     property int maxLag: 480
@@ -31,13 +31,13 @@ Settings {
     property bool stLZ4: true
     property int romCacheSize: 0
 
-    // Win32 "debug" -> core_cfg
+    // Win32 "debug" -> CoreCfg
     property bool audioDelayEnabled: true
     property bool compiledJumpEnabled: true
     property bool ceqsNaNAccurate: true
     property bool accurateRDPCompletion: true
 
-    // Win32 "vcr" -> core_cfg
+    // Win32 "vcr" -> CoreCfg
     property bool vcrBackups: true
     property bool vcrWriteExtendedFormat: true
 

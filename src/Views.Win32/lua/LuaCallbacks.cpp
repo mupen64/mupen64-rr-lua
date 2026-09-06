@@ -61,7 +61,7 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
         }},
     {LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED,
         [](auto l) -> int {
-            lua_pushinteger(l, g_main_ctx.core_ctx->vcr_get_warp_modify_status());
+            lua_pushinteger(l, g_main_ctx.CoreCtx->vcr_get_warp_modify_status());
             return lua_pcall(l, 1, 0, 0);
         }},
     {LuaCallbacks::REG_ATKEY,

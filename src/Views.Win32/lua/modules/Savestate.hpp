@@ -24,9 +24,9 @@ static int do_file(lua_State *L)
     const auto callback = lua_tocallback(L, 3);
     const bool ignore_warnings = lua_toboolean(L, 4);
 
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
-        g_main_ctx.core_ctx->st_do_file(
+        g_main_ctx.CoreCtx->st_do_file(
             path, job,
             [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buf) {
                 g_main_ctx.dispatcher->invoke([=] {
@@ -41,7 +41,7 @@ static int do_file(lua_State *L)
                 });
             },
             ignore_warnings);
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
     });
     return 0;
 }
@@ -53,9 +53,9 @@ static int do_slot(lua_State *L)
     const auto callback = lua_tocallback(L, 3);
     const bool ignore_warnings = lua_toboolean(L, 4);
 
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
-        g_main_ctx.core_ctx->st_do_file(
+        g_main_ctx.CoreCtx->st_do_file(
             get_st_with_slot_path(slot), job,
             [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buf) {
                 g_main_ctx.dispatcher->invoke([=] {
@@ -70,7 +70,7 @@ static int do_slot(lua_State *L)
                 });
             },
             ignore_warnings);
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
     });
     return 0;
 }
@@ -83,10 +83,10 @@ static int do_memory(lua_State *L)
     const auto callback = lua_tocallback(L, 3);
     const bool ignore_warnings = lua_toboolean(L, 4);
 
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         const auto buffer = std::vector<uint8_t>(buffer_str, buffer_str + buffer_len);
-        g_main_ctx.core_ctx->st_do_memory(
+        g_main_ctx.CoreCtx->st_do_memory(
             buffer, job,
             [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buf) {
                 g_main_ctx.dispatcher->invoke([=] {
@@ -101,7 +101,7 @@ static int do_memory(lua_State *L)
                 });
             },
             ignore_warnings);
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
     });
     return 0;
 }

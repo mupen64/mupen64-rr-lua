@@ -29,13 +29,13 @@ class EmuContext : public QObject
 
     friend class EmuOptions;
 
-    // core_ctx properties
+    // CoreCtx properties
     Q_PROPERTY(bool launched READ isLaunched NOTIFY launchedChanged)
     Q_PROPERTY(bool paused READ isPaused WRITE setPaused NOTIFY pausedChanged)
     Q_PROPERTY(bool coreExecuting READ isCoreExecuting NOTIFY coreExecutingChanged)
     Q_PROPERTY(bool gsButton READ isGSButton WRITE setGSButton NOTIFY gsButtonChanged)
 
-    // core_cfg properties
+    // CoreCfg properties
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
 
     // extra properties
@@ -49,7 +49,7 @@ class EmuContext : public QObject
 
     static EmuContext *instance();
 
-    static core_ctx *rawContext()
+    static CoreCtx *rawContext()
     {
         auto *inst = instance();
         return (inst != nullptr) ? inst->m_core_ctx : nullptr;
@@ -59,13 +59,13 @@ class EmuContext : public QObject
     // ==========================
 
     // -> vr_start_rom
-    Q_INVOKABLE CoreResult::Value startROM(const QUrl &url);
+    Q_INVOKABLE QtCoreResult::Value startROM(const QUrl &url);
 
     // -> vr_close_rom
-    Q_INVOKABLE CoreResult::Value closeROM(bool resetVCR = true);
+    Q_INVOKABLE QtCoreResult::Value closeROM(bool resetVCR = true);
 
     // -> vr_reset_rom
-    Q_INVOKABLE CoreResult::Value resetROM(bool resetSaveData, bool stopVCR);
+    Q_INVOKABLE QtCoreResult::Value resetROM(bool resetSaveData, bool stopVCR);
 
     // -> vr_invalidate_visuals
     Q_INVOKABLE void invalidateVisuals();
@@ -107,7 +107,7 @@ class EmuContext : public QObject
     // -> st_do_file
     Q_INVOKABLE void loadFile(const QUrl &url);
 
-    // core_cfg properties
+    // CoreCfg properties
     // ==========================
 
     // -> .fps_modifier
@@ -154,7 +154,7 @@ class EmuContext : public QObject
     // -> set_gs_button() called
     void gsButtonChanged(bool value);
 
-    // core_cfg properties
+    // CoreCfg properties
     // ==========================
 
     // -> .fps_modifier changed
@@ -218,7 +218,7 @@ class EmuContext : public QObject
   private:
     CoreCfg *m_core_cfg;
     CoreParams *m_core_params;
-    core_ctx *m_core_ctx;
+    CoreCtx *m_core_ctx;
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
@@ -230,7 +230,7 @@ class EmuContext : public QObject
 };
 
 /**
- * @brief Qt bindings for parts of core_cfg that are only used for configuration.
+ * @brief Qt bindings for parts of CoreCfg that are only used for configuration.
  */
 class EmuOptions : public QObject
 {
@@ -475,5 +475,5 @@ class EmuPaths : public QObject
 
 namespace CoreUtil
 {
-void clear_plugin_funcs(core_params &params);
+void clear_plugin_funcs(CoreParams &params);
 }

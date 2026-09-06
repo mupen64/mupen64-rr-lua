@@ -168,7 +168,7 @@ void LuaManager::destroy_environment(LuaEnvironment *lua)
     // Remove any breakpoints registered by the script.
     for (const auto &pair : lua->active_breakpoints)
     {
-        g_main_ctx.core_ctx->dbg_remove_breakpoint(pair.first);
+        g_main_ctx.CoreCtx->dbg_remove_breakpoint(pair.first);
         lua_freecallback(lua->L, pair.second);
     }
 

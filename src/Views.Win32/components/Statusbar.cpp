@@ -134,7 +134,7 @@ static HWND statusbar_hwnd;
 static std::vector<Segment> get_current_parts()
 {
     const SegmentLayout layout = LAYOUT_MAP.at(static_cast<Config::StatusbarLayout>(g_config.statusbar_layout));
-    return (g_main_ctx.core_ctx->vr_get_launched()) ? layout.emu_parts : layout.idle_parts;
+    return (g_main_ctx.CoreCtx->vr_get_launched()) ? layout.emu_parts : layout.idle_parts;
 }
 
 static size_t section_to_segment_index(const Statusbar::Section section)

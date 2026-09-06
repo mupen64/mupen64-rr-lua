@@ -241,14 +241,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 refresh:
     CoreVCRMovieHeader header = {};
 
-    if (g_main_ctx.core_ctx->vcr_parse_header(g_ctx.user_result.path, &header) != CoreResult::Res_Ok)
+    if (g_main_ctx.CoreCtx->vcr_parse_header(g_ctx.user_result.path, &header) != CoreResult::Res_Ok)
     {
         return FALSE;
     }
 
     std::vector<CoreButtons> inputs = {};
 
-    if (g_main_ctx.core_ctx->vcr_read_movie_inputs(g_ctx.user_result.path, inputs) != CoreResult::Res_Ok)
+    if (g_main_ctx.CoreCtx->vcr_read_movie_inputs(g_ctx.user_result.path, inputs) != CoreResult::Res_Ok)
     {
         return FALSE;
     }
@@ -259,7 +259,7 @@ refresh:
 
     metadata.emplace_back(
         std::make_pair("ROM", std::format("{} ({}, {})", (char *)header.rom_name,
-                                  g_main_ctx.core_ctx->vr_country_code_to_country_name(header.rom_country),
+                                  g_main_ctx.CoreCtx->vr_country_code_to_country_name(header.rom_country),
                                   std::format("{:#08x}", header.rom_crc1))));
 
     metadata.emplace_back(
@@ -351,13 +351,13 @@ refresh:
 
 static std::filesystem::path get_default_movie_path(bool readonly)
 {
-    const auto rom_hdr = g_main_ctx.core_ctx->vr_get_rom_header();
+    const auto rom_hdr = g_main_ctx.CoreCtx->vr_get_rom_header();
 
     if (g_config.recent_movie_paths.empty() || !readonly)
     {
         char rom_name[sizeof(rom_hdr->nom) + 1]{};
         std::memcpy(rom_name, rom_hdr->nom, sizeof(rom_hdr->nom));
-        const auto rom_country = g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code);
+        const auto rom_country = g_main_ctx.CoreCtx->vr_country_code_to_country_name(rom_hdr->Country_code);
         return std::format("{} ({}).m64", rom_name, rom_country);
     }
 

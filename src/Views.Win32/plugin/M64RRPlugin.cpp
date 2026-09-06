@@ -254,31 +254,31 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     }
     init->platform = M64RRSpec::Platform::Windows;
     init->main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
-    init->rom = g_main_ctx.core_ctx->rom;
-    init->rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-    init->dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
-    init->imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
+    init->rom = g_main_ctx.CoreCtx->rom;
+    init->rdram = (uint8_t *)g_main_ctx.CoreCtx->rdram;
+    init->dmem = (uint8_t *)g_main_ctx.CoreCtx->sp_dmem;
+    init->imem = (uint8_t *)g_main_ctx.CoreCtx->sp_imem;
 
-    init->rdram_register = g_main_ctx.core_ctx->rdram_register;
-    init->mi_register = g_main_ctx.core_ctx->mi_register;
-    init->pi_register = g_main_ctx.core_ctx->pi_register;
-    init->sp_register = g_main_ctx.core_ctx->sp_register;
-    init->rsp_register = g_main_ctx.core_ctx->rsp_register;
-    init->si_register = g_main_ctx.core_ctx->si_register;
-    init->vi_register = g_main_ctx.core_ctx->vi_register;
-    init->ri_register = g_main_ctx.core_ctx->ri_register;
-    init->ai_register = g_main_ctx.core_ctx->ai_register;
-    init->dpc_register = g_main_ctx.core_ctx->dpc_register;
-    init->dps_register = g_main_ctx.core_ctx->dps_register;
+    init->rdram_register = g_main_ctx.CoreCtx->rdram_register;
+    init->mi_register = g_main_ctx.CoreCtx->mi_register;
+    init->pi_register = g_main_ctx.CoreCtx->pi_register;
+    init->sp_register = g_main_ctx.CoreCtx->sp_register;
+    init->rsp_register = g_main_ctx.CoreCtx->rsp_register;
+    init->si_register = g_main_ctx.CoreCtx->si_register;
+    init->vi_register = g_main_ctx.CoreCtx->vi_register;
+    init->ri_register = g_main_ctx.CoreCtx->ri_register;
+    init->ai_register = g_main_ctx.CoreCtx->ai_register;
+    init->dpc_register = g_main_ctx.CoreCtx->dpc_register;
+    init->dps_register = g_main_ctx.CoreCtx->dps_register;
 
     init->process_dlist = funcs.video_process_dlist;
 
     init->controllers = g_main_ctx.core.controls;
 
-    init->get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
-    init->frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
+    init->get_effective_speed_mode = [](void) { return g_main_ctx.CoreCtx->vr_get_effective_speed_mode(); };
+    init->frame_skipped = [](void) { return g_main_ctx.CoreCtx->vr_get_frame_skipped(); };
     init->config_path = get_config_path;
-    init->rcp_counter = g_main_ctx.core_ctx->rcp_counter;
+    init->rcp_counter = g_main_ctx.CoreCtx->rcp_counter;
     init->request_size = Main::request_size;
 
     switch (m_type)

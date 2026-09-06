@@ -73,8 +73,8 @@ BetterEmulationLock::BetterEmulationLock()
     }
     else
     {
-        was_paused = g_main_ctx.core_ctx->vr_get_paused();
-        g_main_ctx.core_ctx->vr_pause_emu();
+        was_paused = g_main_ctx.CoreCtx->vr_get_paused();
+        g_main_ctx.CoreCtx->vr_pause_emu();
     }
 }
 
@@ -82,11 +82,11 @@ BetterEmulationLock::~BetterEmulationLock()
 {
     if (was_paused)
     {
-        g_main_ctx.core_ctx->vr_pause_emu();
+        g_main_ctx.CoreCtx->vr_pause_emu();
     }
     else
     {
-        g_main_ctx.core_ctx->vr_resume_emu();
+        g_main_ctx.CoreCtx->vr_resume_emu();
     }
 }
 
@@ -151,21 +151,21 @@ const char *get_status_text()
     static char text[1024]{};
     memset(text, 0, sizeof(text));
 
-    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
 
     const auto index_adjustment = g_config.vcr_0_index ? 1 : 0;
     const auto current_sample = info.current_sample;
-    const auto current_vi = g_main_ctx.core_ctx->vcr_get_current_vi();
+    const auto current_vi = g_main_ctx.CoreCtx->vcr_get_current_vi();
     const auto is_before_start = static_cast<int64_t>(current_sample) - static_cast<int64_t>(index_adjustment) < 0;
 
-    if (g_main_ctx.core_ctx->vcr_get_warp_modify_status())
+    if (g_main_ctx.CoreCtx->vcr_get_warp_modify_status())
     {
         sprintf(text, "Warping (%.2f%%)",
-            (double)current_sample / (double)g_main_ctx.core_ctx->vcr_get_length_samples() * 100.0);
+            (double)current_sample / (double)g_main_ctx.CoreCtx->vcr_get_length_samples() * 100.0);
         return text;
     }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording)
+    if (g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Recording)
     {
         if (is_before_start)
         {
@@ -177,7 +177,7 @@ const char *get_status_text()
         }
     }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Playback)
+    if (g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Playback)
     {
         if (is_before_start)
         {
@@ -185,8 +185,8 @@ const char *get_status_text()
         }
         else
         {
-            sprintf(text, "%d / %d (%d / %d) ", current_vi, g_main_ctx.core_ctx->vcr_get_length_vis(),
-                current_sample - index_adjustment, g_main_ctx.core_ctx->vcr_get_length_samples());
+            sprintf(text, "%d / %d (%d / %d) ", current_vi, g_main_ctx.CoreCtx->vcr_get_length_vis(),
+                current_sample - index_adjustment, g_main_ctx.CoreCtx->vcr_get_length_samples());
         }
     }
 
@@ -200,9 +200,9 @@ std::filesystem::path get_summercart_path()
 
 std::filesystem::path get_st_with_slot_path(const size_t slot)
 {
-    const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
+    const auto hdr = g_main_ctx.CoreCtx->vr_get_rom_header();
     const auto fname = std::format("{} {}.st{}", IOUtils::rom_name_to_string((const char *)hdr->nom),
-        g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code), slot);
+        g_main_ctx.CoreCtx->vr_country_code_to_country_name(hdr->Country_code), slot);
     return AppConfig::save_directory() / fname;
 }
 
@@ -275,12 +275,12 @@ static std::string get_titlebar_text()
 
     if (g_emu_starting) text += " - Starting...";
 
-    if (g_main_ctx.core_ctx->vr_get_launched())
-        text += std::format(" - {}", IOUtils::rom_name_to_string(g_main_ctx.core_ctx->vr_get_rom_header()->nom));
+    if (g_main_ctx.CoreCtx->vr_get_launched())
+        text += std::format(" - {}", IOUtils::rom_name_to_string(g_main_ctx.CoreCtx->vr_get_rom_header()->nom));
 
-    if (g_main_ctx.core_ctx->vcr_get_task() != CoreVCRTask::Idle)
+    if (g_main_ctx.CoreCtx->vcr_get_task() != CoreVCRTask::Idle)
     {
-        auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
+        auto vcr_filename = g_main_ctx.CoreCtx->vcr_get_path().filename();
         text += std::format(" - {}", vcr_filename.string());
     }
 
@@ -323,10 +323,10 @@ void on_task_changed(CoreVCRTask value)
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) ||
             task_is_playback(value) && !task_is_playback(previous_value) &&
-                !g_main_ctx.core_ctx->vcr_get_path().empty())
+                !g_main_ctx.CoreCtx->vcr_get_path().empty())
         {
             RecentMenu::add(AppActions::RECENT_MOVIES, g_config.recent_movie_paths,
-                g_main_ctx.core_ctx->vcr_get_path().string(), g_config.is_recent_movie_paths_frozen);
+                g_main_ctx.CoreCtx->vcr_get_path().string(), g_config.is_recent_movie_paths_frozen);
         }
 
         update_titlebar();
@@ -362,14 +362,14 @@ void on_emu_launched_changed(bool value)
 
         update_titlebar();
         // Some menu items, like movie ones, depend on both this and vcr task
-        on_task_changed(g_main_ctx.core_ctx->vcr_get_task());
+        on_task_changed(g_main_ctx.CoreCtx->vcr_get_task());
 
         // Reset and restore view stuff when emulation starts
         if (value)
         {
             g_vis_since_input_poll_warning_dismissed = false;
 
-            const auto rom_path = g_main_ctx.core_ctx->vr_get_rom_path();
+            const auto rom_path = g_main_ctx.CoreCtx->vr_get_rom_path();
             if (!rom_path.empty())
             {
                 RecentMenu::add(AppActions::RECENT_ROMS, g_config.recent_rom_paths, rom_path.string(),
@@ -419,7 +419,7 @@ void on_capturing_changed(bool value)
 void on_speed_modifier_changed(int32_t value)
 {
     const auto vis_per_second =
-        g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+        g_main_ctx.CoreCtx->vr_get_vis_per_second(g_main_ctx.CoreCtx->vr_get_rom_header()->Country_code);
     const auto effective_vis_per_second = (double)vis_per_second * ((double)value / 100.0);
 
     Statusbar::post(std::format("Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
@@ -443,7 +443,7 @@ void on_vis_since_input_poll_exceeded()
                                     "Warning", true))
     {
         ThreadPool::submit_task([] {
-            const auto result = g_main_ctx.core_ctx->vr_close_rom(true);
+            const auto result = g_main_ctx.CoreCtx->vr_close_rom(true);
             CoreUtils::show_error_dialog_for_result(result);
         });
     }
@@ -576,7 +576,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             g_config.core.vcr_readonly = true;
             Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
             ThreadPool::submit_task([fname] {
-                auto result = g_main_ctx.core_ctx->vcr_start_playback(fname);
+                auto result = g_main_ctx.CoreCtx->vcr_start_playback(fname);
                 CoreUtils::show_error_dialog_for_result(result);
             });
         }
@@ -584,11 +584,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                  extension == ".st2" || extension == ".st3" || extension == ".st4" || extension == ".st5" ||
                  extension == ".st6" || extension == ".st7" || extension == ".st8" || extension == ".st9")
         {
-            if (!g_main_ctx.core_ctx->vr_get_launched()) break;
-            g_main_ctx.core_ctx->vr_wait_increment();
+            if (!g_main_ctx.CoreCtx->vr_get_launched()) break;
+            g_main_ctx.CoreCtx->vr_wait_increment();
             ThreadPool::submit_task([=] {
-                g_main_ctx.core_ctx->vr_wait_decrement();
-                g_main_ctx.core_ctx->st_do_file(fname, CoreSTJob::Load, nullptr, false);
+                g_main_ctx.CoreCtx->vr_wait_decrement();
+                g_main_ctx.CoreCtx->st_do_file(fname, CoreSTJob::Load, nullptr, false);
             });
         }
         else if (extension == ".lua")
@@ -673,7 +673,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         Messenger::broadcast<Messenger::Message::SizeChanged>(
             std::make_pair(rect.right - rect.left, rect.bottom - rect.top));
 
-        if (g_main_ctx.core_ctx->vr_get_launched())
+        if (g_main_ctx.CoreCtx->vr_get_launched())
         {
             // We don't need to remember the dimensions set by gfx plugin
             break;
@@ -731,7 +731,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         AppConfig::save();
 
         ThreadPool::submit_task([=] {
-            g_main_ctx.core_ctx->vr_close_rom(true);
+            g_main_ctx.CoreCtx->vr_close_rom(true);
 
             PostMessage(hwnd, WM_PREDESTROY, 0, 0);
         });
@@ -747,8 +747,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_ENTERMENULOOP:
         g_main_ctx.in_menu_loop = true;
-        g_main_ctx.paused_before_menu = g_main_ctx.core_ctx->vr_get_paused();
-        g_main_ctx.core_ctx->vr_pause_emu();
+        g_main_ctx.paused_before_menu = g_main_ctx.CoreCtx->vr_get_paused();
+        g_main_ctx.CoreCtx->vr_pause_emu();
         break;
     case WM_EXITMENULOOP:
         // This message is sent when we escape the blocking menu loop, including situations where the clicked menu
@@ -760,11 +760,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             g_main_ctx.in_menu_loop = false;
             if (g_main_ctx.paused_before_menu)
             {
-                g_main_ctx.core_ctx->vr_pause_emu();
+                g_main_ctx.CoreCtx->vr_pause_emu();
             }
             else
             {
-                g_main_ctx.core_ctx->vr_resume_emu();
+                g_main_ctx.CoreCtx->vr_resume_emu();
             }
         }).detach();
         break;
@@ -782,12 +782,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         case WA_CLICKACTIVE:
             if (!g_paused_before_focus)
             {
-                g_main_ctx.core_ctx->vr_resume_emu();
+                g_main_ctx.CoreCtx->vr_resume_emu();
             }
             break;
         case WA_INACTIVE:
-            g_paused_before_focus = g_main_ctx.core_ctx->vr_get_paused();
-            g_main_ctx.core_ctx->vr_pause_emu();
+            g_paused_before_focus = g_main_ctx.CoreCtx->vr_get_paused();
+            g_main_ctx.CoreCtx->vr_pause_emu();
             break;
         default:
             break;
@@ -802,7 +802,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
-    g_main_ctx.core_ctx->vr_invalidate_visuals();
+    g_main_ctx.CoreCtx->vr_invalidate_visuals();
 
     static std::chrono::high_resolution_clock::time_point last_statusbar_update =
         std::chrono::high_resolution_clock::now();
@@ -814,7 +814,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
 
         if (CaptureManager::is_capturing())
         {
-            if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Idle)
+            if (g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Idle)
             {
                 Statusbar::post(std::format("{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
             }
@@ -836,7 +836,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
     if (time - last_statusbar_update > std::chrono::seconds(1))
     {
         float fps, vis;
-        g_main_ctx.core_ctx->vr_get_timings(fps, vis);
+        g_main_ctx.CoreCtx->vr_get_timings(fps, vis);
 
         Statusbar::post(std::format("FPS: {:.1f}", fps), Statusbar::Section::FPS);
         Statusbar::post(std::format("VI/s: {:.1f}", vis), Statusbar::Section::VIs);
@@ -961,7 +961,7 @@ static CoreResult init_core()
     g_main_ctx.core.st_pre_callback = st_callback_wrapper;
     g_main_ctx.core.get_plugin_names = PluginUtil::get_plugin_names;
 
-    const auto result = core_create(&g_main_ctx.core, &g_main_ctx.core_ctx);
+    const auto result = core_create(&g_main_ctx.core, &g_main_ctx.CoreCtx);
 
     PluginUtil::init();
 

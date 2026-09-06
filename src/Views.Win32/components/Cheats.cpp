@@ -14,7 +14,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
     {
     case WM_INITDIALOG: {
         std::stack<std::vector<CoreCheat>> override_stack;
-        g_main_ctx.core_ctx->cht_get_override_stack(override_stack);
+        g_main_ctx.CoreCtx->cht_get_override_stack(override_stack);
         if (!override_stack.empty())
         {
             SetDlgItemText(hwnd, IDC_CHEAT_STATUS, "Read-only: Cheats are overriden by the core.");
@@ -33,16 +33,16 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         case IDC_NEW_CHEAT: {
             CoreCheat script;
 
-            if (!g_main_ctx.core_ctx->cht_compile(
+            if (!g_main_ctx.CoreCtx->cht_compile(
                     "D033AFA1 0020\n8133B1BC 4220\nD033AFA1 0020\n8133B17C 0300\nD033AFA1 0020\n8133B17E 0880", script))
             {
                 break;
             }
 
             std::vector<CoreCheat> cheats;
-            g_main_ctx.core_ctx->cht_get_list(cheats);
+            g_main_ctx.CoreCtx->cht_get_list(cheats);
             cheats.push_back(script);
-            g_main_ctx.core_ctx->cht_set_list(cheats);
+            g_main_ctx.CoreCtx->cht_set_list(cheats);
 
             goto rebuild_list;
         }
@@ -55,9 +55,9 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
             }
 
             std::vector<CoreCheat> cheats;
-            g_main_ctx.core_ctx->cht_get_list(cheats);
+            g_main_ctx.CoreCtx->cht_get_list(cheats);
             cheats.erase(cheats.begin() + selected_index);
-            g_main_ctx.core_ctx->cht_set_list(cheats);
+            g_main_ctx.CoreCtx->cht_set_list(cheats);
 
             goto rebuild_list;
         }
@@ -70,9 +70,9 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
             }
 
             std::vector<CoreCheat> cheats;
-            g_main_ctx.core_ctx->cht_get_list(cheats);
+            g_main_ctx.CoreCtx->cht_get_list(cheats);
             cheats[selected_index].active = IsDlgButtonChecked(hwnd, IDC_CHECK_CHEAT_ENABLED) == BST_CHECKED;
-            g_main_ctx.core_ctx->cht_set_list(cheats);
+            g_main_ctx.CoreCtx->cht_set_list(cheats);
 
             goto rebuild_list;
         }
@@ -86,7 +86,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
             }
 
             std::vector<CoreCheat> cheats;
-            g_main_ctx.core_ctx->cht_get_list(cheats);
+            g_main_ctx.CoreCtx->cht_get_list(cheats);
             const bool prev_active = cheats[selected_index].active;
 
             const auto code = get_window_text(GetDlgItem(hwnd, IDC_EDIT_CHEAT)).value();
@@ -94,7 +94,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 
             CoreCheat script;
 
-            if (!g_main_ctx.core_ctx->cht_compile(code, script))
+            if (!g_main_ctx.CoreCtx->cht_compile(code, script))
             {
                 DialogService::show_dialog("Cheat code could not be compiled.\r\nVerify that the syntax is correct",
                     "Cheats", CoreMessageTone::Error);
@@ -105,7 +105,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
             script.active = prev_active;
 
             cheats[selected_index] = script;
-            g_main_ctx.core_ctx->cht_set_list(cheats);
+            g_main_ctx.CoreCtx->cht_set_list(cheats);
 
             goto rebuild_list;
         }
@@ -127,7 +127,7 @@ update_selection: {
     }
 
     std::vector<CoreCheat> cheats;
-    g_main_ctx.core_ctx->cht_get_list(cheats);
+    g_main_ctx.CoreCtx->cht_get_list(cheats);
 
     CheckDlgButton(hwnd, IDC_CHECK_CHEAT_ENABLED, cheats[selected_index].active ? BST_CHECKED : BST_UNCHECKED);
     SetDlgItemText(hwnd, IDC_EDIT_CHEAT, cheats[selected_index].code.c_str());
@@ -140,7 +140,7 @@ rebuild_list: {
     auto prev_index = ListBox_GetCurSel(lb_hwnd);
     ListBox_ResetContent(lb_hwnd);
     std::vector<CoreCheat> cheats;
-    g_main_ctx.core_ctx->cht_get_list(cheats);
+    g_main_ctx.CoreCtx->cht_get_list(cheats);
     for (const auto &script : cheats)
     {
         auto name = !script.active ? script.name + " (Disabled)" : script.name;
