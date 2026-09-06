@@ -2,7 +2,7 @@ name: Build (nightly)
 
 on:
   schedule:
-    - cron: "0 23 * * *"
+    - cron: '0 22 * * *'
   workflow_dispatch:
 
 concurrency:
