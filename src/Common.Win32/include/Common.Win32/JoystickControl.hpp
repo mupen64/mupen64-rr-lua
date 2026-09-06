@@ -55,6 +55,21 @@ struct Context
 
 using Mode = Context::Mode;
 
+inline Gdiplus::Color contrastize(const Gdiplus::Color &color, int amount, bool dark_background)
+{
+    const auto contrastize_component = [](BYTE component, int amount, bool dark_background) {
+        if (dark_background)
+        {
+            return static_cast<BYTE>(component + (255 - component) * amount / 100);
+        }
+        return static_cast<BYTE>(component - component * amount / 100);
+    };
+
+    return Gdiplus::Color(color.GetAlpha(), contrastize_component(color.GetRed(), amount, dark_background),
+        contrastize_component(color.GetGreen(), amount, dark_background),
+        contrastize_component(color.GetBlue(), amount, dark_background));
+}
+
 inline void get_cursor_to_joystick_position(const HWND hwnd, int &x, int &y)
 {
     RECT rc{};
@@ -83,22 +98,29 @@ inline void update_joystick_position(HWND hwnd, Context *ctx)
         return;
     }
 
-    get_cursor_to_joystick_position(hwnd, ctx->x, ctx->y);
+    int32_t x;
+    int32_t y;
+    get_cursor_to_joystick_position(hwnd, x, y);
 
     if (ctx->mode == Mode::Relative)
     {
-        ctx->x -= ctx->cursor_diff_x;
-        ctx->y -= ctx->cursor_diff_y;
+        x -= ctx->cursor_diff_x;
+        y -= ctx->cursor_diff_y;
     }
 
     RECT rc{};
     GetClientRect(hwnd, &rc);
 
-    if (std::abs(ctx->x) < 8) ctx->x = 0;
-    if (std::abs(ctx->y) < 8) ctx->y = 0;
+    if (std::abs(x) < 8) x = 0;
+    if (std::abs(y) < 8) y = 0;
 
-    ctx->x = std::clamp(ctx->x, -128, 127);
-    ctx->y = std::clamp(ctx->y, -128, 127);
+    x = std::clamp(x, -128, 127);
+    y = std::clamp(y, -128, 127);
+
+    if (x == ctx->x && y == ctx->y) return;
+
+    ctx->x = x;
+    ctx->y = y;
 
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
     SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_position_changed, 0, 0);
@@ -288,6 +310,12 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_MOUSEMOVE:
         update_joystick_position(hwnd, ctx);
         break;
+    case WM_THEMECHANGED:
+    case WM_SYSCOLORCHANGE:
+    case WM_SETTINGCHANGE:
+        update_clear_color(hwnd, ctx);
+        RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        break;
     case WM_PAINT: {
         RECT rc{};
         GetClientRect(hwnd, &rc);
@@ -298,21 +326,12 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         const float mid_y = rc.bottom / 2.0;
         const float stick_x = mid_x + ctx->x / 128.0f * (rc.right / 2.0f);
         const float stick_y = mid_y - ctx->y / 128.0f * (rc.bottom / 2.0f);
-        update_clear_color(hwnd, ctx);
         ctx->g->Clear(ctx->clear_color);
 
         const auto luminance = 0.299 * ctx->clear_color.GetRed() + 0.587 * ctx->clear_color.GetGreen() +
                                0.114 * ctx->clear_color.GetBlue();
         const bool dark_background = luminance < 128.0;
-        const auto contrastize = [dark_background](BYTE component, int amount) {
-            if (dark_background)
-            {
-                return static_cast<BYTE>(component + (255 - component) * amount / 100);
-            }
-            return static_cast<BYTE>(component - component * amount / 100);
-        };
-        const Gdiplus::Color border_color(255, contrastize(ctx->clear_color.GetRed(), 25),
-            contrastize(ctx->clear_color.GetGreen(), 25), contrastize(ctx->clear_color.GetBlue(), 25));
+        const Gdiplus::Color border_color = contrastize(ctx->clear_color, 25, dark_background);
         const auto ellipse_color = dark_background ? Gdiplus::Color::Black : Gdiplus::Color::White;
 
         ctx->border_pen->SetColor(border_color);
