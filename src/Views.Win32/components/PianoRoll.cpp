@@ -1134,8 +1134,8 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         // We create all the child controls here because windows dialog scaling would mess our stuff up when mixing
         // dialog manager and manual creation
         piano_roll.hwnd = hwnd;
-        piano_roll.joy_hwnd = CreateWindowEx(WS_EX_STATICEDGE, JOYSTICK_CLASS, "", WS_CHILD | WS_VISIBLE, 17, 30, 131,
-            131, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+        piano_roll.joy_hwnd = CreateWindowEx(0, JOYSTICK_CLASS, "", WS_CHILD | WS_VISIBLE, 17, 30, 131, 131,
+            piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
         CreateWindowEx(0, WC_STATIC, "History", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT | SS_CENTERIMAGE, 17, 166,
             131, 15, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
         piano_roll.hist_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTBOX, "",

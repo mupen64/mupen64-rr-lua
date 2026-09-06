@@ -46,9 +46,10 @@ struct Context
     HBITMAP back_bmp{};
     Gdiplus::Graphics *g{};
     Gdiplus::Color clear_color{};
-    Gdiplus::Brush *bg_brush{};
-    Gdiplus::Brush *tip_brush{};
+    Gdiplus::SolidBrush *bg_brush{};
+    Gdiplus::SolidBrush *tip_brush{};
     Gdiplus::Pen *outline_pen{};
+    Gdiplus::Pen *border_pen{};
     Gdiplus::Pen *line_pen{};
 };
 
@@ -121,7 +122,31 @@ inline void destroy_dcs(const HWND hwnd, Context *ctx)
     delete ctx->bg_brush;
     delete ctx->tip_brush;
     delete ctx->outline_pen;
+    delete ctx->border_pen;
     delete ctx->line_pen;
+}
+
+inline void update_clear_color(const HWND hwnd, Context *ctx)
+{
+    const auto parent_hwnd = GetParent(hwnd);
+    const auto parent_dc = GetDC(parent_hwnd);
+    const auto clear_brush =
+        reinterpret_cast<HBRUSH>(SendMessage(parent_hwnd, WM_CTLCOLORDLG, reinterpret_cast<WPARAM>(parent_dc), 0));
+
+    if (clear_brush)
+    {
+        LOGBRUSH log_brush{};
+        if (GetObject(clear_brush, sizeof(log_brush), &log_brush) == sizeof(log_brush))
+        {
+            ctx->clear_color.SetFromCOLORREF(log_brush.lbColor);
+        }
+    }
+    else
+    {
+        ctx->clear_color.SetFromCOLORREF(GetSysColor(COLOR_WINDOW));
+    }
+
+    ReleaseDC(parent_hwnd, parent_dc);
 }
 
 inline void create_dcs(const HWND hwnd, Context *ctx)
@@ -147,20 +172,11 @@ inline void create_dcs(const HWND hwnd, Context *ctx)
     ctx->bg_brush = new Gdiplus::SolidBrush(Gdiplus::Color::White);
     ctx->tip_brush = new Gdiplus::SolidBrush(Gdiplus::Color(255, 255, 0, 0));
     ctx->outline_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 0), 1.0f * scale);
+    ctx->border_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 0), 1.0f * scale);
     ctx->line_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 255), 3.0f * scale);
+    ctx->line_pen->SetLineCap(Gdiplus::LineCapRound, Gdiplus::LineCapRound, Gdiplus::DashCapRound);
 
-    // We get the clear color by asking the parent window for its background brush, so this works even with weird themes
-    const auto parent_hwnd = GetParent(hwnd);
-    const auto parent_dc = GetDC(parent_hwnd);
-    const auto clear_brush = (HBRUSH)SendMessage(parent_hwnd, WM_CTLCOLORDLG, (WPARAM)parent_dc, 0);
-
-    LOGBRUSH log_brush{};
-    GetObject(clear_brush, sizeof(log_brush), &log_brush);
-
-    ctx->clear_color.SetFromCOLORREF(log_brush.lbColor);
-
-    ReleaseDC(parent_hwnd, parent_dc);
-    DeleteObject(clear_brush);
+    update_clear_color(hwnd, ctx);
 }
 
 inline auto get_ctx(const HWND hwnd)
@@ -282,7 +298,40 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         const float mid_y = rc.bottom / 2.0;
         const float stick_x = mid_x + ctx->x / 128.0f * (rc.right / 2.0f);
         const float stick_y = mid_y - ctx->y / 128.0f * (rc.bottom / 2.0f);
+        update_clear_color(hwnd, ctx);
         ctx->g->Clear(ctx->clear_color);
+
+        const auto luminance = 0.299 * ctx->clear_color.GetRed() + 0.587 * ctx->clear_color.GetGreen() +
+                               0.114 * ctx->clear_color.GetBlue();
+        const bool dark_background = luminance < 128.0;
+        const auto contrastize = [dark_background](BYTE component, int amount) {
+            if (dark_background)
+            {
+                return static_cast<BYTE>(component + (255 - component) * amount / 100);
+            }
+            return static_cast<BYTE>(component - component * amount / 100);
+        };
+        const Gdiplus::Color border_color(255, contrastize(ctx->clear_color.GetRed(), 25),
+            contrastize(ctx->clear_color.GetGreen(), 25), contrastize(ctx->clear_color.GetBlue(), 25));
+        const auto ellipse_color = dark_background ? Gdiplus::Color::Black : Gdiplus::Color::White;
+
+        ctx->border_pen->SetColor(border_color);
+        ctx->outline_pen->SetColor(border_color);
+        ctx->bg_brush->SetColor(ellipse_color);
+
+        const auto border_width = ctx->border_pen->GetWidth();
+        const auto radius = std::max(0.0f, 5.0f * border_width);
+        const auto border_left = border_width / 2.0f;
+        const auto border_top = border_width / 2.0f;
+        const auto border_right = rc.right - border_width / 2.0f;
+        const auto border_bottom = rc.bottom - border_width / 2.0f;
+        Gdiplus::GraphicsPath border_path;
+        border_path.AddArc(border_left, border_top, radius * 2.0f, radius * 2.0f, 180.0f, 90.0f);
+        border_path.AddArc(border_right - radius * 2.0f, border_top, radius * 2.0f, radius * 2.0f, 270.0f, 90.0f);
+        border_path.AddArc(
+            border_right - radius * 2.0f, border_bottom - radius * 2.0f, radius * 2.0f, radius * 2.0f, 0.0f, 90.0f);
+        border_path.AddArc(border_left, border_bottom - radius * 2.0f, radius * 2.0f, radius * 2.0f, 90.0f, 90.0f);
+        border_path.CloseFigure();
 
         const auto tip_size = ctx->outline_pen->GetWidth() * 8.0f;
 
@@ -290,6 +339,7 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->g->DrawEllipse(ctx->outline_pen, 0, 0, rc.right, rc.bottom);
         ctx->g->DrawLine(ctx->outline_pen, mid_x, 0.0f, mid_x, (float)rc.bottom);
         ctx->g->DrawLine(ctx->outline_pen, 0.0f, mid_y, (float)rc.right, mid_y);
+        ctx->g->DrawPath(ctx->border_pen, &border_path);
         ctx->g->DrawLine(ctx->line_pen, mid_x, mid_y, stick_x, stick_y);
         ctx->g->FillEllipse(ctx->tip_brush, stick_x - tip_size / 2, stick_y - tip_size / 2, tip_size, tip_size);
 
