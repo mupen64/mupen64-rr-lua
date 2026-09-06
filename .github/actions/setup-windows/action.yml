@@ -52,7 +52,7 @@ runs:
           vcpkg-${{ runner.os }}-${{ inputs.arch }}-
 
     - name: Setup nightly build environment variables
-      if: ${{ inputs.is_nightly }}
+      if: ${{ inputs.is_nightly == 'true' }}
       shell: powershell
       run: |
         $suffix = "${{ inputs.commit_hash }}"
