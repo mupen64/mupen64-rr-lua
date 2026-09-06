@@ -1144,6 +1144,7 @@ void Status::on_config_changed()
     set_style(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW, !new_config.float_from_parent);
     set_style(hwnd, GWL_STYLE, DS_SYSMODAL, !new_config.float_from_parent);
     set_style(hwnd, GWL_STYLE, WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, new_config.titlebar);
+    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 
     // HACK: Fix window size when switching between titlebar and no titlebar
     RECT rect = new_config.titlebar ? initial_window_rect : initial_client_rect;
