@@ -1374,23 +1374,24 @@ inline void update_window_theme(HWND hwnd, bool dark, const std::vector<HWND> &e
 
 inline void update_theme_data(bool dark)
 {
-#define RECREATE(x)                                                                                                    \
+#define RECREATE(x, color)                                                                                             \
     if (theme_data.x##_brush)                                                                                          \
     {                                                                                                                  \
         DeleteObject(theme_data.x##_brush);                                                                            \
         theme_data.x##_brush = nullptr;                                                                                \
     }                                                                                                                  \
-    theme_data.x##_brush = CreateSolidBrush(dark ? dark_theme_data.x##_color : light_theme_data.x##_color);            \
-    theme_data.x##_color = dark ? dark_theme_data.x##_color : light_theme_data.x##_color;
+    theme_data.x##_brush = CreateSolidBrush(color);                                                                    \
+    theme_data.x##_color = color;
 
-    RECREATE(bg)
-    RECREATE(text_1)
-    RECREATE(text_2)
-    RECREATE(listbox_bg)
-    RECREATE(edit_bg)
-    RECREATE(tab_normal)
-    RECREATE(tab_hover)
-    RECREATE(disabled_text)
+    const auto bg_color = dark ? dark_theme_data.bg_color : GetSysColor(COLOR_3DFACE);
+    RECREATE(bg, bg_color)
+    RECREATE(text_1, dark ? dark_theme_data.text_1_color : light_theme_data.text_1_color)
+    RECREATE(text_2, dark ? dark_theme_data.text_2_color : light_theme_data.text_2_color)
+    RECREATE(listbox_bg, dark ? dark_theme_data.listbox_bg_color : light_theme_data.listbox_bg_color)
+    RECREATE(edit_bg, dark ? dark_theme_data.edit_bg_color : light_theme_data.edit_bg_color)
+    RECREATE(tab_normal, dark ? dark_theme_data.tab_normal_color : light_theme_data.tab_normal_color)
+    RECREATE(tab_hover, dark ? dark_theme_data.tab_hover_color : light_theme_data.tab_hover_color)
+    RECREATE(disabled_text, dark ? dark_theme_data.disabled_text_color : light_theme_data.disabled_text_color)
 
 #define UPDATE_COLOR(x) theme_data.x##_color = dark ? dark_theme_data.x##_color : light_theme_data.x##_color;
     UPDATE_COLOR(groupbox_border)
