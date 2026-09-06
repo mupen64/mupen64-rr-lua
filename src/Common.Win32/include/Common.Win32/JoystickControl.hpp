@@ -83,22 +83,29 @@ inline void update_joystick_position(HWND hwnd, Context *ctx)
         return;
     }
 
-    get_cursor_to_joystick_position(hwnd, ctx->x, ctx->y);
+    int32_t x;
+    int32_t y;
+    get_cursor_to_joystick_position(hwnd, x, y);
 
     if (ctx->mode == Mode::Relative)
     {
-        ctx->x -= ctx->cursor_diff_x;
-        ctx->y -= ctx->cursor_diff_y;
+        x -= ctx->cursor_diff_x;
+        y -= ctx->cursor_diff_y;
     }
 
     RECT rc{};
     GetClientRect(hwnd, &rc);
 
-    if (std::abs(ctx->x) < 8) ctx->x = 0;
-    if (std::abs(ctx->y) < 8) ctx->y = 0;
+    if (std::abs(x) < 8) x = 0;
+    if (std::abs(y) < 8) y = 0;
 
-    ctx->x = std::clamp(ctx->x, -128, 127);
-    ctx->y = std::clamp(ctx->y, -128, 127);
+    x = std::clamp(x, -128, 127);
+    y = std::clamp(y, -128, 127);
+
+    if (x == ctx->x && y == ctx->y) return;
+
+    ctx->x = x;
+    ctx->y = y;
 
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
     SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_position_changed, 0, 0);
