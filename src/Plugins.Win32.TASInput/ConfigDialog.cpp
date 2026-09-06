@@ -9,6 +9,7 @@
 #include <Main.hpp>
 #include <NewConfig.hpp>
 #include <GamepadManager.hpp>
+#include <WinDarkMode.h>
 
 const auto editbox_ids = {IDC_E_A, IDC_E_B, IDC_E_START, IDC_E_ZTRIG, IDC_E_LTRIG, IDC_E_RTRIG, IDC_E_DPLEFT,
     IDC_E_DPRIGHT, IDC_E_DPUP, IDC_E_DPDOWN, IDC_E_CLEFT, IDC_E_CRIGHT, IDC_E_CUP, IDC_E_CDOWN, IDC_EAS_UP,
@@ -408,6 +409,8 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ComboBox_SetCurSel(cb_hwnd, g_ctx.selected_controller);
 
         refresh_device_list();
+
+        WinDarkMode::attach(hwnd, {.is_dialog = true});
         break;
     }
     case WM_CLOSE:
