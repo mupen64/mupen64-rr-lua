@@ -2,7 +2,7 @@ name: Build (nightly)
 
 on:
   schedule:
-    - cron: 0 23 * * *
+    - cron: "0 23 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout `main` branch
         uses: actions/checkout@v6
+        with:
+          ref: main
 
       - uses: ./.github/actions/setup-windows
         with:
@@ -57,6 +59,8 @@ jobs:
     steps:
       - name: Checkout `main` branch
         uses: actions/checkout@v6
+        with:
+          ref: main
 
       - uses: ./.github/actions/setup-ubuntu
         with:
