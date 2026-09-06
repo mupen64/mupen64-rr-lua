@@ -169,9 +169,6 @@ inline void create_dcs(const HWND hwnd, Context *ctx)
 
     const auto scale = (float)GetDpiForWindow(hwnd) / 96.0f;
 
-    const auto corner_diameter = static_cast<int>(12.0f * scale);
-    SetWindowRgn(hwnd, CreateRoundRectRgn(0, 0, rc.right, rc.bottom, corner_diameter, corner_diameter), TRUE);
-
     ctx->bg_brush = new Gdiplus::SolidBrush(Gdiplus::Color::White);
     ctx->tip_brush = new Gdiplus::SolidBrush(Gdiplus::Color(255, 255, 0, 0));
     ctx->outline_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 0), 1.0f * scale);
@@ -323,7 +320,7 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->bg_brush->SetColor(ellipse_color);
 
         const auto border_width = ctx->border_pen->GetWidth();
-        const auto radius = 6.0f * border_width;
+        const auto radius = std::max(0.0f, 5.0f * border_width);
         const auto border_left = border_width / 2.0f;
         const auto border_top = border_width / 2.0f;
         const auto border_right = rc.right - border_width / 2.0f;
@@ -342,9 +339,9 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->g->DrawEllipse(ctx->outline_pen, 0, 0, rc.right, rc.bottom);
         ctx->g->DrawLine(ctx->outline_pen, mid_x, 0.0f, mid_x, (float)rc.bottom);
         ctx->g->DrawLine(ctx->outline_pen, 0.0f, mid_y, (float)rc.right, mid_y);
+        ctx->g->DrawPath(ctx->border_pen, &border_path);
         ctx->g->DrawLine(ctx->line_pen, mid_x, mid_y, stick_x, stick_y);
         ctx->g->FillEllipse(ctx->tip_brush, stick_x - tip_size / 2, stick_y - tip_size / 2, tip_size, tip_size);
-        ctx->g->DrawPath(ctx->border_pen, &border_path);
 
         rc.right += 1;
         rc.bottom += 1;
