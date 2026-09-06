@@ -6,6 +6,6 @@
 
 #pragma once
 
-#define CURRENT_VERSION "1.5.0-1"
+#define CURRENT_VERSION "1.5.0-2"
 
 #define VERSION_NAME_HELPER_GEN_NAME(base_name) base_name
