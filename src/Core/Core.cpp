@@ -29,9 +29,7 @@ CoreCtx g_ctx{};
 
 extern "C"
 {
-    // ReSharper disable CppInconsistentNaming
-    CORE_EXPORT void *CORE_RDRAM = nullptr;
-    // ReSharper restore CppInconsistentNaming
+    CORE_EXPORT void *CORE_RDRAM = nullptr; // NOLINT
 }
 
 static void log_dummy(std::string_view)
