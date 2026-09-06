@@ -177,6 +177,7 @@ inline void create_dcs(const HWND hwnd, Context *ctx)
     ctx->outline_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 0), 1.0f * scale);
     ctx->border_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 0), 1.0f * scale);
     ctx->line_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 255), 3.0f * scale);
+    ctx->line_pen->SetLineCap(Gdiplus::LineCapRound, Gdiplus::LineCapRound, Gdiplus::DashCapRound);
 
     update_clear_color(hwnd, ctx);
 }
