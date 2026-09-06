@@ -357,6 +357,9 @@ void on_emu_launched_changed(bool value)
             SetWindowLong(g_main_ctx.hwnd, GWL_STYLE, window_style | WS_THICKFRAME | WS_MAXIMIZEBOX);
         }
 
+        SetWindowPos(g_main_ctx.hwnd, nullptr, 0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+
         update_titlebar();
         // Some menu items, like movie ones, depend on both this and vcr task
         on_task_changed(g_main_ctx.core_ctx->vcr_get_task());
