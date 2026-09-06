@@ -64,7 +64,7 @@ ApplicationWindow {
                 anchors.centerIn: parent
                 text: "MessageBox test"
                 onClicked: {
-                    dialogService.queueInfoDialog(null, "Hello there.", "General Kenobi! You are a bold one.", CoreDialogType.Error)
+                    dialogService.queueInfoDialog(null, "Hello there.", "General Kenobi! You are a bold one.", CoreMessageTone.Error)
                 }
             }
         }

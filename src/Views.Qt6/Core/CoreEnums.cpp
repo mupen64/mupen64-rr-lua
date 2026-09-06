@@ -7,7 +7,7 @@
 
 #include <QQmlEngine>
 
-QJSValue CoreResult::message(Value value)
+QJSValue QmlCoreResult::message(Value value)
 {
     using namespace std::literals;
     using namespace Qt::Literals;

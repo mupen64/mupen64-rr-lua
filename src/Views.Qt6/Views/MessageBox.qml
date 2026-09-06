@@ -36,11 +36,11 @@ DialogBase {
                     // to QIcon::fromTheme. Qt uses the XDG specification for icon names:
                     // https://specifications.freedesktop.org/icon-naming/latest/
                     switch (dialog.coreType) {
-                        case CoreDialogType.Error:
+                        case CoreMessageTone.Error:
                             return "image://icons/dialog-error";
-                        case CoreDialogType.Warning:
+                        case CoreMessageTone.Warn:
                             return "image://icons/dialog-warning";
-                        case CoreDialogType.Information:
+                        case CoreMessageTone.Info:
                         default:
                             return "image://icons/dialog-information";
                     }

@@ -5,7 +5,9 @@
  */
 #pragma once
 
+#include <filesystem>
 #include <future>
+#include <string_view>
 #include <Common/MiscHelpers.hpp>
 #include <QObject>
 
@@ -71,4 +73,24 @@ std::future<void> on_signal(typename details::SignalFnTraits<F>::Class *object, 
 
     return future;
 }
+
+inline std::filesystem::path to_std_path(QAnyStringView str) {
+    return str.visit(MiscHelpers::Overload {
+        [](QLatin1StringView l1_str) -> std::filesystem::path {
+            auto qstr = l1_str.toString();
+            return (std::u16string_view) (QStringView) qstr;
+        },
+        [](QUtf8StringView utf8_str) -> std::filesystem::path {
+            return (std::u8string_view) utf8_str;
+        },
+        [](QStringView utf16_str) -> std::filesystem::path {
+            return (std::u16string_view) utf16_str;
+        }
+    });
+}
+
+inline QString to_qt_string(const std::filesystem::path& path) {
+    return QAnyStringView(path.native()).toString();
+}
+
 } // namespace QtUtils

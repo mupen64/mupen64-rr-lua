@@ -67,7 +67,7 @@ void Plugin::init_common()
     m_process_event = (M64RRSpec::PtrProcessEvent)load_symbol("M64RRProcessEvent");
 }
 
-void Plugin::initiate(core_ctx *ctx, core_params &params, const std::function<void(M64RRSpec::PluginInit *)> &post_init)
+void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void(M64RRSpec::PluginInit *)> &post_init)
 {
     m_init_data.reset(new M64RRSpec::PluginInit);
 
@@ -118,7 +118,7 @@ void Plugin::initiate(core_ctx *ctx, core_params &params, const std::function<vo
     if (m_process_event) m_process_event(init_event);
 }
 
-void Plugin::bind_functions(core_params &params)
+void Plugin::bind_functions(CoreParams &params)
 {
     switch (m_type)
     {
@@ -170,7 +170,7 @@ PluginSet::PluginSet(Plugin &&video, Plugin &&audio, Plugin &&input, Plugin &&rs
 {
 }
 
-void PluginSet::initiate_plugins(core_ctx *core_ctx, core_params &core_params)
+void PluginSet::initiate_plugins(CoreCtx *core_ctx, CoreParams &core_params)
 {
     CoreUtil::clear_plugin_funcs(core_params);
 
@@ -187,7 +187,7 @@ void PluginSet::initiate_plugins(core_ctx *core_ctx, core_params &core_params)
     });
 }
 
-void PluginSet::emu_started(core_params &core_params)
+void PluginSet::emu_started(CoreParams &core_params)
 {
     const auto opened_event = M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened};
 
@@ -202,7 +202,7 @@ void PluginSet::emu_started(core_params &core_params)
     m_rsp.send_event(opened_event);
 }
 
-void PluginSet::emu_stopped(core_params &core_params)
+void PluginSet::emu_stopped(CoreParams &core_params)
 {
     const auto closed_event = M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed};
     const auto shutdown_event = M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown};

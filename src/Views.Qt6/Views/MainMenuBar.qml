@@ -31,7 +31,7 @@ MenuBar {
                 return;
 
             let title = `${message.module} Error ${result}`;
-            root.dialogService.queueInfoDialog(null, title, message.error, CoreDialogType.Error);
+            root.dialogService.queueInfoDialog(null, title, message.error, CoreMessageTone.Error);
         }
     }
 

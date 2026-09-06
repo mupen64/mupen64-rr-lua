@@ -12,10 +12,10 @@
 
 #include <Core/Types.hpp>
 
-class CoreResult : public QObject
+class QmlCoreResult : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    QML_NAMED_ELEMENT(CoreResult)
     QML_SINGLETON
   public:
     /**
@@ -132,16 +132,16 @@ class CoreResult : public QObject
     Q_INVOKABLE QJSValue message(Value value);
 };
 
-namespace CoreDialogType
+namespace QmlCoreMessageTone
 {
 Q_NAMESPACE
-QML_ELEMENT
+QML_NAMED_ELEMENT(CoreMessageTone)
 
 enum Value
 {
-    Error = CoreMessageTone::Error,
-    Warning = CoreMessageTone::Warn,
-    Information = CoreMessageTone::Info,
+    Error = (int) CoreMessageTone::Error,
+    Warn = (int) CoreMessageTone::Warn,
+    Info = (int) CoreMessageTone::Info,
 };
 Q_ENUM_NS(Value)
 

@@ -49,7 +49,7 @@ class EmuContext : public QObject
 
     static EmuContext *instance();
 
-    static core_ctx *rawContext()
+    static CoreCtx *rawContext()
     {
         auto *inst = instance();
         return (inst != nullptr) ? inst->m_core_ctx : nullptr;
@@ -59,13 +59,13 @@ class EmuContext : public QObject
     // ==========================
 
     // -> vr_start_rom
-    Q_INVOKABLE CoreResult::Value startROM(const QUrl &url);
+    Q_INVOKABLE QmlCoreResult::Value startROM(const QUrl &url);
 
     // -> vr_close_rom
-    Q_INVOKABLE CoreResult::Value closeROM(bool resetVCR = true);
+    Q_INVOKABLE QmlCoreResult::Value closeROM(bool resetVCR = true);
 
     // -> vr_reset_rom
-    Q_INVOKABLE CoreResult::Value resetROM(bool resetSaveData, bool stopVCR);
+    Q_INVOKABLE QmlCoreResult::Value resetROM(bool resetSaveData, bool stopVCR);
 
     // -> vr_invalidate_visuals
     Q_INVOKABLE void invalidateVisuals();
@@ -193,7 +193,7 @@ class EmuContext : public QObject
      * @param type The dialog's type. Used to display an icon next to the text.
      */
     void openMultiDialog(QJSValue done, QAnyStringView title, QAnyStringView content, const QList<QString> &choices,
-        CoreDialogType::Value type);
+        QmlCoreMessageTone::Value type);
 
     /**
      * @brief Opens a yes/no dialog.
@@ -203,7 +203,7 @@ class EmuContext : public QObject
      * @param content The dialog's content text.
      * @param type The dialog's type. Used to display an icon next to the text.
      */
-    void openAskDialog(QJSValue done, QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
+    void openAskDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
 
     /**
      * @brief Opens an info dialog.
@@ -213,12 +213,12 @@ class EmuContext : public QObject
      * @param content The dialog's content text.
      * @param type The dialog's type. Used to display an icon next to the text.
      */
-    void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
+    void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
 
   private:
     CoreCfg *m_core_cfg;
     CoreParams *m_core_params;
-    core_ctx *m_core_ctx;
+    CoreCtx *m_core_ctx;
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
@@ -475,5 +475,5 @@ class EmuPaths : public QObject
 
 namespace CoreUtil
 {
-void clear_plugin_funcs(core_params &params);
+void clear_plugin_funcs(CoreParams &params);
 }

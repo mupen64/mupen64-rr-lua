@@ -28,7 +28,7 @@ class Plugin
     /**
      * @brief Triggers the `Initiate` event and sets up necessary initialization data.
      */
-    void initiate(core_ctx *core_ctx, CoreParams &core_params,
+    void initiate(CoreCtx *core_ctx, CoreParams &core_params,
         const std::function<void(M64RRSpec::PluginInit *)> &post_init = {});
 
     /**
@@ -89,7 +89,7 @@ class PluginSet
     const Plugin &input() const { return m_input; }
     const Plugin &rsp() const { return m_rsp; }
 
-    void initiate_plugins(core_ctx *core_ctx, CoreParams &core_params);
+    void initiate_plugins(CoreCtx *core_ctx, CoreParams &core_params);
     void emu_started(CoreParams &core_params);
     void emu_stopped(CoreParams &core_params);
 

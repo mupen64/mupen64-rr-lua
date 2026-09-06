@@ -18,8 +18,8 @@
 
 static std::atomic<EmuContext *> g_core_instance = nullptr;
 
-static core_cfg g_core_cfg{};
-static core_params g_core_params{};
+static CoreCfg g_core_cfg{};
+static CoreParams g_core_params{};
 
 static void set_core_instance(EmuContext *ptr)
 {
@@ -100,7 +100,7 @@ EmuContext::EmuContext(QObject *parent)
                     [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
                 auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
 
-                openMultiDialog(done_callback, title, str, qt_choices, CoreDialogType::from_core(type));
+                openMultiDialog(done_callback, title, str, qt_choices, QmlCoreMessageTone::from_core(type));
             });
 
         return future.get();
@@ -116,7 +116,7 @@ EmuContext::EmuContext(QObject *parent)
             auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
                 [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
 
-            openAskDialog(done_callback, title, str, warning ? CoreDialogType::Warning : CoreDialogType::Information);
+            openAskDialog(done_callback, title, str, warning ? QmlCoreMessageTone::Warn : QmlCoreMessageTone::Info);
         });
 
         return future.get();
@@ -131,7 +131,7 @@ EmuContext::EmuContext(QObject *parent)
                 auto done_callback = QJSFunctions::toJSFunction(
                     qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
 
-                openAskDialog(done_callback, title, str, CoreDialogType::from_core(type));
+                openAskDialog(done_callback, title, str, QmlCoreMessageTone::from_core(type));
             });
 
         future.get();
@@ -172,20 +172,20 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-CoreResult::Value EmuContext::startROM(const QUrl &url)
+QmlCoreResult::Value EmuContext::startROM(const QUrl &url)
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
-    return CoreResult::from_core(m_core_ctx->vr_start_rom(path));
+    return QmlCoreResult::from_core(m_core_ctx->vr_start_rom(path));
 }
 
-CoreResult::Value EmuContext::closeROM(bool resetVCR)
+QmlCoreResult::Value EmuContext::closeROM(bool resetVCR)
 {
-    return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
+    return QmlCoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
 }
 
-CoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
+QmlCoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
 {
-    return CoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
+    return QmlCoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
 }
 
 void EmuContext::invalidateVisuals()
@@ -330,7 +330,7 @@ void EmuContext::readVideoOutput(QImage &image)
 // Internal utilities
 // ==========================
 
-void CoreUtil::clear_plugin_funcs(core_params &params)
+void CoreUtil::clear_plugin_funcs(CoreParams &params)
 {
     params.video_process_dlist = [](auto...) {};
     params.video_process_rdp_list = [](auto...) {};
