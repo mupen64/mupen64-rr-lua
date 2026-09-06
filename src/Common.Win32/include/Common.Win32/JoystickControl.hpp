@@ -310,6 +310,12 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_MOUSEMOVE:
         update_joystick_position(hwnd, ctx);
         break;
+    case WM_THEMECHANGED:
+    case WM_SYSCOLORCHANGE:
+    case WM_SETTINGCHANGE:
+        update_clear_color(hwnd, ctx);
+        RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        break;
     case WM_PAINT: {
         RECT rc{};
         GetClientRect(hwnd, &rc);
@@ -320,7 +326,6 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         const float mid_y = rc.bottom / 2.0;
         const float stick_x = mid_x + ctx->x / 128.0f * (rc.right / 2.0f);
         const float stick_y = mid_y - ctx->y / 128.0f * (rc.bottom / 2.0f);
-        update_clear_color(hwnd, ctx);
         ctx->g->Clear(ctx->clear_color);
 
         const auto luminance = 0.299 * ctx->clear_color.GetRed() + 0.587 * ctx->clear_color.GetGreen() +
