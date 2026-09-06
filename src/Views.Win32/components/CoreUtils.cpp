@@ -14,7 +14,8 @@ static void prompt_plugin_change(HWND hwnd)
 {
     auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_PLUGIN_LOAD_ERROR,
         {"Choose Default Plugins", "Change Plugins", "Cancel"},
-        "One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", "Core", CoreMessageTone::Error, hwnd);
+        "One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", "Core", CoreMessageTone::Error,
+        hwnd);
 
     if (result == 0)
     {
@@ -64,7 +65,8 @@ static void prompt_plugin_change(HWND hwnd)
 
 std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(CoreResult result)
 {
-    if (result == CoreResult::Res_Ok || result == CoreResult::Res_Cancelled || result == CoreResult::VCR_InvalidControllers)
+    if (result == CoreResult::Res_Ok || result == CoreResult::Res_Cancelled ||
+        result == CoreResult::VCR_InvalidControllers)
     {
         return {};
     }

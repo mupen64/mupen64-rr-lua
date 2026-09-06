@@ -255,9 +255,10 @@ void savestates_save_immediate_impl(const SavestateTask &task)
 
         if (compressed.empty())
         {
-            task.callback(
-                CoreSTCallbackInfo{
-                    .result = CoreResult::ST_FileWriteError, .job = task.job, .medium = task.medium, .params = task.params},
+            task.callback(CoreSTCallbackInfo{.result = CoreResult::ST_FileWriteError,
+                              .job = task.job,
+                              .medium = task.medium,
+                              .params = task.params},
                 st);
             return;
         }
@@ -265,16 +266,18 @@ void savestates_save_immediate_impl(const SavestateTask &task)
         // write compressed st to disk
         if (!IOUtils::write_entire_file(new_st_path, compressed))
         {
-            task.callback(
-                CoreSTCallbackInfo{
-                    .result = CoreResult::ST_FileWriteError, .job = task.job, .medium = task.medium, .params = task.params},
+            task.callback(CoreSTCallbackInfo{.result = CoreResult::ST_FileWriteError,
+                              .job = task.job,
+                              .medium = task.medium,
+                              .params = task.params},
                 st);
             return;
         }
     }
 
     task.callback(
-        CoreSTCallbackInfo{.result = CoreResult::Res_Ok, .job = task.job, .medium = task.medium, .params = task.params}, st);
+        CoreSTCallbackInfo{.result = CoreResult::Res_Ok, .job = task.job, .medium = task.medium, .params = task.params},
+        st);
     g_core->callbacks.save_state();
 }
 
@@ -311,7 +314,8 @@ void savestates_load_immediate_impl(const SavestateTask &task)
     if (st_buf.empty())
     {
         task.callback(
-            CoreSTCallbackInfo{.result = CoreResult::ST_NotFound, .job = task.job, .medium = task.medium, .params = task.params},
+            CoreSTCallbackInfo{
+                .result = CoreResult::ST_NotFound, .job = task.job, .medium = task.medium, .params = task.params},
             {});
         return;
     }
@@ -320,9 +324,10 @@ void savestates_load_immediate_impl(const SavestateTask &task)
 
     if (decompressed_buf.empty())
     {
-        task.callback(
-            CoreSTCallbackInfo{
-                .result = CoreResult::ST_DecompressionError, .job = task.job, .medium = task.medium, .params = task.params},
+        task.callback(CoreSTCallbackInfo{.result = CoreResult::ST_DecompressionError,
+                          .job = task.job,
+                          .medium = task.medium,
+                          .params = task.params},
             {});
         return;
     }
@@ -364,9 +369,10 @@ void savestates_load_immediate_impl(const SavestateTask &task)
     assert(si_register_valid && flashram_infos_valid && "Savestate contains invalid DMA register contents");
     if (!si_register_valid || !flashram_infos_valid)
     {
-        task.callback(
-            CoreSTCallbackInfo{
-                .result = CoreResult::ST_InvalidRegisters, .job = task.job, .medium = task.medium, .params = task.params},
+        task.callback(CoreSTCallbackInfo{.result = CoreResult::ST_InvalidRegisters,
+                          .job = task.job,
+                          .medium = task.medium,
+                          .params = task.params},
             {});
         return;
     }
@@ -384,9 +390,10 @@ void savestates_load_immediate_impl(const SavestateTask &task)
     if (len == sizeof(g_event_queue_buf))
     {
         // Exhausted the buffer and still no terminator. Prevents the buffer overflow "Queuecrush".
-        task.callback(
-            CoreSTCallbackInfo{
-                .result = CoreResult::ST_EventQueueTooLong, .job = task.job, .medium = task.medium, .params = task.params},
+        task.callback(CoreSTCallbackInfo{.result = CoreResult::ST_EventQueueTooLong,
+                          .job = task.job,
+                          .medium = task.medium,
+                          .params = task.params},
             {});
         return;
     }
@@ -435,9 +442,10 @@ void savestates_load_immediate_impl(const SavestateTask &task)
                 g_core->show_ask_dialog(CORE_DLG_ST_UNFREEZE_WARNING, err_str.c_str(), "Savestate", true);
             if (!result)
             {
-                task.callback(
-                    CoreSTCallbackInfo{
-                        .result = CoreResult::Res_Cancelled, .job = task.job, .medium = task.medium, .params = task.params},
+                task.callback(CoreSTCallbackInfo{.result = CoreResult::Res_Cancelled,
+                                  .job = task.job,
+                                  .medium = task.medium,
+                                  .params = task.params},
                     {});
                 goto failedLoad;
             }
@@ -445,7 +453,8 @@ void savestates_load_immediate_impl(const SavestateTask &task)
     }
     else
     {
-        if (!task.ignore_warnings && (vcr_get_task() == CoreVCRTask::Recording || vcr_get_task() == CoreVCRTask::Playback))
+        if (!task.ignore_warnings &&
+            (vcr_get_task() == CoreVCRTask::Recording || vcr_get_task() == CoreVCRTask::Playback))
         {
             const auto result = g_core->show_ask_dialog(CORE_DLG_ST_NOT_FROM_MOVIE,
                 "The savestate is not from a movie. Loading it might desynchronize the "
@@ -453,9 +462,10 @@ void savestates_load_immediate_impl(const SavestateTask &task)
                 "Savestate", true);
             if (!result)
             {
-                task.callback(
-                    CoreSTCallbackInfo{
-                        .result = CoreResult::Res_Cancelled, .job = task.job, .medium = task.medium, .params = task.params},
+                task.callback(CoreSTCallbackInfo{.result = CoreResult::Res_Cancelled,
+                                  .job = task.job,
+                                  .medium = task.medium,
+                                  .params = task.params},
                     {});
                 return;
             }
@@ -731,9 +741,10 @@ bool st_do_file(
         g_core->log_trace("[ST] do_file: Can't enqueue work.");
         if (callback)
         {
-            callback(
-                CoreSTCallbackInfo{
-                    .result = CoreResult::ST_CoreNotLaunched, .job = job, .medium = CoreSTMedium::Path, .params = {.path = path}},
+            callback(CoreSTCallbackInfo{.result = CoreResult::ST_CoreNotLaunched,
+                         .job = job,
+                         .medium = CoreSTMedium::Path,
+                         .params = {.path = path}},
                 {});
         }
         return false;

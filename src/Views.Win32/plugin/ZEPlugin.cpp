@@ -108,7 +108,8 @@ static void CALL dummy_capture_screen(char *)
 {
     if (!PluginUtil::mge_available())
     {
-        DialogService::show_dialog("The current video plugin doesn't support screenshots.", "Screenshot", CoreMessageTone::Error);
+        DialogService::show_dialog(
+            "The current video plugin doesn't support screenshots.", "Screenshot", CoreMessageTone::Error);
         return;
     }
 
@@ -222,7 +223,8 @@ void ZEPlugin::config(HWND hwnd)
         dll_config(hwnd);
     else
     {
-        DialogService::show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", CoreMessageTone::Error, hwnd);
+        DialogService::show_dialog(
+            std::format("'{}' has no configuration.", this->name()), "Plugin", CoreMessageTone::Error, hwnd);
     }
 
     deinitiate_dummy();

@@ -40,8 +40,8 @@ bool confirm_user_exit()
 
     const std::tuple<bool, std::string_view> messages[] = {
         {g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording, "Recording"},
-        {g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Playback, "Playback"}, {CaptureManager::is_capturing(), "Capture"},
-        {g_main_ctx.core_ctx->tl_active(), "Trace logging"}};
+        {g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Playback, "Playback"},
+        {CaptureManager::is_capturing(), "Capture"}, {g_main_ctx.core_ctx->tl_active(), "Trace logging"}};
 
     std::vector<std::string_view> active_messages;
     for (const auto &[is_active, msg] : messages)
@@ -736,13 +736,12 @@ static void start_capture_direct(const ActionManager::action_argument_map &param
     const auto path = params.at("path");
     const auto ask_preset = params.at("ask_preset") == "1";
 
-    CaptureManager::start_capture(
-        path, (Config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
-            if (result)
-            {
-                Statusbar::post("Capture started...");
-            }
-        });
+    CaptureManager::start_capture(path, (Config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
+        if (result)
+        {
+            Statusbar::post("Capture started...");
+        }
+    });
 }
 
 static void start_capture_normal()
@@ -812,8 +811,8 @@ static void show_about_dialog()
                      "Copyright ©️ 2026"
                      "\r\n"
                      "Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
-    const auto result =
-        DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", CoreMessageTone::Info);
+    const auto result = DialogService::show_multiple_choice_dialog(
+        VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", CoreMessageTone::Info);
 
     if (result == 0)
     {
@@ -883,8 +882,9 @@ static bool enable_when_emu_launched_and_vcr_active()
 static bool enable_during_playback()
 {
     const auto task = g_main_ctx.core_ctx->vcr_get_task();
-    return g_main_ctx.core_ctx->vr_get_launched() && (task == CoreVCRTask::Playback || task == CoreVCRTask::StartPlaybackFromReset ||
-                                                         task == CoreVCRTask::StartPlaybackFromSnapshot);
+    return g_main_ctx.core_ctx->vr_get_launched() &&
+           (task == CoreVCRTask::Playback || task == CoreVCRTask::StartPlaybackFromReset ||
+               task == CoreVCRTask::StartPlaybackFromSnapshot);
 }
 
 static bool enable_when_emu_launched_and_capturing()

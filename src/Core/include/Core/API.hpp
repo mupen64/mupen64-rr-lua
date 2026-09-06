@@ -735,8 +735,8 @@ extern "C"
          * shown. \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are
          * originating from the emu thread. \return Whether the operation was enqueued.
          */
-        std::function<bool(const std::vector<uint8_t> &buffer, CoreSTJob job, const CoreSTCallback &callback,
-            bool ignore_warnings)>
+        std::function<bool(
+            const std::vector<uint8_t> &buffer, CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings)>
             st_do_memory;
 
         /**

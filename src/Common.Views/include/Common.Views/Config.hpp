@@ -435,4 +435,4 @@ std::filesystem::path backup_directory();
  */
 std::filesystem::path logs_directory();
 
-} // namespace Config
+} // namespace AppConfig

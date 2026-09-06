@@ -623,7 +623,8 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_idle", "vcr_unfreeze")
 }
 
 /*
- * Tests that vcr_unfreeze fails with CoreResult::VCR_InvalidFormat when the freeze buffer's size field is categorically too small.
+ * Tests that vcr_unfreeze fails with CoreResult::VCR_InvalidFormat when the freeze buffer's size field is categorically
+ * too small.
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_size_too_small", "vcr_unfreeze")
 {
@@ -638,8 +639,8 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_size_too_small", "vcr_unfreeze")
 }
 
 /*
- * Tests that vcr_unfreeze fails with CoreResult::VCR_NotFromThisMovie when the freeze buffer's uid field doesn't match the current
- * movie's uid.
+ * Tests that vcr_unfreeze fails with CoreResult::VCR_NotFromThisMovie when the freeze buffer's uid field doesn't match
+ * the current movie's uid.
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_uid_incompatible", "vcr_unfreeze")
 {
@@ -656,9 +657,9 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_uid_incompatible", "vcr_unfreeze")
 }
 
 /*
- * Tests that vcr_unfreeze fails with CoreResult::VCR_InvalidFrame when the freeze buffer is from a future sample of the current
- * movie, but the VCR is in read-only mode (which would cause a desync due to the input buffer not being updated and
- * therefore mismatched).
+ * Tests that vcr_unfreeze fails with CoreResult::VCR_InvalidFrame when the freeze buffer is from a future sample of the
+ * current movie, but the VCR is in read-only mode (which would cause a desync due to the input buffer not being updated
+ * and therefore mismatched).
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_desync_risk", "vcr_unfreeze")
 {
@@ -679,8 +680,8 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_desync_risk", "vcr_unfreeze")
 }
 
 /*
- * Tests that vcr_unfreeze fails with CoreResult::VCR_InvalidFormat when the freeze buffer's size field is smaller than the expected
- * size for the given input buffer.
+ * Tests that vcr_unfreeze fails with CoreResult::VCR_InvalidFormat when the freeze buffer's size field is smaller than
+ * the expected size for the given input buffer.
  */
 TEST_CASE_METHOD(VcrFixture, "fails_when_malformed_input_size", "vcr_unfreeze")
 {

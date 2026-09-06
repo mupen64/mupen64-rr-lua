@@ -209,7 +209,8 @@ void check(bool manual)
     {
         if (manual)
         {
-            DialogService::show_notification("You are already up-to-date.", "Already up-to-date", CoreMessageTone::Info);
+            DialogService::show_notification(
+                "You are already up-to-date.", "Already up-to-date", CoreMessageTone::Info);
         }
 
         return;

@@ -1251,8 +1251,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
     if (!g_ui_timer)
     {
-        DialogService::show_dialog(
-            "timeSetEvent call failed. Verify that your system supports multimedia timers.", "Error", CoreMessageTone::Error);
+        DialogService::show_dialog("timeSetEvent call failed. Verify that your system supports multimedia timers.",
+            "Error", CoreMessageTone::Error);
         return -1;
     }
 

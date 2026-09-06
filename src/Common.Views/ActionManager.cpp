@@ -354,8 +354,8 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
 
     for (const auto &action_to_be_removed : actions)
     {
-        std::erase_if(g_mgr.actions,
-            [&](const Action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
+        std::erase_if(
+            g_mgr.actions, [&](const Action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
     }
 
     g_mgr.filter_result_cache.clear();

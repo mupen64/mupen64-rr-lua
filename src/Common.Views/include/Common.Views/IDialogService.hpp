@@ -29,8 +29,8 @@ namespace DialogService
  * function will return the last choice.
  */
 size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices, std::string_view str,
-    std::optional<std::string_view> title = std::nullopt, CoreMessageTone type = CoreMessageTone::Warn, void *hwnd = nullptr,
-    std::optional<std::string_view> details = std::nullopt);
+    std::optional<std::string_view> title = std::nullopt, CoreMessageTone type = CoreMessageTone::Warn,
+    void *hwnd = nullptr, std::optional<std::string_view> details = std::nullopt);
 
 /**
  * \brief Asks the user a Yes/No question.

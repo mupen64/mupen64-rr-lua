@@ -23,8 +23,7 @@ void st_do_work();
  */
 void st_on_core_stop();
 
-bool st_do_file(
-    const std::filesystem::path &path, CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings);
+bool st_do_file(const std::filesystem::path &path, CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings);
 bool st_do_memory(
     const std::vector<uint8_t> &buffer, CoreSTJob job, const CoreSTCallback &callback, bool ignore_warnings);
 void st_get_undo_savestate(std::vector<uint8_t> &buffer);

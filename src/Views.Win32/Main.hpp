@@ -68,7 +68,8 @@ extern MainContext g_main_ctx;
 
 static bool task_is_playback(const CoreVCRTask task)
 {
-    return task == CoreVCRTask::Playback || task == CoreVCRTask::StartPlaybackFromReset || task == CoreVCRTask::StartPlaybackFromSnapshot;
+    return task == CoreVCRTask::Playback || task == CoreVCRTask::StartPlaybackFromReset ||
+           task == CoreVCRTask::StartPlaybackFromSnapshot;
 }
 
 static bool vcr_is_task_recording(const CoreVCRTask task)

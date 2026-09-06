@@ -120,8 +120,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         {
             EnableWindow(GetDlgItem(hwnd, id), false);
         }
-        SendMessage(
-            GetDlgItem(hwnd, IDC_INI_DESCRIPTION), EM_SETLIMITTEXT, sizeof(CoreVCRMovieHeader::description), 0);
+        SendMessage(GetDlgItem(hwnd, IDC_INI_DESCRIPTION), EM_SETLIMITTEXT, sizeof(CoreVCRMovieHeader::description), 0);
         SendMessage(GetDlgItem(hwnd, IDC_INI_AUTHOR), EM_SETLIMITTEXT, sizeof(CoreVCRMovieHeader::author), 0);
 
         SetDlgItemText(hwnd, IDC_INI_AUTHOR, g_config.last_movie_author.c_str());

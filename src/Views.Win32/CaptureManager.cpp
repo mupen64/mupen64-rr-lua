@@ -430,7 +430,8 @@ void ai_len_changed()
 
     if (!m_encoder->append_audio(reinterpret_cast<uint8_t *>(buf), ai_len, m_audio_bitrate))
     {
-        DialogService::show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture", CoreMessageTone::Error);
+        DialogService::show_dialog(
+            "Failed to append audio data.\nCapture will be stopped.", "Capture", CoreMessageTone::Error);
         stop_capture();
     }
 }

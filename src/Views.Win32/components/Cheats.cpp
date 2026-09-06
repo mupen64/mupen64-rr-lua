@@ -96,8 +96,8 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 
             if (!g_main_ctx.core_ctx->cht_compile(code, script))
             {
-                DialogService::show_dialog(
-                    "Cheat code could not be compiled.\r\nVerify that the syntax is correct", "Cheats", CoreMessageTone::Error);
+                DialogService::show_dialog("Cheat code could not be compiled.\r\nVerify that the syntax is correct",
+                    "Cheats", CoreMessageTone::Error);
                 break;
             }
 
