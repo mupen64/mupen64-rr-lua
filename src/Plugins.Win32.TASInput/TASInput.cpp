@@ -12,6 +12,7 @@
 #include <Main.hpp>
 #include <NewConfig.hpp>
 #include <TASInput.hpp>
+#include <WinDarkMode.h>
 
 #define WM_EDIT_END (WM_USER + 3)
 #define WM_UPDATE_STATUS (WM_USER + 4)
@@ -495,6 +496,8 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx = reinterpret_cast<Status *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
         ctx->combo_listbox = GetDlgItem(hwnd, IDC_MACROLIST);
         ctx->load_combos("combos.cmb");
+
+        WinDarkMode::attach(hwnd, {.is_dialog = true});
         break;
     case WM_EDIT_END:
         ctx->end_edit(ctx->renaming_combo_index, (char *)lparam);
@@ -648,8 +651,10 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         ctx->on_config_changed();
 
         ctx->ready = true;
+
+        WinDarkMode::attach(hwnd, {.is_dialog = true});
+        break;
     }
-    break;
     case WM_SHOWWINDOW: {
         if (!wparam) save_config();
 
