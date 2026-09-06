@@ -292,9 +292,9 @@ static std::string get_titlebar_text()
 
 static void update_titlebar()
 {
-    ThreadPool::submit_task([] {
+    g_main_ctx.dispatcher->invoke([] {
         const auto text = get_titlebar_text();
-        g_main_ctx.dispatcher->invoke([&] { SetWindowText(g_main_ctx.hwnd, text.c_str()); });
+        SetWindowText(g_main_ctx.hwnd, text.c_str());
     });
 }
 
@@ -492,8 +492,10 @@ void on_warp_modify_status_changed(bool value)
 
 void on_emu_starting_changed(bool value)
 {
-    g_emu_starting = value;
-    update_titlebar();
+    g_main_ctx.dispatcher->invoke([=] {
+        g_emu_starting = value;
+        update_titlebar();
+    });
 }
 
 WindowInfo get_window_info()
