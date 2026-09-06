@@ -284,7 +284,7 @@ void LuaCallbacks::call_atmouse(const LuaMouseEventArgs &args)
 bool invoke_callbacks_with_key_impl(
     const LuaEnvironment *lua, const std::function<int(lua_State *)> &function, LuaCallbacks::callback_key key)
 {
-    NEED(is_on_gui_thread(), "not on GUI thread");
+    need(is_on_gui_thread(), "not on GUI thread");
 
     lua_State *L = lua->L;
 

@@ -221,7 +221,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
     if (len <= 0) return true;
 
     const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / sound_buf_size;
-    NEED(fill_percentage <= 80, "Audio buffer overflowed");
+    need(fill_percentage <= 80, "Audio buffer overflowed");
 
     memcpy(m_sound_buf + sound_buf_pos, buf, len);
     sound_buf_pos += len;
@@ -238,7 +238,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 
     if (resampled_len <= 0) return true;
 
-    NEED((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
+    need((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
 
     BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, resampled_len / m_sound_format.nBlockAlign,
                         m_resampled_sound, resampled_len, 0, NULL, NULL));

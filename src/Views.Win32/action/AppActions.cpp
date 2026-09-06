@@ -922,10 +922,10 @@ static void add_action_with_up(const std::string &path, const Hotkey &default_ho
         .get_enabled = get_enabled,
         .get_active = get_active,
     });
-    NEED(success, std::format("Failed to add action for path '{}'.", path));
+    need(success, std::format("Failed to add action for path '{}'.", path));
 
     success = ActionManager::associate_hotkey(path, default_hotkey, false);
-    NEED(success, std::format("Failed to associate hotkey for path '{}'.", path));
+    need(success, std::format("Failed to associate hotkey for path '{}'.", path));
 }
 
 static void add_action(const std::string &path, const Hotkey &default_hotkey, const std::function<void()> &callback,
@@ -948,10 +948,10 @@ static void add_action(const std::string &path,
         .get_enabled = get_enabled,
         .get_active = get_active,
     });
-    NEED(success, std::format("Failed to add action for path '{}'.", path));
+    need(success, std::format("Failed to add action for path '{}'.", path));
 
     success = ActionManager::associate_hotkey(path, Hotkey::make_empty(), false);
-    NEED(success, std::format("Failed to associate hotkey for path '{}'.", path));
+    need(success, std::format("Failed to associate hotkey for path '{}'.", path));
 }
 
 static void generate_path_recent_menu(const std::string &base_path, const Hotkey &load_first_hotkey,

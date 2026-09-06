@@ -43,7 +43,7 @@ std::string OptionItem::get_value_name() const
     case Type::Folder:
         return std::get<std::string>(value);
     default:
-        NEED(false, "Unhandled option type in OptionItem::get_value_name");
+        need(false, "Unhandled option type in OptionItem::get_value_name");
     }
     return "";
 }

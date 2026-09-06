@@ -462,7 +462,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         break;
     }
     default:
-        NEED(false, "Unsupported plugin type");
+        need(false, "Unsupported plugin type");
         break;
     }
 

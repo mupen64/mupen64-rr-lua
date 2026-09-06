@@ -186,7 +186,7 @@ bool OGL_InitContext()
 
     g_sdl_window =
         SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-    SDL_assert_release(g_sdl_window);
+    need(g_sdl_window, "Failed to create an SDL window. Verify that your graphics driver supports OpenGL.");
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
@@ -203,9 +203,10 @@ bool OGL_InitContext()
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
         g_sdl_context = SDL_GL_CreateContext(g_sdl_window);
     }
-    SDL_assert_release(g_sdl_context);
+    need(g_sdl_context, "Failed to create an OpenGL context. Verify that your graphics driver supports OpenGL.");
 
-    SDL_assert_release(SDL_GL_MakeCurrent(g_sdl_window, g_sdl_context));
+    need(SDL_GL_MakeCurrent(g_sdl_window, g_sdl_context),
+        "Failed to set an OpenGL context. Verify that your graphics driver supports OpenGL.");
 
     int multisample_buffers = 0;
     int multisample_samples = 0;
@@ -214,7 +215,7 @@ bool OGL_InitContext()
 
     if (OGL.msaa > 0)
     {
-        NEED(multisample_buffers == 1 && multisample_samples == OGL.msaa,
+        need(multisample_buffers == 1 && multisample_samples == OGL.msaa,
             std::format("MSAA {}x is required, got {} buffers {} samples. Try updating your graphics driver.", OGL.msaa,
                 multisample_buffers, multisample_samples));
     }

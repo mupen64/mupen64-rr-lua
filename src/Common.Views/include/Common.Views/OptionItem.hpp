@@ -73,7 +73,7 @@ struct OptionItem
     WritableProp current_value;
 
     ReadableProp initial_value = ReadableProp([] -> DataVariant {
-        NEED(false, "Initial value not set for option");
+        need(false, "Initial value not set for option");
         return DataVariant{};
     });
 
@@ -156,7 +156,7 @@ inline double get_number_value(const OptionItem::DataVariant &value)
         return std::get<double>(value);
     }
 
-    NEED(false, "Number option does not hold an int32_t or double value");
+    need(false, "Number option does not hold an int32_t or double value");
     return 0.0;
 }
 
@@ -171,7 +171,7 @@ inline OptionItem::DataVariant parse_number_value(const std::string &text, const
         return std::stod(text);
     }
 
-    NEED(false, "Number option does not hold an int32_t or double value");
+    need(false, "Number option does not hold an int32_t or double value");
     return current;
 }
 } // namespace OptionUtils

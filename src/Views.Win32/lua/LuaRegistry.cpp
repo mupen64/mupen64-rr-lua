@@ -187,7 +187,7 @@ static void register_function(lua_State *L, const std::string &name, const lua_C
 {
     const auto parts = StrUtils::split_string(name, ".") | std::ranges::to<std::vector>();
 
-    NEED(parts.size() == 2, "Accessor invalid");
+    need(parts.size() == 2, "Accessor invalid");
 
     const auto namespace_name = std::string(parts.at(0));
     const auto function_name = std::string(parts.at(1));

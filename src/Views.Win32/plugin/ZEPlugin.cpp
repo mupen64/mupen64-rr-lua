@@ -528,7 +528,7 @@ void ZEPlugin::initiate_dummy()
         break;
     }
     default:
-        NEED(false, "Unknown plugin type");
+        need(false, "Unknown plugin type");
     }
 }
 

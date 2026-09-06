@@ -1020,7 +1020,7 @@ static void enable_mitigations()
 {
     PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ext = {0};
     ext.DisableExtensionPoints = 1;
-    NEED(SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext)),
+    need(SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext)),
         "Couldn't set process mitigation policy.");
 
     BOOL bool_false = FALSE;
@@ -1078,7 +1078,7 @@ void Main::init_sdl()
     if (!g_sdl_initialized)
     {
         g_main_ctx.dispatcher->invoke([] {
-            NEED(
+            need(
                 SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), "Failed to init SDL");
         });
     }
@@ -1187,7 +1187,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
     const auto hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-    NEED(SUCCEEDED(hr), "Failed to initialize COM.");
+    need(SUCCEEDED(hr), "Failed to initialize COM.");
 
     WinDarkMode::init();
 

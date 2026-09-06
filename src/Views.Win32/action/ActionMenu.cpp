@@ -274,7 +274,7 @@ static void build_initial_menu_tree(ActionMenuContext &ctx)
 static void add_menu_items(ActionMenuContext &ctx, MenuItem &item, const HMENU parent_menu)
 {
     ctx.menu_id_counter++;
-    NEED(ctx.menu_id_counter <= IDM_RESERVED_END,
+    need(ctx.menu_id_counter <= IDM_RESERVED_END,
         std::format("Menu ID counter overflow: {} (max {})", ctx.menu_id_counter, IDM_RESERVED_END).c_str());
 
     item.id = (uint16_t)ctx.menu_id_counter;

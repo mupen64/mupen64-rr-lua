@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR_Common STATIC
+    "Assert.cpp"
     "CommonPCH.cpp"
     "include/Common/Assert.hpp"
     "include/Common/CommonPCH.hpp"

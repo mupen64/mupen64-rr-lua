@@ -64,7 +64,7 @@ LuaEnvironment *LuaManager::get_environment_for_state(lua_State *lua_state)
 std::expected<LuaEnvironment *, std::string> LuaManager::create_environment(const std::filesystem::path &path,
     const LuaEnvironment::destroying_func &destroying_callback, const LuaEnvironment::print_func &print_callback)
 {
-    NEED(is_on_gui_thread(), "not on GUI thread");
+    need(is_on_gui_thread(), "not on GUI thread");
 
     auto lua = new LuaEnvironment();
 
@@ -150,7 +150,7 @@ fail:
 
 void LuaManager::destroy_environment(LuaEnvironment *lua)
 {
-    NEED(lua && lua->L, "LuaManager::destroy_environment: Lua environment is already destroyed");
+    need(lua && lua->L, "LuaManager::destroy_environment: Lua environment is already destroyed");
 
     LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATSTOP);
 
