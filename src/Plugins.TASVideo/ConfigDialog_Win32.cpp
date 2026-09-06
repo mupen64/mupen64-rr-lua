@@ -15,6 +15,7 @@
 #include "Textures.h"
 #include <Common.Win32/Common.hpp>
 #include <nlohmann/json.hpp>
+#include <WinDarkMode.h>
 using nlohmann::json;
 
 static void apply(HWND hWndDlg)
@@ -134,6 +135,7 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         SendMessage(hWndDlg, WM_COMMAND, MAKEWPARAM(IDC_TEXTUREFILTER, CBN_SELCHANGE),
             (LPARAM)GetDlgItem(hWndDlg, IDC_TEXTUREFILTER));
 
+        WinDarkMode::attach(hWndDlg, {.is_dialog = true});
         return TRUE;
     }
     case WM_COMMAND:
