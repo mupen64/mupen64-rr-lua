@@ -169,6 +169,18 @@ inline void update_clear_color(const HWND hwnd, Context *ctx)
     }
 
     ReleaseDC(parent_hwnd, parent_dc);
+
+    const auto luminance =
+        0.299 * ctx->clear_color.GetRed() + 0.587 * ctx->clear_color.GetGreen() + 0.114 * ctx->clear_color.GetBlue();
+    const bool dark_background = luminance < 128.0;
+    const auto border_color = contrastize(ctx->clear_color, 25, dark_background);
+    const auto ellipse_color = dark_background ? Gdiplus::Color(255, 30, 30, 30) : Gdiplus::Color::White;
+    const auto line_color = dark_background ? Gdiplus::Color(255, 64, 64, 255) : Gdiplus::Color(255, 0, 0, 255);
+
+    ctx->border_pen->SetColor(border_color);
+    ctx->outline_pen->SetColor(border_color);
+    ctx->bg_brush->SetColor(ellipse_color);
+    ctx->line_pen->SetColor(line_color);
 }
 
 inline void create_dcs(const HWND hwnd, Context *ctx)
@@ -327,16 +339,6 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         const float stick_x = mid_x + ctx->x / 128.0f * (rc.right / 2.0f);
         const float stick_y = mid_y - ctx->y / 128.0f * (rc.bottom / 2.0f);
         ctx->g->Clear(ctx->clear_color);
-
-        const auto luminance = 0.299 * ctx->clear_color.GetRed() + 0.587 * ctx->clear_color.GetGreen() +
-                               0.114 * ctx->clear_color.GetBlue();
-        const bool dark_background = luminance < 128.0;
-        const Gdiplus::Color border_color = contrastize(ctx->clear_color, 25, dark_background);
-        const auto ellipse_color = dark_background ? Gdiplus::Color::Black : Gdiplus::Color::White;
-
-        ctx->border_pen->SetColor(border_color);
-        ctx->outline_pen->SetColor(border_color);
-        ctx->bg_brush->SetColor(ellipse_color);
 
         const auto border_width = ctx->border_pen->GetWidth();
         const auto radius = std::max(0.0f, 5.0f * border_width);
