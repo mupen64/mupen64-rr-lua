@@ -100,7 +100,7 @@ EmuContext::EmuContext(QObject *parent)
                     [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
                 auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
 
-                openMultiDialog(done_callback, title, str, qt_choices, CoreDialogType::from_core(type));
+                openMultiDialog(done_callback, title, str, qt_choices, QtCoreMessageTone::from_core(type));
             });
 
         return future.get();
@@ -116,7 +116,7 @@ EmuContext::EmuContext(QObject *parent)
             auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
                 [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
 
-            openAskDialog(done_callback, title, str, warning ? CoreDialogType::Warning : CoreDialogType::Information);
+            openAskDialog(done_callback, title, str, warning ? QtCoreMessageTone::Warn : QtCoreMessageTone::Info);
         });
 
         return future.get();
@@ -131,7 +131,7 @@ EmuContext::EmuContext(QObject *parent)
                 auto done_callback = QJSFunctions::toJSFunction(
                     qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
 
-                openAskDialog(done_callback, title, str, CoreDialogType::from_core(type));
+                openAskDialog(done_callback, title, str, QtCoreMessageTone::from_core(type));
             });
 
         future.get();
@@ -172,20 +172,20 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-QtCoreResult::Value EmuContext::startROM(const QUrl &url)
+QmlCoreResult::Value EmuContext::startROM(const QUrl &url)
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
-    return QtCoreResult::from_core(m_core_ctx->vr_start_rom(path));
+    return QmlCoreResult::from_core(m_core_ctx->vr_start_rom(path));
 }
 
-QtCoreResult::Value EmuContext::closeROM(bool resetVCR)
+QmlCoreResult::Value EmuContext::closeROM(bool resetVCR)
 {
-    return QtCoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
+    return QmlCoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
 }
 
-QtCoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
+QmlCoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
 {
-    return QtCoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
+    return QmlCoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
 }
 
 void EmuContext::invalidateVisuals()

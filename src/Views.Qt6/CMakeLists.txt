@@ -39,7 +39,6 @@ set(qml_sources
     "Views/DialogService.qml"
     "Views/MainMenuBar.qml"
     "Views/MainWindow.qml"
-    "Views/MessageBox.qml"
 )
 set(qml_singleton_sources
     "Views/SettingsCore.qml"
