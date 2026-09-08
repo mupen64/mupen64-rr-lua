@@ -1791,12 +1791,28 @@ function avi.stopcapture() end
 -- hotkey functions
 --#region
 
----@class Hotkey Represents a combination of keys.
----@field key Keycode? The SDL keycode that is pressed to trigger the hotkey.
----@field ctrl boolean? Whether the control modifier is pressed.
----@field shift boolean? Whether the shift modifier is pressed.
----@field alt boolean? Whether the alt modifier is pressed.
----@field assigned boolean? Whether the hotkey is assigned. Defaults to `true`.
+---@class HotkeyNoTrigger
+---@field type "none"
+---Represents an unassigned hotkey trigger.
+
+---@class HotkeyKeyCodeTrigger
+---@field type "keycode"
+---@field value Keycode The SDL keycode that triggers the hotkey.
+---Represents a keyboard hotkey trigger.
+
+---@class HotkeyMouseButtonTrigger
+---@field type "mousebutton"
+---@field value MouseButtonFlags The SDL mouse-button flag that triggers the hotkey.
+---Represents a mouse hotkey trigger.
+
+---@alias HotkeyTrigger HotkeyNoTrigger|HotkeyKeyCodeTrigger|HotkeyMouseButtonTrigger
+
+---@class Hotkey
+---@field trigger HotkeyTrigger The event that triggers the hotkey.
+---@field ctrl boolean? Whether the control modifier is pressed. Defaults to `false`.
+---@field shift boolean? Whether the shift modifier is pressed. Defaults to `false`.
+---@field alt boolean? Whether the alt modifier is pressed. Defaults to `false`.
+---Represents a trigger and its keyboard modifiers. Can invoke an action.
 
 ---Shows a dialog prompting the user to enter a hotkey.
 ---@param caption string The headline to display in the dialog.
