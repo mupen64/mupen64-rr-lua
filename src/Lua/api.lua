@@ -10,7 +10,7 @@ emu = {}
 memory = {}
 debugger = {}
 wgui = {}
-d2d = {}
+painter = {}
 input = {}
 joypad = {}
 movie = {}
@@ -540,21 +540,21 @@ function emu.statusbar(message) end
 ---@return nil
 function emu.atvi(f, unregister) end
 
----Similar to `emu.atvi`, but for wgui drawing commands.
----Only drawing functions from the wgui namespace will work here, those from d2d will not.
+---Similar to `emu.atvi`, but for `wgui` drawing commands.
+---Only drawing functions from the `wgui` namespace work here; painter commands do not.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called after every VI frame.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
 function emu.atupdatescreen(f, unregister) end
 
----Similar to `emu.atvi`, but for d2d and wgui drawing commands.
----Drawing functions from both the d2d and wgui namespaces will work here, but it's recommended to put wgui drawcalls into the `emu.atupdatescreen` callback for efficiency and compatibility reasons.
+---Calls `f` with a platform-agnostic painter after every VI frame.
+---The painter is only valid for the duration of the callback. Resources such as brushes, images, and text styles may be retained and reused across frames.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
----@param f fun(): nil The function to be called after every VI frame.
+---@param f fun(p: Painter): nil The function to be called after every VI frame.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
-function emu.atdrawd2d(f, unregister) end
+function emu.atpaint(f, unregister) end
 
 ---Calls the function `f` every input frame.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
@@ -1178,224 +1178,273 @@ function wgui.resetclip() end
 --#endregion
 
 
--- d2d functions
+-- painter functions
 --#region
 
----An opaque handle to a Direct2D solid color brush, as returned by [d2d.create_brush](lua://d2d.create_brush).
----@alias brush integer
+---All painter coordinates and sizes are expressed in device-independent pixels.
+---@class PainterRect
+---@field x number The x-coordinate of the top-left corner.
+---@field y number The y-coordinate of the top-left corner.
+---@field width number The rectangle width.
+---@field height number The rectangle height.
 
----@class D2DColor
----@field r number The red component of the color in the range [0, 1].
----@field g number The green component of the color in the range [0, 1].
----@field b number The blue component of the color in the range [0, 1].
----@field a number The alpha component of the color in the range [0, 1].
+---@class PainterColor
+---@field r number The red component in the range [0, 1].
+---@field g number The green component in the range [0, 1].
+---@field b number The blue component in the range [0, 1].
+---@field a number? The alpha component in the range [0, 1]. Defaults to 1.
 
----@class D2DDrawImageParams
----@field identifier integer The identifier of the image to draw, as returned by [d2d.load_image](lua://d2d.load_image).
----@field destx1 integer The x-coordinate of the top-left corner of the destination rectangle.
----@field desty1 integer The y-coordinate of the top-left corner of the destination rectangle.
----@field destx2 integer? The x-coordinate of the bottom-right corner of the destination rectangle. If `nil`, `destx1` plus the natural width of the image is assumed.
----@field desty2 integer? The y-coordinate of the bottom-right corner of the destination rectangle. If `nil`, `desty1` plus the natural height of the image is assumed.
----@field srcx1 integer? The x-coordinate of the top-left corner of the source rectangle. If `nil`, `0` is assumed.
----@field srcy1 integer? The y-coordinate of the top-left corner of the source rectangle. If `nil`, `0` is assumed.
----@field srcx2 integer? The x-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcx1` plus the natural width of the image is assumed.
----@field srcy2 integer? The y-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcy1` plus the natural height of the image is assumed.
----@field color D2DColor? The color to tint the image with. The RGB components are treated as multipliers, and the alpha component is treated as the opacity. If `nil`, the image is drawn without tinting.
----@field interpolation integer? The interpolation mode to use. 0: nearest neighbor, 1|nil: bilinear.
+---A flat list of coordinates in the form `{ x1, y1, x2, y2, ... }`.
+---A flat representation avoids allocating a table for every point and must contain at least two points.
+---@alias PainterPoints number[]
 
----Gets the target frequency of the `emu.atdrawd2d` and `emu.atupdatescreen` callbacks in FPS.
----@return number? # The target FPS, or nil if none was set with [d2d.set_target_fps](lua://d2d.set_target_fps).
+---@alias PainterLineCap "butt"|"round"|"square"
+---@alias PainterLineJoin "miter"|"round"|"bevel"
+
+---@class PainterStrokeStyle
+---@field width number? The stroke width. Defaults to 1.
+---@field cap PainterLineCap? The shape of line endpoints. Defaults to `"butt"`.
+---@field join PainterLineJoin? The shape of line joins. Defaults to `"miter"`.
+---@field miter_limit number? The maximum miter length relative to the stroke width. Defaults to 4.
+---@field dashes number[]? Alternating dash and gap lengths. An empty or absent list produces a solid stroke.
+---@field dash_offset number? The offset into the dash pattern. Defaults to 0.
+
+---@alias PainterFontSlant "normal"|"italic"|"oblique"
+
+---@class PainterTextStyleParams
+---@field family string|string[]? A font family or fallback list. Defaults to the platform UI font.
+---@field size number? The font size. Defaults to 12.
+---@field weight integer? A font weight from 1 through 1000. 400 is normal and 700 is bold. Defaults to 400.
+---@field slant PainterFontSlant? Defaults to `"normal"`.
+---@field underline boolean? Defaults to false.
+---@field strikethrough boolean? Defaults to false.
+---@field letter_spacing number? Extra spacing between characters. Defaults to 0.
+---@field line_height number? Line height as a multiplier of the font size. If absent, the font's natural line height is used.
+
+---@alias PainterTextHorizontalAlign "left"|"center"|"right"|"justify"
+---@alias PainterTextVerticalAlign "top"|"center"|"bottom"
+---@alias PainterTextWrap "none"|"word"|"character"
+---@alias PainterTextOverflow "visible"|"clip"|"ellipsis"
+
+---@class PainterTextLayout
+---@field align_x PainterTextHorizontalAlign? Horizontal alignment. Defaults to `"left"`.
+---@field align_y PainterTextVerticalAlign? Vertical alignment. Defaults to `"top"`.
+---@field wrap PainterTextWrap? Wrapping mode. Defaults to `"word"`.
+---@field overflow PainterTextOverflow? Behavior when text does not fit. Defaults to `"clip"`.
+---@field clip boolean? Whether glyphs are clipped to the layout rectangle. Defaults to true.
+
+---@class PainterTextConstraints
+---@field width number? Maximum layout width. If absent, width is unconstrained.
+---@field height number? Maximum layout height. If absent, height is unconstrained.
+---@field wrap PainterTextWrap? Wrapping mode. Defaults to `"word"` when `width` is present and `"none"` otherwise.
+---@field max_lines integer? Maximum number of laid-out lines.
+
+---@class PainterTextMetrics
+---@field width number The width of the laid-out text, including trailing whitespace.
+---@field height number The height of the laid-out text.
+---@field line_count integer The number of laid-out lines.
+---@field baseline number The first line's baseline measured from the top of the layout.
+---@field truncated boolean Whether width, height, or `max_lines` truncated the text.
+
+---@alias PainterSampling "nearest"|"linear"
+
+---@class PainterImageOptions
+---@field source PainterRect? The source rectangle in image pixels. Defaults to the whole image.
+---@field opacity number? Opacity in the range [0, 1]. Defaults to 1.
+---@field sampling PainterSampling? Sampling used when scaling. Defaults to `"linear"`.
+---@field tint PainterColor? A color multiplied with the image pixels before blending.
+
+---An immutable, reusable solid-color brush.
+---Resources are garbage-collected, but `close` can be used for deterministic release.
+---@class PainterBrush
+local PainterBrush = {}
+
+---Releases the brush's native resources. Calling this more than once has no effect.
+---Using the brush afterward is an error.
+function PainterBrush:close() end
+
+---A decoded image which can also be used as a drawing target.
+---Resources are garbage-collected, but `close` can be used for deterministic release.
+---@class PainterImage
+---@field width integer The natural width in pixels.
+---@field height integer The natural height in pixels.
+local PainterImage = {}
+
+---Invokes `callback` immediately with a painter targeting this image.
+---Drawing updates the image in place. The painter is only valid for the duration of the callback.
+---@param callback fun(p: Painter): nil
+function PainterImage:paint(callback) end
+
+---Releases the image's native resources. Calling this more than once has no effect.
+---Using the image afterward is an error.
+function PainterImage:close() end
+
+---An immutable, reusable text style.
+---Resources are garbage-collected, but `close` can be used for deterministic release.
+---@class PainterTextStyle
+local PainterTextStyle = {}
+
+---Releases the text style's native resources. Calling this more than once has no effect.
+---Using the style afterward is an error.
+function PainterTextStyle:close() end
+
+---Creates a reusable solid-color brush.
 ---@nodiscard
-function d2d.get_target_fps() end
+---@param color PainterColor
+---@return PainterBrush
+function painter.brush(color) end
 
----Sets the target frequency of the `emu.atdrawd2d` and `emu.atupdatescreen` callbacks in FPS.
----@param fps number? The target FPS. If nil, the target FPS will be the monitor's refresh rate.
-function d2d.set_target_fps(fps) end
-
----Creates a solid color brush and returns its handle.
----The handle must be freed with [d2d.free_brush](lua://d2d.free_brush) once it is no longer needed,
----otherwise the brush is leaked. Brushes can be reused across frames.
----@param r number The red component of the color in the range [0, 1].
----@param g number The green component of the color in the range [0, 1].
----@param b number The blue component of the color in the range [0, 1].
----@param a number The alpha component of the color in the range [0, 1], where 0 is fully transparent and 1 is fully opaque.
----@return brush # The handle of the created brush.
+---Creates a reusable text style.
 ---@nodiscard
-function d2d.create_brush(r, g, b, a) end
+---@param params PainterTextStyleParams
+---@return PainterTextStyle
+function painter.text_style(params) end
 
----Frees a brush created with [d2d.create_brush](lua://d2d.create_brush).
----The brush handle is invalid after this function is called.
----@param brush brush The handle of the brush to free.
-function d2d.free_brush(brush) end
-
----Clears the screen with the specified color.
----If this function is never called, the screen will not be cleared.
----**This function may not work correctly when the Lua GDI presenter is selected.**
----@param r number The red component of the color in the range [0, 1].
----@param g number The green component of the color in the range [0, 1].
----@param b number The blue component of the color in the range [0, 1].
----@param a number The alpha component of the color in the range [0, 1].
-function d2d.clear(r, g, b, a) end
-
----Draws a filled-in rectangle.
----@param x1 integer The x-coordinate of the top-left corner.
----@param y1 integer The y-coordinate of the top-left corner.
----@param x2 integer The x-coordinate of the bottom-right corner.
----@param y2 integer The y-coordinate of the bottom-right corner.
----@param brush brush The brush to fill the rectangle with.
-function d2d.fill_rectangle(x1, y1, x2, y2, brush) end
-
----Draws the border of a rectangle.
----@param x1 integer The x-coordinate of the top-left corner.
----@param y1 integer The y-coordinate of the top-left corner.
----@param x2 integer The x-coordinate of the bottom-right corner.
----@param y2 integer The y-coordinate of the bottom-right corner.
----@param thickness number The thickness of the border in pixels.
----@param brush brush The brush to draw the border with.
-function d2d.draw_rectangle(x1, y1, x2, y2, thickness, brush) end
-
----Draws a filled-in ellipse.
----@param x integer The x-coordinate of the center of the ellipse.
----@param y integer The y-coordinate of the center of the ellipse.
----@param radiusX integer The radius of the ellipse on the x-axis in pixels.
----@param radiusY integer The radius of the ellipse on the y-axis in pixels.
----@param brush brush The brush to fill the ellipse with.
-function d2d.fill_ellipse(x, y, radiusX, radiusY, brush) end
-
----Draws the border of an ellipse.
----@param x integer The x-coordinate of the center of the ellipse.
----@param y integer The y-coordinate of the center of the ellipse.
----@param radiusX integer The radius of the ellipse on the x-axis in pixels.
----@param radiusY integer The radius of the ellipse on the y-axis in pixels.
----@param thickness number The thickness of the border in pixels.
----@param brush brush The brush to draw the border with.
-function d2d.draw_ellipse(x, y, radiusX, radiusY, thickness, brush) end
-
----Draws a line from `(x1, y1)` to `(x2, y2)`.
----@param x1 integer The x-coordinate of the start point.
----@param y1 integer The y-coordinate of the start point.
----@param x2 integer The x-coordinate of the end point.
----@param y2 integer The y-coordinate of the end point.
----@param thickness number The thickness of the line in pixels.
----@param brush brush The brush to draw the line with.
-function d2d.draw_line(x1, y1, x2, y2, thickness, brush) end
-
----Draws text inside the specified layout rectangle.
----@param x1 integer The x-coordinate of the top-left corner of the layout rectangle.
----@param y1 integer The y-coordinate of the top-left corner of the layout rectangle.
----@param x2 integer The x-coordinate of the bottom-right corner of the layout rectangle.
----@param y2 integer The y-coordinate of the bottom-right corner of the layout rectangle.
----@param text string The text to draw.
----@param fontname string The name of the font to use (e.g. `"Arial"`).
----@param fontsize number The font size in DIPs.
----@param fontweight number The font weight, following the DirectWrite weights: 100 (thin), 200, 300, 400 (normal), 500, 600, 700 (bold), 800, 900 (black).
----@param fontstyle 0|1|2 The font style. 0: normal, 1: oblique, 2: italic.
----@param horizalign integer The horizontal alignment within the layout rectangle. 0: left, 1: right, 2: center, 3: justified.
----@param vertalign integer The vertical alignment within the layout rectangle. 0: top, 1: bottom, 2: center.
----@param options integer Bitmask of Direct2D draw text options. 0: none, 0x1: no pixel snapping, 0x2: clip to the layout rectangle, 0x4: enable color fonts. See [D2D1_DRAW_TEXT_OPTIONS](https://learn.microsoft.com/en-us/windows/win32/api/d2d1/ne-d2d1-d2d1_draw_text_options).
----@param brush brush The brush to paint the text with. Pass 0 to use the default fill brush.
-function d2d.draw_text(x1, y1, x2, y2, text, fontname, fontsize, fontweight,
-                       fontstyle, horizalign, vertalign, options, brush)
-end
-
----Returns the width and height the specified text would occupy when drawn.
----The text is laid out within `max_width` and `max_height`, wrapping as
----needed. Note that measurement always uses a normal (non-bold, non-italic)
----font style, so the result may differ slightly from bold or italic text.
----@param text string The text to measure.
----@param fontname string The name of the font to measure with.
----@param fontsize number The font size in DIPs (roughly pixels).
----@param max_width number The maximum layout width in pixels. Text wraps beyond this width.
----@param max_height number The maximum layout height in pixels.
----@return {width: integer, height: integer} # The measured width (including trailing whitespace) and height in pixels.
+---Creates a transparent image which can be drawn into with [PainterImage:paint](lua://PainterImage.paint).
 ---@nodiscard
-function d2d.get_text_size(text, fontname, fontsize, max_width, max_height) end
+---@param width integer The image width in pixels. Must be greater than zero.
+---@param height integer The image height in pixels. Must be greater than zero.
+---@return PainterImage
+function painter.new_image(width, height) end
 
----Specifies an axis-aligned rectangle to which all subsequent drawing
----operations are clipped.
----The clip is pushed onto a stack and can be popped off the stack with
----[d2d.pop_clip](lua://d2d.pop_clip). Clips do not persist between frames.
----@param x1 integer The x-coordinate of the top-left corner of the clip rectangle.
----@param y1 integer The y-coordinate of the top-left corner of the clip rectangle.
----@param x2 integer The x-coordinate of the bottom-right corner of the clip rectangle.
----@param y2 integer The y-coordinate of the bottom-right corner of the clip rectangle.
-function d2d.push_clip(x1, y1, x2, y2) end
-
----Pops the most recent clip off the clip stack.
----Must be called once for every [d2d.push_clip](lua://d2d.push_clip).
-function d2d.pop_clip() end
-
----Draws a filled-in rounded rectangle.
----@param x1 integer The x-coordinate of the top-left corner.
----@param y1 integer The y-coordinate of the top-left corner.
----@param x2 integer The x-coordinate of the bottom-right corner.
----@param y2 integer The y-coordinate of the bottom-right corner.
----@param radiusX number The x-radius of the corner ellipses in pixels.
----@param radiusY number The y-radius of the corner ellipses in pixels.
----@param brush brush The brush to fill the rectangle with.
-function d2d.fill_rounded_rectangle(x1, y1, x2, y2, radiusX, radiusY, brush) end
-
----Draws the border of a rounded rectangle.
----@param x1 integer The x-coordinate of the top-left corner.
----@param y1 integer The y-coordinate of the top-left corner.
----@param x2 integer The x-coordinate of the bottom-right corner.
----@param y2 integer The y-coordinate of the bottom-right corner.
----@param radiusX number The x-radius of the corner ellipses in pixels.
----@param radiusY number The y-radius of the corner ellipses in pixels.
----@param thickness number The thickness of the border in pixels.
----@param brush brush The brush to draw the border with.
-function d2d.draw_rounded_rectangle(x1, y1, x2, y2, radiusX, radiusY, thickness,
-                                    brush)
-end
-
----Loads an image file from `path` and returns its identifier.
----Supported formats are those supported by WIC (BMP, GIF, ICO, JPEG, PNG,
----TIFF, among others). The identifier must be freed with
----[d2d.free_image](lua://d2d.free_image) once it is no longer needed, otherwise the image is
----leaked. Returns nil if the file could not be loaded.
----@param path string The path of the image file to load.
----@return integer? # The identifier of the loaded image, or nil on failure.
+---Loads and decodes an image from a file.
+---The supported encoded formats are implementation-defined and can be queried with [painter.image_formats](lua://painter.image_formats).
 ---@nodiscard
-function d2d.load_image(path) end
+---@param path string
+---@return PainterImage? image
+---@return string? error_message
+function painter.load_image(path) end
 
----Frees the image with the specified identifier.
----Using an identifier after freeing it is undefined behavior and may crash.
----@param identifier integer The identifier of the image to free, as returned by [d2d.load_image](lua://d2d.load_image) or [d2d.draw_to_image](lua://d2d.draw_to_image).
-function d2d.free_image(identifier) end
-
----Draws an image with the specified parameters.
----@param params D2DDrawImageParams The draw parameters.
-function d2d.draw_image2(params) end
-
----Returns the width and height of the image with the specified identifier, in pixels.
+---Decodes an image from a binary Lua string.
+---The encoded format is detected from the data.
 ---@nodiscard
----@param identifier integer The identifier of the image, as returned by [d2d.load_image](lua://d2d.load_image) or [d2d.draw_to_image](lua://d2d.draw_to_image).
----@return {width: integer, height: integer} # The width and height of the image in pixels.
-function d2d.get_image_info(identifier) end
+---@param data string
+---@return PainterImage? image
+---@return string? error_message
+function painter.decode_image(data) end
 
----Sets the text antialiasing mode.
----0: per-primitive (default), 1: grayscale, 2: ClearType, 3: natural.
----@param mode 0|1|2|3 The antialiasing mode to use.
-function d2d.set_text_antialias_mode(mode) end
-
----Sets the antialiasing mode for drawing operations.
----0: per-primitive (default, edge antialiasing), 1: aliased (no edge antialiasing).
----@param mode 0|1 The antialiasing mode to use.
-function d2d.set_antialias_mode(mode) end
-
----Renders an offscreen image by drawing into it inside `callback` and returns
----its identifier.
----The callback is invoked immediately after calling the function.
----While it runs, all `d2d` calls target the image instead of the screen.
----The image starts out fully transparent black.
----The returned identifier must be freed with [d2d.free_image](lua://d2d.free_image) once it is no longer needed.
----The image can be drawn to the screen with [d2d.draw_image2](lua://d2d.draw_image2).
----@param width integer The width of the image in pixels. Values below 1 are clamped to 1.
----@param height integer The height of the image in pixels. Values below 1 are clamped to 1.
----@param callback fun() The function to invoke with the image as the active render target.
----@return integer # The identifier of the rendered image.
+---Returns the lowercase names of encoded image formats supported by this implementation, such as `"png"` and `"jpeg"`.
 ---@nodiscard
-function d2d.draw_to_image(width, height, callback) end
+---@return string[]
+function painter.image_formats() end
+
+---The short-lived drawing context supplied to [emu.atpaint](lua://emu.atpaint).
+---Methods must only be called while the callback which supplied this object is active.
+---@class Painter
+local Painter = {}
+
+---Clears the entire drawing target to `color`, ignoring the current clip stack.
+---When called from [PainterImage:paint](lua://PainterImage.paint), this clears the image rather than the screen.
+---@param color PainterColor
+function Painter:clear(color) end
+
+---Fills `rect` with `brush`.
+---@param rect PainterRect
+---@param brush PainterBrush
+function Painter:fill_rect(rect, brush) end
+
+---Strokes the inside edge of `rect`.
+---@param rect PainterRect
+---@param brush PainterBrush
+---@param style PainterStrokeStyle?
+function Painter:stroke_rect(rect, brush, style) end
+
+---Fills a rectangle with uniformly rounded corners.
+---@param rect PainterRect
+---@param radius number The corner radius. Values are clamped to fit the rectangle.
+---@param brush PainterBrush
+function Painter:fill_round_rect(rect, radius, brush) end
+
+---Strokes a rectangle with uniformly rounded corners.
+---@param rect PainterRect
+---@param radius number The corner radius. Values are clamped to fit the rectangle.
+---@param brush PainterBrush
+---@param style PainterStrokeStyle?
+function Painter:stroke_round_rect(rect, radius, brush, style) end
+
+---Fills the ellipse inscribed in `rect`.
+---@param rect PainterRect
+---@param brush PainterBrush
+function Painter:fill_ellipse(rect, brush) end
+
+---Strokes the ellipse inscribed in `rect`.
+---@param rect PainterRect
+---@param brush PainterBrush
+---@param style PainterStrokeStyle?
+function Painter:stroke_ellipse(rect, brush, style) end
+
+---Fills a circle.
+---@param x number The center x-coordinate.
+---@param y number The center y-coordinate.
+---@param radius number
+---@param brush PainterBrush
+function Painter:fill_circle(x, y, radius, brush) end
+
+---Strokes a circle.
+---@param x number The center x-coordinate.
+---@param y number The center y-coordinate.
+---@param radius number
+---@param brush PainterBrush
+---@param style PainterStrokeStyle?
+function Painter:stroke_circle(x, y, radius, brush, style) end
+
+---Draws a line segment.
+---@param x1 number
+---@param y1 number
+---@param x2 number
+---@param y2 number
+---@param brush PainterBrush
+---@param style PainterStrokeStyle?
+function Painter:line(x1, y1, x2, y2, brush, style) end
+
+---Draws connected line segments without closing the shape.
+---@param points PainterPoints
+---@param brush PainterBrush
+---@param style PainterStrokeStyle?
+function Painter:polyline(points, brush, style) end
+
+---Fills a closed polygon using the non-zero winding rule.
+---@param points PainterPoints
+---@param brush PainterBrush
+function Painter:fill_polygon(points, brush) end
+
+---Strokes a closed polygon.
+---@param points PainterPoints
+---@param brush PainterBrush
+---@param style PainterStrokeStyle?
+function Painter:stroke_polygon(points, brush, style) end
+
+---Draws an image into `destination`.
+---@param image PainterImage
+---@param destination PainterRect
+---@param options PainterImageOptions?
+function Painter:image(image, destination, options) end
+
+---Draws laid-out text inside `rect`.
+---Explicit newline characters always start a new line. Text shaping, bidirectional text, and font fallback are implementation responsibilities.
+---@param text string
+---@param rect PainterRect
+---@param style PainterTextStyle
+---@param brush PainterBrush
+---@param layout PainterTextLayout?
+function Painter:text(text, rect, style, brush, layout) end
+
+---Measures text using the same shaping and wrapping rules as [Painter:text](lua://Painter.text).
+---No drawing context is required, so the result may be cached by an implementation.
+---@nodiscard
+---@param text string
+---@param style PainterTextStyle
+---@param constraints PainterTextConstraints?
+---@return PainterTextMetrics
+function painter.measure_text(text, style, constraints) end
+
+---Intersects `rect` with the current clip and pushes the result onto a stack.
+---Clips are scoped to this painter and are automatically discarded when its callback returns.
+---@param rect PainterRect
+function Painter:push_clip(rect) end
+
+---Removes the most recently pushed clip. Calling this without a matching `push_clip` is an error.
+function Painter:pop_clip() end
 
 --#endregion
 
