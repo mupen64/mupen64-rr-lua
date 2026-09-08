@@ -1017,7 +1017,10 @@ retest.describe('mupen64', function()
                 action.add({
                     path = "Test > Something",
                 })
-                local result = action.associate_hotkey("Test > Something", { key = Mupen.keycode.SDLK_TAB }, true)
+                local result = action.associate_hotkey("Test > Something", {
+                    key = Mupen.keycode.SDLK_F1,
+                    alt = true,
+                }, true)
                 retest.expect(result).to.be.truthy()
             end)
         end)

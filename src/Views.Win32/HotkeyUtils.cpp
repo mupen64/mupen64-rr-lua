@@ -166,6 +166,22 @@ std::optional<SDL_Keycode> HotkeyUtils::vk_to_keycode(uint32_t vk)
     return std::nullopt;
 }
 
+std::optional<SDL_Keycode> HotkeyUtils::message_to_keycode(uint32_t vk, LPARAM key_data)
+{
+    const bool extended = (HIWORD(key_data) & KF_EXTENDED) == KF_EXTENDED;
+
+    if (vk == VK_RETURN && extended) return SDLK_KP_ENTER;
+    if (vk == VK_CONTROL) return extended ? SDLK_RCTRL : SDLK_LCTRL;
+    if (vk == VK_MENU) return extended ? SDLK_RALT : SDLK_LALT;
+    if (vk == VK_SHIFT)
+    {
+        const auto scan_code = static_cast<UINT>((key_data >> 16) & 0xFF);
+        return vk_to_keycode(MapVirtualKey(scan_code, MAPVK_VSC_TO_VK_EX));
+    }
+
+    return vk_to_keycode(vk);
+}
+
 std::optional<uint32_t> HotkeyUtils::keycode_to_vk(SDL_Keycode keycode)
 {
     for (const auto &[win, sdl] : WIN_TO_SDL_KEYCODE)
