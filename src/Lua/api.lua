@@ -93,71 +93,68 @@ Mupen = {
         -- The provided input buffer is empty
         vcr_warp_modify_empty_input_buffer = 18,
 
-        -- Another seek operation is already running
-        vcr_seek_already_running = 19,
-
         -- The seek operation could not be initiated due to a savestate not being loaded successfully
-        vcr_seek_savestate_load_failed = 20,
+        vcr_seek_savestate_load_failed = 19,
 
         -- The seek operation can't be initiated because the seek savestate interval is 0
-        vcr_seek_savestate_interval_zero = 21,
+        vcr_seek_savestate_interval_zero = 20,
 
         -- The seek string is malformed
-        vcr_seek_string_malformed = 22,
+        vcr_seek_string_malformed = 21,
 
         -- VR
         -- ==========================================
 
         -- Couldn't find a rom matching the provided movie
-        vr_no_matching_rom = 23,
+        vr_no_matching_rom = 22,
 
         -- An error occured during plugin loading
-        vr_plugin_error = 24,
+        vr_plugin_error = 23,
 
         -- The ROM or alternative rom source is invalid
-        vr_rom_invalid = 25,
+        vr_rom_invalid = 24,
 
         -- The emulator isn't running yet
-        vr_not_running = 26,
+        vr_not_running = 25,
 
         -- Failed to open core streams
-        vr_file_open_failed = 27,
+        vr_file_open_failed = 26,
 
         -- Savestates
         -- ==========================================
 
         -- The core isn't launched
-        st_core_not_launched = 28,
+        st_core_not_launched = 27,
 
         -- The savestate file wasn't found
-        st_not_found = 29,
+        st_not_found = 28,
 
         -- The savestate couldn't be written to disk
-        st_file_write_error = 30,
+        st_file_write_error = 29,
 
         -- Couldn't decompress the savestate
-        st_decompression_error = 31,
+        st_decompression_error = 30,
 
         -- The event queue was too long
-        st_event_queue_too_long = 32,
+        st_event_queue_too_long = 31,
 
         -- The CPU registers contained invalid values
-        st_invalid_registers = 33,
+        st_invalid_registers = 32,
 
         -- Plugins
         -- ==========================================
 
         -- The plugin library couldn't be loaded
-        pl_load_library_failed = 34,
+        pl_load_library_failed = 33,
 
         -- The plugin doesn't export a GetDllInfo function
-        pl_no_get_dll_info = 35,
+        pl_no_get_dll_info = 34,
 
         -- Init
         -- ==========================================
 
         -- The core params are missing a critical component.
-        in_missing_component = 36,
+        in_missing_component = 35,
     },
 
     ---@alias VKeycode integer
