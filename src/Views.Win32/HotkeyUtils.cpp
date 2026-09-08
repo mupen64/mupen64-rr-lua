@@ -160,11 +160,26 @@ struct DialogParams
     Hotkey hotkey = Hotkey::make_unassigned();
 };
 
+std::optional<SDL_Keycode> HotkeyUtils::vk_to_keycode(uint32_t vk)
+{
+    if (const auto it = WIN_TO_SDL_KEYCODE.find(vk); it != WIN_TO_SDL_KEYCODE.end()) return it->second;
+    return std::nullopt;
+}
+
+std::optional<uint32_t> HotkeyUtils::keycode_to_vk(SDL_Keycode keycode)
+{
+    for (const auto &[win, sdl] : WIN_TO_SDL_KEYCODE)
+    {
+        if (sdl == keycode) return win;
+    }
+    return std::nullopt;
+}
+
 std::optional<Hotkey::Trigger> HotkeyUtils::vk_to_trigger(uint32_t vk)
 {
     if (vk == 0) return Hotkey::Trigger{std::monostate{}};
 
-    if (WIN_TO_SDL_KEYCODE.contains(vk)) return Hotkey::KeyCode(WIN_TO_SDL_KEYCODE.at(vk));
+    if (const auto keycode = vk_to_keycode(vk); keycode.has_value()) return Hotkey::KeyCode(*keycode);
     if (vk == VK_LBUTTON) return Hotkey::MouseButton(SDL_BUTTON_LEFT);
     if (vk == VK_MBUTTON) return Hotkey::MouseButton(SDL_BUTTON_MIDDLE);
     if (vk == VK_RBUTTON) return Hotkey::MouseButton(SDL_BUTTON_RIGHT);
@@ -199,12 +214,7 @@ std::optional<uint32_t> HotkeyUtils::trigger_to_vk(const Hotkey::Trigger &trigge
 
     if (std::holds_alternative<Hotkey::KeyCode>(trigger))
     {
-        const SDL_Keycode keycode = std::get<Hotkey::KeyCode>(trigger).get();
-        for (const auto &[win, sdl] : WIN_TO_SDL_KEYCODE)
-        {
-            if (sdl == keycode) return win;
-        }
-        return std::nullopt;
+        return keycode_to_vk(std::get<Hotkey::KeyCode>(trigger).get());
     }
 
     return std::nullopt;

@@ -22,6 +22,16 @@ namespace HotkeyUtils
 std::optional<::Hotkey::Trigger> vk_to_trigger(uint32_t vk);
 
 /**
+ * \brief Converts a Windows virtual key code to an SDL keycode.
+ */
+std::optional<SDL_Keycode> vk_to_keycode(uint32_t vk);
+
+/**
+ * \brief Converts an SDL keycode to a Windows virtual key code.
+ */
+std::optional<uint32_t> keycode_to_vk(SDL_Keycode keycode);
+
+/**
  * \brief Tries to convert a `Hotkey::Trigger` to a Windows virtual key code.
  * \return The converted virtual key code, or `std::nullopt` if there is no equivalent.
  */
