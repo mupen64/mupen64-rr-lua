@@ -458,7 +458,7 @@ Mupen = {
 ---@alias tostringusable string|number
 
 ---@class KeyEventArgs
----@field keycode VKeycode? The virtual keycode, if the event is a key event.
+---@field keycode Keycode? The SDL keycode, if the event is a key event.
 ---@field ctrl boolean Whether the Ctrl key is held down.
 ---@field alt boolean Whether the Alt key is held down.
 ---@field shift boolean Whether the Shift key is held down.
@@ -1545,7 +1545,7 @@ function input.prompt(title, placeholder) end
 
 ---Gets the name of a key.
 ---@nodiscard
----@param key integer
+---@param key Keycode
 ---@return string
 function input.get_key_name_text(key) end
 
@@ -1743,7 +1743,7 @@ function avi.stopcapture() end
 --#region
 
 ---@class Hotkey Represents a combination of keys.
----@field key VKeycode? The key that is pressed to trigger the hotkey. Note that this is a virtual keycode.
+---@field key Keycode? The SDL keycode that is pressed to trigger the hotkey.
 ---@field ctrl boolean? Whether the control modifier is pressed.
 ---@field shift boolean? Whether the shift modifier is pressed.
 ---@field alt boolean? Whether the alt modifier is pressed.
