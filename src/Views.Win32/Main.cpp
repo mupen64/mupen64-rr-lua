@@ -322,8 +322,7 @@ void on_task_changed(CoreVCRTask value)
         }
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) ||
-            task_is_playback(value) && !task_is_playback(previous_value) &&
-                !g_main_ctx.CoreCtx->vcr_get_path().empty())
+            task_is_playback(value) && !task_is_playback(previous_value) && !g_main_ctx.CoreCtx->vcr_get_path().empty())
         {
             RecentMenu::add(AppActions::RECENT_MOVIES, g_config.recent_movie_paths,
                 g_main_ctx.CoreCtx->vcr_get_path().string(), g_config.is_recent_movie_paths_frozen);
