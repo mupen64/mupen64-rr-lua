@@ -13,47 +13,76 @@
 
 namespace LuaCore::Hotkey
 {
+static void push_trigger(lua_State *L, const ::Hotkey::Trigger &trigger)
+{
+    lua_newtable(L);
+
+    if (std::holds_alternative<std::monostate>(trigger))
+    {
+        lua_pushstring(L, "none");
+    }
+    else if (std::holds_alternative<::Hotkey::KeyCode>(trigger))
+    {
+        lua_pushstring(L, "keycode");
+        lua_pushinteger(L, std::get<::Hotkey::KeyCode>(trigger).get());
+        lua_setfield(L, -2, "value");
+    }
+    else
+    {
+        lua_pushstring(L, "mousebutton");
+        lua_pushinteger(L, std::get<::Hotkey::MouseButton>(trigger).get());
+        lua_setfield(L, -2, "value");
+    }
+
+    lua_setfield(L, -2, "type");
+}
+
 static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
 {
     lua_newtable(L);
 
-    // COMPAT
-    lua_pushstring(L, "key");
-    lua_pushinteger(L, *HotkeyUtils::trigger_to_vk(hotkey.trigger));
-    lua_settable(L, -3);
+    push_trigger(L, hotkey.trigger);
+    lua_setfield(L, -2, "trigger");
 
-    lua_pushstring(L, "ctrl");
     lua_pushboolean(L, hotkey.ctrl);
-    lua_settable(L, -3);
+    lua_setfield(L, -2, "ctrl");
 
-    lua_pushstring(L, "shift");
     lua_pushboolean(L, hotkey.shift);
-    lua_settable(L, -3);
+    lua_setfield(L, -2, "shift");
 
-    lua_pushstring(L, "alt");
     lua_pushboolean(L, hotkey.alt);
-    lua_settable(L, -3);
+    lua_setfield(L, -2, "alt");
+}
 
-    // COMPAT
-    lua_pushstring(L, "assigned");
-    lua_pushboolean(L, hotkey.is_assigned());
-    lua_settable(L, -3);
+static ::Hotkey::Trigger check_trigger(lua_State *L, int i)
+{
+    luaL_checktype(L, i, LUA_TTABLE);
+
+    lua_getfield(L, i, "type");
+    const std::string type = luaL_checkstring(L, -1);
+    lua_pop(L, 1);
+
+    if (type == "none") return std::monostate{};
+    if (type != "keycode" && type != "mousebutton")
+    {
+        luaL_error(L, "Unknown hotkey trigger type: %s", type.c_str());
+        std::unreachable();
+    }
+
+    lua_getfield(L, i, "value");
+    const auto value = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    if (type == "keycode") return ::Hotkey::KeyCode(static_cast<SDL_Keycode>(value));
+    return ::Hotkey::MouseButton(static_cast<SDL_MouseButtonFlags>(value));
 }
 
 static ::Hotkey check_hotkey(lua_State *L, int i)
 {
-    auto hotkey = ::Hotkey::make_empty();
+    luaL_checktype(L, i, LUA_TTABLE);
 
-    if (!lua_istable(L, i))
-    {
-        luaL_error(L, "Expected a table at argument %d", i);
-        return hotkey;
-    }
-
-    // COMPAT
-    lua_getfield(L, i, "key");
-    const auto vk = luaL_opt(L, lua_tointeger, -1, 0);
-    hotkey.trigger = *HotkeyUtils::vk_to_trigger(vk);
+    lua_getfield(L, i, "trigger");
+    ::Hotkey hotkey(check_trigger(L, -1));
     lua_pop(L, 1);
 
     lua_getfield(L, i, "ctrl");
@@ -64,10 +93,8 @@ static ::Hotkey check_hotkey(lua_State *L, int i)
     hotkey.shift = luaL_opt(L, lua_toboolean, -1, false);
     lua_pop(L, 1);
 
-    // COMPAT
-    lua_getfield(L, i, "assigned");
-    const auto assigned = luaL_opt(L, lua_toboolean, -1, true);
-    if (!assigned) hotkey = ::Hotkey::make_unassigned();
+    lua_getfield(L, i, "alt");
+    hotkey.alt = luaL_opt(L, lua_toboolean, -1, false);
     lua_pop(L, 1);
 
     return hotkey;

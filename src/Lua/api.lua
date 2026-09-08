@@ -27,6 +27,283 @@ Mupen = {
     _DESCRIPTION = 'Mupen64 Lua Scripting API',
     _LICENSE = 'GPL-2',
 
+    ---@enum Keycode
+    ---SDL keycodes used by hotkeys and keyboard events.
+    keycode = {
+        SDLK_UNKNOWN = 0x00000000,
+        SDLK_RETURN = 0x0000000D,
+        SDLK_ESCAPE = 0x0000001B,
+        SDLK_BACKSPACE = 0x00000008,
+        SDLK_TAB = 0x00000009,
+        SDLK_SPACE = 0x00000020,
+        SDLK_DELETE = 0x0000007F,
+
+        SDLK_0 = 0x00000030,
+        SDLK_1 = 0x00000031,
+        SDLK_2 = 0x00000032,
+        SDLK_3 = 0x00000033,
+        SDLK_4 = 0x00000034,
+        SDLK_5 = 0x00000035,
+        SDLK_6 = 0x00000036,
+        SDLK_7 = 0x00000037,
+        SDLK_8 = 0x00000038,
+        SDLK_9 = 0x00000039,
+        SDLK_A = 0x00000061,
+        SDLK_B = 0x00000062,
+        SDLK_C = 0x00000063,
+        SDLK_D = 0x00000064,
+        SDLK_E = 0x00000065,
+        SDLK_F = 0x00000066,
+        SDLK_G = 0x00000067,
+        SDLK_H = 0x00000068,
+        SDLK_I = 0x00000069,
+        SDLK_J = 0x0000006A,
+        SDLK_K = 0x0000006B,
+        SDLK_L = 0x0000006C,
+        SDLK_M = 0x0000006D,
+        SDLK_N = 0x0000006E,
+        SDLK_O = 0x0000006F,
+        SDLK_P = 0x00000070,
+        SDLK_Q = 0x00000071,
+        SDLK_R = 0x00000072,
+        SDLK_S = 0x00000073,
+        SDLK_T = 0x00000074,
+        SDLK_U = 0x00000075,
+        SDLK_V = 0x00000076,
+        SDLK_W = 0x00000077,
+        SDLK_X = 0x00000078,
+        SDLK_Y = 0x00000079,
+        SDLK_Z = 0x0000007A,
+
+        SDLK_PLUS = 0x0000002B,
+        SDLK_COMMA = 0x0000002C,
+        SDLK_MINUS = 0x0000002D,
+        SDLK_PERIOD = 0x0000002E,
+        SDLK_SLASH = 0x0000002F,
+        SDLK_SEMICOLON = 0x0000003B,
+        SDLK_EQUALS = 0x0000003D,
+        SDLK_LEFTBRACKET = 0x0000005B,
+        SDLK_BACKSLASH = 0x0000005C,
+        SDLK_RIGHTBRACKET = 0x0000005D,
+        SDLK_GRAVE = 0x00000060,
+        SDLK_APOSTROPHE = 0x00000027,
+
+        SDLK_CAPSLOCK = 0x40000039,
+        SDLK_F1 = 0x4000003A,
+        SDLK_F2 = 0x4000003B,
+        SDLK_F3 = 0x4000003C,
+        SDLK_F4 = 0x4000003D,
+        SDLK_F5 = 0x4000003E,
+        SDLK_F6 = 0x4000003F,
+        SDLK_F7 = 0x40000040,
+        SDLK_F8 = 0x40000041,
+        SDLK_F9 = 0x40000042,
+        SDLK_F10 = 0x40000043,
+        SDLK_F11 = 0x40000044,
+        SDLK_F12 = 0x40000045,
+        SDLK_F13 = 0x40000068,
+        SDLK_F14 = 0x40000069,
+        SDLK_F15 = 0x4000006A,
+        SDLK_F16 = 0x4000006B,
+        SDLK_F17 = 0x4000006C,
+        SDLK_F18 = 0x4000006D,
+        SDLK_F19 = 0x4000006E,
+        SDLK_F20 = 0x4000006F,
+        SDLK_F21 = 0x40000070,
+        SDLK_F22 = 0x40000071,
+        SDLK_F23 = 0x40000072,
+        SDLK_F24 = 0x40000073,
+        SDLK_PRINTSCREEN = 0x40000046,
+        SDLK_SCROLLLOCK = 0x40000047,
+        SDLK_PAUSE = 0x40000048,
+        SDLK_INSERT = 0x40000049,
+        SDLK_HOME = 0x4000004A,
+        SDLK_PAGEUP = 0x4000004B,
+        SDLK_END = 0x4000004D,
+        SDLK_PAGEDOWN = 0x4000004E,
+        SDLK_RIGHT = 0x4000004F,
+        SDLK_LEFT = 0x40000050,
+        SDLK_DOWN = 0x40000051,
+        SDLK_UP = 0x40000052,
+
+        SDLK_NUMLOCKCLEAR = 0x40000053,
+        SDLK_KP_DIVIDE = 0x40000054,
+        SDLK_KP_MULTIPLY = 0x40000055,
+        SDLK_KP_MINUS = 0x40000056,
+        SDLK_KP_PLUS = 0x40000057,
+        SDLK_KP_ENTER = 0x40000058,
+        SDLK_KP_1 = 0x40000059,
+        SDLK_KP_2 = 0x4000005A,
+        SDLK_KP_3 = 0x4000005B,
+        SDLK_KP_4 = 0x4000005C,
+        SDLK_KP_5 = 0x4000005D,
+        SDLK_KP_6 = 0x4000005E,
+        SDLK_KP_7 = 0x4000005F,
+        SDLK_KP_8 = 0x40000060,
+        SDLK_KP_9 = 0x40000061,
+        SDLK_KP_0 = 0x40000062,
+        SDLK_KP_PERIOD = 0x40000063,
+        SDLK_APPLICATION = 0x40000065,
+        SDLK_KP_EQUALS = 0x40000067,
+
+        SDLK_LCTRL = 0x400000E0,
+        SDLK_LSHIFT = 0x400000E1,
+        SDLK_LALT = 0x400000E2,
+        SDLK_LGUI = 0x400000E3,
+        SDLK_RCTRL = 0x400000E4,
+        SDLK_RSHIFT = 0x400000E5,
+        SDLK_RALT = 0x400000E6,
+        SDLK_RGUI = 0x400000E7,
+        SDLK_SLEEP = 0x40000102,
+        SDLK_HELP = 0x40000075,
+        SDLK_MENU = 0x40000076,
+        SDLK_SELECT = 0x40000077,
+        SDLK_EXECUTE = 0x40000074,
+        SDLK_CLEAR = 0x4000009C,
+        SDLK_PRIOR = 0x4000009D,
+        SDLK_SEPARATOR = 0x4000009F,
+        SDLK_MUTE = 0x4000007F,
+        SDLK_VOLUMEUP = 0x40000080,
+        SDLK_VOLUMEDOWN = 0x40000081,
+
+        SDLK_EXCLAIM = 0x00000021,
+        SDLK_DBLAPOSTROPHE = 0x00000022,
+        SDLK_HASH = 0x00000023,
+        SDLK_DOLLAR = 0x00000024,
+        SDLK_PERCENT = 0x00000025,
+        SDLK_AMPERSAND = 0x00000026,
+        SDLK_LEFTPAREN = 0x00000028,
+        SDLK_RIGHTPAREN = 0x00000029,
+        SDLK_ASTERISK = 0x0000002A,
+        SDLK_COLON = 0x0000003A,
+        SDLK_LESS = 0x0000003C,
+        SDLK_GREATER = 0x0000003E,
+        SDLK_QUESTION = 0x0000003F,
+        SDLK_AT = 0x00000040,
+        SDLK_CARET = 0x0000005E,
+        SDLK_UNDERSCORE = 0x0000005F,
+        SDLK_LEFTBRACE = 0x0000007B,
+        SDLK_PIPE = 0x0000007C,
+        SDLK_RIGHTBRACE = 0x0000007D,
+        SDLK_TILDE = 0x0000007E,
+        SDLK_PLUSMINUS = 0x000000B1,
+        SDLK_POWER = 0x40000066,
+        SDLK_STOP = 0x40000078,
+        SDLK_AGAIN = 0x40000079,
+        SDLK_UNDO = 0x4000007A,
+        SDLK_CUT = 0x4000007B,
+        SDLK_COPY = 0x4000007C,
+        SDLK_PASTE = 0x4000007D,
+        SDLK_FIND = 0x4000007E,
+        SDLK_KP_COMMA = 0x40000085,
+        SDLK_KP_EQUALSAS400 = 0x40000086,
+        SDLK_ALTERASE = 0x40000099,
+        SDLK_SYSREQ = 0x4000009A,
+        SDLK_CANCEL = 0x4000009B,
+        SDLK_RETURN2 = 0x4000009E,
+        SDLK_OUT = 0x400000A0,
+        SDLK_OPER = 0x400000A1,
+        SDLK_CLEARAGAIN = 0x400000A2,
+        SDLK_CRSEL = 0x400000A3,
+        SDLK_EXSEL = 0x400000A4,
+        SDLK_KP_00 = 0x400000B0,
+        SDLK_KP_000 = 0x400000B1,
+        SDLK_THOUSANDSSEPARATOR = 0x400000B2,
+        SDLK_DECIMALSEPARATOR = 0x400000B3,
+        SDLK_CURRENCYUNIT = 0x400000B4,
+        SDLK_CURRENCYSUBUNIT = 0x400000B5,
+        SDLK_KP_LEFTPAREN = 0x400000B6,
+        SDLK_KP_RIGHTPAREN = 0x400000B7,
+        SDLK_KP_LEFTBRACE = 0x400000B8,
+        SDLK_KP_RIGHTBRACE = 0x400000B9,
+        SDLK_KP_TAB = 0x400000BA,
+        SDLK_KP_BACKSPACE = 0x400000BB,
+        SDLK_KP_A = 0x400000BC,
+        SDLK_KP_B = 0x400000BD,
+        SDLK_KP_C = 0x400000BE,
+        SDLK_KP_D = 0x400000BF,
+        SDLK_KP_E = 0x400000C0,
+        SDLK_KP_F = 0x400000C1,
+        SDLK_KP_XOR = 0x400000C2,
+        SDLK_KP_POWER = 0x400000C3,
+        SDLK_KP_PERCENT = 0x400000C4,
+        SDLK_KP_LESS = 0x400000C5,
+        SDLK_KP_GREATER = 0x400000C6,
+        SDLK_KP_AMPERSAND = 0x400000C7,
+        SDLK_KP_DBLAMPERSAND = 0x400000C8,
+        SDLK_KP_VERTICALBAR = 0x400000C9,
+        SDLK_KP_DBLVERTICALBAR = 0x400000CA,
+        SDLK_KP_COLON = 0x400000CB,
+        SDLK_KP_HASH = 0x400000CC,
+        SDLK_KP_SPACE = 0x400000CD,
+        SDLK_KP_AT = 0x400000CE,
+        SDLK_KP_EXCLAM = 0x400000CF,
+        SDLK_KP_MEMSTORE = 0x400000D0,
+        SDLK_KP_MEMRECALL = 0x400000D1,
+        SDLK_KP_MEMCLEAR = 0x400000D2,
+        SDLK_KP_MEMADD = 0x400000D3,
+        SDLK_KP_MEMSUBTRACT = 0x400000D4,
+        SDLK_KP_MEMMULTIPLY = 0x400000D5,
+        SDLK_KP_MEMDIVIDE = 0x400000D6,
+        SDLK_KP_PLUSMINUS = 0x400000D7,
+        SDLK_KP_CLEAR = 0x400000D8,
+        SDLK_KP_CLEARENTRY = 0x400000D9,
+        SDLK_KP_BINARY = 0x400000DA,
+        SDLK_KP_OCTAL = 0x400000DB,
+        SDLK_KP_DECIMAL = 0x400000DC,
+        SDLK_KP_HEXADECIMAL = 0x400000DD,
+        SDLK_MODE = 0x40000101,
+        SDLK_WAKE = 0x40000103,
+        SDLK_CHANNEL_INCREMENT = 0x40000104,
+        SDLK_CHANNEL_DECREMENT = 0x40000105,
+        SDLK_MEDIA_PLAY = 0x40000106,
+        SDLK_MEDIA_PAUSE = 0x40000107,
+        SDLK_MEDIA_RECORD = 0x40000108,
+        SDLK_MEDIA_FAST_FORWARD = 0x40000109,
+        SDLK_MEDIA_REWIND = 0x4000010A,
+        SDLK_MEDIA_NEXT_TRACK = 0x4000010B,
+        SDLK_MEDIA_PREVIOUS_TRACK = 0x4000010C,
+        SDLK_MEDIA_STOP = 0x4000010D,
+        SDLK_MEDIA_EJECT = 0x4000010E,
+        SDLK_MEDIA_PLAY_PAUSE = 0x4000010F,
+        SDLK_MEDIA_SELECT = 0x40000110,
+        SDLK_AC_NEW = 0x40000111,
+        SDLK_AC_OPEN = 0x40000112,
+        SDLK_AC_CLOSE = 0x40000113,
+        SDLK_AC_EXIT = 0x40000114,
+        SDLK_AC_SAVE = 0x40000115,
+        SDLK_AC_PRINT = 0x40000116,
+        SDLK_AC_PROPERTIES = 0x40000117,
+        SDLK_AC_SEARCH = 0x40000118,
+        SDLK_AC_HOME = 0x40000119,
+        SDLK_AC_BACK = 0x4000011A,
+        SDLK_AC_FORWARD = 0x4000011B,
+        SDLK_AC_STOP = 0x4000011C,
+        SDLK_AC_REFRESH = 0x4000011D,
+        SDLK_AC_BOOKMARKS = 0x4000011E,
+        SDLK_SOFTLEFT = 0x4000011F,
+        SDLK_SOFTRIGHT = 0x40000120,
+        SDLK_CALL = 0x40000121,
+        SDLK_ENDCALL = 0x40000122,
+        SDLK_LEFT_TAB = 0x20000001,
+        SDLK_LEVEL5_SHIFT = 0x20000002,
+        SDLK_MULTI_KEY_COMPOSE = 0x20000003,
+        SDLK_LMETA = 0x20000004,
+        SDLK_RMETA = 0x20000005,
+        SDLK_LHYPER = 0x20000006,
+        SDLK_RHYPER = 0x20000007,
+    },
+
+    ---@enum MouseButtonFlags
+    ---SDL mouse-button bitmasks.
+    mousebutton = {
+        SDL_BUTTON_LMASK = 0x01,
+        SDL_BUTTON_MMASK = 0x02,
+        SDL_BUTTON_RMASK = 0x04,
+        SDL_BUTTON_X1MASK = 0x08,
+        SDL_BUTTON_X2MASK = 0x10,
+    },
+
     ---@enum Result
     ---An enum containing results that can be returned by the core.
     result = {
@@ -93,297 +370,71 @@ Mupen = {
         -- The provided input buffer is empty
         vcr_warp_modify_empty_input_buffer = 18,
 
-        -- Another seek operation is already running
-        vcr_seek_already_running = 19,
-
         -- The seek operation could not be initiated due to a savestate not being loaded successfully
-        vcr_seek_savestate_load_failed = 20,
+        vcr_seek_savestate_load_failed = 19,
 
         -- The seek operation can't be initiated because the seek savestate interval is 0
-        vcr_seek_savestate_interval_zero = 21,
+        vcr_seek_savestate_interval_zero = 20,
 
         -- The seek string is malformed
-        vcr_seek_string_malformed = 22,
+        vcr_seek_string_malformed = 21,
 
         -- VR
         -- ==========================================
 
         -- Couldn't find a rom matching the provided movie
-        vr_no_matching_rom = 23,
+        vr_no_matching_rom = 22,
 
         -- An error occured during plugin loading
-        vr_plugin_error = 24,
+        vr_plugin_error = 23,
 
         -- The ROM or alternative rom source is invalid
-        vr_rom_invalid = 25,
+        vr_rom_invalid = 24,
 
         -- The emulator isn't running yet
-        vr_not_running = 26,
+        vr_not_running = 25,
 
         -- Failed to open core streams
-        vr_file_open_failed = 27,
+        vr_file_open_failed = 26,
 
         -- Savestates
         -- ==========================================
 
         -- The core isn't launched
-        st_core_not_launched = 28,
+        st_core_not_launched = 27,
 
         -- The savestate file wasn't found
-        st_not_found = 29,
+        st_not_found = 28,
 
         -- The savestate couldn't be written to disk
-        st_file_write_error = 30,
+        st_file_write_error = 29,
 
         -- Couldn't decompress the savestate
-        st_decompression_error = 31,
+        st_decompression_error = 30,
 
         -- The event queue was too long
-        st_event_queue_too_long = 32,
+        st_event_queue_too_long = 31,
 
         -- The CPU registers contained invalid values
-        st_invalid_registers = 33,
+        st_invalid_registers = 32,
 
         -- Plugins
         -- ==========================================
 
         -- The plugin library couldn't be loaded
-        pl_load_library_failed = 34,
+        pl_load_library_failed = 33,
 
         -- The plugin doesn't export a GetDllInfo function
-        pl_no_get_dll_info = 35,
+        pl_no_get_dll_info = 34,
 
         -- Init
         -- ==========================================
 
         -- The core params are missing a critical component.
-        in_missing_component = 36,
+        in_missing_component = 35,
     },
 
-    ---@alias VKeycode integer
-    ---A virtual keycode.
 
-    ---@enum VKeycodes
-    -- A complete enum of Windows Virtual-Key codes.
-    VKeycodes = {
-        -- Mouse Buttons
-        VK_LBUTTON = 0x01,  -- Left mouse button
-        VK_RBUTTON = 0x02,  -- Right mouse button
-        VK_CANCEL = 0x03,   -- Control-break processing
-        VK_MBUTTON = 0x04,  -- Middle mouse button
-        VK_XBUTTON1 = 0x05, -- X1 mouse button
-        VK_XBUTTON2 = 0x06, -- X2 mouse button
-        -- 0x07 Reserved
-
-        -- Editing/Navigation
-        VK_BACK = 0x08,   -- Backspace key
-        VK_TAB = 0x09,    -- Tab key
-        -- 0x0A–0x0B Reserved
-        VK_CLEAR = 0x0C,  -- Clear key
-        VK_RETURN = 0x0D, -- Enter key
-        -- 0x0E–0x0F Unassigned
-
-        -- Modifier and Lock Keys
-        VK_SHIFT = 0x10,   -- Shift key
-        VK_CONTROL = 0x11, -- Ctrl key
-        VK_MENU = 0x12,    -- Alt (Menu) key
-        VK_PAUSE = 0x13,   -- Pause key
-        VK_CAPITAL = 0x14, -- Caps Lock key
-
-        -- IME and Language
-        VK_KANA = 0x15,    -- IME Kana mode
-        VK_HANGUL = 0x15,  -- IME Hangul mode (same value)
-        VK_IME_ON = 0x16,  -- IME On
-        VK_JUNJA = 0x17,   -- IME Junja mode
-        VK_FINAL = 0x18,   -- IME final mode
-        VK_HANJA = 0x19,   -- IME Hanja mode
-        VK_KANJI = 0x19,   -- IME Kanji mode (same value)
-        VK_IME_OFF = 0x1A, -- IME Off
-
-        -- Navigation/System
-        VK_ESCAPE = 0x1B,     -- Esc key
-        VK_CONVERT = 0x1C,    -- IME Convert
-        VK_NONCONVERT = 0x1D, -- IME Non-convert
-        VK_ACCEPT = 0x1E,     -- IME Accept
-        VK_MODECHANGE = 0x1F, -- IME Mode change request
-        VK_SPACE = 0x20,      -- Spacebar
-        VK_PRIOR = 0x21,      -- Page Up
-        VK_NEXT = 0x22,       -- Page Down
-        VK_END = 0x23,        -- End
-        VK_HOME = 0x24,       -- Home
-        VK_LEFT = 0x25,       -- Left arrow
-        VK_UP = 0x26,         -- Up arrow
-        VK_RIGHT = 0x27,      -- Right arrow
-        VK_DOWN = 0x28,       -- Down arrow
-        VK_SELECT = 0x29,     -- Select key
-        VK_PRINT = 0x2A,      -- Print key
-        VK_EXECUTE = 0x2B,    -- Execute key
-        VK_SNAPSHOT = 0x2C,   -- Print Screen key
-        VK_INSERT = 0x2D,     -- Insert key
-        VK_DELETE = 0x2E,     -- Delete key
-        VK_HELP = 0x2F,       -- Help key
-
-        -- Number Keys (0–9)
-        VK_0 = 0x30, -- '0' key
-        VK_1 = 0x31, -- '1' key
-        VK_2 = 0x32, -- '2' key
-        VK_3 = 0x33, -- '3' key
-        VK_4 = 0x34, -- '4' key
-        VK_5 = 0x35, -- '5' key
-        VK_6 = 0x36, -- '6' key
-        VK_7 = 0x37, -- '7' key
-        VK_8 = 0x38, -- '8' key
-        VK_9 = 0x39, -- '9' key
-        -- 0x3A–0x40 Undefined
-
-        -- Letter Keys (A–Z)
-        VK_A = 0x41, -- A key
-        VK_B = 0x42, -- B key
-        VK_C = 0x43, -- C key
-        VK_D = 0x44, -- D key
-        VK_E = 0x45, -- E key
-        VK_F = 0x46, -- F key
-        VK_G = 0x47, -- G key
-        VK_H = 0x48, -- H key
-        VK_I = 0x49, -- I key
-        VK_J = 0x4A, -- J key
-        VK_K = 0x4B, -- K key
-        VK_L = 0x4C, -- L key
-        VK_M = 0x4D, -- M key
-        VK_N = 0x4E, -- N key
-        VK_O = 0x4F, -- O key
-        VK_P = 0x50, -- P key
-        VK_Q = 0x51, -- Q key
-        VK_R = 0x52, -- R key
-        VK_S = 0x53, -- S key
-        VK_T = 0x54, -- T key
-        VK_U = 0x55, -- U key
-        VK_V = 0x56, -- V key
-        VK_W = 0x57, -- W key
-        VK_X = 0x58, -- X key
-        VK_Y = 0x59, -- Y key
-        VK_Z = 0x5A, -- Z key
-
-        -- Windows/Apps Keys
-        VK_LWIN = 0x5B,  -- Left Windows key
-        VK_RWIN = 0x5C,  -- Right Windows key
-        VK_APPS = 0x5D,  -- Applications key
-        -- 0x5E Reserved
-        VK_SLEEP = 0x5F, -- Computer Sleep key
-
-        -- Numeric Keypad
-        VK_NUMPAD0 = 0x60,   -- Numpad 0
-        VK_NUMPAD1 = 0x61,   -- Numpad 1
-        VK_NUMPAD2 = 0x62,   -- Numpad 2
-        VK_NUMPAD3 = 0x63,   -- Numpad 3
-        VK_NUMPAD4 = 0x64,   -- Numpad 4
-        VK_NUMPAD5 = 0x65,   -- Numpad 5
-        VK_NUMPAD6 = 0x66,   -- Numpad 6
-        VK_NUMPAD7 = 0x67,   -- Numpad 7
-        VK_NUMPAD8 = 0x68,   -- Numpad 8
-        VK_NUMPAD9 = 0x69,   -- Numpad 9
-        VK_MULTIPLY = 0x6A,  -- Numpad *
-        VK_ADD = 0x6B,       -- Numpad +
-        VK_SEPARATOR = 0x6C, -- Separator key
-        VK_SUBTRACT = 0x6D,  -- Numpad –
-        VK_DECIMAL = 0x6E,   -- Numpad .
-        VK_DIVIDE = 0x6F,    -- Numpad /
-
-        -- Function Keys
-        VK_F1 = 0x70,
-        VK_F2 = 0x71,
-        VK_F3 = 0x72,
-        VK_F4 = 0x73,
-        VK_F5 = 0x74,
-        VK_F6 = 0x75,
-        VK_F7 = 0x76,
-        VK_F8 = 0x77,
-        VK_F9 = 0x78,
-        VK_F10 = 0x79,
-        VK_F11 = 0x7A,
-        VK_F12 = 0x7B,
-        VK_F13 = 0x7C,
-        VK_F14 = 0x7D,
-        VK_F15 = 0x7E,
-        VK_F16 = 0x7F,
-        VK_F17 = 0x80,
-        VK_F18 = 0x81,
-        VK_F19 = 0x82,
-        VK_F20 = 0x83,
-        VK_F21 = 0x84,
-        VK_F22 = 0x85,
-        VK_F23 = 0x86,
-        VK_F24 = 0x87,
-        -- 0x88–0x8F Reserved
-
-        -- Lock Keys & OEM
-        VK_NUMLOCK = 0x90, -- Num Lock
-        VK_SCROLL = 0x91,  -- Scroll Lock
-        -- 0x92–0x96 OEM specific
-        -- 0x97–0x9F Unassigned
-
-        -- Extended Modifiers
-        VK_LSHIFT = 0xA0,   -- Left Shift
-        VK_RSHIFT = 0xA1,   -- Right Shift
-        VK_LCONTROL = 0xA2, -- Left Ctrl
-        VK_RCONTROL = 0xA3, -- Right Ctrl
-        VK_LMENU = 0xA4,    -- Left Alt
-        VK_RMENU = 0xA5,    -- Right Alt
-
-        -- Multimedia & Browser Keys (extended range)
-        VK_BROWSER_BACK = 0xA6,        -- Browser Back
-        VK_BROWSER_FORWARD = 0xA7,     -- Browser Forward
-        VK_BROWSER_REFRESH = 0xA8,     -- Browser Refresh
-        VK_BROWSER_STOP = 0xA9,        -- Browser Stop
-        VK_BROWSER_SEARCH = 0xAA,      -- Browser Search
-        VK_BROWSER_FAVORITES = 0xAB,   -- Browser Favorites
-        VK_BROWSER_HOME = 0xAC,        -- Browser Home
-        VK_VOLUME_MUTE = 0xAD,         -- Volume Mute
-        VK_VOLUME_DOWN = 0xAE,         -- Volume Down
-        VK_VOLUME_UP = 0xAF,           -- Volume Up
-        VK_MEDIA_NEXT_TRACK = 0xB0,    -- Media Next Track
-        VK_MEDIA_PREV_TRACK = 0xB1,    -- Media Previous Track
-        VK_MEDIA_STOP = 0xB2,          -- Media Stop
-        VK_MEDIA_PLAY_PAUSE = 0xB3,    -- Media Play/Pause
-        VK_LAUNCH_MAIL = 0xB4,         -- Launch Mail
-        VK_LAUNCH_MEDIA_SELECT = 0xB5, -- Media Select
-        VK_LAUNCH_APP1 = 0xB6,         -- Launch App1
-        VK_LAUNCH_APP2 = 0xB7,         -- Launch App2
-        -- 0xB8–0xB9 Reserved
-
-        -- OEM Specific and Other
-        VK_OEM_1 = 0xBA,      -- ';:' key
-        VK_OEM_PLUS = 0xBB,   -- '+' key
-        VK_OEM_COMMA = 0xBC,  -- ',' key
-        VK_OEM_MINUS = 0xBD,  -- '-' key
-        VK_OEM_PERIOD = 0xBE, -- '.' key
-        VK_OEM_2 = 0xBF,      -- '/?' key
-        VK_OEM_3 = 0xC0,      -- '`~' key
-        -- 0xC1–0xD7 Reserved
-        -- 0xD8–0xDA Unassigned
-        VK_OEM_4 = 0xDB, -- '[{' key
-        VK_OEM_5 = 0xDC, -- '\|' key
-        VK_OEM_6 = 0xDD, -- ']}' key
-        VK_OEM_7 = 0xDE, -- '\''/'"' key
-        VK_OEM_8 = 0xDF, -- Miscellaneous
-        -- 0xE0 Reserved
-        -- 0xE1 OEM specific
-        VK_OEM_102 = 0xE2,    -- Angle bracket or backslash (RT 102-key)
-        VK_PROCESSKEY = 0xE5, -- IME Process key
-        -- 0xE6 OEM specific
-        VK_PACKET = 0xE7,     -- Unicode packet key
-        -- 0xE8 Unassigned
-        -- 0xE9–0xF5 OEM specific
-        VK_ATTN = 0xF6,      -- Attn key
-        VK_CRSEL = 0xF7,     -- CRSEL key
-        VK_EXSEL = 0xF8,     -- EXSEL key
-        VK_EREOF = 0xF9,     -- Erase EOF key
-        VK_PLAY = 0xFA,      -- Play key
-        VK_ZOOM = 0xFB,      -- Zoom key
-        VK_NONAME = 0xFC,    -- Reserved
-        VK_PA1 = 0xFD,       -- PA1 key
-        VK_OEM_CLEAR = 0xFE, -- Clear key
-    },
 
     ---The speed mode of the core.
     ---@enum CoreSpeedMode
@@ -407,7 +458,7 @@ Mupen = {
 ---@alias tostringusable string|number
 
 ---@class KeyEventArgs
----@field keycode VKeycode? The virtual keycode, if the event is a key event.
+---@field keycode Keycode? The SDL keycode, if the event is a key event.
 ---@field ctrl boolean Whether the Ctrl key is held down.
 ---@field alt boolean Whether the Alt key is held down.
 ---@field shift boolean Whether the Shift key is held down.
@@ -1494,7 +1545,7 @@ function input.prompt(title, placeholder) end
 
 ---Gets the name of a key.
 ---@nodiscard
----@param key integer
+---@param key Keycode
 ---@return string
 function input.get_key_name_text(key) end
 
@@ -1691,12 +1742,28 @@ function avi.stopcapture() end
 -- hotkey functions
 --#region
 
----@class Hotkey Represents a combination of keys.
----@field key VKeycode? The key that is pressed to trigger the hotkey. Note that this is a virtual keycode.
----@field ctrl boolean? Whether the control modifier is pressed.
----@field shift boolean? Whether the shift modifier is pressed.
----@field alt boolean? Whether the alt modifier is pressed.
----@field assigned boolean? Whether the hotkey is assigned. Defaults to `true`.
+---@class HotkeyNoTrigger
+---@field type "none"
+---Represents an unassigned hotkey trigger.
+
+---@class HotkeyKeyCodeTrigger
+---@field type "keycode"
+---@field value Keycode The SDL keycode that triggers the hotkey.
+---Represents a keyboard hotkey trigger.
+
+---@class HotkeyMouseButtonTrigger
+---@field type "mousebutton"
+---@field value MouseButtonFlags The SDL mouse-button flag that triggers the hotkey.
+---Represents a mouse hotkey trigger.
+
+---@alias HotkeyTrigger HotkeyNoTrigger|HotkeyKeyCodeTrigger|HotkeyMouseButtonTrigger
+
+---@class Hotkey
+---@field trigger HotkeyTrigger The event that triggers the hotkey.
+---@field ctrl boolean? Whether the control modifier is pressed. Defaults to `false`.
+---@field shift boolean? Whether the shift modifier is pressed. Defaults to `false`.
+---@field alt boolean? Whether the alt modifier is pressed. Defaults to `false`.
+---Represents a trigger and its keyboard modifiers. Can invoke an action.
 
 ---Shows a dialog prompting the user to enter a hotkey.
 ---@param caption string The headline to display in the dialog.

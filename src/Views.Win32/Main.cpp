@@ -322,8 +322,7 @@ void on_task_changed(CoreVCRTask value)
         }
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) ||
-            task_is_playback(value) && !task_is_playback(previous_value) &&
-                !g_main_ctx.CoreCtx->vcr_get_path().empty())
+            task_is_playback(value) && !task_is_playback(previous_value) && !g_main_ctx.CoreCtx->vcr_get_path().empty())
         {
             RecentMenu::add(AppActions::RECENT_MOVIES, g_config.recent_movie_paths,
                 g_main_ctx.CoreCtx->vcr_get_path().string(), g_config.is_recent_movie_paths_frozen);
@@ -602,7 +601,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
 
         LuaKeyEventArgs args = get_base_key_event_args();
-        args.keycode = wParam;
+        if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
+            args.keycode = keycode;
         args.pressed = true;
         args.repeat = repeat;
 
@@ -613,7 +613,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYUP:
     case WM_KEYUP: {
         LuaKeyEventArgs args = get_base_key_event_args();
-        args.keycode = wParam;
+        if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
+            args.keycode = keycode;
         args.pressed = false;
         args.repeat = false;
 
