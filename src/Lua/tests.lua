@@ -20,7 +20,7 @@ retest.attach_coverage(
         { "emu",       emu },
         { "memory",    memory },
         { "wgui",      wgui },
-        { "d2d",       d2d },
+        { "painter",   painter },
         { "input",     input },
         { "joypad",    joypad },
         { "movie",     movie },
@@ -643,51 +643,65 @@ retest.describe('mupen64', function()
         end)
     end)
 
-    retest.describe('d2d', function()
-        retest.describe('get_target_fps', function()
-            retest.it('returns_number_or_nil', function()
-                local fps = d2d.get_target_fps()
-                retest.expect(type(fps) == 'number' or fps == nil).to.equal(true)
+    retest.describe('painter', function()
+        local VALID_IMAGE = cpath .. "image.png"
+        local NONEXISTENT_IMAGE = cpath .. "nonexistent.png"
+
+        retest.it('creates_and_paints_images', function()
+            local image = painter.new_image(32, 24)
+            local brush = painter.brush({ r = 1, g = 0, b = 0, a = 1 })
+
+            retest.expect(image.width).to.equal(32)
+            retest.expect(image.height).to.equal(24)
+
+            image:paint(function(p)
+                p:clear({ r = 0, g = 0, b = 0, a = 0 })
+                p:fill_rect({ x = 1, y = 1, width = 10, height = 10 }, brush)
+                p:stroke_rect({ x = 0, y = 0, width = 32, height = 24 }, brush, { width = 2 })
+                p:fill_round_rect({ x = 2, y = 2, width = 8, height = 8 }, 2, brush)
+                p:fill_ellipse({ x = 4, y = 4, width = 8, height = 6 }, brush)
+                p:fill_circle(16, 12, 3, brush)
+                p:line(0, 0, 31, 23, brush)
+                p:polyline({ 0, 0, 5, 5, 10, 0 }, brush)
+                p:fill_polygon({ 0, 0, 5, 10, 10, 0 }, brush)
+                p:stroke_polygon({ 12, 0, 17, 10, 22, 0 }, brush)
+                p:push_clip({ x = 0, y = 0, width = 16, height = 12 })
+                p:pop_clip()
             end)
+
+            brush:close()
+            brush:close()
+            image:close()
+            image:close()
         end)
 
-        retest.describe('set_target_fps', function()
-            retest.it('sets_and_returns_target_fps', function()
-                local previous_fps = d2d.get_target_fps()
-
-                d2d.set_target_fps(30)
-                retest.expect(d2d.get_target_fps()).to.equal(30)
-
-                d2d.set_target_fps(previous_fps)
-            end)
-
-            retest.it('accepts_nil', function()
-                local previous_fps = d2d.get_target_fps()
-
-                local func = function()
-                    d2d.set_target_fps(nil)
-                end
-                retest.expect(func).to_not.fail()
-
-                d2d.set_target_fps(previous_fps)
-            end)
+        retest.it('rejects_invalid_image_sizes', function()
+            retest.expect(function() painter.new_image(0, 1) end).to.fail()
+            retest.expect(function() painter.new_image(1, -1) end).to.fail()
         end)
 
-        retest.describe('draw_to_image', function()
-            retest.it('clamps_negative_sizes', function()
-                local img = d2d.draw_to_image(-10, -10, function() end)
-                local info = d2d.get_image_info(img)
-                retest.expect(info.width).to.equal(1)
-                retest.expect(info.height).to.equal(1)
-            end)
+        retest.it('invalidates_callback_scoped_painters', function()
+            local image = painter.new_image(1, 1)
+            local retained
+            image:paint(function(p) retained = p end)
+            retest.expect(function() retained:clear({ r = 0, g = 0, b = 0 }) end).to.fail()
+            image:close()
         end)
-        retest.describe('draw_text', function()
-            retest.it('doesnt_crash_with_negative_sizes', function()
-                local brush = d2d.create_brush(1, 0, 0, 1)
-                d2d.draw_text(0, 0, -10, -10, "Test", "Arial", 12, 800, 0, 0, 0, 0, brush)
-                d2d.free_brush(brush)
-                retest.expect(true).to.be.truthy()
-            end)
+
+        retest.it('loads_images_from_disk', function()
+            local image, message = painter.load_image(VALID_IMAGE)
+            retest.expect(message).to.equal(nil)
+            image = assert(image)
+            retest.expect(image.width > 0).to.equal(true)
+            retest.expect(image.height > 0).to.equal(true)
+            image:close()
+        end)
+
+        retest.it('returns_a_message_when_loading_fails', function()
+            local image, message = painter.load_image(NONEXISTENT_IMAGE)
+            retest.expect(image).to.equal(nil)
+            retest.expect(type(message)).to.equal("string")
+            retest.expect(#message > 0).to.equal(true)
         end)
     end)
 

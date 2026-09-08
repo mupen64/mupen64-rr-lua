@@ -20,7 +20,7 @@ enum callback_key : uint8_t
 {
     REG_LUACLASS = LUA_RIDX_LAST + 1,
     REG_ATUPDATESCREEN,
-    REG_ATDRAWD2D,
+    REG_ATPAINT,
     REG_ATVI,
     REG_ATINPUT,
     REG_ATSTOP,

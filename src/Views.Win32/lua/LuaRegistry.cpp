@@ -9,7 +9,7 @@
 #include <lua/modules/AVI.hpp>
 #include <lua/modules/Action.hpp>
 #include <lua/modules/Clipboard.hpp>
-#include <lua/modules/D2D.hpp>
+#include <lua/modules/Painter.hpp>
 #include <lua/modules/Emu.hpp>
 #include <lua/modules/Global.hpp>
 #include <lua/modules/Hotkey.hpp>
@@ -32,7 +32,7 @@ const luaL_Reg GLOBAL_FUNCS[] = {{"print", LuaCore::Global::print}, {"tostringex
 const luaL_Reg EMU_FUNCS[] = {{"console", LuaCore::Emu::ConsoleWriteLua}, {"statusbar", LuaCore::Emu::StatusbarWrite},
 
     {"atvi", LuaCore::Emu::subscribe_atvi}, {"atupdatescreen", LuaCore::Emu::subscribe_atupdatescreen},
-    {"atdrawd2d", LuaCore::Emu::subscribe_atdrawd2d}, {"atinput", LuaCore::Emu::subscribe_atinput},
+    {"atpaint", LuaCore::Emu::subscribe_atpaint}, {"atinput", LuaCore::Emu::subscribe_atinput},
     {"atstop", LuaCore::Emu::subscribe_atstop}, {"atwindowmessage", LuaCore::Emu::subscribe_atwindowmessage},
     {"atinterval", LuaCore::Emu::subscribe_atinterval}, {"atplaymovie", LuaCore::Emu::subscribe_atplaymovie},
     {"atstopmovie", LuaCore::Emu::subscribe_atstopmovie}, {"atloadstate", LuaCore::Emu::subscribe_atloadstate},
@@ -102,23 +102,10 @@ const luaL_Reg WGUI_FUNCS[] = {{"setbrush", LuaCore::Wgui::set_brush}, {"setpen"
     {"info", LuaCore::Wgui::GetGUIInfo}, {"resize", LuaCore::Wgui::ResizeWindow}, {"setclip", LuaCore::Wgui::SetClip},
     {"resetclip", LuaCore::Wgui::ResetClip}, {NULL, NULL}};
 
-const luaL_Reg D2D_FUNCS[] = {{"get_target_fps", LuaCore::D2D::get_target_fps},
-    {"set_target_fps", LuaCore::D2D::set_target_fps}, {"create_brush", LuaCore::D2D::create_brush},
-    {"free_brush", LuaCore::D2D::free_brush},
-
-    {"clear", LuaCore::D2D::clear}, {"fill_rectangle", LuaCore::D2D::fill_rectangle},
-    {"draw_rectangle", LuaCore::D2D::draw_rectangle}, {"fill_ellipse", LuaCore::D2D::fill_ellipse},
-    {"draw_ellipse", LuaCore::D2D::draw_ellipse}, {"draw_line", LuaCore::D2D::draw_line},
-    {"draw_text", LuaCore::D2D::draw_text}, {"get_text_size", LuaCore::D2D::measure_text},
-    {"push_clip", LuaCore::D2D::push_clip}, {"pop_clip", LuaCore::D2D::pop_clip},
-    {"fill_rounded_rectangle", LuaCore::D2D::fill_rounded_rectangle},
-    {"draw_rounded_rectangle", LuaCore::D2D::draw_rounded_rectangle}, {"load_image", LuaCore::D2D::load_image},
-    {"free_image", LuaCore::D2D::free_image}, {"draw_image2", LuaCore::D2D::draw_image2},
-    {"get_image_info", LuaCore::D2D::get_image_info},
-    {"set_text_antialias_mode", LuaCore::D2D::set_text_antialias_mode},
-    {"set_antialias_mode", LuaCore::D2D::set_antialias_mode},
-
-    {"draw_to_image", LuaCore::D2D::draw_to_image}, {NULL, NULL}};
+const luaL_Reg PAINTER_FUNCS[] = {{"brush", LuaCore::Painter::brush}, {"text_style", LuaCore::Painter::text_style},
+    {"new_image", LuaCore::Painter::new_image}, {"load_image", LuaCore::Painter::load_image},
+    {"decode_image", LuaCore::Painter::decode_image}, {"image_formats", LuaCore::Painter::image_formats},
+    {"measure_text", LuaCore::Painter::measure_text}, {NULL, NULL}};
 
 const luaL_Reg INPUT_FUNCS[] = {{"get", LuaCore::Input::get_keys}, {"diff", LuaCore::Input::GetKeyDifference},
     {"prompt", LuaCore::Input::prompt}, {"get_key_name_text", LuaCore::Input::LuaGetKeyNameText}, {NULL, NULL}};
@@ -207,7 +194,8 @@ void LuaRegistry::register_functions(lua_State *L)
     register_as_package(L, "memory", MEMORY_FUNCS);
     register_as_package(L, "debugger", DEBUGGER_FUNCS);
     register_as_package(L, "wgui", WGUI_FUNCS);
-    register_as_package(L, "d2d", D2D_FUNCS);
+    LuaCore::Painter::register_types(L);
+    register_as_package(L, "painter", PAINTER_FUNCS);
     register_as_package(L, "input", INPUT_FUNCS);
     register_as_package(L, "joypad", JOYPAD_FUNCS);
     register_as_package(L, "movie", MOVIE_FUNCS);

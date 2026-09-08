@@ -96,23 +96,8 @@ static void draw_lua(bool force)
 
         bool success = true;
 
-        // D2D Graphics
-        if (!lua->rctx.presenter)
-        {
-            // NOTE: We have to invoke the callback because we're waiting for the script to issue a d2d call
-            success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
-        }
-        else
-        {
-            const auto dc = lua->rctx.presenter->dc();
-            dc->BeginDraw();
-            dc->SetTransform(D2D1::Matrix3x2F::Identity());
-
-            success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
-            dc->EndDraw();
-
-            lua->rctx.presenter->present();
-        }
+        success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATPAINT);
+        if (lua->rctx.presenter) lua->rctx.presenter->present();
 
         // GDI Graphics. Ugh.
         success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATUPDATESCREEN);

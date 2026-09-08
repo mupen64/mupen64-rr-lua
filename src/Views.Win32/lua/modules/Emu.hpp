@@ -38,9 +38,9 @@ static int subscribe_atupdatescreen(lua_State *L)
     return 0;
 }
 
-static int subscribe_atdrawd2d(lua_State *L)
+static int subscribe_atpaint(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATDRAWD2D);
+    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATPAINT);
     return 0;
 }
 

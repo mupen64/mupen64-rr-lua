@@ -7,6 +7,7 @@
 #include "Common.hpp"
 #include <lua/LuaCallbacks.hpp>
 #include <lua/LuaManager.hpp>
+#include <lua/modules/Painter.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
@@ -46,6 +47,7 @@ static int pcall_no_params(lua_State *L)
 }
 
 const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State *)>> CALLBACK_FUNC_MAP = {
+    {LuaCallbacks::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback},
     {LuaCallbacks::REG_ATINPUT,
         [](auto l) -> int {
             lua_pushinteger(l, current_input_n);
@@ -304,8 +306,9 @@ bool invoke_callbacks_with_key_impl(
         if (function(L))
         {
             const char *str = lua_tostring(L, -1);
-            lua->print(lua, std::string(str) + "\r\n");
-            g_view_logger->info("Lua error: {}", str);
+            const std::string message = str ? str : "Lua callback failed with a non-string error object";
+            lua->print(lua, message + "\r\n");
+            g_view_logger->info("Lua error: {}", message);
             return false;
         }
     }
