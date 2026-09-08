@@ -17,9 +17,13 @@ static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
 {
     lua_newtable(L);
 
-    // COMPAT
     lua_pushstring(L, "key");
-    lua_pushinteger(L, *HotkeyUtils::trigger_to_vk(hotkey.trigger));
+    if (std::holds_alternative<::Hotkey::KeyCode>(hotkey.trigger))
+        lua_pushinteger(L, std::get<::Hotkey::KeyCode>(hotkey.trigger).get());
+    else if (const auto vk = HotkeyUtils::trigger_to_vk(hotkey.trigger); vk.has_value())
+        lua_pushinteger(L, *vk);
+    else
+        lua_pushnil(L);
     lua_settable(L, -3);
 
     lua_pushstring(L, "ctrl");
@@ -50,10 +54,15 @@ static ::Hotkey check_hotkey(lua_State *L, int i)
         return hotkey;
     }
 
-    // COMPAT
     lua_getfield(L, i, "key");
-    const auto vk = luaL_opt(L, lua_tointeger, -1, 0);
-    hotkey.trigger = *HotkeyUtils::vk_to_trigger(vk);
+    const auto keycode = static_cast<SDL_Keycode>(luaL_opt(L, lua_tointeger, -1, SDLK_UNKNOWN));
+    // Prior to 1.5.0-3, these were Windows virtual keycodes.
+    // These values don't overlap valid SDL keycodes, so we can just check for them.
+    if (keycode == VK_LBUTTON || keycode == VK_MBUTTON || keycode == VK_RBUTTON || keycode == VK_XBUTTON1 ||
+        keycode == VK_XBUTTON2)
+        hotkey.trigger = *HotkeyUtils::vk_to_trigger(keycode);
+    else
+        hotkey.trigger = ::Hotkey::KeyCode(keycode);
     lua_pop(L, 1);
 
     lua_getfield(L, i, "ctrl");
@@ -62,6 +71,10 @@ static ::Hotkey check_hotkey(lua_State *L, int i)
 
     lua_getfield(L, i, "shift");
     hotkey.shift = luaL_opt(L, lua_toboolean, -1, false);
+    lua_pop(L, 1);
+
+    lua_getfield(L, i, "alt");
+    hotkey.alt = luaL_opt(L, lua_toboolean, -1, false);
     lua_pop(L, 1);
 
     // COMPAT
