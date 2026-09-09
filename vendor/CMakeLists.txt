@@ -19,9 +19,6 @@ add_library(vendor::decan ALIAS decan-hpp)
 add_subdirectory(glad)
 add_library(vendor::glad ALIAS glad)
 
-add_subdirectory(microlru)
-add_library(vendor::microlru ALIAS microlru)
-
 add_subdirectory(mini)
 add_library(vendor::mini ALIAS mini)
 

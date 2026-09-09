@@ -9,7 +9,7 @@
 #include <Common.Views/ActionManager.hpp>
 #include <SDL3/SDL_keycode.h>
 #include <lua/presenters/Presenter.hpp>
-
+#include <Common/LRUCache.hpp>
 #include <memory>
 
 namespace LuaCore::Painter::Detail
@@ -48,10 +48,10 @@ struct LuaRenderingContext
     IDWriteFactory *dw_factory{};
 
     // The cache for DirectWrite text layouts
-    MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts{};
+    LRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts{};
 
     // The cache for DirectWrite text size measurements
-    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
+    LRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
 
     // The generational LRU cache for painter text layouts
     std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts{};

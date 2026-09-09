@@ -435,8 +435,8 @@ void LuaRenderer::ensure_d2d_renderer_created(LuaRenderingContext *ctx)
     }
 
     ctx->d2d_render_target_stack.push(ctx->presenter->dc());
-    ctx->dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout *>(512, [&](auto value) { value->Release(); });
-    ctx->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
+    ctx->dw_text_layouts = LRU::Cache<uint64_t, IDWriteTextLayout *>(512, [&](auto value) { value->Release(); });
+    ctx->dw_text_sizes = LRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
 }
 
 void LuaRenderer::mark_gdi_content_present(LuaRenderingContext *ctx)

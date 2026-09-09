@@ -161,7 +161,6 @@ target_link_libraries(Mupen64RR_Views_Win32 PRIVATE
     vendor::argh
     vendor::bs-thread-pool
     vendor::windarkmode
-    vendor::microlru
     vendor::mini
     Mupen64RR_Plugins_DummyAudio
     Mupen64RR_Plugins_DummyInput
