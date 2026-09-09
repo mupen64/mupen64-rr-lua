@@ -127,3 +127,27 @@ bool luaL_checkboolean(lua_State *L, int i)
 
     return lua_toboolean(L, i);
 }
+
+void luaL_create_metatable(
+    lua_State *L, const char *name, const luaL_Reg *methods, lua_CFunction index, lua_CFunction gc)
+{
+    if (luaL_newmetatable(L, name))
+    {
+        luaL_setfuncs(L, methods, 0);
+        if (index)
+        {
+            lua_pushcfunction(L, index);
+            lua_setfield(L, -2, "__index");
+        }
+        else
+        {
+            lua_pushvalue(L, -1);
+            lua_setfield(L, -2, "__index");
+        }
+        lua_pushcfunction(L, gc);
+        lua_setfield(L, -2, "__gc");
+        lua_pushstring(L, name);
+        lua_setfield(L, -2, "__name");
+    }
+    lua_pop(L, 1);
+}

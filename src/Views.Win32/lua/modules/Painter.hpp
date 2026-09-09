@@ -516,13 +516,12 @@ class TextLayoutCache
             ++m_generation;
         }
 
-        while (!m_lru.empty() &&
-               m_generation - m_lru.back().generation > TEXT_LAYOUT_CACHE_MAX_UNUSED_GENERATIONS)
+        while (!m_lru.empty() && m_generation - m_lru.back().generation > TEXT_LAYOUT_CACHE_MAX_UNUSED_GENERATIONS)
             evict(std::prev(m_lru.end()));
     }
 
-    IDWriteTextLayout *get(const std::wstring &text, const TextFormatResource &format, float width, float height,
-        bool ellipsis)
+    IDWriteTextLayout *get(
+        const std::wstring &text, const TextFormatResource &format, float width, float height, bool ellipsis)
     {
         const size_t hash = hash_key(text, format, width, height, ellipsis);
         const auto [first, last] = m_index.equal_range(hash);
@@ -541,8 +540,8 @@ class TextLayoutCache
         IDWriteTextLayout *layout)
     {
         const size_t hash = hash_key(text, format, width, height, ellipsis);
-        TextLayoutCacheKey key{text, format.style, format.alignment, format.paragraph_alignment, format.wrapping, width,
-            height, ellipsis};
+        TextLayoutCacheKey key{
+            text, format.style, format.alignment, format.paragraph_alignment, format.wrapping, width, height, ellipsis};
         key.style.closed = false;
         m_lru.push_front({std::move(key), layout, m_generation, hash});
         m_index.emplace(hash, m_lru.begin());
@@ -1687,14 +1686,14 @@ inline bool execute_commands(Painter *painter, std::string &error)
                     break;
                 }
                 const UINT32 length = static_cast<UINT32>(std::min<size_t>(payload.text.size(), UINT32_MAX));
-                HRESULT hr = text_factory->CreateTextLayout(payload.text.data(), length, format, width, height, &layout);
+                HRESULT hr =
+                    text_factory->CreateTextLayout(payload.text.data(), length, format, width, height, &layout);
                 if (FAILED(hr) || !layout)
                 {
                     set_execution_error(error, "DirectWrite text layout", FAILED(hr) ? hr : E_FAIL);
                     succeeded = false;
                 }
-                if (succeeded)
-                    succeeded = apply_deferred_text_style(layout, format_resource.style, length, error);
+                if (succeeded) succeeded = apply_deferred_text_style(layout, format_resource.style, length, error);
                 if (succeeded && payload.ellipsis)
                 {
                     IDWriteInlineObject *ellipsis = nullptr;
@@ -1790,29 +1789,6 @@ inline int image_paint(lua_State *L)
     return 0;
 }
 
-inline void create_metatable(
-    lua_State *L, const char *name, const luaL_Reg *methods, lua_CFunction index, lua_CFunction gc)
-{
-    if (luaL_newmetatable(L, name))
-    {
-        luaL_setfuncs(L, methods, 0);
-        if (index)
-        {
-            lua_pushcfunction(L, index);
-            lua_setfield(L, -2, "__index");
-        }
-        else
-        {
-            lua_pushvalue(L, -1);
-            lua_setfield(L, -2, "__index");
-        }
-        lua_pushcfunction(L, gc);
-        lua_setfield(L, -2, "__gc");
-        lua_pushstring(L, name);
-        lua_setfield(L, -2, "__name");
-    }
-    lua_pop(L, 1);
-}
 } // namespace Detail
 
 inline int brush(lua_State *L)
@@ -2079,10 +2055,10 @@ inline void register_types(lua_State *L)
         {"fill_polygon", Detail::painter_fill_polygon}, {"stroke_polygon", Detail::painter_stroke_polygon},
         {"image", Detail::painter_image}, {"text", Detail::painter_text}, {"push_clip", Detail::painter_push_clip},
         {"pop_clip", Detail::painter_pop_clip}, {nullptr, nullptr}};
-    Detail::create_metatable(L, Detail::BRUSH_MT, brush_methods, nullptr, Detail::brush_gc);
-    Detail::create_metatable(L, Detail::IMAGE_MT, image_methods, Detail::image_index, Detail::image_gc);
-    Detail::create_metatable(L, Detail::TEXT_STYLE_MT, text_style_methods, nullptr, Detail::text_style_gc);
-    Detail::create_metatable(L, Detail::PAINTER_MT, painter_methods, nullptr, Detail::painter_gc);
+    luaL_create_metatable(L, Detail::BRUSH_MT, brush_methods, nullptr, Detail::brush_gc);
+    luaL_create_metatable(L, Detail::IMAGE_MT, image_methods, Detail::image_index, Detail::image_gc);
+    luaL_create_metatable(L, Detail::TEXT_STYLE_MT, text_style_methods, nullptr, Detail::text_style_gc);
+    luaL_create_metatable(L, Detail::PAINTER_MT, painter_methods, nullptr, Detail::painter_gc);
 }
 
 inline int invoke_paint_callback(lua_State *L)

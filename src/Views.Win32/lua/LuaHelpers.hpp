@@ -75,3 +75,14 @@ std::string lua_pushstlstring(lua_State *L, const std::string &str);
  * \return The boolean at the given index in the Lua stack.
  */
 bool luaL_checkboolean(lua_State *L, int i);
+
+/**
+ * \brief Creates a metatable with the given name and methods, and sets the index and gc functions.
+ * \param L The Lua state.
+ * \param name The name of the metatable.
+ * \param methods The methods of the metatable.
+ * \param index The index function of the metatable.
+ * \param gc The gc function of the metatable.
+ */
+void luaL_create_metatable(
+    lua_State *L, const char *name, const luaL_Reg *methods, lua_CFunction index, lua_CFunction gc);
