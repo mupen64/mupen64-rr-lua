@@ -14,12 +14,14 @@
 #include <cmath>
 #include <cstdint>
 #include <dwrite_1.h>
+#include <format>
 #include <iterator>
 #include <limits>
 #include <list>
 #include <memory>
 #include <new>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -180,20 +182,14 @@ inline std::string hresult_message(const char *operation, HRESULT hr)
     FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr,
         static_cast<DWORD>(hr), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<char *>(&system_message), 0,
         nullptr);
-    std::string result(operation);
-    result += " failed (HRESULT 0x";
-    char code[16]{};
-    snprintf(code, sizeof(code), "%08lX", static_cast<unsigned long>(hr));
-    result += code;
-    result += ")";
     if (system_message)
     {
-        result += ": ";
-        result += system_message;
-        while (!result.empty() && (result.back() == '\r' || result.back() == '\n')) result.pop_back();
+        std::string_view detail(system_message);
+        while (!detail.empty() && (detail.back() == '\r' || detail.back() == '\n')) detail.remove_suffix(1);
         LocalFree(system_message);
+        return std::format("{} failed (HRESULT 0x{:08X}): {}", operation, static_cast<unsigned long>(hr), detail);
     }
-    return result;
+    return std::format("{} failed (HRESULT 0x{:08X})", operation, static_cast<unsigned long>(hr));
 }
 
 inline int fail_hr(lua_State *L, const char *operation, HRESULT hr)
