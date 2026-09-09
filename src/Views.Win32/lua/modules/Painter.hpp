@@ -1338,6 +1338,7 @@ inline int painter_image(lua_State *L)
         luaL_error(L, "image center rectangle is outside the source rectangle");
 
     std::vector<ImageSlice> slices;
+    slices.reserve(nine_sliced ? 9 : 1);
     if (nine_sliced)
     {
         const float left_width = center.left - source.left;
