@@ -35,9 +35,9 @@ constexpr const char *IMAGE_MT = "mupen64.PainterImage";
 constexpr const char *TEXT_STYLE_MT = "mupen64.PainterTextStyle";
 constexpr const char *PAINTER_MT = "mupen64.Painter";
 constexpr float MAX_LAYOUT_SIZE = 10000000.0f;
-constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 512;
+constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 2048;
 constexpr std::uint64_t TEXT_LAYOUT_CACHE_MAX_UNUSED_GENERATIONS = 120;
-constexpr size_t TEXT_MEASUREMENT_CACHE_CAPACITY = 512;
+constexpr size_t TEXT_MEASUREMENT_CACHE_CAPACITY = 2048;
 
 struct Brush
 {
