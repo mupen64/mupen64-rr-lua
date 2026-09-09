@@ -8,9 +8,9 @@
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
-local root = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+$", "")
-local WIDTH = 800
-local HEIGHT = 600
+local ROOT <const> = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+$", "")
+local WIDTH <const> = 800
+local HEIGHT <const> = 600
 local page = 1
 local frame = 0
 local last_paint_time
@@ -24,17 +24,17 @@ local function rect(x, y, width, height)
     return { x = x, y = y, width = width, height = height }
 end
 
-local background_color = color(0.025, 0.035, 0.055)
-local background = painter.brush(background_color)
-local white = painter.brush(color(0.92, 0.95, 1.0))
-local faint = painter.brush(color(0.50, 0.58, 0.70))
-local ninesliced = assert(painter.load_image(root .. '\\..\\ninesliced.png'))
-local nineslice_options = {
+local BACKGROUND_COLOR <const> = color(0.025, 0.035, 0.055)
+local BACKGROUND <const> = painter.brush(BACKGROUND_COLOR)
+local WHITE <const> = painter.brush(color(0.92, 0.95, 1.0))
+local FAINT <const> = painter.brush(color(0.50, 0.58, 0.70))
+local NINESLICED <const> = assert(painter.load_image(ROOT .. '\\..\\ninesliced.png'))
+local NINESLICE_OPTIONS <const> = {
     source = rect(0, 0, 32, 32),
     center = rect(15, 15, 2, 2),
     sampling = "nearest",
 }
-local palette = {
+local PALETTE <const> = {
     painter.brush(color(0.95, 0.20, 0.20, 0.32)),
     painter.brush(color(0.20, 0.85, 0.35, 0.32)),
     painter.brush(color(0.20, 0.45, 1.00, 0.32)),
@@ -42,88 +42,139 @@ local palette = {
     painter.brush(color(0.75, 0.25, 0.95, 0.32)),
     painter.brush(color(0.10, 0.85, 0.85, 0.32)),
 }
-local text_style = painter.text_style({ size = 18 })
+local TEXT_STYLE <const> = painter.text_style({ size = 18 })
 
-local small_style = painter.text_style({ size = 13 })
+local SMALL_STYLE <const> = painter.text_style({ size = 13 })
 
-local measure_identical_text = "This is an identical string measured repeatedly."
-local measure_different_text = {}
+local MEASURE_IDENTICAL_TEXT <const> = "This is an identical string measured repeatedly."
+local MEASURE_DIFFERENT_TEXT <const> = {}
 for i = 1, 1000 do
-    measure_different_text[i] = string.format("This is different string number %04d.", i)
+    MEASURE_DIFFERENT_TEXT[i] = string.format("This is different string number %04d.", i)
 end
 
-local function draw_header(p)
-    p:text(string.format("Frame time: %.2f ms", frame_time_ms), rect(20, 16, 220, 20),
-        small_style, white)
-    p:text("Page " .. page .. "/4    Q: previous    E: next", rect(20, 570, 760, 20),
-        small_style, faint)
-end
-
-local function draw_primitives(p)
-    p:clear(background_color)
-    draw_header(p)
-
-    for i = 1, 140 do
-        local x = 70 + ((i * 37) % 660)
-        local y = 95 + ((i * 61) % 410)
-        local w = 35 + ((i * 19) % 150)
-        local h = 25 + ((i * 13) % 115)
-        local brush = palette[((i - 1) % #palette) + 1]
-        local stroke = { width = 1 + (i % 4), cap = "round", join = "round" }
-
-        p:fill_rect(rect(x, y, w, h), brush)
-        p:stroke_rect(rect(x + 8, y + 6, w, h), brush, stroke)
-        p:fill_round_rect(rect(x - 12, y + 10, w * 0.8, h * 0.7), 10, brush)
-        p:stroke_round_rect(rect(x + 12, y - 8, w * 0.7, h * 0.8), 8, brush, stroke)
-        p:fill_ellipse(rect(x - 20, y - 14, w * 0.9, h * 0.8), brush)
-        p:stroke_ellipse(rect(x + 18, y + 8, w * 0.65, h * 0.65), brush, stroke)
-        p:fill_circle(x + w * 0.5, y + h * 0.5, 10 + (i % 25), brush)
-        p:stroke_circle(x + w * 0.4, y + h * 0.6, 14 + (i % 18), brush, stroke)
-        p:line(x - 25, y + h + 15, x + w + 25, y - 15, brush, stroke)
-        p:polyline({ x - 10, y + h, x + w * 0.3, y - 12,
-            x + w * 0.7, y + h + 12, x + w + 20, y + 4 }, brush, stroke)
-        p:fill_polygon({ x, y + h * 0.5, x + w * 0.45, y - 18,
-            x + w, y + h * 0.25, x + w * 0.65, y + h + 18 }, brush)
-        p:stroke_polygon({ x - 8, y + h * 0.5, x + w * 0.45, y - 18,
-            x + w + 8, y + h * 0.5, x + w * 0.45, y + h + 18 }, brush, stroke)
-    end
-end
-
-local function grid_cell(i, x_origin)
+local TEXT_OPTIONS <const> = { overflow = "visible", wrap = "none", clip = false }
+local TEXT_DIFFERENT <const> = {}
+local TEXT_CELLS_LEFT <const> = {}
+local TEXT_CELLS_RIGHT <const> = {}
+for i = 1, 1000 do
+    TEXT_DIFFERENT[i] = string.format("value %05d / item %03d", 10000 + i, i)
     local cell = (i - 1) % 50
     local column = cell % 5
     local row = math.floor(cell / 5)
-    return rect(x_origin + column * 79, 55 + row * 50, 75, 42)
+    TEXT_CELLS_LEFT[i] = rect(10 + column * 79, 55 + row * 50, 75, 42)
+    TEXT_CELLS_RIGHT[i] = rect(405 + column * 79, 55 + row * 50, 75, 42)
+end
+local TEXT_IDENTICAL <const> = "This is intentionally unchanged painter text. " ..
+    "It should exercise caching of immutable layout and glyph data."
+
+local PRIMITIVE_CASES <const> = {}
+for i = 1, 140 do
+    local x = 70 + ((i * 37) % 660)
+    local y = 95 + ((i * 61) % 410)
+    local w = 35 + ((i * 19) % 150)
+    local h = 25 + ((i * 13) % 115)
+    PRIMITIVE_CASES[i] = {
+        brush = PALETTE[((i - 1) % #PALETTE) + 1],
+        stroke = { width = 1 + (i % 4), cap = "round", join = "round" },
+        fill_rect = rect(x, y, w, h),
+        stroke_rect = rect(x + 8, y + 6, w, h),
+        fill_round_rect = rect(x - 12, y + 10, w * 0.8, h * 0.7),
+        stroke_round_rect = rect(x + 12, y - 8, w * 0.7, h * 0.8),
+        fill_ellipse = rect(x - 20, y - 14, w * 0.9, h * 0.8),
+        stroke_ellipse = rect(x + 18, y + 8, w * 0.65, h * 0.65),
+        fill_polygon = { x, y + h * 0.5, x + w * 0.45, y - 18,
+            x + w, y + h * 0.25, x + w * 0.65, y + h + 18 },
+        stroke_polygon = { x - 8, y + h * 0.5, x + w * 0.45, y - 18,
+            x + w + 8, y + h * 0.5, x + w * 0.45, y + h + 18 },
+        polyline = { x - 10, y + h, x + w * 0.3, y - 12,
+            x + w * 0.7, y + h + 12, x + w + 20, y + 4 },
+        circle = { x + w * 0.5, y + h * 0.5, 10 + (i % 25) },
+        stroke_circle = { x + w * 0.4, y + h * 0.6, 14 + (i % 18) },
+        line = { x - 25, y + h + 15, x + w + 25, y - 15 },
+    }
+end
+
+local IMAGE_CELLS <const> = {}
+for i = 1, 1000 do
+    local cell = (i - 1) % 100
+    local column = cell % 10
+    local row = math.floor(cell / 10)
+    IMAGE_CELLS[i] = rect(10 + column * 79, 55 + row * 50, 75, 42)
+end
+
+local HEADER_FRAME_RECT <const> = rect(20, 16, 220, 20)
+local HEADER_PAGE_RECT <const> = rect(20, 570, 760, 20)
+local PAGE_TEXT <const> = {
+    "Page 1/4    Q: previous    E: next",
+    "Page 2/4    Q: previous    E: next",
+    "Page 3/4    Q: previous    E: next",
+    "Page 4/4    Q: previous    E: next",
+}
+local MEASURE_TITLE_RECT <const> = rect(40, 80, 720, 35)
+local MEASURE_DESCRIPTION_RECT <const> = rect(40, 125, 720, 25)
+local MEASURE_IDENTICAL_TITLE_RECT <const> = rect(55, 190, 300, 28)
+local MEASURE_IDENTICAL_TIME_RECT <const> = rect(75, 235, 300, 25)
+local MEASURE_IDENTICAL_WIDTH_RECT <const> = rect(75, 265, 300, 25)
+local MEASURE_IDENTICAL_LINES_RECT <const> = rect(75, 295, 300, 25)
+local MEASURE_DIFFERENT_TITLE_RECT <const> = rect(425, 190, 300, 28)
+local MEASURE_DIFFERENT_TIME_RECT <const> = rect(445, 235, 300, 25)
+local MEASURE_DIFFERENT_WIDTH_RECT <const> = rect(445, 265, 300, 25)
+local MEASURE_DIFFERENT_LINES_RECT <const> = rect(445, 295, 300, 25)
+local function draw_header(p)
+    p:text(string.format("Frame time: %.2f ms", frame_time_ms), HEADER_FRAME_RECT,
+        SMALL_STYLE, WHITE)
+    p:text(PAGE_TEXT[page], HEADER_PAGE_RECT, SMALL_STYLE, FAINT)
+end
+
+local function draw_primitives(p)
+    p:clear(BACKGROUND_COLOR)
+    draw_header(p)
+
+    for i = 1, 140 do
+        local primitive = PRIMITIVE_CASES[i]
+        local brush = primitive.brush
+        local stroke = primitive.stroke
+        p:fill_rect(primitive.fill_rect, brush)
+        p:stroke_rect(primitive.stroke_rect, brush, stroke)
+        p:fill_round_rect(primitive.fill_round_rect, 10, brush)
+        p:stroke_round_rect(primitive.stroke_round_rect, 8, brush, stroke)
+        p:fill_ellipse(primitive.fill_ellipse, brush)
+        p:stroke_ellipse(primitive.stroke_ellipse, brush, stroke)
+        p:fill_circle(primitive.circle[1], primitive.circle[2], primitive.circle[3], brush)
+        p:stroke_circle(primitive.stroke_circle[1], primitive.stroke_circle[2],
+            primitive.stroke_circle[3], brush, stroke)
+        p:line(primitive.line[1], primitive.line[2], primitive.line[3], primitive.line[4],
+            brush, stroke)
+        p:polyline(primitive.polyline, brush, stroke)
+        p:fill_polygon(primitive.fill_polygon, brush)
+        p:stroke_polygon(primitive.stroke_polygon, brush, stroke)
+    end
 end
 
 local function draw_text(p)
-    p:clear(background_color)
+    p:clear(BACKGROUND_COLOR)
     draw_header(p)
 
     for i = 1, 1000 do
-        local brush = palette[((i + frame) % #palette) + 1]
-        local text = string.format("value %05d / item %03d", math.random(10000, 20000), i)
-        p:text(text, grid_cell(i, 10), text_style, brush,
-            { overflow = "visible", wrap = "none", clip = false })
+        local brush = PALETTE[((i + frame) % #PALETTE) + 1]
+        p:text(TEXT_DIFFERENT[i], TEXT_CELLS_LEFT[i], TEXT_STYLE, brush, TEXT_OPTIONS)
     end
 
-    local message = "This is intentionally unchanged painter text. " ..
-        "It should exercise caching of immutable layout and glyph data."
     for i = 1, 1000 do
-        p:text(message, grid_cell(i, 405), text_style, palette[(i % #palette) + 1],
-            { overflow = "visible", wrap = "none", clip = false })
+        p:text(TEXT_IDENTICAL, TEXT_CELLS_RIGHT[i], TEXT_STYLE,
+            PALETTE[(i % #PALETTE) + 1], TEXT_OPTIONS)
     end
 end
 
 local function draw_measure_text(p)
-    p:clear(background_color)
+    p:clear(BACKGROUND_COLOR)
     draw_header(p)
 
     local identical_width = 0
     local identical_lines = 0
     local identical_start = os.clock()
     for _ = 1, 1000 do
-        local metrics = painter.measure_text(measure_identical_text, text_style)
+        local metrics = painter.measure_text(MEASURE_IDENTICAL_TEXT, TEXT_STYLE)
         identical_width = identical_width + metrics.width
         identical_lines = identical_lines + metrics.line_count
     end
@@ -133,46 +184,39 @@ local function draw_measure_text(p)
     local different_lines = 0
     local different_start = os.clock()
     for i = 1, 1000 do
-        local metrics = painter.measure_text(measure_different_text[i], text_style)
+        local metrics = painter.measure_text(MEASURE_DIFFERENT_TEXT[i], TEXT_STYLE)
         different_width = different_width + metrics.width
         different_lines = different_lines + metrics.line_count
     end
     local different_time_ms = (os.clock() - different_start) * 1000
 
-    p:text("measure_text stress test", rect(40, 80, 720, 35), text_style, white)
+    p:text("measure_text stress test", MEASURE_TITLE_RECT, TEXT_STYLE, WHITE)
     p:text("Each frame measures 1000 identical strings and 1000 different strings.",
-        rect(40, 125, 720, 25), small_style, faint)
+        MEASURE_DESCRIPTION_RECT, SMALL_STYLE, FAINT)
 
-    p:text("1000 identical strings", rect(55, 190, 300, 28), text_style, palette[2])
-    p:text(string.format("time: %.2f ms", identical_time_ms), rect(75, 235, 300, 25),
-        small_style, white)
+    p:text("1000 identical strings", MEASURE_IDENTICAL_TITLE_RECT, TEXT_STYLE, PALETTE[2])
+    p:text(string.format("time: %.2f ms", identical_time_ms), MEASURE_IDENTICAL_TIME_RECT,
+        SMALL_STYLE, WHITE)
     p:text(string.format("average width: %.2f px", identical_width / 1000),
-        rect(75, 265, 300, 25), small_style, white)
-    p:text(string.format("total lines: %d", identical_lines), rect(75, 295, 300, 25),
-        small_style, white)
+        MEASURE_IDENTICAL_WIDTH_RECT, SMALL_STYLE, WHITE)
+    p:text(string.format("total lines: %d", identical_lines), MEASURE_IDENTICAL_LINES_RECT,
+        SMALL_STYLE, WHITE)
 
-    p:text("1000 different strings", rect(425, 190, 300, 28), text_style, palette[3])
-    p:text(string.format("time: %.2f ms", different_time_ms), rect(445, 235, 300, 25),
-        small_style, white)
+    p:text("1000 different strings", MEASURE_DIFFERENT_TITLE_RECT, TEXT_STYLE, PALETTE[3])
+    p:text(string.format("time: %.2f ms", different_time_ms), MEASURE_DIFFERENT_TIME_RECT,
+        SMALL_STYLE, WHITE)
     p:text(string.format("average width: %.2f px", different_width / 1000),
-        rect(445, 265, 300, 25), small_style, white)
-    p:text(string.format("total lines: %d", different_lines), rect(445, 295, 300, 25),
-        small_style, white)
-end
-
-local function image_grid_cell(i)
-    local cell = (i - 1) % 100
-    local column = cell % 10
-    local row = math.floor(cell / 10)
-    return rect(10 + column * 79, 55 + row * 50, 75, 42)
+        MEASURE_DIFFERENT_WIDTH_RECT, SMALL_STYLE, WHITE)
+    p:text(string.format("total lines: %d", different_lines), MEASURE_DIFFERENT_LINES_RECT,
+        SMALL_STYLE, WHITE)
 end
 
 local function draw_ninesliced(p)
-    p:clear(background_color)
+    p:clear(BACKGROUND_COLOR)
     draw_header(p)
 
     for i = 1, 1000 do
-        p:image(ninesliced, image_grid_cell(i), nineslice_options)
+        p:image(NINESLICED, IMAGE_CELLS[i], NINESLICE_OPTIONS)
     end
 end
 
