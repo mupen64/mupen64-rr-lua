@@ -53,6 +53,21 @@ generated:paint(function(q)
     q:fill_circle(78, 38, 22, painter.brush(color(0.36, 0.62, 0.56)))
 end)
 
+local rt = painter.new_image(48, 48)
+rt:paint(function(q)
+    q:clear(color(0.16, 0.18, 0.22))
+    q:fill_circle(24, 24, 14, painter.brush(color(0.78, 0.52, 0.30)))
+    q:stroke_circle(24, 24, 20, painter.brush(color(0.40, 0.63, 0.72)), { width = 2 })
+end)
+
+local nested_rt = painter.new_image(56, 56)
+nested_rt:paint(function(q)
+    q:clear(color(0.10, 0.11, 0.13))
+    q:image(rt, rect(4, 4, 24, 24))
+    q:image(rt, rect(28, 4, 24, 24), { opacity = 0.7 })
+    q:image(rt, rect(16, 28, 24, 24), { tint = color(0.60, 0.80, 0.70) })
+end)
+
 local source_path = root .. '\\..\\peppers.png'
 local loaded = painter.load_image(source_path)
 local ninesliced = painter.load_image(root .. '\\..\\ninesliced.png')
@@ -182,7 +197,19 @@ emu.atpaint(function(p)
         end
     end)
 
-    tile(p, 215, 560, "hex colors", function(q, x, y)
+    tile(p, 215, 560, "render target", function(q, x, y)
+        q:image(rt, rect(x + 24, y + 20, 48, 48))
+        q:image(rt, rect(x + 84, y + 20, 72, 72), { opacity = 0.85 })
+        q:image(rt, rect(x + 24, y + 74, 24, 24), { tint = color(0.60, 0.80, 0.70) })
+    end)
+
+    tile(p, 410, 560, "nested render targets", function(q, x, y)
+        q:image(nested_rt, rect(x + 24, y + 16, 56, 56))
+        q:image(nested_rt, rect(x + 92, y + 16, 72, 72), { opacity = 0.85 })
+        q:image(nested_rt, rect(x + 24, y + 80, 28, 28), { tint = color(0.75, 0.65, 0.85) })
+    end)
+
+    tile(p, 605, 560, "hex colors", function(q, x, y)
         q:fill_rect(rect(x + 24, y + 24, 64, 32), "#C78550")
         q:fill_rect(rect(x + 97, y + 24, 64, 32), "#5C9E8F80")
         q:fill_round_rect(rect(x + 24, y + 64, 137, 20), 6, "#6BAE84")
