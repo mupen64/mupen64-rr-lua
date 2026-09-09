@@ -15,6 +15,7 @@
 namespace LuaCore::Painter::Detail
 {
 class TextLayoutCache;
+class TextMeasurementCache;
 }
 
 /**
@@ -54,6 +55,9 @@ struct LuaRenderingContext
 
     // The generational LRU cache for painter text layouts
     std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts{};
+
+    // The LRU cache for painter text measurements
+    std::shared_ptr<LuaCore::Painter::Detail::TextMeasurementCache> painter_text_measurements{};
 
     // The stack of render targets. The top is used for D2D calls.
     std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};

@@ -37,6 +37,7 @@ constexpr const char *PAINTER_MT = "mupen64.Painter";
 constexpr float MAX_LAYOUT_SIZE = 10000000.0f;
 constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 512;
 constexpr std::uint64_t TEXT_LAYOUT_CACHE_MAX_UNUSED_GENERATIONS = 120;
+constexpr size_t TEXT_MEASUREMENT_CACHE_CAPACITY = 512;
 
 struct Brush
 {
@@ -613,6 +614,133 @@ class TextLayoutCache
     std::list<Entry> m_lru{};
     std::unordered_multimap<size_t, std::list<Entry>::iterator> m_index{};
 };
+
+struct TextMeasurement
+{
+    float width{};
+    float height{};
+    UINT32 line_count{};
+    float baseline{};
+    bool truncated{};
+};
+
+struct TextMeasurementCacheKey
+{
+    std::wstring text{};
+    TextStyle style{};
+    float width{};
+    float height{};
+    lua_Integer max_lines{};
+    DWRITE_WORD_WRAPPING wrapping{};
+    bool has_width{};
+    bool has_height{};
+};
+
+class TextMeasurementCache
+{
+  public:
+    bool get(const std::wstring &text, const TextStyle &style, float width, float height, lua_Integer max_lines,
+        DWRITE_WORD_WRAPPING wrapping, bool has_width, bool has_height, TextMeasurement *measurement)
+    {
+        const size_t hash = hash_key(text, style, width, height, max_lines, wrapping, has_width, has_height);
+        const auto [first, last] = m_index.equal_range(hash);
+        for (auto candidate = first; candidate != last; ++candidate)
+        {
+            const auto entry = candidate->second;
+            if (!equal_key(entry->key, text, style, width, height, max_lines, wrapping, has_width, has_height))
+                continue;
+            *measurement = entry->measurement;
+            m_lru.splice(m_lru.begin(), m_lru, entry);
+            return true;
+        }
+        return false;
+    }
+
+    void add(const std::wstring &text, const TextStyle &style, float width, float height, lua_Integer max_lines,
+        DWRITE_WORD_WRAPPING wrapping, bool has_width, bool has_height, const TextMeasurement &measurement)
+    {
+        const size_t hash = hash_key(text, style, width, height, max_lines, wrapping, has_width, has_height);
+        TextMeasurementCacheKey key{text, style, width, height, max_lines, wrapping, has_width, has_height};
+        key.style.closed = false;
+        m_lru.push_front({std::move(key), measurement, hash});
+        m_index.emplace(hash, m_lru.begin());
+        while (m_lru.size() > TEXT_MEASUREMENT_CACHE_CAPACITY) evict(std::prev(m_lru.end()));
+    }
+
+  private:
+    struct Entry
+    {
+        TextMeasurementCacheKey key{};
+        TextMeasurement measurement{};
+        size_t hash{};
+    };
+
+    template <typename T> static void hash_combine(size_t &seed, const T &value)
+    {
+        seed ^= std::hash<T>{}(value) + static_cast<size_t>(0x9e3779b9) + (seed << 6) + (seed >> 2);
+    }
+
+    static size_t hash_key(const std::wstring &text, const TextStyle &style, float width, float height,
+        lua_Integer max_lines, DWRITE_WORD_WRAPPING wrapping, bool has_width, bool has_height)
+    {
+        size_t hash = std::hash<std::wstring>{}(text);
+        hash_combine(hash, style.family);
+        hash_combine(hash, style.size);
+        hash_combine(hash, static_cast<int>(style.weight));
+        hash_combine(hash, static_cast<int>(style.slant));
+        hash_combine(hash, style.underline);
+        hash_combine(hash, style.strikethrough);
+        hash_combine(hash, style.letter_spacing);
+        hash_combine(hash, style.line_height);
+        hash_combine(hash, style.has_line_height);
+        hash_combine(hash, width);
+        hash_combine(hash, height);
+        hash_combine(hash, max_lines);
+        hash_combine(hash, static_cast<int>(wrapping));
+        hash_combine(hash, has_width);
+        hash_combine(hash, has_height);
+        return hash;
+    }
+
+    static bool equal_key(const TextMeasurementCacheKey &key, const std::wstring &text, const TextStyle &style,
+        float width, float height, lua_Integer max_lines, DWRITE_WORD_WRAPPING wrapping, bool has_width,
+        bool has_height)
+    {
+        return key.text == text && equal_text_style(key.style, style) && key.width == width && key.height == height &&
+               key.max_lines == max_lines && key.wrapping == wrapping && key.has_width == has_width &&
+               key.has_height == has_height;
+    }
+
+    void evict(std::list<Entry>::iterator entry)
+    {
+        const auto [first, last] = m_index.equal_range(entry->hash);
+        for (auto candidate = first; candidate != last; ++candidate)
+        {
+            if (candidate->second != entry) continue;
+            m_index.erase(candidate);
+            break;
+        }
+        m_lru.erase(entry);
+    }
+
+    std::list<Entry> m_lru{};
+    std::unordered_multimap<size_t, std::list<Entry>::iterator> m_index{};
+};
+
+inline void push_text_measurement(lua_State *L, const TextMeasurement &measurement)
+{
+    lua_createtable(L, 0, 5);
+    lua_pushnumber(L, measurement.width);
+    lua_setfield(L, -2, "width");
+    lua_pushnumber(L, measurement.height);
+    lua_setfield(L, -2, "height");
+    lua_pushinteger(L, measurement.line_count);
+    lua_setfield(L, -2, "line_count");
+    lua_pushnumber(L, measurement.baseline);
+    lua_setfield(L, -2, "baseline");
+    lua_pushboolean(L, measurement.truncated);
+    lua_setfield(L, -2, "truncated");
+}
 
 inline UINT32 intern_text_format(Painter *painter, const TextStyle &style, DWRITE_TEXT_ALIGNMENT alignment,
     DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment, DWRITE_WORD_WRAPPING wrapping)
@@ -1973,12 +2101,30 @@ inline int measure_text(lua_State *L)
         lua_pop(L, 1);
     }
 
+    const DWRITE_WORD_WRAPPING wrapping = Detail::parse_wrap(L, wrap);
+    Detail::TextMeasurementCache *measurement_cache = nullptr;
+    if (auto *environment = LuaManager::get_environment_for_state(L))
+    {
+        auto &cache = environment->rctx.painter_text_measurements;
+        if (!cache) cache = std::make_shared<Detail::TextMeasurementCache>();
+        measurement_cache = cache.get();
+    }
+
+    Detail::TextMeasurement measurement{};
+    if (measurement_cache &&
+        measurement_cache->get(
+            text, *style, width, height, max_lines, wrapping, has_width, has_height, &measurement))
+    {
+        Detail::push_text_measurement(L, measurement);
+        return 1;
+    }
+
     IDWriteFactory *factory = nullptr;
     HRESULT hr = Detail::create_text_factory(&factory);
     if (FAILED(hr) || !factory) return Detail::fail_hr(L, "DWriteCreateFactory", FAILED(hr) ? hr : E_FAIL);
     IDWriteTextFormat *format = nullptr;
     hr = Detail::create_text_format(factory, style, &format);
-    if (SUCCEEDED(hr)) hr = format->SetWordWrapping(Detail::parse_wrap(L, wrap));
+    if (SUCCEEDED(hr)) hr = format->SetWordWrapping(wrapping);
     IDWriteTextLayout *layout = nullptr;
     const UINT32 length = static_cast<UINT32>(std::min<size_t>(text.size(), UINT32_MAX));
     if (SUCCEEDED(hr))
@@ -2021,18 +2167,15 @@ inline int measure_text(lua_State *L)
     for (const auto &line : lines)
         if (line.isTrimmed) truncated = true;
 
-    lua_createtable(L, 0, 5);
-    lua_pushnumber(L, has_width ? std::min(metrics.widthIncludingTrailingWhitespace, width)
-                                : metrics.widthIncludingTrailingWhitespace);
-    lua_setfield(L, -2, "width");
-    lua_pushnumber(L, measured_height);
-    lua_setfield(L, -2, "height");
-    lua_pushinteger(L, reported_lines);
-    lua_setfield(L, -2, "line_count");
-    lua_pushnumber(L, lines.empty() ? 0 : lines.front().baseline);
-    lua_setfield(L, -2, "baseline");
-    lua_pushboolean(L, truncated);
-    lua_setfield(L, -2, "truncated");
+    measurement.width = has_width ? std::min(metrics.widthIncludingTrailingWhitespace, width)
+                                  : metrics.widthIncludingTrailingWhitespace;
+    measurement.height = measured_height;
+    measurement.line_count = reported_lines;
+    measurement.baseline = lines.empty() ? 0 : lines.front().baseline;
+    measurement.truncated = truncated;
+    if (measurement_cache)
+        measurement_cache->add(text, *style, width, height, max_lines, wrapping, has_width, has_height, measurement);
+    Detail::push_text_measurement(L, measurement);
     return 1;
 }
 
