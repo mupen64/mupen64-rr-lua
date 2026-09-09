@@ -4,7 +4,7 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
--- Painter API stress test. Press Q/E to switch between the three pages.
+-- Painter API stress test. Press Q/E to switch between the pages.
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
@@ -46,10 +46,16 @@ local text_style = painter.text_style({ size = 18 })
 
 local small_style = painter.text_style({ size = 13 })
 
+local measure_identical_text = "This is an identical string measured repeatedly."
+local measure_different_text = {}
+for i = 1, 1000 do
+    measure_different_text[i] = string.format("This is different string number %04d.", i)
+end
+
 local function draw_header(p)
     p:text(string.format("Frame time: %.2f ms", frame_time_ms), rect(20, 16, 220, 20),
         small_style, white)
-    p:text("Page " .. page .. "/3    Q: previous    E: next", rect(20, 570, 760, 20),
+    p:text("Page " .. page .. "/4    Q: previous    E: next", rect(20, 570, 760, 20),
         small_style, faint)
 end
 
@@ -109,6 +115,51 @@ local function draw_text(p)
     end
 end
 
+local function draw_measure_text(p)
+    p:clear(background_color)
+    draw_header(p)
+
+    local identical_width = 0
+    local identical_lines = 0
+    local identical_start = os.clock()
+    for _ = 1, 1000 do
+        local metrics = painter.measure_text(measure_identical_text, text_style)
+        identical_width = identical_width + metrics.width
+        identical_lines = identical_lines + metrics.line_count
+    end
+    local identical_time_ms = (os.clock() - identical_start) * 1000
+
+    local different_width = 0
+    local different_lines = 0
+    local different_start = os.clock()
+    for i = 1, 1000 do
+        local metrics = painter.measure_text(measure_different_text[i], text_style)
+        different_width = different_width + metrics.width
+        different_lines = different_lines + metrics.line_count
+    end
+    local different_time_ms = (os.clock() - different_start) * 1000
+
+    p:text("measure_text stress test", rect(40, 80, 720, 35), text_style, white)
+    p:text("Each frame measures 1000 identical strings and 1000 different strings.",
+        rect(40, 125, 720, 25), small_style, faint)
+
+    p:text("1000 identical strings", rect(55, 190, 300, 28), text_style, palette[2])
+    p:text(string.format("time: %.2f ms", identical_time_ms), rect(75, 235, 300, 25),
+        small_style, white)
+    p:text(string.format("average width: %.2f px", identical_width / 1000),
+        rect(75, 265, 300, 25), small_style, white)
+    p:text(string.format("total lines: %d", identical_lines), rect(75, 295, 300, 25),
+        small_style, white)
+
+    p:text("1000 different strings", rect(425, 190, 300, 28), text_style, palette[3])
+    p:text(string.format("time: %.2f ms", different_time_ms), rect(445, 235, 300, 25),
+        small_style, white)
+    p:text(string.format("average width: %.2f px", different_width / 1000),
+        rect(445, 265, 300, 25), small_style, white)
+    p:text(string.format("total lines: %d", different_lines), rect(445, 295, 300, 25),
+        small_style, white)
+end
+
 local function image_grid_cell(i)
     local cell = (i - 1) % 100
     local column = cell % 10
@@ -130,9 +181,9 @@ emu.atkey(function(args)
         return
     end
     if args.keycode == Mupen.keycode.SDLK_Q then
-        page = (page - 2) % 3 + 1
+        page = (page - 2) % 4 + 1
     elseif args.keycode == Mupen.keycode.SDLK_E then
-        page = page % 3 + 1
+        page = page % 4 + 1
     end
 end)
 
@@ -147,7 +198,9 @@ emu.atpaint(function(p)
         draw_primitives(p)
     elseif page == 2 then
         draw_text(p)
-    else
+    elseif page == 3 then
         draw_ninesliced(p)
+    else
+        draw_measure_text(p)
     end
 end)
