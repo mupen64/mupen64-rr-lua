@@ -111,14 +111,11 @@ local PAGE_TEXT <const> = {
     "Page 4/4    Q: previous    E: next",
 }
 local MEASURE_TITLE_RECT <const> = rect(40, 80, 720, 35)
-local MEASURE_DESCRIPTION_RECT <const> = rect(40, 125, 720, 25)
 local MEASURE_IDENTICAL_TITLE_RECT <const> = rect(55, 190, 300, 28)
 local MEASURE_IDENTICAL_TIME_RECT <const> = rect(75, 235, 300, 25)
-local MEASURE_IDENTICAL_WIDTH_RECT <const> = rect(75, 265, 300, 25)
 local MEASURE_IDENTICAL_LINES_RECT <const> = rect(75, 295, 300, 25)
 local MEASURE_DIFFERENT_TITLE_RECT <const> = rect(425, 190, 300, 28)
 local MEASURE_DIFFERENT_TIME_RECT <const> = rect(445, 235, 300, 25)
-local MEASURE_DIFFERENT_WIDTH_RECT <const> = rect(445, 265, 300, 25)
 local MEASURE_DIFFERENT_LINES_RECT <const> = rect(445, 295, 300, 25)
 local function draw_header(p)
     p:text(string.format("Frame time: %.2f ms", frame_time_ms), HEADER_FRAME_RECT,
@@ -170,43 +167,33 @@ local function draw_measure_text(p)
     p:clear(BACKGROUND_COLOR)
     draw_header(p)
 
-    local identical_width = 0
     local identical_lines = 0
     local identical_start = os.clock()
     for _ = 1, 1000 do
         local metrics = painter.measure_text(MEASURE_IDENTICAL_TEXT, TEXT_STYLE)
-        identical_width = identical_width + metrics.width
         identical_lines = identical_lines + metrics.line_count
     end
     local identical_time_ms = (os.clock() - identical_start) * 1000
 
-    local different_width = 0
     local different_lines = 0
     local different_start = os.clock()
     for i = 1, 1000 do
         local metrics = painter.measure_text(MEASURE_DIFFERENT_TEXT[i], TEXT_STYLE)
-        different_width = different_width + metrics.width
         different_lines = different_lines + metrics.line_count
     end
     local different_time_ms = (os.clock() - different_start) * 1000
 
     p:text("measure_text stress test", MEASURE_TITLE_RECT, TEXT_STYLE, WHITE)
-    p:text("Each frame measures 1000 identical strings and 1000 different strings.",
-        MEASURE_DESCRIPTION_RECT, SMALL_STYLE, FAINT)
 
     p:text("1000 identical strings", MEASURE_IDENTICAL_TITLE_RECT, TEXT_STYLE, PALETTE[2])
     p:text(string.format("time: %.2f ms", identical_time_ms), MEASURE_IDENTICAL_TIME_RECT,
         SMALL_STYLE, WHITE)
-    p:text(string.format("average width: %.2f px", identical_width / 1000),
-        MEASURE_IDENTICAL_WIDTH_RECT, SMALL_STYLE, WHITE)
     p:text(string.format("total lines: %d", identical_lines), MEASURE_IDENTICAL_LINES_RECT,
         SMALL_STYLE, WHITE)
 
     p:text("1000 different strings", MEASURE_DIFFERENT_TITLE_RECT, TEXT_STYLE, PALETTE[3])
     p:text(string.format("time: %.2f ms", different_time_ms), MEASURE_DIFFERENT_TIME_RECT,
         SMALL_STYLE, WHITE)
-    p:text(string.format("average width: %.2f px", different_width / 1000),
-        MEASURE_DIFFERENT_WIDTH_RECT, SMALL_STYLE, WHITE)
     p:text(string.format("total lines: %d", different_lines), MEASURE_DIFFERENT_LINES_RECT,
         SMALL_STYLE, WHITE)
 end
