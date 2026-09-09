@@ -4,14 +4,14 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
--- Painter API stress test. Press Q/E to switch between the pages.
+-- Painter API stress test.
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
 local ROOT <const> = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+$", "")
 local WIDTH <const> = 800
 local HEIGHT <const> = 600
-local page = 1
+
 local frame = 0
 local last_paint_time
 local frame_time_ms = 0
@@ -27,7 +27,6 @@ end
 local BACKGROUND_COLOR <const> = color(0.025, 0.035, 0.055)
 local BACKGROUND <const> = painter.brush(BACKGROUND_COLOR)
 local WHITE <const> = painter.brush(color(0.92, 0.95, 1.0))
-local FAINT <const> = painter.brush(color(0.50, 0.58, 0.70))
 local NINESLICED <const> = assert(painter.load_image(ROOT .. '\\..\\ninesliced.png'))
 local NINESLICE_OPTIONS <const> = {
     source = rect(0, 0, 32, 32),
@@ -103,13 +102,6 @@ for i = 1, 1000 do
 end
 
 local HEADER_FRAME_RECT <const> = rect(20, 16, 220, 20)
-local HEADER_PAGE_RECT <const> = rect(20, 570, 760, 20)
-local PAGE_TEXT <const> = {
-    "Page 1/4    Q: previous    E: next",
-    "Page 2/4    Q: previous    E: next",
-    "Page 3/4    Q: previous    E: next",
-    "Page 4/4    Q: previous    E: next",
-}
 local MEASURE_TITLE_RECT <const> = rect(40, 80, 720, 35)
 local MEASURE_IDENTICAL_TITLE_RECT <const> = rect(55, 190, 300, 28)
 local MEASURE_IDENTICAL_TIME_RECT <const> = rect(75, 235, 300, 25)
@@ -120,7 +112,6 @@ local MEASURE_DIFFERENT_LINES_RECT <const> = rect(445, 295, 300, 25)
 local function draw_header(p)
     p:text(string.format("Frame time: %.2f ms", frame_time_ms), HEADER_FRAME_RECT,
         SMALL_STYLE, WHITE)
-    p:text(PAGE_TEXT[page], HEADER_PAGE_RECT, SMALL_STYLE, FAINT)
 end
 
 local function draw_primitives(p)
@@ -149,11 +140,7 @@ local function draw_primitives(p)
 end
 
 local function draw_text(p)
-    p:clear(BACKGROUND_COLOR)
-    draw_header(p)
-
-    for i = 1, 1000 do
-        local brush = PALETTE[((i + frame) % #PALETTE) + 1]
+[((i + frame) % #PALETTE) + 1]
         p:text(TEXT_DIFFERENT[i], TEXT_CELLS_LEFT[i], TEXT_STYLE, brush, TEXT_OPTIONS)
     end
 
@@ -164,10 +151,7 @@ local function draw_text(p)
 end
 
 local function draw_measure_text(p)
-    p:clear(BACKGROUND_COLOR)
-    draw_header(p)
-
-    local identical_lines = 0
+ = 0
     local identical_start = os.clock()
     for _ = 1, 1000 do
         local metrics = painter.measure_text(MEASURE_IDENTICAL_TEXT, TEXT_STYLE)
@@ -199,24 +183,10 @@ local function draw_measure_text(p)
 end
 
 local function draw_ninesliced(p)
-    p:clear(BACKGROUND_COLOR)
-    draw_header(p)
-
-    for i = 1, 1000 do
-        p:image(NINESLICED, IMAGE_CELLS[i], NINESLICE_OPTIONS)
+NINESLICED, IMAGE_CELLS[i], NINESLICE_OPTIONS)
     end
 end
 
-emu.atkey(function(args)
-    if not args.pressed or args["repeat"] then
-        return
-    end
-    if args.keycode == Mupen.keycode.SDLK_Q then
-        page = (page - 2) % 4 + 1
-    elseif args.keycode == Mupen.keycode.SDLK_E then
-        page = page % 4 + 1
-    end
-end)
 
 emu.atpaint(function(p)
     local paint_time = os.clock()
@@ -225,13 +195,8 @@ emu.atpaint(function(p)
     end
     last_paint_time = paint_time
     frame = frame + 1
-    if page == 1 then
-        draw_primitives(p)
-    elseif page == 2 then
-        draw_text(p)
-    elseif page == 3 then
-        draw_ninesliced(p)
-    else
-        draw_measure_text(p)
-    end
+    draw_primitives(p)
+    draw_text(p)
+    draw_ninesliced(p)
+    draw_measure_text(p)
 end)
