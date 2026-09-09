@@ -26,6 +26,11 @@
 #include <utility>
 #include <vector>
 
+inline bool operator==(const D2D1_COLOR_F &a, const D2D1_COLOR_F &b)
+{
+    return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+}
+
 namespace LuaCore::Painter
 {
 namespace Detail
@@ -69,6 +74,13 @@ struct TextStyle
     bool closed{};
 };
 
+inline bool operator==(const TextStyle &a, const TextStyle &b)
+{
+    return a.family == b.family && a.size == b.size && a.weight == b.weight && a.slant == b.slant &&
+           a.underline == b.underline && a.strikethrough == b.strikethrough && a.letter_spacing == b.letter_spacing &&
+           a.line_height == b.line_height && a.has_line_height == b.has_line_height;
+}
+
 struct Stroke
 {
     float width{1.0f};
@@ -76,6 +88,16 @@ struct Stroke
     std::vector<float> dashes;
     bool specified{};
 };
+
+inline bool operator==(const Stroke &a, const Stroke &b)
+{
+    if (a.specified != b.specified || a.width != b.width || a.dashes != b.dashes) return false;
+    if (!a.specified) return true;
+    const auto &p = a.properties;
+    const auto &q = b.properties;
+    return p.startCap == q.startCap && p.endCap == q.endCap && p.dashCap == q.dashCap && p.lineJoin == q.lineJoin &&
+           p.miterLimit == q.miterLimit && p.dashStyle == q.dashStyle && p.dashOffset == q.dashOffset;
+}
 
 struct BrushResource
 {
@@ -298,15 +320,10 @@ inline Painter *check_painter(lua_State *L, int index)
     return painter;
 }
 
-inline bool equal_color(const D2D1_COLOR_F &a, const D2D1_COLOR_F &b)
-{
-    return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
-}
-
 inline UINT32 intern_brush(Painter *painter, const Brush &brush)
 {
     for (UINT32 i = 0; i < painter->brushes.size(); ++i)
-        if (equal_color(painter->brushes[i].color, brush.color)) return i;
+        if (painter->brushes[i].color == brush.color) return i;
     painter->brushes.push_back({brush.color, nullptr});
     return static_cast<UINT32>(painter->brushes.size() - 1);
 }
@@ -430,31 +447,15 @@ inline Stroke check_stroke(lua_State *L, int index)
     return result;
 }
 
-inline bool equal_stroke(const Stroke &a, const Stroke &b)
-{
-    if (a.specified != b.specified || a.width != b.width || a.dashes != b.dashes) return false;
-    if (!a.specified) return true;
-    return a.properties.startCap == b.properties.startCap && a.properties.endCap == b.properties.endCap &&
-           a.properties.dashCap == b.properties.dashCap && a.properties.lineJoin == b.properties.lineJoin &&
-           a.properties.miterLimit == b.properties.miterLimit && a.properties.dashStyle == b.properties.dashStyle &&
-           a.properties.dashOffset == b.properties.dashOffset;
-}
-
 inline UINT32 intern_stroke(Painter *painter, Stroke stroke)
 {
     for (UINT32 i = 0; i < painter->strokes.size(); ++i)
-        if (equal_stroke(painter->strokes[i].value, stroke)) return i;
+        if (painter->strokes[i].value == stroke) return i;
     painter->strokes.push_back({std::move(stroke), nullptr});
     return static_cast<UINT32>(painter->strokes.size() - 1);
 }
 
-inline bool equal_text_style(const TextStyle &a, const TextStyle &b)
-{
-    return a.family == b.family && a.size == b.size && a.weight == b.weight && a.slant == b.slant &&
-           a.underline == b.underline && a.strikethrough == b.strikethrough && a.letter_spacing == b.letter_spacing &&
-           a.line_height == b.line_height && a.has_line_height == b.has_line_height;
-}
-
+inline UINT32 intern_text_format
 struct TextLayoutCacheKey
 {
     std::wstring text;
@@ -563,7 +564,7 @@ class TextLayoutCache
     static bool equal_key(const TextLayoutCacheKey &key, const std::wstring &text, const TextFormatResource &format,
         float width, float height, bool ellipsis)
     {
-        return key.text == text && equal_text_style(key.style, format.style) && key.alignment == format.alignment &&
+        return key.text == text && key.style == format.style && key.alignment == format.alignment &&
                key.paragraph_alignment == format.paragraph_alignment && key.wrapping == format.wrapping &&
                key.width == width && key.height == height && key.ellipsis == ellipsis;
     }
@@ -677,7 +678,7 @@ class TextMeasurementCache
         float width, float height, lua_Integer max_lines, DWRITE_WORD_WRAPPING wrapping, bool has_width,
         bool has_height)
     {
-        return key.text == text && equal_text_style(key.style, style) && key.width == width && key.height == height &&
+        return key.text == text && key.style == style && key.width == width && key.height == height &&
                key.max_lines == max_lines && key.wrapping == wrapping && key.has_width == has_width &&
                key.has_height == has_height;
     }
@@ -720,7 +721,7 @@ inline UINT32 intern_text_format(Painter *painter, const TextStyle &style, DWRIT
     {
         const auto &candidate = painter->text_formats[i];
         if (candidate.alignment == alignment && candidate.paragraph_alignment == paragraph_alignment &&
-            candidate.wrapping == wrapping && equal_text_style(candidate.style, style))
+            candidate.wrapping == wrapping && candidate.style == style)
             return i;
     }
     TextFormatResource resource{};
