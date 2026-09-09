@@ -455,7 +455,6 @@ inline UINT32 intern_stroke(Painter *painter, Stroke stroke)
     return static_cast<UINT32>(painter->strokes.size() - 1);
 }
 
-inline UINT32 intern_text_format
 struct TextLayoutCacheKey
 {
     std::wstring text;
