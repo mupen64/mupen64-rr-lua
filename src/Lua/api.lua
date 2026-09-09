@@ -1188,11 +1188,22 @@ function wgui.resetclip() end
 ---@field width number The rectangle width.
 ---@field height number The rectangle height.
 
----@class PainterColor
+---An RGBA color table.
+---@class PainterColorTable
 ---@field r number The red component in the range [0, 1].
 ---@field g number The green component in the range [0, 1].
 ---@field b number The blue component in the range [0, 1].
 ---@field a number? The alpha component in the range [0, 1]. Defaults to 1.
+
+---A color, either an RGBA table or a hex string `"#RRGGBBAA"` or `"#RRGGBB"`.
+---@alias PainterColor
+---| PainterColorTable
+---| string
+
+---A fill or stroke paint source: either a reusable [PainterBrush](lua://PainterBrush) or a [PainterColor](lua://PainterColor).
+---@alias PainterFill
+---| PainterBrush
+---| PainterColor
 
 ---A flat list of coordinates in the form `{ x1, y1, x2, y2, ... }`.
 ---A flat representation avoids allocating a table for every point and must contain at least two points.
@@ -1339,81 +1350,81 @@ local Painter = {}
 ---@param color PainterColor
 function Painter:clear(color) end
 
----Fills `rect` with `brush`.
+---Fills `rect` with `paint`.
 ---@param rect PainterRect
----@param brush PainterBrush
-function Painter:fill_rect(rect, brush) end
+---@param paint PainterFill
+function Painter:fill_rect(rect, paint) end
 
 ---Strokes the inside edge of `rect`.
 ---@param rect PainterRect
----@param brush PainterBrush
+---@param paint PainterFill
 ---@param style PainterStrokeStyle?
-function Painter:stroke_rect(rect, brush, style) end
+function Painter:stroke_rect(rect, paint, style) end
 
 ---Fills a rectangle with uniformly rounded corners.
 ---@param rect PainterRect
 ---@param radius number The corner radius. Values are clamped to fit the rectangle.
----@param brush PainterBrush
-function Painter:fill_round_rect(rect, radius, brush) end
+---@param paint PainterFill
+function Painter:fill_round_rect(rect, radius, paint) end
 
 ---Strokes a rectangle with uniformly rounded corners.
 ---@param rect PainterRect
 ---@param radius number The corner radius. Values are clamped to fit the rectangle.
----@param brush PainterBrush
+---@param paint PainterFill
 ---@param style PainterStrokeStyle?
-function Painter:stroke_round_rect(rect, radius, brush, style) end
+function Painter:stroke_round_rect(rect, radius, paint, style) end
 
 ---Fills the ellipse inscribed in `rect`.
 ---@param rect PainterRect
----@param brush PainterBrush
-function Painter:fill_ellipse(rect, brush) end
+---@param paint PainterFill
+function Painter:fill_ellipse(rect, paint) end
 
 ---Strokes the ellipse inscribed in `rect`.
 ---@param rect PainterRect
----@param brush PainterBrush
+---@param paint PainterFill
 ---@param style PainterStrokeStyle?
-function Painter:stroke_ellipse(rect, brush, style) end
+function Painter:stroke_ellipse(rect, paint, style) end
 
 ---Fills a circle.
 ---@param x number The center x-coordinate.
 ---@param y number The center y-coordinate.
 ---@param radius number
----@param brush PainterBrush
-function Painter:fill_circle(x, y, radius, brush) end
+---@param paint PainterFill
+function Painter:fill_circle(x, y, radius, paint) end
 
 ---Strokes a circle.
 ---@param x number The center x-coordinate.
 ---@param y number The center y-coordinate.
 ---@param radius number
----@param brush PainterBrush
+---@param paint PainterFill
 ---@param style PainterStrokeStyle?
-function Painter:stroke_circle(x, y, radius, brush, style) end
+function Painter:stroke_circle(x, y, radius, paint, style) end
 
 ---Draws a line segment.
 ---@param x1 number
 ---@param y1 number
 ---@param x2 number
 ---@param y2 number
----@param brush PainterBrush
+---@param paint PainterFill
 ---@param style PainterStrokeStyle?
-function Painter:line(x1, y1, x2, y2, brush, style) end
+function Painter:line(x1, y1, x2, y2, paint, style) end
 
 ---Draws connected line segments without closing the shape.
 ---@param points PainterPoints
----@param brush PainterBrush
+---@param paint PainterFill
 ---@param style PainterStrokeStyle?
-function Painter:polyline(points, brush, style) end
+function Painter:polyline(points, paint, style) end
 
 ---Fills a closed polygon using the non-zero winding rule.
 ---@param points PainterPoints
----@param brush PainterBrush
-function Painter:fill_polygon(points, brush) end
+---@param paint PainterFill
+function Painter:fill_polygon(points, paint) end
 
 ---Strokes a closed polygon.
 ---@param points PainterPoints
----@param brush PainterBrush
+---@param paint PainterFill
 ---@param style PainterStrokeStyle?
-function Painter:stroke_polygon(points, brush, style) end
+function Painter:stroke_polygon(points, paint, style) end
 
 ---Draws an image into `destination`.
 ---When `options.center` is provided, the image is drawn in nine slices. Corners remain unscaled, edges scale along one axis, and the center scales along both axes.
@@ -1427,9 +1438,9 @@ function Painter:image(image, destination, options) end
 ---@param text string
 ---@param rect PainterRect
 ---@param style PainterTextStyle
----@param brush PainterBrush
+---@param paint PainterFill
 ---@param layout PainterTextLayout?
-function Painter:text(text, rect, style, brush, layout) end
+function Painter:text(text, rect, style, paint, layout) end
 
 ---Measures text using the same shaping and wrapping rules as [Painter:text](lua://Painter.text).
 ---No drawing context is required, so the result may be cached by an implementation.

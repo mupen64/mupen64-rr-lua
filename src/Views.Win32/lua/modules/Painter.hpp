@@ -242,8 +242,36 @@ inline std::string table_string(lua_State *L, int table, const char *field, cons
     return result;
 }
 
+inline D2D1_COLOR_F parse_hex_color(lua_State *L, std::string_view hex)
+{
+    auto parse_hex_digit = [](char c) -> int {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return -1;
+    };
+    if (!hex.empty() && hex.front() == '#') hex.remove_prefix(1);
+    if (hex.size() != 6 && hex.size() != 8) luaL_error(L, "color string must be \"#RRGGBB\" or \"#RRGGBBAA\"");
+    int values[4] = {0, 0, 0, 255};
+    for (size_t i = 0; i < hex.size(); i += 2)
+    {
+        const int high = parse_hex_digit(hex[i]);
+        const int low = i + 1 < hex.size() ? parse_hex_digit(hex[i + 1]) : high;
+        if (high < 0 || low < 0) luaL_error(L, "color string contains an invalid hex digit");
+        values[i / 2] = high << 4 | low;
+    }
+    constexpr float scale = 1.0f / 255.0f;
+    return D2D1::ColorF(values[0] * scale, values[1] * scale, values[2] * scale, values[3] * scale);
+}
+
 inline D2D1_COLOR_F check_color(lua_State *L, int index)
 {
+    if (lua_type(L, index) == LUA_TSTRING)
+    {
+        size_t length{};
+        const char *hex = lua_tolstring(L, index, &length);
+        return parse_hex_color(L, {hex, length});
+    }
     luaL_checktype(L, index, LUA_TTABLE);
     const float r = table_number(L, index, "r", 0, true);
     const float g = table_number(L, index, "g", 0, true);
@@ -1055,6 +1083,7 @@ inline int image_index(lua_State *L)
 
 inline UINT32 command_brush(lua_State *L, Painter *painter, int index)
 {
+    if (lua_type(L, index) != LUA_TUSERDATA) return intern_brush(painter, Brush{check_color(L, index), false});
     return intern_brush(painter, *check_brush(L, index));
 }
 
@@ -2112,8 +2141,7 @@ inline int measure_text(lua_State *L)
 
     Detail::TextMeasurement measurement{};
     if (measurement_cache &&
-        measurement_cache->get(
-            text, *style, width, height, max_lines, wrapping, has_width, has_height, &measurement))
+        measurement_cache->get(text, *style, width, height, max_lines, wrapping, has_width, has_height, &measurement))
     {
         Detail::push_text_measurement(L, measurement);
         return 1;

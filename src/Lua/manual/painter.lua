@@ -112,7 +112,7 @@ emu.atpaint(function(p)
         q:stroke_rect(rect(x + 25, y + 27, 135, 48), brushes.edge, { width = 1 })
         q:push_clip(rect(x + 26, y + 28, 133, 46))
         q:polyline({ x + 5, y + 68, x + 48, y + 30, x + 91, y + 68,
-            x + 134, y + 30, x + 177, y + 68 }, brushes.orange,
+                x + 134, y + 30, x + 177, y + 68 }, brushes.orange,
             { width = 6, cap = "round", join = "round" })
         q:pop_clip()
     end)
@@ -180,5 +180,12 @@ emu.atpaint(function(p)
                 sampling = "nearest",
             })
         end
+    end)
+
+    tile(p, 215, 560, "hex colors", function(q, x, y)
+        q:fill_rect(rect(x + 24, y + 24, 64, 32), "#C78550")
+        q:fill_rect(rect(x + 97, y + 24, 64, 32), "#5C9E8F80")
+        q:fill_round_rect(rect(x + 24, y + 64, 137, 20), 6, "#6BAE84")
+        q:stroke_rect(rect(x + 24, y + 64, 137, 20), "#474B52", { width = 1 })
     end)
 end)
