@@ -813,6 +813,9 @@ inline int painter_image(lua_State *L)
     auto *image = check_image(L, 2);
     const auto destination = check_rect(L, 3);
     D2D1_RECT_F source = D2D1::RectF(0, 0, static_cast<float>(image->width), static_cast<float>(image->height));
+    D2D1_RECT_F center{};
+    bool has_source = false;
+    bool nine_sliced = false;
     float opacity = 1;
     D2D1_BITMAP_INTERPOLATION_MODE interpolation = D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
     bool tinted = false;
@@ -828,7 +831,18 @@ inline int painter_image(lua_State *L)
         else if (sampling != "linear")
             luaL_error(L, "invalid image sampling mode '%s'", sampling.c_str());
         lua_getfield(L, 4, "source");
-        if (!lua_isnil(L, -1)) source = check_rect(L, -1);
+        if (!lua_isnil(L, -1))
+        {
+            source = check_rect(L, -1);
+            has_source = true;
+        }
+        lua_pop(L, 1);
+        lua_getfield(L, 4, "center");
+        if (!lua_isnil(L, -1))
+        {
+            center = check_rect(L, -1);
+            nine_sliced = true;
+        }
         lua_pop(L, 1);
         lua_getfield(L, 4, "tint");
         if (!lua_isnil(L, -1))
@@ -838,12 +852,64 @@ inline int painter_image(lua_State *L)
         }
         lua_pop(L, 1);
     }
-    if (source.left < 0 || source.top < 0 || source.right > image->width || source.bottom > image->height)
+    if (source.left < 0 || source.top < 0 || source.right > static_cast<float>(image->width) ||
+        source.bottom > static_cast<float>(image->height))
         luaL_error(L, "image source rectangle is outside the image");
+    if (nine_sliced && !has_source) luaL_error(L, "nine-sliced images require a source rectangle");
+    if (nine_sliced && (center.left < source.left || center.top < source.top || center.right > source.right ||
+                           center.bottom > source.bottom))
+        luaL_error(L, "image center rectangle is outside the source rectangle");
+
+    struct ImageSlice
+    {
+        D2D1_RECT_F source;
+        D2D1_RECT_F destination;
+    };
+    std::vector<ImageSlice> slices;
+    if (nine_sliced)
+    {
+        const float left_width = center.left - source.left;
+        const float right_width = source.right - center.right;
+        const float top_height = center.top - source.top;
+        const float bottom_height = source.bottom - center.bottom;
+        const float destination_width = destination.right - destination.left;
+        const float destination_height = destination.bottom - destination.top;
+        if (destination_width < left_width + right_width || destination_height < top_height + bottom_height)
+        {
+            slices.push_back({center, destination});
+        }
+        else
+        {
+            const float source_x[] = {source.left, center.left, center.right, source.right};
+            const float source_y[] = {source.top, center.top, center.bottom, source.bottom};
+            const float destination_x[] = {
+                destination.left, destination.left + left_width, destination.right - right_width, destination.right};
+            const float destination_y[] = {
+                destination.top, destination.top + top_height, destination.bottom - bottom_height, destination.bottom};
+            for (int y = 0; y < 3; ++y)
+            {
+                for (int x = 0; x < 3; ++x)
+                {
+                    const auto slice_source = D2D1::RectF(source_x[x], source_y[y], source_x[x + 1], source_y[y + 1]);
+                    const auto slice_destination =
+                        D2D1::RectF(destination_x[x], destination_y[y], destination_x[x + 1], destination_y[y + 1]);
+                    if (slice_source.right > slice_source.left && slice_source.bottom > slice_source.top &&
+                        slice_destination.right > slice_destination.left &&
+                        slice_destination.bottom > slice_destination.top)
+                        slices.push_back({slice_source, slice_destination});
+                }
+            }
+        }
+    }
+    else
+    {
+        slices.push_back({source, destination});
+    }
 
     if (!tinted)
     {
-        painter->target->DrawBitmap(image->bitmap, destination, opacity, interpolation, source);
+        for (const auto &slice : slices)
+            painter->target->DrawBitmap(image->bitmap, slice.destination, opacity, interpolation, slice.source);
         return 0;
     }
 
@@ -877,17 +943,19 @@ inline int painter_image(lua_State *L)
     }
     D2D1_MATRIX_3X2_F old_transform{};
     dc->GetTransform(&old_transform);
-    const float source_width = source.right - source.left;
-    const float source_height = source.bottom - source.top;
-    const float sx = source_width > 0 ? (destination.right - destination.left) / source_width : 1;
-    const float sy = source_height > 0 ? (destination.bottom - destination.top) / source_height : 1;
-    dc->SetTransform(D2D1::Matrix3x2F::Scale(sx, sy) *
-                     D2D1::Matrix3x2F::Translation(destination.left, destination.top) * old_transform);
-    const D2D1_POINT_2F origin = D2D1::Point2F(0, 0);
-    dc->DrawImage(output, origin, source,
-        interpolation == D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR ? D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR
-                                                                         : D2D1_INTERPOLATION_MODE_LINEAR,
-        D2D1_COMPOSITE_MODE_SOURCE_OVER);
+    const auto effect_interpolation = interpolation == D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+                                          ? D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+                                          : D2D1_INTERPOLATION_MODE_LINEAR;
+    for (const auto &slice : slices)
+    {
+        const float source_width = slice.source.right - slice.source.left;
+        const float source_height = slice.source.bottom - slice.source.top;
+        const float sx = source_width > 0 ? (slice.destination.right - slice.destination.left) / source_width : 1;
+        const float sy = source_height > 0 ? (slice.destination.bottom - slice.destination.top) / source_height : 1;
+        dc->SetTransform(D2D1::Matrix3x2F::Scale(sx, sy) *
+                         D2D1::Matrix3x2F::Translation(slice.destination.left, slice.destination.top) * old_transform);
+        dc->DrawImage(output, D2D1::Point2F(0, 0), slice.source, effect_interpolation, D2D1_COMPOSITE_MODE_SOURCE_OVER);
+    }
     dc->SetTransform(old_transform);
     output->Release();
     effect->Release();

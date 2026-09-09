@@ -55,6 +55,7 @@ end)
 
 local source_path = root .. '\\..\\peppers.png'
 local loaded = painter.load_image(source_path)
+local ninesliced = painter.load_image(root .. '\\..\\ninesliced.png')
 local decoded
 local file = io.open(source_path, "rb")
 if file then
@@ -169,5 +170,15 @@ emu.atpaint(function(p)
         local metrics = painter.measure_text("measure me", loose_style, { width = 100, wrap = "word" })
         q:text(string.format("%d line(s), %.0f px", metrics.line_count, metrics.width),
             rect(x + 15, y + 68, 155, 18), label_style, brushes.muted)
+    end)
+
+    tile(p, 20, 560, "nine-sliced image", function(q, x, y)
+        if ninesliced then
+            q:image(ninesliced, rect(x + 24, y + 20, 137, 72), {
+                source = rect(0, 0, 32, 32),
+                center = rect(15, 15, 2, 2),
+                sampling = "nearest",
+            })
+        end
     end)
 end)

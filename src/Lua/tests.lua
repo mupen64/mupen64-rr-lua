@@ -675,6 +675,30 @@ retest.describe('mupen64', function()
             image:close()
         end)
 
+        retest.it('rejects_invalid_nine_slice_options', function()
+            local source = painter.new_image(32, 32)
+            local target = painter.new_image(32, 32)
+
+            retest.expect(function()
+                target:paint(function(p)
+                    p:image(source, { x = 0, y = 0, width = 32, height = 32 }, {
+                        center = { x = 15, y = 15, width = 2, height = 2 },
+                    })
+                end)
+            end).to.fail()
+            retest.expect(function()
+                target:paint(function(p)
+                    p:image(source, { x = 0, y = 0, width = 32, height = 32 }, {
+                        source = { x = 0, y = 0, width = 32, height = 32 },
+                        center = { x = 31, y = 31, width = 2, height = 2 },
+                    })
+                end)
+            end).to.fail()
+
+            target:close()
+            source:close()
+        end)
+
         retest.it('rejects_invalid_image_sizes', function()
             retest.expect(function() painter.new_image(0, 1) end).to.fail()
             retest.expect(function() painter.new_image(1, -1) end).to.fail()

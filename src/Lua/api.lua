@@ -1249,7 +1249,8 @@ function wgui.resetclip() end
 ---@alias PainterSampling "nearest"|"linear"
 
 ---@class PainterImageOptions
----@field source PainterRect? The source rectangle in image pixels. Defaults to the whole image.
+---@field source PainterRect? The source rectangle in image pixels. Defaults to the whole image. Required when `center` is provided.
+---@field center PainterRect? The center rectangle in image pixels for nine-sliced drawing. It must be contained by `source`; the surrounding corners retain their original size and aspect ratio. If the destination cannot fit the corners, only this center is stretched over it.
 ---@field opacity number? Opacity in the range [0, 1]. Defaults to 1.
 ---@field sampling PainterSampling? Sampling used when scaling. Defaults to `"linear"`.
 ---@field tint PainterColor? A color multiplied with the image pixels before blending.
@@ -1415,6 +1416,7 @@ function Painter:fill_polygon(points, brush) end
 function Painter:stroke_polygon(points, brush, style) end
 
 ---Draws an image into `destination`.
+---When `options.center` is provided, the image is drawn in nine slices. Corners remain unscaled, edges scale along one axis, and the center scales along both axes.
 ---@param image PainterImage
 ---@param destination PainterRect
 ---@param options PainterImageOptions?
