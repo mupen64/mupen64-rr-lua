@@ -14,6 +14,7 @@
 namespace
 {
 const std::vector<std::string> ALWAYS_LOUD_IDS = {VIEW_DLG_RAMSTART, VIEW_DLG_CONFIRM_SETTINGS_DISCARD, VIEW_DLG_ABOUT};
+const std::vector<std::string> NO_DONT_ASK_AGAIN_IDS = {VIEW_DLG_RAMSTART, VIEW_DLG_ABOUT};
 StrUtils::unordered_string_map<size_t> dialog_choice_map;
 } // namespace
 
@@ -79,8 +80,12 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
         .pszContent = wstr.c_str(),
         .cButtons = (UINT)buttons.size(),
         .pButtons = buttons.data(),
-        .pszVerificationText = L"Don't show again",
     };
+
+    if (std::ranges::find(NO_DONT_ASK_AGAIN_IDS, id) == NO_DONT_ASK_AGAIN_IDS.end())
+    {
+        task_dialog_config.pszVerificationText = L"Don't show again";
+    }
 
     if (wdetails)
     {
@@ -94,7 +99,7 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
     BOOL dont_show_again = false;
     TaskDialogIndirect(&task_dialog_config, &pressed_button, nullptr, &dont_show_again);
 
-    if (dont_show_again)
+    if (dont_show_again && std::ranges::find(NO_DONT_ASK_AGAIN_IDS, id) == NO_DONT_ASK_AGAIN_IDS.end())
     {
         // directly construct key
         dialog_choice_map.emplace(
