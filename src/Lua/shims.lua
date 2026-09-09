@@ -121,19 +121,19 @@ end
 ---@param interpolation integer 0: nearest neighbor, 1: linear, -1: don't use.
 ---@param identifier number
 ---@return nil
-function d2d.draw_image(destx1, desty1, destx2, desty2, srcx1, srcy1, srcx2,
-                        srcy2, opacity, interpolation, identifier)
-    d2d.draw_image2({
-        identifier = identifier,
-        destx1 = destx1,
-        desty1 = desty1,
-        destx2 = destx2,
-        desty2 = desty2,
-        srcx1 = srcx1,
-        srcy1 = srcy1,
-        srcx2 = srcx2,
-        srcy2 = srcy2,
-        color = opacity == 1 and nil or { r = 1, g = 1, b = 1, a = opacity },
-        interpolation = interpolation,
-    })
-end
+-- function d2d.draw_image(destx1, desty1, destx2, desty2, srcx1, srcy1, srcx2,
+--                         srcy2, opacity, interpolation, identifier)
+--     d2d.draw_image2({
+--         identifier = identifier,
+--         destx1 = destx1,
+--         desty1 = desty1,
+--         destx2 = destx2,
+--         desty2 = desty2,
+--         srcx1 = srcx1,
+--         srcy1 = srcy1,
+--         srcx2 = srcx2,
+--         srcy2 = srcy2,
+--         color = opacity == 1 and nil or { r = 1, g = 1, b = 1, a = opacity },
+--         interpolation = interpolation,
+--     })
+-- end
