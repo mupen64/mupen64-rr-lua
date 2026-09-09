@@ -16,6 +16,7 @@
 #include <dwrite_1.h>
 #include <new>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace LuaCore::Painter
@@ -58,18 +59,112 @@ struct TextStyle
     bool closed{};
 };
 
+struct Stroke
+{
+    float width{1.0f};
+    D2D1_STROKE_STYLE_PROPERTIES properties{D2D1::StrokeStyleProperties()};
+    std::vector<float> dashes{};
+    bool specified{};
+};
+
+struct BrushResource
+{
+    D2D1_COLOR_F color{};
+    ID2D1SolidColorBrush *native{};
+};
+
+struct StrokeResource
+{
+    Stroke value{};
+    ID2D1StrokeStyle *native{};
+};
+
+struct TextFormatResource
+{
+    TextStyle style{};
+    DWRITE_TEXT_ALIGNMENT alignment{DWRITE_TEXT_ALIGNMENT_LEADING};
+    DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment{DWRITE_PARAGRAPH_ALIGNMENT_NEAR};
+    DWRITE_WORD_WRAPPING wrapping{DWRITE_WORD_WRAPPING_WRAP};
+    IDWriteTextFormat *native{};
+};
+
+struct ImageResource
+{
+    ID2D1Bitmap *bitmap{};
+    UINT width{};
+    UINT height{};
+};
+
+struct ImageSlice
+{
+    D2D1_RECT_F source{};
+    D2D1_RECT_F destination{};
+};
+
+enum class CommandType : std::uint8_t
+{
+    Clear,
+    FillRect,
+    StrokeRect,
+    FillRoundRect,
+    StrokeRoundRect,
+    FillEllipse,
+    StrokeEllipse,
+    Line,
+    Polyline,
+    FillPolygon,
+    StrokePolygon,
+    Image,
+    Text,
+    PushClip,
+    PopClip,
+};
+
+struct GeometryPayload
+{
+    std::vector<D2D1_POINT_2F> points{};
+};
+
+struct ImagePayload
+{
+    std::vector<ImageSlice> slices{};
+    D2D1_COLOR_F tint{D2D1::ColorF(1, 1, 1, 1)};
+    float opacity{1.0f};
+    D2D1_BITMAP_INTERPOLATION_MODE interpolation{D2D1_BITMAP_INTERPOLATION_MODE_LINEAR};
+    bool tinted{};
+};
+
+struct TextPayload
+{
+    std::wstring text{};
+    D2D1_DRAW_TEXT_OPTIONS options{D2D1_DRAW_TEXT_OPTIONS_NONE};
+    bool ellipsis{};
+};
+
+struct Command
+{
+    CommandType type{};
+    UINT32 brush{};
+    UINT32 resource{};
+    UINT32 payload{};
+    D2D1_RECT_F bounds{};
+    float scalar{};
+};
+
 struct Painter
 {
     ID2D1RenderTarget *target{};
     LuaRenderingContext *context{};
     std::vector<D2D1_RECT_F> clips{};
+    std::vector<Command> commands{};
+    std::vector<GeometryPayload> geometry_payloads{};
+    std::vector<ImagePayload> image_payloads{};
+    std::vector<TextPayload> text_payloads{};
+    std::vector<BrushResource> brushes{};
+    std::vector<StrokeResource> strokes{};
+    std::vector<TextFormatResource> text_formats{};
+    std::vector<ImageResource> images{};
     bool active{};
-};
-
-struct Stroke
-{
-    float width{1.0f};
-    ID2D1StrokeStyle *style{};
 };
 
 inline std::string hresult_message(const char *operation, HRESULT hr)
@@ -228,13 +323,17 @@ inline Painter *check_painter(lua_State *L, int index)
     return painter;
 }
 
-inline ID2D1SolidColorBrush *realize_brush(lua_State *L, Painter *painter, int brush_index)
+inline bool equal_color(const D2D1_COLOR_F &a, const D2D1_COLOR_F &b)
 {
-    const auto *brush = check_brush(L, brush_index);
-    ID2D1SolidColorBrush *native = nullptr;
-    const HRESULT hr = painter->target->CreateSolidColorBrush(brush->color, &native);
-    if (FAILED(hr) || !native) fail_hr(L, "ID2D1RenderTarget::CreateSolidColorBrush", FAILED(hr) ? hr : E_FAIL);
-    return native;
+    return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+}
+
+inline UINT32 intern_brush(Painter *painter, const Brush &brush)
+{
+    for (UINT32 i = 0; i < painter->brushes.size(); ++i)
+        if (equal_color(painter->brushes[i].color, brush.color)) return i;
+    painter->brushes.push_back({brush.color, nullptr});
+    return static_cast<UINT32>(painter->brushes.size() - 1);
 }
 
 inline void close_image(Image *image)
@@ -258,14 +357,32 @@ inline Painter *push_painter(lua_State *L, LuaRenderingContext *context, ID2D1Re
     return painter;
 }
 
+inline void discard_commands(Painter *painter)
+{
+    if (!painter) return;
+    for (auto &brush : painter->brushes)
+        if (brush.native) brush.native->Release();
+    for (auto &stroke : painter->strokes)
+        if (stroke.native) stroke.native->Release();
+    for (auto &format : painter->text_formats)
+        if (format.native) format.native->Release();
+    for (auto &image : painter->images)
+        if (image.bitmap) image.bitmap->Release();
+    painter->commands.clear();
+    painter->geometry_payloads.clear();
+    painter->image_payloads.clear();
+    painter->text_payloads.clear();
+    painter->brushes.clear();
+    painter->strokes.clear();
+    painter->text_formats.clear();
+    painter->images.clear();
+    painter->clips.clear();
+}
+
 inline void invalidate_painter(Painter *painter)
 {
-    if (!painter || !painter->active) return;
-    while (!painter->clips.empty())
-    {
-        painter->target->PopAxisAlignedClip();
-        painter->clips.pop_back();
-    }
+    if (!painter) return;
+    discard_commands(painter);
     painter->active = false;
     painter->target = nullptr;
     painter->context = nullptr;
@@ -300,11 +417,12 @@ inline D2D1_LINE_JOIN parse_join(lua_State *L, const std::string &value)
     return D2D1_LINE_JOIN_MITER;
 }
 
-inline Stroke check_stroke(lua_State *L, Painter *painter, int index)
+inline Stroke check_stroke(lua_State *L, int index)
 {
     Stroke result{};
     if (lua_isnoneornil(L, index)) return result;
     luaL_checktype(L, index, LUA_TTABLE);
+    result.specified = true;
     result.width = table_number(L, index, "width", 1);
     if (!(result.width > 0)) luaL_error(L, "stroke width must be greater than zero");
 
@@ -314,35 +432,81 @@ inline Stroke check_stroke(lua_State *L, Painter *painter, int index)
     const float offset = table_number(L, index, "dash_offset", 0);
     if (!(miter > 0)) luaL_error(L, "miter_limit must be greater than zero");
 
-    std::vector<float> dashes;
     const int absolute = lua_absindex(L, index);
     lua_getfield(L, absolute, "dashes");
     if (!lua_isnil(L, -1))
     {
         luaL_checktype(L, -1, LUA_TTABLE);
         const size_t count = lua_rawlen(L, -1);
-        dashes.reserve(count);
+        result.dashes.reserve(count);
         for (size_t i = 0; i < count; ++i)
         {
             lua_rawgeti(L, -1, static_cast<lua_Integer>(i + 1));
             const float dash = finite_number(L, -1, "dash length");
             if (!(dash > 0)) luaL_error(L, "dash lengths must be greater than zero");
-            dashes.push_back(dash / result.width);
+            result.dashes.push_back(dash / result.width);
             lua_pop(L, 1);
         }
     }
     lua_pop(L, 1);
 
-    D2D1_STROKE_STYLE_PROPERTIES properties = D2D1::StrokeStyleProperties(cap, cap, cap, join, miter,
-        dashes.empty() ? D2D1_DASH_STYLE_SOLID : D2D1_DASH_STYLE_CUSTOM, offset / result.width);
-    ID2D1Factory *factory = nullptr;
-    painter->target->GetFactory(&factory);
-    if (!factory) luaL_error(L, "Direct2D target has no factory");
-    const HRESULT hr = factory->CreateStrokeStyle(
-        properties, dashes.empty() ? nullptr : dashes.data(), static_cast<UINT32>(dashes.size()), &result.style);
-    factory->Release();
-    if (FAILED(hr) || !result.style) fail_hr(L, "ID2D1Factory::CreateStrokeStyle", FAILED(hr) ? hr : E_FAIL);
+    result.properties = D2D1::StrokeStyleProperties(cap, cap, cap, join, miter,
+        result.dashes.empty() ? D2D1_DASH_STYLE_SOLID : D2D1_DASH_STYLE_CUSTOM, offset / result.width);
     return result;
+}
+
+inline bool equal_stroke(const Stroke &a, const Stroke &b)
+{
+    if (a.specified != b.specified || a.width != b.width || a.dashes != b.dashes) return false;
+    if (!a.specified) return true;
+    return a.properties.startCap == b.properties.startCap && a.properties.endCap == b.properties.endCap &&
+           a.properties.dashCap == b.properties.dashCap && a.properties.lineJoin == b.properties.lineJoin &&
+           a.properties.miterLimit == b.properties.miterLimit && a.properties.dashStyle == b.properties.dashStyle &&
+           a.properties.dashOffset == b.properties.dashOffset;
+}
+
+inline UINT32 intern_stroke(Painter *painter, Stroke stroke)
+{
+    for (UINT32 i = 0; i < painter->strokes.size(); ++i)
+        if (equal_stroke(painter->strokes[i].value, stroke)) return i;
+    painter->strokes.push_back({std::move(stroke), nullptr});
+    return static_cast<UINT32>(painter->strokes.size() - 1);
+}
+
+inline bool equal_text_style(const TextStyle &a, const TextStyle &b)
+{
+    return a.family == b.family && a.size == b.size && a.weight == b.weight && a.slant == b.slant &&
+           a.underline == b.underline && a.strikethrough == b.strikethrough && a.letter_spacing == b.letter_spacing &&
+           a.line_height == b.line_height && a.has_line_height == b.has_line_height;
+}
+
+inline UINT32 intern_text_format(Painter *painter, const TextStyle &style, DWRITE_TEXT_ALIGNMENT alignment,
+    DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment, DWRITE_WORD_WRAPPING wrapping)
+{
+    for (UINT32 i = 0; i < painter->text_formats.size(); ++i)
+    {
+        const auto &candidate = painter->text_formats[i];
+        if (candidate.alignment == alignment && candidate.paragraph_alignment == paragraph_alignment &&
+            candidate.wrapping == wrapping && equal_text_style(candidate.style, style))
+            return i;
+    }
+    TextFormatResource resource{};
+    resource.style = style;
+    resource.style.closed = false;
+    resource.alignment = alignment;
+    resource.paragraph_alignment = paragraph_alignment;
+    resource.wrapping = wrapping;
+    painter->text_formats.push_back(std::move(resource));
+    return static_cast<UINT32>(painter->text_formats.size() - 1);
+}
+
+inline UINT32 intern_image(Painter *painter, const Image &image)
+{
+    for (UINT32 i = 0; i < painter->images.size(); ++i)
+        if (painter->images[i].bitmap == image.bitmap) return i;
+    image.bitmap->AddRef();
+    painter->images.push_back({image.bitmap, image.width, image.height});
+    return static_cast<UINT32>(painter->images.size() - 1);
 }
 
 inline std::vector<D2D1_POINT_2F> check_points(lua_State *L, int index)
@@ -366,35 +530,33 @@ inline std::vector<D2D1_POINT_2F> check_points(lua_State *L, int index)
     return points;
 }
 
-inline ID2D1PathGeometry *make_geometry(
-    lua_State *L, Painter *painter, const std::vector<D2D1_POINT_2F> &points, bool closed, bool filled)
+inline HRESULT make_geometry(ID2D1Factory *factory, const std::vector<D2D1_POINT_2F> &points, bool closed, bool filled,
+    ID2D1PathGeometry **geometry)
 {
-    ID2D1Factory *factory = nullptr;
-    painter->target->GetFactory(&factory);
-    if (!factory) luaL_error(L, "Direct2D target has no factory");
-    ID2D1PathGeometry *geometry = nullptr;
-    HRESULT hr = factory->CreatePathGeometry(&geometry);
-    factory->Release();
-    if (FAILED(hr) || !geometry) fail_hr(L, "ID2D1Factory::CreatePathGeometry", FAILED(hr) ? hr : E_FAIL);
+    *geometry = nullptr;
+    HRESULT hr = factory ? factory->CreatePathGeometry(geometry) : E_NOINTERFACE;
+    if (FAILED(hr) || !*geometry) return FAILED(hr) ? hr : E_FAIL;
     ID2D1GeometrySink *sink = nullptr;
-    hr = geometry->Open(&sink);
-    if (FAILED(hr) || !sink)
+    hr = (*geometry)->Open(&sink);
+    if (SUCCEEDED(hr) && sink)
     {
-        geometry->Release();
-        fail_hr(L, "ID2D1PathGeometry::Open", FAILED(hr) ? hr : E_FAIL);
+        sink->SetFillMode(D2D1_FILL_MODE_WINDING);
+        sink->BeginFigure(points.front(), filled ? D2D1_FIGURE_BEGIN_FILLED : D2D1_FIGURE_BEGIN_HOLLOW);
+        if (points.size() > 1) sink->AddLines(points.data() + 1, static_cast<UINT32>(points.size() - 1));
+        sink->EndFigure(closed ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+        hr = sink->Close();
+        sink->Release();
     }
-    sink->SetFillMode(D2D1_FILL_MODE_WINDING);
-    sink->BeginFigure(points.front(), filled ? D2D1_FIGURE_BEGIN_FILLED : D2D1_FIGURE_BEGIN_HOLLOW);
-    if (points.size() > 1) sink->AddLines(points.data() + 1, static_cast<UINT32>(points.size() - 1));
-    sink->EndFigure(closed ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
-    hr = sink->Close();
-    sink->Release();
+    else if (SUCCEEDED(hr))
+    {
+        hr = E_FAIL;
+    }
     if (FAILED(hr))
     {
-        geometry->Release();
-        fail_hr(L, "ID2D1GeometrySink::Close", hr);
+        (*geometry)->Release();
+        *geometry = nullptr;
     }
-    return geometry;
+    return hr;
 }
 
 inline HRESULT create_text_factory(IDWriteFactory **factory)
@@ -629,24 +791,35 @@ inline int image_index(lua_State *L)
     return 1;
 }
 
+inline UINT32 command_brush(lua_State *L, Painter *painter, int index)
+{
+    return intern_brush(painter, *check_brush(L, index));
+}
+
+inline UINT32 command_stroke(lua_State *L, Painter *painter, int index)
+{
+    return intern_stroke(painter, check_stroke(L, index));
+}
+
 inline int painter_clear(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
+    Command command{};
+    command.type = CommandType::Clear;
     const auto color = check_color(L, 2);
-    const auto clips = painter->clips;
-    for (size_t i = 0; i < clips.size(); ++i) painter->target->PopAxisAlignedClip();
-    painter->target->Clear(color);
-    for (const auto &clip : clips) painter->target->PushAxisAlignedClip(clip, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+    command.bounds = D2D1::RectF(color.r, color.g, color.b, color.a);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
 inline int painter_fill_rect(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto rect = check_rect(L, 2);
-    auto *native = realize_brush(L, painter, 3);
-    painter->target->FillRectangle(rect, native);
-    native->Release();
+    Command command{};
+    command.type = CommandType::FillRect;
+    command.bounds = check_rect(L, 2);
+    command.brush = command_brush(L, painter, 3);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
@@ -654,26 +827,29 @@ inline int painter_stroke_rect(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
     auto rect = check_rect(L, 2);
-    auto *native = realize_brush(L, painter, 3);
-    auto stroke = check_stroke(L, painter, 4);
+    const auto stroke = check_stroke(L, 4);
     rect = inset_rect(rect, stroke.width * 0.5f);
-    painter->target->DrawRectangle(rect, native, stroke.width, stroke.style);
-    if (stroke.style) stroke.style->Release();
-    native->Release();
+    Command command{};
+    command.type = CommandType::StrokeRect;
+    command.bounds = rect;
+    command.brush = command_brush(L, painter, 3);
+    command.resource = intern_stroke(painter, stroke);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
 inline int painter_fill_round_rect(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto rect = check_rect(L, 2);
-    float radius = finite_number(L, 3, "radius");
-    if (radius < 0) luaL_error(L, "radius must be non-negative");
-    radius = std::min(radius, std::min(rect.right - rect.left, rect.bottom - rect.top) * 0.5f);
-    const D2D1_ROUNDED_RECT rounded{rect, radius, radius};
-    auto *native = realize_brush(L, painter, 4);
-    painter->target->FillRoundedRectangle(rounded, native);
-    native->Release();
+    Command command{};
+    command.type = CommandType::FillRoundRect;
+    command.bounds = check_rect(L, 2);
+    command.scalar = finite_number(L, 3, "radius");
+    if (command.scalar < 0) luaL_error(L, "radius must be non-negative");
+    command.scalar = std::min(command.scalar,
+        std::min(command.bounds.right - command.bounds.left, command.bounds.bottom - command.bounds.top) * 0.5f);
+    command.brush = command_brush(L, painter, 4);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
@@ -683,27 +859,28 @@ inline int painter_stroke_round_rect(lua_State *L)
     auto rect = check_rect(L, 2);
     float radius = finite_number(L, 3, "radius");
     if (radius < 0) luaL_error(L, "radius must be non-negative");
-    auto *native = realize_brush(L, painter, 4);
-    auto stroke = check_stroke(L, painter, 5);
+    const auto stroke = check_stroke(L, 5);
     rect = inset_rect(rect, stroke.width * 0.5f);
     radius = std::max(0.0f, radius - stroke.width * 0.5f);
     radius = std::min(radius, std::min(rect.right - rect.left, rect.bottom - rect.top) * 0.5f);
-    const D2D1_ROUNDED_RECT rounded{rect, radius, radius};
-    painter->target->DrawRoundedRectangle(rounded, native, stroke.width, stroke.style);
-    if (stroke.style) stroke.style->Release();
-    native->Release();
+    Command command{};
+    command.type = CommandType::StrokeRoundRect;
+    command.bounds = rect;
+    command.scalar = radius;
+    command.brush = command_brush(L, painter, 4);
+    command.resource = intern_stroke(painter, stroke);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
 inline int painter_fill_ellipse(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto rect = check_rect(L, 2);
-    const D2D1_ELLIPSE ellipse{D2D1::Point2F((rect.left + rect.right) * 0.5f, (rect.top + rect.bottom) * 0.5f),
-        (rect.right - rect.left) * 0.5f, (rect.bottom - rect.top) * 0.5f};
-    auto *native = realize_brush(L, painter, 3);
-    painter->target->FillEllipse(ellipse, native);
-    native->Release();
+    Command command{};
+    command.type = CommandType::FillEllipse;
+    command.bounds = check_rect(L, 2);
+    command.brush = command_brush(L, painter, 3);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
@@ -711,14 +888,14 @@ inline int painter_stroke_ellipse(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
     auto rect = check_rect(L, 2);
-    auto *native = realize_brush(L, painter, 3);
-    auto stroke = check_stroke(L, painter, 4);
+    const auto stroke = check_stroke(L, 4);
     rect = inset_rect(rect, stroke.width * 0.5f);
-    const D2D1_ELLIPSE ellipse{D2D1::Point2F((rect.left + rect.right) * 0.5f, (rect.top + rect.bottom) * 0.5f),
-        (rect.right - rect.left) * 0.5f, (rect.bottom - rect.top) * 0.5f};
-    painter->target->DrawEllipse(ellipse, native, stroke.width, stroke.style);
-    if (stroke.style) stroke.style->Release();
-    native->Release();
+    Command command{};
+    command.type = CommandType::StrokeEllipse;
+    command.bounds = rect;
+    command.brush = command_brush(L, painter, 3);
+    command.resource = intern_stroke(painter, stroke);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
@@ -729,9 +906,11 @@ inline int painter_fill_circle(lua_State *L)
     const float y = finite_number(L, 3, "y");
     const float radius = finite_number(L, 4, "radius");
     if (radius < 0) luaL_error(L, "radius must be non-negative");
-    auto *native = realize_brush(L, painter, 5);
-    painter->target->FillEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), radius, radius), native);
-    native->Release();
+    Command command{};
+    command.type = CommandType::FillEllipse;
+    command.bounds = D2D1::RectF(x - radius, y - radius, x + radius, y + radius);
+    command.brush = command_brush(L, painter, 5);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
@@ -742,68 +921,75 @@ inline int painter_stroke_circle(lua_State *L)
     const float y = finite_number(L, 3, "y");
     float radius = finite_number(L, 4, "radius");
     if (radius < 0) luaL_error(L, "radius must be non-negative");
-    auto *native = realize_brush(L, painter, 5);
-    auto stroke = check_stroke(L, painter, 6);
+    const auto stroke = check_stroke(L, 6);
     radius = std::max(0.0f, radius - stroke.width * 0.5f);
-    painter->target->DrawEllipse(
-        D2D1::Ellipse(D2D1::Point2F(x, y), radius, radius), native, stroke.width, stroke.style);
-    if (stroke.style) stroke.style->Release();
-    native->Release();
+    Command command{};
+    command.type = CommandType::StrokeEllipse;
+    command.bounds = D2D1::RectF(x - radius, y - radius, x + radius, y + radius);
+    command.brush = command_brush(L, painter, 5);
+    command.resource = intern_stroke(painter, stroke);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
 inline int painter_line(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto a = D2D1::Point2F(finite_number(L, 2, "x1"), finite_number(L, 3, "y1"));
-    const auto b = D2D1::Point2F(finite_number(L, 4, "x2"), finite_number(L, 5, "y2"));
-    auto *native = realize_brush(L, painter, 6);
-    auto stroke = check_stroke(L, painter, 7);
-    painter->target->DrawLine(a, b, native, stroke.width, stroke.style);
-    if (stroke.style) stroke.style->Release();
-    native->Release();
+    Command command{};
+    command.type = CommandType::Line;
+    command.bounds = D2D1::RectF(
+        finite_number(L, 2, "x1"), finite_number(L, 3, "y1"), finite_number(L, 4, "x2"), finite_number(L, 5, "y2"));
+    command.brush = command_brush(L, painter, 6);
+    command.resource = command_stroke(L, painter, 7);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
 inline int painter_polyline(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto points = check_points(L, 2);
-    auto *native = realize_brush(L, painter, 3);
-    auto stroke = check_stroke(L, painter, 4);
-    auto *geometry = make_geometry(L, painter, points, false, false);
-    painter->target->DrawGeometry(geometry, native, stroke.width, stroke.style);
-    geometry->Release();
-    if (stroke.style) stroke.style->Release();
-    native->Release();
+    auto points = check_points(L, 2);
+    const UINT32 brush = command_brush(L, painter, 3);
+    const UINT32 stroke = command_stroke(L, painter, 4);
+    Command command{};
+    command.type = CommandType::Polyline;
+    command.brush = brush;
+    command.resource = stroke;
+    command.payload = static_cast<UINT32>(painter->geometry_payloads.size());
+    painter->geometry_payloads.push_back({std::move(points)});
+    painter->commands.push_back(command);
     return 0;
 }
 
 inline int painter_fill_polygon(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto points = check_points(L, 2);
+    auto points = check_points(L, 2);
     if (points.size() < 3) luaL_error(L, "a polygon requires at least three points");
-    auto *native = realize_brush(L, painter, 3);
-    auto *geometry = make_geometry(L, painter, points, true, true);
-    painter->target->FillGeometry(geometry, native);
-    geometry->Release();
-    native->Release();
+    const UINT32 brush = command_brush(L, painter, 3);
+    Command command{};
+    command.type = CommandType::FillPolygon;
+    command.brush = brush;
+    command.payload = static_cast<UINT32>(painter->geometry_payloads.size());
+    painter->geometry_payloads.push_back({std::move(points)});
+    painter->commands.push_back(command);
     return 0;
 }
 
 inline int painter_stroke_polygon(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto points = check_points(L, 2);
+    auto points = check_points(L, 2);
     if (points.size() < 3) luaL_error(L, "a polygon requires at least three points");
-    auto *native = realize_brush(L, painter, 3);
-    auto stroke = check_stroke(L, painter, 4);
-    auto *geometry = make_geometry(L, painter, points, true, false);
-    painter->target->DrawGeometry(geometry, native, stroke.width, stroke.style);
-    geometry->Release();
-    if (stroke.style) stroke.style->Release();
-    native->Release();
+    const UINT32 brush = command_brush(L, painter, 3);
+    const UINT32 stroke = command_stroke(L, painter, 4);
+    Command command{};
+    command.type = CommandType::StrokePolygon;
+    command.brush = brush;
+    command.resource = stroke;
+    command.payload = static_cast<UINT32>(painter->geometry_payloads.size());
+    painter->geometry_payloads.push_back({std::move(points)});
+    painter->commands.push_back(command);
     return 0;
 }
 
@@ -860,11 +1046,6 @@ inline int painter_image(lua_State *L)
                            center.bottom > source.bottom))
         luaL_error(L, "image center rectangle is outside the source rectangle");
 
-    struct ImageSlice
-    {
-        D2D1_RECT_F source;
-        D2D1_RECT_F destination;
-    };
     std::vector<ImageSlice> slices;
     if (nine_sliced)
     {
@@ -906,87 +1087,26 @@ inline int painter_image(lua_State *L)
         slices.push_back({source, destination});
     }
 
-    if (!tinted)
-    {
-        for (const auto &slice : slices)
-            painter->target->DrawBitmap(image->bitmap, slice.destination, opacity, interpolation, slice.source);
-        return 0;
-    }
-
-    ID2D1DeviceContext *dc = nullptr;
-    HRESULT hr = painter->target->QueryInterface(IID_PPV_ARGS(&dc));
-    if (FAILED(hr) || !dc)
-        return fail_hr(L, "image tinting requires an ID2D1DeviceContext", FAILED(hr) ? hr : E_NOINTERFACE);
-    ID2D1Effect *effect = nullptr;
-    hr = dc->CreateEffect(CLSID_D2D1ColorMatrix, &effect);
-    if (SUCCEEDED(hr) && effect)
-    {
-        effect->SetInput(0, image->bitmap);
-        const float alpha = tint.a * opacity;
-        const D2D1_MATRIX_5X4_F matrix = D2D1::Matrix5x4F(
-            tint.r * alpha, 0, 0, 0, 0, tint.g * alpha, 0, 0, 0, 0, tint.b * alpha, 0, 0, 0, 0, alpha, 0, 0, 0, 0);
-        hr = effect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, matrix);
-    }
-    if (FAILED(hr) || !effect)
-    {
-        if (effect) effect->Release();
-        dc->Release();
-        return fail_hr(L, "Direct2D color-matrix effect", FAILED(hr) ? hr : E_FAIL);
-    }
-    ID2D1Image *output = nullptr;
-    effect->GetOutput(&output);
-    if (!output)
-    {
-        effect->Release();
-        dc->Release();
-        return fail_hr(L, "ID2D1Effect::GetOutput", E_FAIL);
-    }
-    D2D1_MATRIX_3X2_F old_transform{};
-    dc->GetTransform(&old_transform);
-    const auto effect_interpolation = interpolation == D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
-                                          ? D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR
-                                          : D2D1_INTERPOLATION_MODE_LINEAR;
-    for (const auto &slice : slices)
-    {
-        const float source_width = slice.source.right - slice.source.left;
-        const float source_height = slice.source.bottom - slice.source.top;
-        const float sx = source_width > 0 ? (slice.destination.right - slice.destination.left) / source_width : 1;
-        const float sy = source_height > 0 ? (slice.destination.bottom - slice.destination.top) / source_height : 1;
-        dc->SetTransform(D2D1::Matrix3x2F::Scale(sx, sy) *
-                         D2D1::Matrix3x2F::Translation(slice.destination.left, slice.destination.top) * old_transform);
-        dc->DrawImage(output, D2D1::Point2F(0, 0), slice.source, effect_interpolation, D2D1_COMPOSITE_MODE_SOURCE_OVER);
-    }
-    dc->SetTransform(old_transform);
-    output->Release();
-    effect->Release();
-    dc->Release();
+    const UINT32 image_resource = intern_image(painter, *image);
+    Command command{};
+    command.type = CommandType::Image;
+    command.resource = image_resource;
+    command.payload = static_cast<UINT32>(painter->image_payloads.size());
+    painter->image_payloads.push_back({std::move(slices), tint, opacity, interpolation, tinted});
+    painter->commands.push_back(command);
     return 0;
 }
 
 inline int painter_text(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto text = utf8_to_wide(L, 2);
+    auto text = utf8_to_wide(L, 2);
     const auto rect = check_rect(L, 3);
-    auto *style = check_text_style(L, 4);
-    auto *native = realize_brush(L, painter, 5);
+    const auto *style = check_text_style(L, 4);
 
-    IDWriteFactory *factory = nullptr;
-    HRESULT hr = create_text_factory(&factory);
-    if (FAILED(hr) || !factory)
-    {
-        native->Release();
-        return fail_hr(L, "DWriteCreateFactory", FAILED(hr) ? hr : E_FAIL);
-    }
-    IDWriteTextFormat *format = nullptr;
-    hr = create_text_format(factory, style, &format);
-    if (FAILED(hr) || !format)
-    {
-        factory->Release();
-        native->Release();
-        return fail_hr(L, "IDWriteFactory::CreateTextFormat", FAILED(hr) ? hr : E_FAIL);
-    }
-
+    DWRITE_TEXT_ALIGNMENT alignment = DWRITE_TEXT_ALIGNMENT_LEADING;
+    DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
+    DWRITE_WORD_WRAPPING wrapping = DWRITE_WORD_WRAPPING_WRAP;
     bool clip = true;
     std::string overflow = "clip";
     if (!lua_isnoneornil(L, 6))
@@ -994,76 +1114,55 @@ inline int painter_text(lua_State *L)
         luaL_checktype(L, 6, LUA_TTABLE);
         const auto align_x = table_string(L, 6, "align_x", "left");
         if (align_x == "left")
-            format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+            alignment = DWRITE_TEXT_ALIGNMENT_LEADING;
         else if (align_x == "center")
-            format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+            alignment = DWRITE_TEXT_ALIGNMENT_CENTER;
         else if (align_x == "right")
-            format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+            alignment = DWRITE_TEXT_ALIGNMENT_TRAILING;
         else if (align_x == "justify")
-            format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+            alignment = DWRITE_TEXT_ALIGNMENT_JUSTIFIED;
         else
             luaL_error(L, "invalid horizontal text alignment '%s'", align_x.c_str());
         const auto align_y = table_string(L, 6, "align_y", "top");
         if (align_y == "top")
-            format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+            paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
         else if (align_y == "center")
-            format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+            paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
         else if (align_y == "bottom")
-            format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+            paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_FAR;
         else
             luaL_error(L, "invalid vertical text alignment '%s'", align_y.c_str());
-        hr = format->SetWordWrapping(parse_wrap(L, table_string(L, 6, "wrap", "word")));
+        wrapping = parse_wrap(L, table_string(L, 6, "wrap", "word"));
         overflow = table_string(L, 6, "overflow", "clip");
         if (overflow != "visible" && overflow != "clip" && overflow != "ellipsis")
             luaL_error(L, "invalid text overflow mode '%s'", overflow.c_str());
         clip = table_bool(L, 6, "clip", true);
     }
-    if (FAILED(hr))
-    {
-        format->Release();
-        factory->Release();
-        native->Release();
-        return fail_hr(L, "IDWriteTextFormat configuration", hr);
-    }
-
-    IDWriteTextLayout *layout = nullptr;
-    const UINT32 length = static_cast<UINT32>(std::min<size_t>(text.size(), UINT32_MAX));
-    hr =
-        factory->CreateTextLayout(text.data(), length, format, rect.right - rect.left, rect.bottom - rect.top, &layout);
-    if (SUCCEEDED(hr) && layout) apply_text_style(L, layout, style, length);
-    if (SUCCEEDED(hr) && overflow == "ellipsis")
-    {
-        IDWriteInlineObject *ellipsis = nullptr;
-        hr = factory->CreateEllipsisTrimmingSign(format, &ellipsis);
-        if (SUCCEEDED(hr) && ellipsis)
-        {
-            const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
-            hr = layout->SetTrimming(&trimming, ellipsis);
-            ellipsis->Release();
-        }
-    }
-    format->Release();
-    factory->Release();
-    if (FAILED(hr) || !layout)
-    {
-        if (layout) layout->Release();
-        native->Release();
-        return fail_hr(L, "DirectWrite text layout", FAILED(hr) ? hr : E_FAIL);
-    }
-    D2D1_DRAW_TEXT_OPTIONS options = D2D1_DRAW_TEXT_OPTIONS_NONE;
-    if (clip && overflow != "visible") options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
-    painter->target->DrawTextLayout(D2D1::Point2F(rect.left, rect.top), layout, native, options);
-    layout->Release();
-    native->Release();
+    const UINT32 brush = command_brush(L, painter, 5);
+    const UINT32 format = intern_text_format(painter, *style, alignment, paragraph_alignment, wrapping);
+    TextPayload payload{};
+    payload.text = std::move(text);
+    payload.ellipsis = overflow == "ellipsis";
+    if (clip && overflow != "visible") payload.options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
+    Command command{};
+    command.type = CommandType::Text;
+    command.bounds = rect;
+    command.brush = brush;
+    command.resource = format;
+    command.payload = static_cast<UINT32>(painter->text_payloads.size());
+    painter->text_payloads.push_back(std::move(payload));
+    painter->commands.push_back(command);
     return 0;
 }
 
 inline int painter_push_clip(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto rect = check_rect(L, 2);
-    painter->target->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-    painter->clips.push_back(rect);
+    Command command{};
+    command.type = CommandType::PushClip;
+    command.bounds = check_rect(L, 2);
+    painter->clips.push_back(command.bounds);
+    painter->commands.push_back(std::move(command));
     return 0;
 }
 
@@ -1071,9 +1170,419 @@ inline int painter_pop_clip(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
     if (painter->clips.empty()) return luaL_error(L, "pop_clip called without a matching push_clip");
-    painter->target->PopAxisAlignedClip();
     painter->clips.pop_back();
+    Command command{};
+    command.type = CommandType::PopClip;
+    painter->commands.push_back(std::move(command));
     return 0;
+}
+
+inline bool is_clip_command(CommandType type)
+{
+    return type == CommandType::PushClip || type == CommandType::PopClip;
+}
+
+inline bool is_provable_noop(const Painter *painter, const Command &command)
+{
+    const float width = command.bounds.right - command.bounds.left;
+    const float height = command.bounds.bottom - command.bounds.top;
+    switch (command.type)
+    {
+    case CommandType::FillRect:
+    case CommandType::FillRoundRect:
+    case CommandType::FillEllipse:
+        return width == 0 || height == 0 || painter->brushes[command.brush].color.a == 0;
+    case CommandType::FillPolygon:
+        return painter->brushes[command.brush].color.a == 0;
+    case CommandType::Text:
+        return painter->brushes[command.brush].color.a == 0 || painter->text_payloads[command.payload].text.empty();
+    case CommandType::Image: {
+        const auto &payload = painter->image_payloads[command.payload];
+        return payload.slices.empty() || payload.opacity == 0 || (payload.tinted && payload.tint.a == 0);
+    }
+    default:
+        return false;
+    }
+}
+
+inline void optimize_commands(Painter *painter)
+{
+    size_t latest_clear = painter->commands.size();
+    for (size_t i = 0; i < painter->commands.size(); ++i)
+        if (painter->commands[i].type == CommandType::Clear) latest_clear = i;
+
+    std::vector<Command> optimized;
+    std::vector<GeometryPayload> geometry_payloads;
+    std::vector<ImagePayload> image_payloads;
+    std::vector<TextPayload> text_payloads;
+    optimized.reserve(painter->commands.size());
+    geometry_payloads.reserve(painter->geometry_payloads.size());
+    image_payloads.reserve(painter->image_payloads.size());
+    text_payloads.reserve(painter->text_payloads.size());
+    for (size_t i = 0; i < painter->commands.size(); ++i)
+    {
+        auto command = painter->commands[i];
+        if (latest_clear != painter->commands.size() && i < latest_clear && !is_clip_command(command.type)) continue;
+        if (is_provable_noop(painter, command)) continue;
+        if (command.type == CommandType::Polyline || command.type == CommandType::FillPolygon ||
+            command.type == CommandType::StrokePolygon)
+        {
+            auto &payload = painter->geometry_payloads[command.payload];
+            command.payload = static_cast<UINT32>(geometry_payloads.size());
+            geometry_payloads.push_back(std::move(payload));
+        }
+        else if (command.type == CommandType::Image)
+        {
+            auto &payload = painter->image_payloads[command.payload];
+            command.payload = static_cast<UINT32>(image_payloads.size());
+            image_payloads.push_back(std::move(payload));
+        }
+        else if (command.type == CommandType::Text)
+        {
+            auto &payload = painter->text_payloads[command.payload];
+            command.payload = static_cast<UINT32>(text_payloads.size());
+            text_payloads.push_back(std::move(payload));
+        }
+        optimized.push_back(command);
+    }
+    painter->commands = std::move(optimized);
+    painter->geometry_payloads = std::move(geometry_payloads);
+    painter->image_payloads = std::move(image_payloads);
+    painter->text_payloads = std::move(text_payloads);
+}
+
+inline bool set_execution_error(std::string &error, const char *operation, HRESULT hr)
+{
+    error = hresult_message(operation, hr);
+    return false;
+}
+
+inline bool ensure_d2d_factory(Painter *painter, ID2D1Factory **factory, std::string &error)
+{
+    if (*factory) return true;
+    painter->target->GetFactory(factory);
+    if (!*factory) return set_execution_error(error, "ID2D1RenderTarget::GetFactory", E_NOINTERFACE);
+    return true;
+}
+
+inline bool realize_command_brush(Painter *painter, UINT32 index, ID2D1SolidColorBrush **brush, std::string &error)
+{
+    auto &resource = painter->brushes[index];
+    if (!resource.native)
+    {
+        const HRESULT hr = painter->target->CreateSolidColorBrush(resource.color, &resource.native);
+        if (FAILED(hr) || !resource.native)
+            return set_execution_error(error, "ID2D1RenderTarget::CreateSolidColorBrush", FAILED(hr) ? hr : E_FAIL);
+    }
+    *brush = resource.native;
+    return true;
+}
+
+inline bool realize_command_stroke(
+    Painter *painter, UINT32 index, ID2D1Factory **factory, ID2D1StrokeStyle **style, float *width, std::string &error)
+{
+    auto &resource = painter->strokes[index];
+    *width = resource.value.width;
+    if (!resource.value.specified)
+    {
+        *style = nullptr;
+        return true;
+    }
+    if (!resource.native)
+    {
+        if (!ensure_d2d_factory(painter, factory, error)) return false;
+        const HRESULT hr = (*factory)->CreateStrokeStyle(resource.value.properties,
+            resource.value.dashes.empty() ? nullptr : resource.value.dashes.data(),
+            static_cast<UINT32>(resource.value.dashes.size()), &resource.native);
+        if (FAILED(hr) || !resource.native)
+            return set_execution_error(error, "ID2D1Factory::CreateStrokeStyle", FAILED(hr) ? hr : E_FAIL);
+    }
+    *style = resource.native;
+    return true;
+}
+
+inline bool ensure_text_factory(IDWriteFactory **factory, std::string &error)
+{
+    if (*factory) return true;
+    const HRESULT hr = create_text_factory(factory);
+    if (FAILED(hr) || !*factory) return set_execution_error(error, "DWriteCreateFactory", FAILED(hr) ? hr : E_FAIL);
+    return true;
+}
+
+inline bool realize_text_format(
+    Painter *painter, UINT32 index, IDWriteFactory **factory, IDWriteTextFormat **format, std::string &error)
+{
+    auto &resource = painter->text_formats[index];
+    if (!resource.native)
+    {
+        if (!ensure_text_factory(factory, error)) return false;
+        HRESULT hr = create_text_format(*factory, &resource.style, &resource.native);
+        if (SUCCEEDED(hr)) hr = resource.native->SetTextAlignment(resource.alignment);
+        if (SUCCEEDED(hr)) hr = resource.native->SetParagraphAlignment(resource.paragraph_alignment);
+        if (SUCCEEDED(hr)) hr = resource.native->SetWordWrapping(resource.wrapping);
+        if (FAILED(hr) || !resource.native)
+        {
+            if (resource.native)
+            {
+                resource.native->Release();
+                resource.native = nullptr;
+            }
+            return set_execution_error(error, "IDWriteTextFormat configuration", FAILED(hr) ? hr : E_FAIL);
+        }
+    }
+    *format = resource.native;
+    return true;
+}
+
+inline bool apply_deferred_text_style(
+    IDWriteTextLayout *layout, const TextStyle &style, UINT32 length, std::string &error)
+{
+    const DWRITE_TEXT_RANGE range{0, length};
+    HRESULT hr = S_OK;
+    if (style.underline) hr = layout->SetUnderline(TRUE, range);
+    if (SUCCEEDED(hr) && style.strikethrough) hr = layout->SetStrikethrough(TRUE, range);
+    if (FAILED(hr)) return set_execution_error(error, "IDWriteTextLayout text decoration", hr);
+    if (style.letter_spacing != 0)
+    {
+        IDWriteTextLayout1 *layout1 = nullptr;
+        hr = layout->QueryInterface(IID_PPV_ARGS(&layout1));
+        if (FAILED(hr) || !layout1)
+            return set_execution_error(error,
+                "IDWriteTextLayout1 (letter spacing is unsupported by this DirectWrite version)",
+                FAILED(hr) ? hr : E_NOINTERFACE);
+        hr = layout1->SetCharacterSpacing(0, style.letter_spacing, 0, range);
+        layout1->Release();
+        if (FAILED(hr)) return set_execution_error(error, "IDWriteTextLayout1::SetCharacterSpacing", hr);
+    }
+    return true;
+}
+
+inline bool execute_tinted_image(Painter *painter, UINT32 image, const ImagePayload &payload, std::string &error)
+{
+    ID2D1DeviceContext *dc = nullptr;
+    HRESULT hr = painter->target->QueryInterface(IID_PPV_ARGS(&dc));
+    if (FAILED(hr) || !dc)
+        return set_execution_error(
+            error, "image tinting requires an ID2D1DeviceContext", FAILED(hr) ? hr : E_NOINTERFACE);
+    ID2D1Effect *effect = nullptr;
+    hr = dc->CreateEffect(CLSID_D2D1ColorMatrix, &effect);
+    if (SUCCEEDED(hr) && effect)
+    {
+        effect->SetInput(0, painter->images[image].bitmap);
+        const float alpha = payload.tint.a * payload.opacity;
+        const D2D1_MATRIX_5X4_F matrix = D2D1::Matrix5x4F(payload.tint.r * alpha, 0, 0, 0, 0, payload.tint.g * alpha, 0,
+            0, 0, 0, payload.tint.b * alpha, 0, 0, 0, 0, alpha, 0, 0, 0, 0);
+        hr = effect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, matrix);
+    }
+    if (FAILED(hr) || !effect)
+    {
+        if (effect) effect->Release();
+        dc->Release();
+        return set_execution_error(error, "Direct2D color-matrix effect", FAILED(hr) ? hr : E_FAIL);
+    }
+    ID2D1Image *output = nullptr;
+    effect->GetOutput(&output);
+    if (!output)
+    {
+        effect->Release();
+        dc->Release();
+        return set_execution_error(error, "ID2D1Effect::GetOutput", E_FAIL);
+    }
+    D2D1_MATRIX_3X2_F old_transform{};
+    dc->GetTransform(&old_transform);
+    const auto interpolation = payload.interpolation == D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+                                   ? D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+                                   : D2D1_INTERPOLATION_MODE_LINEAR;
+    for (const auto &slice : payload.slices)
+    {
+        const float source_width = slice.source.right - slice.source.left;
+        const float source_height = slice.source.bottom - slice.source.top;
+        const float sx = source_width > 0 ? (slice.destination.right - slice.destination.left) / source_width : 1;
+        const float sy = source_height > 0 ? (slice.destination.bottom - slice.destination.top) / source_height : 1;
+        dc->SetTransform(D2D1::Matrix3x2F::Scale(sx, sy) *
+                         D2D1::Matrix3x2F::Translation(slice.destination.left, slice.destination.top) * old_transform);
+        dc->DrawImage(output, D2D1::Point2F(0, 0), slice.source, interpolation, D2D1_COMPOSITE_MODE_SOURCE_OVER);
+    }
+    dc->SetTransform(old_transform);
+    output->Release();
+    effect->Release();
+    dc->Release();
+    return true;
+}
+
+inline bool execute_commands(Painter *painter, std::string &error)
+{
+    ID2D1Factory *d2d_factory = nullptr;
+    IDWriteFactory *text_factory = nullptr;
+    std::vector<D2D1_RECT_F> active_clips;
+    bool succeeded = true;
+
+    for (const auto &command : painter->commands)
+    {
+        ID2D1SolidColorBrush *brush = nullptr;
+        ID2D1StrokeStyle *stroke_style = nullptr;
+        float stroke_width = 1.0f;
+        if (command.type == CommandType::PushClip)
+        {
+            painter->target->PushAxisAlignedClip(command.bounds, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+            active_clips.push_back(command.bounds);
+            continue;
+        }
+        if (command.type == CommandType::PopClip)
+        {
+            painter->target->PopAxisAlignedClip();
+            active_clips.pop_back();
+            continue;
+        }
+        if (command.type == CommandType::Clear)
+        {
+            for (size_t i = 0; i < active_clips.size(); ++i) painter->target->PopAxisAlignedClip();
+            painter->target->Clear(
+                D2D1::ColorF(command.bounds.left, command.bounds.top, command.bounds.right, command.bounds.bottom));
+            for (const auto &clip : active_clips)
+                painter->target->PushAxisAlignedClip(clip, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+            continue;
+        }
+        if (command.type != CommandType::Image && !realize_command_brush(painter, command.brush, &brush, error))
+        {
+            succeeded = false;
+            break;
+        }
+        const bool stroked = command.type == CommandType::StrokeRect || command.type == CommandType::StrokeRoundRect ||
+                             command.type == CommandType::StrokeEllipse || command.type == CommandType::Line ||
+                             command.type == CommandType::Polyline || command.type == CommandType::StrokePolygon;
+        if (stroked &&
+            !realize_command_stroke(painter, command.resource, &d2d_factory, &stroke_style, &stroke_width, error))
+        {
+            succeeded = false;
+            break;
+        }
+
+        const auto ellipse = D2D1::Ellipse(D2D1::Point2F((command.bounds.left + command.bounds.right) * 0.5f,
+                                               (command.bounds.top + command.bounds.bottom) * 0.5f),
+            (command.bounds.right - command.bounds.left) * 0.5f, (command.bounds.bottom - command.bounds.top) * 0.5f);
+        switch (command.type)
+        {
+        case CommandType::FillRect:
+            painter->target->FillRectangle(command.bounds, brush);
+            break;
+        case CommandType::StrokeRect:
+            painter->target->DrawRectangle(command.bounds, brush, stroke_width, stroke_style);
+            break;
+        case CommandType::FillRoundRect:
+            painter->target->FillRoundedRectangle(
+                D2D1::RoundedRect(command.bounds, command.scalar, command.scalar), brush);
+            break;
+        case CommandType::StrokeRoundRect:
+            painter->target->DrawRoundedRectangle(
+                D2D1::RoundedRect(command.bounds, command.scalar, command.scalar), brush, stroke_width, stroke_style);
+            break;
+        case CommandType::FillEllipse:
+            painter->target->FillEllipse(ellipse, brush);
+            break;
+        case CommandType::StrokeEllipse:
+            painter->target->DrawEllipse(ellipse, brush, stroke_width, stroke_style);
+            break;
+        case CommandType::Line:
+            painter->target->DrawLine(D2D1::Point2F(command.bounds.left, command.bounds.top),
+                D2D1::Point2F(command.bounds.right, command.bounds.bottom), brush, stroke_width, stroke_style);
+            break;
+        case CommandType::Polyline:
+        case CommandType::FillPolygon:
+        case CommandType::StrokePolygon: {
+            if (!ensure_d2d_factory(painter, &d2d_factory, error))
+            {
+                succeeded = false;
+                break;
+            }
+            ID2D1PathGeometry *geometry = nullptr;
+            const bool closed = command.type != CommandType::Polyline;
+            const bool filled = command.type == CommandType::FillPolygon;
+            const HRESULT hr = make_geometry(
+                d2d_factory, painter->geometry_payloads[command.payload].points, closed, filled, &geometry);
+            if (FAILED(hr) || !geometry)
+            {
+                set_execution_error(error, "Direct2D path geometry creation", FAILED(hr) ? hr : E_FAIL);
+                succeeded = false;
+                break;
+            }
+            if (filled)
+                painter->target->FillGeometry(geometry, brush);
+            else
+                painter->target->DrawGeometry(geometry, brush, stroke_width, stroke_style);
+            geometry->Release();
+            break;
+        }
+        case CommandType::Image: {
+            const auto &payload = painter->image_payloads[command.payload];
+            if (!payload.tinted)
+            {
+                for (const auto &slice : payload.slices)
+                    painter->target->DrawBitmap(painter->images[command.resource].bitmap, slice.destination,
+                        payload.opacity, payload.interpolation, slice.source);
+            }
+            else if (!execute_tinted_image(painter, command.resource, payload, error))
+            {
+                succeeded = false;
+            }
+            break;
+        }
+        case CommandType::Text: {
+            const auto &payload = painter->text_payloads[command.payload];
+            IDWriteTextFormat *format = nullptr;
+            if (!realize_text_format(painter, command.resource, &text_factory, &format, error))
+            {
+                succeeded = false;
+                break;
+            }
+            IDWriteTextLayout *layout = nullptr;
+            const UINT32 length = static_cast<UINT32>(std::min<size_t>(payload.text.size(), UINT32_MAX));
+            HRESULT hr = text_factory->CreateTextLayout(payload.text.data(), length, format,
+                command.bounds.right - command.bounds.left, command.bounds.bottom - command.bounds.top, &layout);
+            if (FAILED(hr) || !layout)
+            {
+                set_execution_error(error, "DirectWrite text layout", FAILED(hr) ? hr : E_FAIL);
+                succeeded = false;
+            }
+            if (succeeded)
+                succeeded =
+                    apply_deferred_text_style(layout, painter->text_formats[command.resource].style, length, error);
+            if (succeeded && payload.ellipsis)
+            {
+                IDWriteInlineObject *ellipsis = nullptr;
+                hr = text_factory->CreateEllipsisTrimmingSign(format, &ellipsis);
+                if (SUCCEEDED(hr) && ellipsis)
+                {
+                    const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
+                    hr = layout->SetTrimming(&trimming, ellipsis);
+                    ellipsis->Release();
+                }
+                if (FAILED(hr))
+                {
+                    set_execution_error(error, "DirectWrite ellipsis trimming", hr);
+                    succeeded = false;
+                }
+            }
+            if (succeeded)
+                painter->target->DrawTextLayout(
+                    D2D1::Point2F(command.bounds.left, command.bounds.top), layout, brush, payload.options);
+            if (layout) layout->Release();
+            break;
+        }
+        default:
+            break;
+        }
+        if (!succeeded) break;
+    }
+
+    while (!active_clips.empty())
+    {
+        painter->target->PopAxisAlignedClip();
+        active_clips.pop_back();
+    }
+    if (text_factory) text_factory->Release();
+    if (d2d_factory) d2d_factory->Release();
+    return succeeded;
 }
 
 inline int screen_paint(lua_State *L)
@@ -1087,10 +1596,17 @@ inline int screen_paint(lua_State *L)
     lua_pushvalue(L, 1);
     auto *painter = push_painter(L, context, target);
     const int status = lua_pcall(L, 1, 0, 0);
+    std::string execution_error;
+    if (status == LUA_OK)
+    {
+        optimize_commands(painter);
+        execute_commands(painter, execution_error);
+    }
     invalidate_painter(painter);
     const HRESULT hr = target->EndDraw();
 
     if (status != LUA_OK) return lua_error(L);
+    if (!execution_error.empty()) return luaL_error(L, "%s", execution_error.c_str());
     if (FAILED(hr)) return fail_hr(L, "ID2D1RenderTarget::EndDraw", hr);
     return 0;
 }
@@ -1107,11 +1623,18 @@ inline int image_paint(lua_State *L)
     lua_pushvalue(L, 2);
     auto *painter = push_painter(L, context, image->target);
     const int status = lua_pcall(L, 1, 0, 0);
+    std::string execution_error;
+    if (status == LUA_OK)
+    {
+        optimize_commands(painter);
+        execute_commands(painter, execution_error);
+    }
     invalidate_painter(painter);
     context->d2d_render_target_stack.pop();
     const HRESULT hr = image->target->EndDraw();
     image->painting = false;
     if (status != LUA_OK) return lua_error(L);
+    if (!execution_error.empty()) return luaL_error(L, "%s", execution_error.c_str());
     if (FAILED(hr)) return fail_hr(L, "ID2D1BitmapRenderTarget::EndDraw", hr);
     return 0;
 }
