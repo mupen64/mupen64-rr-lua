@@ -199,49 +199,6 @@ inline int fail_hr(lua_State *L, const char *operation, HRESULT hr)
     return luaL_error(L, "%s", message.c_str());
 }
 
-inline float finite_number(lua_State *L, int index, const char *name)
-{
-    const auto value = static_cast<float>(luaL_checknumber(L, index));
-    if (!std::isfinite(value)) luaL_error(L, "%s must be finite", name);
-    return value;
-}
-
-inline float table_number(lua_State *L, int table, const char *field, float fallback, bool required = false)
-{
-    table = lua_absindex(L, table);
-    lua_getfield(L, table, field);
-    float result = fallback;
-    if (lua_isnil(L, -1))
-    {
-        if (required) luaL_error(L, "field '%s' is required", field);
-    }
-    else
-    {
-        result = finite_number(L, -1, field);
-    }
-    lua_pop(L, 1);
-    return result;
-}
-
-inline bool table_bool(lua_State *L, int table, const char *field, bool fallback)
-{
-    table = lua_absindex(L, table);
-    lua_getfield(L, table, field);
-    const bool result = lua_isnil(L, -1) ? fallback : lua_toboolean(L, -1) != 0;
-    lua_pop(L, 1);
-    return result;
-}
-
-inline std::string table_string(lua_State *L, int table, const char *field, const char *fallback)
-{
-    table = lua_absindex(L, table);
-    lua_getfield(L, table, field);
-    std::string result = fallback;
-    if (!lua_isnil(L, -1)) result = luaL_checkstring(L, -1);
-    lua_pop(L, 1);
-    return result;
-}
-
 inline D2D1_COLOR_F parse_hex_color(lua_State *L, std::string_view hex)
 {
     auto parse_hex_digit = [](char c) -> int {
@@ -273,10 +230,10 @@ inline D2D1_COLOR_F check_color(lua_State *L, int index)
         return parse_hex_color(L, {hex, length});
     }
     luaL_checktype(L, index, LUA_TTABLE);
-    const float r = table_number(L, index, "r", 0, true);
-    const float g = table_number(L, index, "g", 0, true);
-    const float b = table_number(L, index, "b", 0, true);
-    const float a = table_number(L, index, "a", 1);
+    const float r = luaL_tablenumber(L, index, "r", 0, true);
+    const float g = luaL_tablenumber(L, index, "g", 0, true);
+    const float b = luaL_tablenumber(L, index, "b", 0, true);
+    const float a = luaL_tablenumber(L, index, "a", 1);
     if (r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || a < 0 || a > 1)
         luaL_error(L, "color components must be in the range [0, 1]");
     return D2D1::ColorF(r, g, b, a);
@@ -285,26 +242,12 @@ inline D2D1_COLOR_F check_color(lua_State *L, int index)
 inline D2D1_RECT_F check_rect(lua_State *L, int index)
 {
     luaL_checktype(L, index, LUA_TTABLE);
-    const float x = table_number(L, index, "x", 0, true);
-    const float y = table_number(L, index, "y", 0, true);
-    const float width = table_number(L, index, "width", 0, true);
-    const float height = table_number(L, index, "height", 0, true);
+    const float x = luaL_tablenumber(L, index, "x", 0, true);
+    const float y = luaL_tablenumber(L, index, "y", 0, true);
+    const float width = luaL_tablenumber(L, index, "width", 0, true);
+    const float height = luaL_tablenumber(L, index, "height", 0, true);
     if (width < 0 || height < 0) luaL_error(L, "rectangle width and height must be non-negative");
     return D2D1::RectF(x, y, x + width, y + height);
-}
-
-inline std::wstring utf8_to_wide(lua_State *L, int index)
-{
-    size_t length{};
-    const char *text = luaL_checklstring(L, index, &length);
-    if (!length) return {};
-    if (length > static_cast<size_t>(INT_MAX)) luaL_error(L, "string is too large");
-    const int required = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, text, static_cast<int>(length), nullptr, 0);
-    if (required <= 0) luaL_error(L, "string is not valid UTF-8");
-    std::wstring result(static_cast<size_t>(required), L'\0');
-    if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, text, static_cast<int>(length), result.data(), required))
-        luaL_error(L, "failed to convert UTF-8 string");
-    return result;
 }
 
 inline LuaRenderingContext *check_context(lua_State *L)
@@ -455,13 +398,13 @@ inline Stroke check_stroke(lua_State *L, int index)
     if (lua_isnoneornil(L, index)) return result;
     luaL_checktype(L, index, LUA_TTABLE);
     result.specified = true;
-    result.width = table_number(L, index, "width", 1);
+    result.width = luaL_tablenumber(L, index, "width", 1);
     if (!(result.width > 0)) luaL_error(L, "stroke width must be greater than zero");
 
-    const auto cap = parse_cap(L, table_string(L, index, "cap", "butt"));
-    const auto join = parse_join(L, table_string(L, index, "join", "miter"));
-    const float miter = table_number(L, index, "miter_limit", 4);
-    const float offset = table_number(L, index, "dash_offset", 0);
+    const auto cap = parse_cap(L, luaL_tablestring(L, index, "cap", "butt"));
+    const auto join = parse_join(L, luaL_tablestring(L, index, "join", "miter"));
+    const float miter = luaL_tablenumber(L, index, "miter_limit", 4);
+    const float offset = luaL_tablenumber(L, index, "dash_offset", 0);
     if (!(miter > 0)) luaL_error(L, "miter_limit must be greater than zero");
 
     const int absolute = lua_absindex(L, index);
@@ -474,7 +417,7 @@ inline Stroke check_stroke(lua_State *L, int index)
         for (size_t i = 0; i < count; ++i)
         {
             lua_rawgeti(L, -1, static_cast<lua_Integer>(i + 1));
-            const float dash = finite_number(L, -1, "dash length");
+            const float dash = luaL_checkfinitenumber(L, -1, "dash length");
             if (!(dash > 0)) luaL_error(L, "dash lengths must be greater than zero");
             result.dashes.push_back(dash / result.width);
             lua_pop(L, 1);
@@ -810,10 +753,10 @@ inline std::vector<D2D1_POINT_2F> check_points(lua_State *L, int index)
     for (size_t i = 0; i < count; i += 2)
     {
         lua_rawgeti(L, index, static_cast<lua_Integer>(i + 1));
-        const float x = finite_number(L, -1, "point x");
+        const float x = luaL_checkfinitenumber(L, -1, "point x");
         lua_pop(L, 1);
         lua_rawgeti(L, index, static_cast<lua_Integer>(i + 2));
-        const float y = finite_number(L, -1, "point y");
+        const float y = luaL_checkfinitenumber(L, -1, "point y");
         lua_pop(L, 1);
         points.push_back(D2D1::Point2F(x, y));
     }
@@ -1135,7 +1078,7 @@ inline int painter_fill_round_rect(lua_State *L)
     Command command{};
     command.type = CommandType::FillRoundRect;
     command.bounds = check_rect(L, 2);
-    command.scalar = finite_number(L, 3, "radius");
+    command.scalar = luaL_checkfinitenumber(L, 3, "radius");
     if (command.scalar < 0) luaL_error(L, "radius must be non-negative");
     command.scalar = std::min(command.scalar,
         std::min(command.bounds.right - command.bounds.left, command.bounds.bottom - command.bounds.top) * 0.5f);
@@ -1148,7 +1091,7 @@ inline int painter_stroke_round_rect(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
     auto rect = check_rect(L, 2);
-    float radius = finite_number(L, 3, "radius");
+    float radius = luaL_checkfinitenumber(L, 3, "radius");
     if (radius < 0) luaL_error(L, "radius must be non-negative");
     const auto stroke = check_stroke(L, 5);
     rect = inset_rect(rect, stroke.width * 0.5f);
@@ -1193,9 +1136,9 @@ inline int painter_stroke_ellipse(lua_State *L)
 inline int painter_fill_circle(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const float x = finite_number(L, 2, "x");
-    const float y = finite_number(L, 3, "y");
-    const float radius = finite_number(L, 4, "radius");
+    const float x = luaL_checkfinitenumber(L, 2, "x");
+    const float y = luaL_checkfinitenumber(L, 3, "y");
+    const float radius = luaL_checkfinitenumber(L, 4, "radius");
     if (radius < 0) luaL_error(L, "radius must be non-negative");
     Command command{};
     command.type = CommandType::FillEllipse;
@@ -1208,9 +1151,9 @@ inline int painter_fill_circle(lua_State *L)
 inline int painter_stroke_circle(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const float x = finite_number(L, 2, "x");
-    const float y = finite_number(L, 3, "y");
-    float radius = finite_number(L, 4, "radius");
+    const float x = luaL_checkfinitenumber(L, 2, "x");
+    const float y = luaL_checkfinitenumber(L, 3, "y");
+    float radius = luaL_checkfinitenumber(L, 4, "radius");
     if (radius < 0) luaL_error(L, "radius must be non-negative");
     const auto stroke = check_stroke(L, 6);
     radius = std::max(0.0f, radius - stroke.width * 0.5f);
@@ -1229,7 +1172,7 @@ inline int painter_line(lua_State *L)
     Command command{};
     command.type = CommandType::Line;
     command.bounds = D2D1::RectF(
-        finite_number(L, 2, "x1"), finite_number(L, 3, "y1"), finite_number(L, 4, "x2"), finite_number(L, 5, "y2"));
+        luaL_checkfinitenumber(L, 2, "x1"), luaL_checkfinitenumber(L, 3, "y1"), luaL_checkfinitenumber(L, 4, "x2"), luaL_checkfinitenumber(L, 5, "y2"));
     command.brush = command_brush(L, painter, 6);
     command.resource = command_stroke(L, painter, 7);
     painter->commands.push_back(std::move(command));
@@ -1300,9 +1243,9 @@ inline int painter_image(lua_State *L)
     if (!lua_isnoneornil(L, 4))
     {
         luaL_checktype(L, 4, LUA_TTABLE);
-        opacity = table_number(L, 4, "opacity", 1);
+        opacity = luaL_tablenumber(L, 4, "opacity", 1);
         if (opacity < 0 || opacity > 1) luaL_error(L, "image opacity must be in the range [0, 1]");
-        const auto sampling = table_string(L, 4, "sampling", "linear");
+        const auto sampling = luaL_tablestring(L, 4, "sampling", "linear");
         if (sampling == "nearest")
             interpolation = D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
         else if (sampling != "linear")
@@ -1392,7 +1335,7 @@ inline int painter_image(lua_State *L)
 inline int painter_text(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    auto text = utf8_to_wide(L, 2);
+    auto text = luaL_checkstlwstring(L, 2);
     const auto rect = check_rect(L, 3);
     const auto *style = check_text_style(L, 4);
 
@@ -1404,7 +1347,7 @@ inline int painter_text(lua_State *L)
     if (!lua_isnoneornil(L, 6))
     {
         luaL_checktype(L, 6, LUA_TTABLE);
-        const auto align_x = table_string(L, 6, "align_x", "left");
+        const auto align_x = luaL_tablestring(L, 6, "align_x", "left");
         if (align_x == "left")
             alignment = DWRITE_TEXT_ALIGNMENT_LEADING;
         else if (align_x == "center")
@@ -1415,7 +1358,7 @@ inline int painter_text(lua_State *L)
             alignment = DWRITE_TEXT_ALIGNMENT_JUSTIFIED;
         else
             luaL_error(L, "invalid horizontal text alignment '%s'", align_x.c_str());
-        const auto align_y = table_string(L, 6, "align_y", "top");
+        const auto align_y = luaL_tablestring(L, 6, "align_y", "top");
         if (align_y == "top")
             paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
         else if (align_y == "center")
@@ -1424,11 +1367,11 @@ inline int painter_text(lua_State *L)
             paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_FAR;
         else
             luaL_error(L, "invalid vertical text alignment '%s'", align_y.c_str());
-        wrapping = parse_wrap(L, table_string(L, 6, "wrap", "word"));
-        overflow = table_string(L, 6, "overflow", "clip");
+        wrapping = parse_wrap(L, luaL_tablestring(L, 6, "wrap", "word"));
+        overflow = luaL_tablestring(L, 6, "overflow", "clip");
         if (overflow != "visible" && overflow != "clip" && overflow != "ellipsis")
             luaL_error(L, "invalid text overflow mode '%s'", overflow.c_str());
-        clip = table_bool(L, 6, "clip", true);
+        clip = luaL_tablebool(L, 6, "clip", true);
     }
     const UINT32 brush = command_brush(L, painter, 5);
     const UINT32 format = intern_text_format(painter, *style, alignment, paragraph_alignment, wrapping);
@@ -1965,7 +1908,7 @@ inline int text_style(lua_State *L)
     lua_getfield(L, 1, "family");
     if (lua_isstring(L, -1))
     {
-        style->family = Detail::utf8_to_wide(L, -1);
+        style->family = luaL_checkstlwstring(L, -1);
     }
     else if (lua_istable(L, -1))
     {
@@ -1975,7 +1918,7 @@ inline int text_style(lua_State *L)
             lua_rawgeti(L, -1, static_cast<lua_Integer>(i + 1));
             if (lua_isstring(L, -1))
             {
-                const auto candidate = Detail::utf8_to_wide(L, -1);
+                const auto candidate = luaL_checkstlwstring(L, -1);
                 if (!candidate.empty() && style->family == L"Segoe UI") style->family = candidate;
             }
             else
@@ -1992,13 +1935,13 @@ inline int text_style(lua_State *L)
     lua_pop(L, 1);
     if (style->family.empty()) style->family = L"Segoe UI";
 
-    style->size = Detail::table_number(L, 1, "size", 12);
+    style->size = luaL_tablenumber(L, 1, "size", 12);
     if (!(style->size > 0)) luaL_error(L, "font size must be greater than zero");
-    const float weight = Detail::table_number(L, 1, "weight", 400);
+    const float weight = luaL_tablenumber(L, 1, "weight", 400);
     if (weight < 1 || weight > 1000 || std::floor(weight) != weight)
         luaL_error(L, "font weight must be an integer from 1 through 1000");
     style->weight = static_cast<DWRITE_FONT_WEIGHT>(static_cast<int>(weight));
-    const auto slant = Detail::table_string(L, 1, "slant", "normal");
+    const auto slant = luaL_tablestring(L, 1, "slant", "normal");
     if (slant == "normal")
         style->slant = DWRITE_FONT_STYLE_NORMAL;
     else if (slant == "italic")
@@ -2007,13 +1950,13 @@ inline int text_style(lua_State *L)
         style->slant = DWRITE_FONT_STYLE_OBLIQUE;
     else
         luaL_error(L, "invalid font slant '%s'", slant.c_str());
-    style->underline = Detail::table_bool(L, 1, "underline", false);
-    style->strikethrough = Detail::table_bool(L, 1, "strikethrough", false);
-    style->letter_spacing = Detail::table_number(L, 1, "letter_spacing", 0);
+    style->underline = luaL_tablebool(L, 1, "underline", false);
+    style->strikethrough = luaL_tablebool(L, 1, "strikethrough", false);
+    style->letter_spacing = luaL_tablenumber(L, 1, "letter_spacing", 0);
     lua_getfield(L, 1, "line_height");
     if (!lua_isnil(L, -1))
     {
-        style->line_height = Detail::finite_number(L, -1, "line_height");
+        style->line_height = luaL_checkfinitenumber(L, -1, "line_height");
         if (!(style->line_height > 0)) luaL_error(L, "line_height must be greater than zero");
         style->has_line_height = true;
     }
@@ -2039,7 +1982,7 @@ inline int new_image(lua_State *L)
 
 inline int load_image(lua_State *L)
 {
-    const auto path = Detail::utf8_to_wide(L, 1);
+    const auto path = luaL_checkstlwstring(L, 1);
     IWICImagingFactory *wic = nullptr;
     HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wic));
     if (FAILED(hr) || !wic)
@@ -2094,7 +2037,7 @@ inline int image_formats(lua_State *L)
 
 inline int measure_text(lua_State *L)
 {
-    const auto text = Detail::utf8_to_wide(L, 1);
+    const auto text = luaL_checkstlwstring(L, 1);
     auto *style = Detail::check_text_style(L, 2);
     float width = Detail::MAX_LAYOUT_SIZE;
     float height = Detail::MAX_LAYOUT_SIZE;
@@ -2108,7 +2051,7 @@ inline int measure_text(lua_State *L)
         lua_getfield(L, 3, "width");
         if (!lua_isnil(L, -1))
         {
-            width = Detail::finite_number(L, -1, "width");
+            width = luaL_checkfinitenumber(L, -1, "width");
             if (width < 0) luaL_error(L, "text constraint width must be non-negative");
             has_width = true;
         }
@@ -2116,12 +2059,12 @@ inline int measure_text(lua_State *L)
         lua_getfield(L, 3, "height");
         if (!lua_isnil(L, -1))
         {
-            height = Detail::finite_number(L, -1, "height");
+            height = luaL_checkfinitenumber(L, -1, "height");
             if (height < 0) luaL_error(L, "text constraint height must be non-negative");
             has_height = true;
         }
         lua_pop(L, 1);
-        wrap = Detail::table_string(L, 3, "wrap", has_width ? "word" : "none");
+        wrap = luaL_tablestring(L, 3, "wrap", has_width ? "word" : "none");
         lua_getfield(L, 3, "max_lines");
         if (!lua_isnil(L, -1))
         {

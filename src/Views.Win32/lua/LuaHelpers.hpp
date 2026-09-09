@@ -77,6 +77,58 @@ std::string lua_pushstlstring(lua_State *L, const std::string &str);
 bool luaL_checkboolean(lua_State *L, int i);
 
 /**
+ * \brief Gets a finite number at the given index in the Lua stack. Errors if the value is not a number or not finite.
+ * \param L The Lua state.
+ * \param index The index of the value in the Lua stack.
+ * \param name The name of the value, used in error messages.
+ * \return The finite number at the given index in the Lua stack.
+ */
+float luaL_checkfinitenumber(lua_State *L, int index, const char *name);
+
+/**
+ * \brief Gets a numeric field from a table at the given index in the Lua stack, or a fallback value if the field is
+ * not present or nil. Errors if the field is required and not present, or not a finite number.
+ * \param L The Lua state.
+ * \param table The index of the table in the Lua stack.
+ * \param field The name of the field to read.
+ * \param fallback The value to return if the field is not present or nil.
+ * \param required Whether to error if the field is not present or nil.
+ * \return The value of the field, or the fallback value.
+ */
+float luaL_tablenumber(lua_State *L, int table, const char *field, float fallback, bool required = false);
+
+/**
+ * \brief Gets a boolean field from a table at the given index in the Lua stack, or a fallback value if the field is
+ * not present or nil.
+ * \param L The Lua state.
+ * \param table The index of the table in the Lua stack.
+ * \param field The name of the field to read.
+ * \param fallback The value to return if the field is not present or nil.
+ * \return The value of the field, or the fallback value.
+ */
+bool luaL_tablebool(lua_State *L, int table, const char *field, bool fallback);
+
+/**
+ * \brief Gets a string field from a table at the given index in the Lua stack, or a fallback value if the field is
+ * not present or nil. Errors if the field is present but not a string.
+ * \param L The Lua state.
+ * \param table The index of the table in the Lua stack.
+ * \param field The name of the field to read.
+ * \param fallback The value to return if the field is not present or nil.
+ * \return The value of the field, or the fallback value.
+ */
+std::string luaL_tablestring(lua_State *L, int table, const char *field, const char *fallback);
+
+/**
+ * \brief Gets the string at the given index in the Lua stack, converted from UTF-8 to a wide string. Errors if the
+ * value is not a string or not valid UTF-8.
+ * \param L The Lua state.
+ * \param i The index of the value in the Lua stack.
+ * \return The wide string at the given index in the Lua stack.
+ */
+std::wstring luaL_checkstlwstring(lua_State *L, int i);
+
+/**
  * \brief Creates a metatable with the given name and methods, and sets the index and gc functions.
  * \param L The Lua state.
  * \param name The name of the metatable.

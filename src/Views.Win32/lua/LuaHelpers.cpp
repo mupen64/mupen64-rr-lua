@@ -118,6 +118,16 @@ std::string lua_pushstlstring(lua_State *L, const std::string &str)
     return str;
 }
 
+std::wstring luaL_checkstlwstring(lua_State *L, const int i)
+{
+    const auto text = luaL_checkstlstring(L, i);
+    if (text.empty()) return {};
+
+    const auto result = IOUtils::to_wide_string(text);
+    if (result.empty()) luaL_error(L, "string is not valid UTF-8");
+    return result;
+}
+
 bool luaL_checkboolean(lua_State *L, int i)
 {
     if (!lua_isboolean(L, i))
@@ -126,6 +136,49 @@ bool luaL_checkboolean(lua_State *L, int i)
     }
 
     return lua_toboolean(L, i);
+}
+
+float luaL_checkfinitenumber(lua_State *L, const int index, const char *name)
+{
+    const auto value = static_cast<float>(luaL_checknumber(L, index));
+    if (!std::isfinite(value)) luaL_error(L, "%s must be finite", name);
+    return value;
+}
+
+float luaL_tablenumber(lua_State *L, int table, const char *field, const float fallback, const bool required)
+{
+    table = lua_absindex(L, table);
+    lua_getfield(L, table, field);
+    float result = fallback;
+    if (lua_isnil(L, -1))
+    {
+        if (required) luaL_error(L, "field '%s' is required", field);
+    }
+    else
+    {
+        result = luaL_checkfinitenumber(L, -1, field);
+    }
+    lua_pop(L, 1);
+    return result;
+}
+
+bool luaL_tablebool(lua_State *L, int table, const char *field, const bool fallback)
+{
+    table = lua_absindex(L, table);
+    lua_getfield(L, table, field);
+    const bool result = lua_isnil(L, -1) ? fallback : lua_toboolean(L, -1) != 0;
+    lua_pop(L, 1);
+    return result;
+}
+
+std::string luaL_tablestring(lua_State *L, int table, const char *field, const char *fallback)
+{
+    table = lua_absindex(L, table);
+    lua_getfield(L, table, field);
+    std::string result = fallback;
+    if (!lua_isnil(L, -1)) result = luaL_checkstring(L, -1);
+    lua_pop(L, 1);
+    return result;
 }
 
 void luaL_create_metatable(
