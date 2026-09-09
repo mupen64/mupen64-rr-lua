@@ -14,8 +14,13 @@
 #include <cmath>
 #include <cstdint>
 #include <dwrite_1.h>
+#include <iterator>
+#include <limits>
+#include <list>
+#include <memory>
 #include <new>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -28,6 +33,8 @@ constexpr const char *IMAGE_MT = "mupen64.PainterImage";
 constexpr const char *TEXT_STYLE_MT = "mupen64.PainterTextStyle";
 constexpr const char *PAINTER_MT = "mupen64.Painter";
 constexpr float MAX_LAYOUT_SIZE = 10000000.0f;
+constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 512;
+constexpr std::uint64_t TEXT_LAYOUT_CACHE_MAX_UNUSED_GENERATIONS = 120;
 
 struct Brush
 {
@@ -479,6 +486,138 @@ inline bool equal_text_style(const TextStyle &a, const TextStyle &b)
            a.underline == b.underline && a.strikethrough == b.strikethrough && a.letter_spacing == b.letter_spacing &&
            a.line_height == b.line_height && a.has_line_height == b.has_line_height;
 }
+
+struct TextLayoutCacheKey
+{
+    std::wstring text{};
+    TextStyle style{};
+    DWRITE_TEXT_ALIGNMENT alignment{};
+    DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment{};
+    DWRITE_WORD_WRAPPING wrapping{};
+    float width{};
+    float height{};
+    bool ellipsis{};
+};
+
+class TextLayoutCache
+{
+  public:
+    ~TextLayoutCache() { clear(); }
+
+    void begin_generation()
+    {
+        if (m_generation == std::numeric_limits<std::uint64_t>::max())
+        {
+            m_generation = 1;
+            for (auto &entry : m_lru) entry.generation = 0;
+        }
+        else
+        {
+            ++m_generation;
+        }
+
+        while (!m_lru.empty() &&
+               m_generation - m_lru.back().generation > TEXT_LAYOUT_CACHE_MAX_UNUSED_GENERATIONS)
+            evict(std::prev(m_lru.end()));
+    }
+
+    IDWriteTextLayout *get(const std::wstring &text, const TextFormatResource &format, float width, float height,
+        bool ellipsis)
+    {
+        const size_t hash = hash_key(text, format, width, height, ellipsis);
+        const auto [first, last] = m_index.equal_range(hash);
+        for (auto candidate = first; candidate != last; ++candidate)
+        {
+            const auto entry = candidate->second;
+            if (!equal_key(entry->key, text, format, width, height, ellipsis)) continue;
+            entry->generation = m_generation;
+            m_lru.splice(m_lru.begin(), m_lru, entry);
+            return entry->layout;
+        }
+        return nullptr;
+    }
+
+    void add(const std::wstring &text, const TextFormatResource &format, float width, float height, bool ellipsis,
+        IDWriteTextLayout *layout)
+    {
+        const size_t hash = hash_key(text, format, width, height, ellipsis);
+        TextLayoutCacheKey key{text, format.style, format.alignment, format.paragraph_alignment, format.wrapping, width,
+            height, ellipsis};
+        key.style.closed = false;
+        m_lru.push_front({std::move(key), layout, m_generation, hash});
+        m_index.emplace(hash, m_lru.begin());
+        while (m_lru.size() > TEXT_LAYOUT_CACHE_CAPACITY) evict(std::prev(m_lru.end()));
+    }
+
+    void clear()
+    {
+        for (const auto &entry : m_lru) entry.layout->Release();
+        m_index.clear();
+        m_lru.clear();
+        m_generation = 0;
+    }
+
+  private:
+    struct Entry
+    {
+        TextLayoutCacheKey key{};
+        IDWriteTextLayout *layout{};
+        std::uint64_t generation{};
+        size_t hash{};
+    };
+
+    template <typename T> static void hash_combine(size_t &seed, const T &value)
+    {
+        seed ^= std::hash<T>{}(value) + static_cast<size_t>(0x9e3779b9) + (seed << 6) + (seed >> 2);
+    }
+
+    static size_t hash_key(
+        const std::wstring &text, const TextFormatResource &format, float width, float height, bool ellipsis)
+    {
+        size_t hash = std::hash<std::wstring>{}(text);
+        hash_combine(hash, format.style.family);
+        hash_combine(hash, format.style.size);
+        hash_combine(hash, static_cast<int>(format.style.weight));
+        hash_combine(hash, static_cast<int>(format.style.slant));
+        hash_combine(hash, format.style.underline);
+        hash_combine(hash, format.style.strikethrough);
+        hash_combine(hash, format.style.letter_spacing);
+        hash_combine(hash, format.style.line_height);
+        hash_combine(hash, format.style.has_line_height);
+        hash_combine(hash, static_cast<int>(format.alignment));
+        hash_combine(hash, static_cast<int>(format.paragraph_alignment));
+        hash_combine(hash, static_cast<int>(format.wrapping));
+        hash_combine(hash, width);
+        hash_combine(hash, height);
+        hash_combine(hash, ellipsis);
+        return hash;
+    }
+
+    static bool equal_key(const TextLayoutCacheKey &key, const std::wstring &text, const TextFormatResource &format,
+        float width, float height, bool ellipsis)
+    {
+        return key.text == text && equal_text_style(key.style, format.style) && key.alignment == format.alignment &&
+               key.paragraph_alignment == format.paragraph_alignment && key.wrapping == format.wrapping &&
+               key.width == width && key.height == height && key.ellipsis == ellipsis;
+    }
+
+    void evict(std::list<Entry>::iterator entry)
+    {
+        const auto [first, last] = m_index.equal_range(entry->hash);
+        for (auto candidate = first; candidate != last; ++candidate)
+        {
+            if (candidate->second != entry) continue;
+            m_index.erase(candidate);
+            break;
+        }
+        entry->layout->Release();
+        m_lru.erase(entry);
+    }
+
+    std::uint64_t m_generation{};
+    std::list<Entry> m_lru{};
+    std::unordered_multimap<size_t, std::list<Entry>::iterator> m_index{};
+};
 
 inline UINT32 intern_text_format(Painter *painter, const TextStyle &style, DWRITE_TEXT_ALIGNMENT alignment,
     DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment, DWRITE_WORD_WRAPPING wrapping)
@@ -1417,6 +1556,10 @@ inline bool execute_commands(Painter *painter, std::string &error)
     std::vector<D2D1_RECT_F> active_clips;
     bool succeeded = true;
 
+    auto &text_layout_cache = painter->context->painter_text_layouts;
+    if (!text_layout_cache) text_layout_cache = std::make_shared<TextLayoutCache>();
+    text_layout_cache->begin_generation();
+
     for (const auto &command : painter->commands)
     {
         ID2D1SolidColorBrush *brush = nullptr;
@@ -1529,44 +1672,52 @@ inline bool execute_commands(Painter *painter, std::string &error)
         }
         case CommandType::Text: {
             const auto &payload = painter->text_payloads[command.payload];
-            IDWriteTextFormat *format = nullptr;
-            if (!realize_text_format(painter, command.resource, &text_factory, &format, error))
+            const auto &format_resource = painter->text_formats[command.resource];
+            const float width = command.bounds.right - command.bounds.left;
+            const float height = command.bounds.bottom - command.bounds.top;
+            IDWriteTextLayout *layout =
+                text_layout_cache->get(payload.text, format_resource, width, height, payload.ellipsis);
+            const bool cache_miss = layout == nullptr;
+            if (cache_miss)
             {
-                succeeded = false;
-                break;
-            }
-            IDWriteTextLayout *layout = nullptr;
-            const UINT32 length = static_cast<UINT32>(std::min<size_t>(payload.text.size(), UINT32_MAX));
-            HRESULT hr = text_factory->CreateTextLayout(payload.text.data(), length, format,
-                command.bounds.right - command.bounds.left, command.bounds.bottom - command.bounds.top, &layout);
-            if (FAILED(hr) || !layout)
-            {
-                set_execution_error(error, "DirectWrite text layout", FAILED(hr) ? hr : E_FAIL);
-                succeeded = false;
-            }
-            if (succeeded)
-                succeeded =
-                    apply_deferred_text_style(layout, painter->text_formats[command.resource].style, length, error);
-            if (succeeded && payload.ellipsis)
-            {
-                IDWriteInlineObject *ellipsis = nullptr;
-                hr = text_factory->CreateEllipsisTrimmingSign(format, &ellipsis);
-                if (SUCCEEDED(hr) && ellipsis)
+                IDWriteTextFormat *format = nullptr;
+                if (!realize_text_format(painter, command.resource, &text_factory, &format, error))
                 {
-                    const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
-                    hr = layout->SetTrimming(&trimming, ellipsis);
-                    ellipsis->Release();
+                    succeeded = false;
+                    break;
                 }
-                if (FAILED(hr))
+                const UINT32 length = static_cast<UINT32>(std::min<size_t>(payload.text.size(), UINT32_MAX));
+                HRESULT hr = text_factory->CreateTextLayout(payload.text.data(), length, format, width, height, &layout);
+                if (FAILED(hr) || !layout)
                 {
-                    set_execution_error(error, "DirectWrite ellipsis trimming", hr);
+                    set_execution_error(error, "DirectWrite text layout", FAILED(hr) ? hr : E_FAIL);
                     succeeded = false;
                 }
+                if (succeeded)
+                    succeeded = apply_deferred_text_style(layout, format_resource.style, length, error);
+                if (succeeded && payload.ellipsis)
+                {
+                    IDWriteInlineObject *ellipsis = nullptr;
+                    hr = text_factory->CreateEllipsisTrimmingSign(format, &ellipsis);
+                    if (SUCCEEDED(hr) && ellipsis)
+                    {
+                        const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
+                        hr = layout->SetTrimming(&trimming, ellipsis);
+                        ellipsis->Release();
+                    }
+                    if (FAILED(hr))
+                    {
+                        set_execution_error(error, "DirectWrite ellipsis trimming", hr);
+                        succeeded = false;
+                    }
+                }
+                if (succeeded)
+                    text_layout_cache->add(payload.text, format_resource, width, height, payload.ellipsis, layout);
             }
             if (succeeded)
                 painter->target->DrawTextLayout(
                     D2D1::Point2F(command.bounds.left, command.bounds.top), layout, brush, payload.options);
-            if (layout) layout->Release();
+            if (!succeeded && cache_miss && layout) layout->Release();
             break;
         }
         default:

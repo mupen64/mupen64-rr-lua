@@ -10,6 +10,13 @@
 #include <SDL3/SDL_keycode.h>
 #include <lua/presenters/Presenter.hpp>
 
+#include <memory>
+
+namespace LuaCore::Painter::Detail
+{
+class TextLayoutCache;
+}
+
 /**
  * \brief Represents a Lua rendering context.
  */
@@ -44,6 +51,9 @@ struct LuaRenderingContext
 
     // The cache for DirectWrite text size measurements
     MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
+
+    // The generational LRU cache for painter text layouts
+    std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts{};
 
     // The stack of render targets. The top is used for D2D calls.
     std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
