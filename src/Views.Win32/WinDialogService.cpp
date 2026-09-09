@@ -13,7 +13,7 @@
 
 namespace
 {
-const std::vector<std::string> ALWAYS_LOUD_IDS = {VIEW_DLG_RAMSTART, VIEW_DLG_CONFIRM_SETTINGS_DISCARD};
+const std::vector<std::string> ALWAYS_LOUD_IDS = {VIEW_DLG_RAMSTART, VIEW_DLG_CONFIRM_SETTINGS_DISCARD, VIEW_DLG_ABOUT};
 StrUtils::unordered_string_map<size_t> dialog_choice_map;
 } // namespace
 
