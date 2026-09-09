@@ -73,7 +73,7 @@ struct Stroke
 {
     float width{1.0f};
     D2D1_STROKE_STYLE_PROPERTIES properties{D2D1::StrokeStyleProperties()};
-    std::vector<float> dashes{};
+    std::vector<float> dashes;
     bool specified{};
 };
 
@@ -132,12 +132,12 @@ enum class CommandType : std::uint8_t
 
 struct GeometryPayload
 {
-    std::vector<D2D1_POINT_2F> points{};
+    std::vector<D2D1_POINT_2F> points;
 };
 
 struct ImagePayload
 {
-    std::vector<ImageSlice> slices{};
+    std::vector<ImageSlice> slices;
     D2D1_COLOR_F tint{D2D1::ColorF(1, 1, 1, 1)};
     float opacity{1.0f};
     D2D1_BITMAP_INTERPOLATION_MODE interpolation{D2D1_BITMAP_INTERPOLATION_MODE_LINEAR};
@@ -146,7 +146,7 @@ struct ImagePayload
 
 struct TextPayload
 {
-    std::wstring text{};
+    std::wstring text;
     D2D1_DRAW_TEXT_OPTIONS options{D2D1_DRAW_TEXT_OPTIONS_NONE};
     bool ellipsis{};
 };
@@ -165,15 +165,15 @@ struct Painter
 {
     ID2D1RenderTarget *target{};
     LuaRenderingContext *context{};
-    std::vector<D2D1_RECT_F> clips{};
-    std::vector<Command> commands{};
-    std::vector<GeometryPayload> geometry_payloads{};
-    std::vector<ImagePayload> image_payloads{};
-    std::vector<TextPayload> text_payloads{};
-    std::vector<BrushResource> brushes{};
-    std::vector<StrokeResource> strokes{};
-    std::vector<TextFormatResource> text_formats{};
-    std::vector<ImageResource> images{};
+    std::vector<D2D1_RECT_F> clips;
+    std::vector<Command> commands;
+    std::vector<GeometryPayload> geometry_payloads;
+    std::vector<ImagePayload> image_payloads;
+    std::vector<TextPayload> text_payloads;
+    std::vector<BrushResource> brushes;
+    std::vector<StrokeResource> strokes;
+    std::vector<TextFormatResource> text_formats;
+    std::vector<ImageResource> images;
     bool active{};
 };
 
@@ -514,7 +514,7 @@ inline bool equal_text_style(const TextStyle &a, const TextStyle &b)
 
 struct TextLayoutCacheKey
 {
-    std::wstring text{};
+    std::wstring text;
     TextStyle style{};
     DWRITE_TEXT_ALIGNMENT alignment{};
     DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment{};
@@ -639,8 +639,8 @@ class TextLayoutCache
     }
 
     std::uint64_t m_generation{};
-    std::list<Entry> m_lru{};
-    std::unordered_multimap<size_t, std::list<Entry>::iterator> m_index{};
+    std::list<Entry> m_lru;
+    std::unordered_multimap<size_t, std::list<Entry>::iterator> m_index;
 };
 
 struct TextMeasurement
@@ -654,7 +654,7 @@ struct TextMeasurement
 
 struct TextMeasurementCacheKey
 {
-    std::wstring text{};
+    std::wstring text;
     TextStyle style{};
     float width{};
     float height{};
@@ -751,8 +751,8 @@ class TextMeasurementCache
         m_lru.erase(entry);
     }
 
-    std::list<Entry> m_lru{};
-    std::unordered_multimap<size_t, std::list<Entry>::iterator> m_index{};
+    std::list<Entry> m_lru;
+    std::unordered_multimap<size_t, std::list<Entry>::iterator> m_index;
 };
 
 inline void push_text_measurement(lua_State *L, const TextMeasurement &measurement)
