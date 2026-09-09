@@ -8,6 +8,7 @@
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
+local root = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+$", "")
 local WIDTH = 800
 local HEIGHT = 600
 local page = 1
@@ -27,6 +28,12 @@ local background_color = color(0.025, 0.035, 0.055)
 local background = painter.brush(background_color)
 local white = painter.brush(color(0.92, 0.95, 1.0))
 local faint = painter.brush(color(0.50, 0.58, 0.70))
+local ninesliced = assert(painter.load_image(root .. '\\..\\ninesliced.png'))
+local nineslice_options = {
+    source = rect(0, 0, 32, 32),
+    center = rect(15, 15, 2, 2),
+    sampling = "nearest",
+}
 local palette = {
     painter.brush(color(0.95, 0.20, 0.20, 0.32)),
     painter.brush(color(0.20, 0.85, 0.35, 0.32)),
@@ -42,7 +49,7 @@ local small_style = painter.text_style({ size = 13 })
 local function draw_header(p)
     p:text(string.format("Frame time: %.2f ms", frame_time_ms), rect(20, 16, 220, 20),
         small_style, white)
-    p:text("Page " .. page .. "/2    Q: previous    E: next", rect(20, 570, 760, 20),
+    p:text("Page " .. page .. "/3    Q: previous    E: next", rect(20, 570, 760, 20),
         small_style, faint)
 end
 
@@ -102,14 +109,30 @@ local function draw_text(p)
     end
 end
 
+local function image_grid_cell(i)
+    local cell = (i - 1) % 100
+    local column = cell % 10
+    local row = math.floor(cell / 10)
+    return rect(10 + column * 79, 55 + row * 50, 75, 42)
+end
+
+local function draw_ninesliced(p)
+    p:clear(background_color)
+    draw_header(p)
+
+    for i = 1, 1000 do
+        p:image(ninesliced, image_grid_cell(i), nineslice_options)
+    end
+end
+
 emu.atkey(function(args)
     if not args.pressed or args["repeat"] then
         return
     end
     if args.keycode == Mupen.keycode.SDLK_Q then
-        page = (page - 2) % 2 + 1
+        page = (page - 2) % 3 + 1
     elseif args.keycode == Mupen.keycode.SDLK_E then
-        page = page % 2 + 1
+        page = page % 3 + 1
     end
 end)
 
@@ -122,7 +145,9 @@ emu.atpaint(function(p)
     frame = frame + 1
     if page == 1 then
         draw_primitives(p)
-    else
+    elseif page == 2 then
         draw_text(p)
+    else
+        draw_ninesliced(p)
     end
 end)
