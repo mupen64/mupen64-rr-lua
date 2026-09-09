@@ -187,19 +187,71 @@ static std::string virtual_keycode_to_string(int k)
     return buf2;
 }
 
+static std::string hat_direction_name(int32_t mask)
+{
+    switch (mask)
+    {
+    case SDL_HAT_UP:
+        return "Up";
+    case SDL_HAT_RIGHT:
+        return "Right";
+    case SDL_HAT_DOWN:
+        return "Down";
+    case SDL_HAT_LEFT:
+        return "Left";
+    case SDL_HAT_RIGHTUP:
+        return "Up+Right";
+    case SDL_HAT_RIGHTDOWN:
+        return "Down+Right";
+    case SDL_HAT_LEFTUP:
+        return "Up+Left";
+    case SDL_HAT_LEFTDOWN:
+        return "Down+Left";
+    default:
+        return std::to_string(mask);
+    }
+}
+
 static void update_editbox(int id, const ButtonMapping &mapping)
 {
+    if (mapping.hat >= 0)
+    {
+        SetDlgItemText(
+            g_ctx.hwnd, id, std::format("Hat {} {}", mapping.hat, hat_direction_name(mapping.hat_mask)).c_str());
+        return;
+    }
+
     if (mapping.axis != SDL_GAMEPAD_AXIS_INVALID)
     {
-        const auto str = SDL_GetGamepadStringForAxis((SDL_GamepadAxis)mapping.axis);
-        SetDlgItemText(g_ctx.hwnd, id, str);
+        std::string str;
+        if (GamepadManager::current_device_is_gamepad())
+        {
+            const char *name = SDL_GetGamepadStringForAxis((SDL_GamepadAxis)mapping.axis);
+            str = name ? name : std::format("Axis {}", mapping.axis);
+        }
+        else
+        {
+            str = std::format("Axis {}", mapping.axis);
+        }
+        if (mapping.axis_direction < 0) str += " -";
+        if (mapping.axis_direction > 0) str += " +";
+        SetDlgItemText(g_ctx.hwnd, id, str.c_str());
         return;
     }
 
     if (mapping.button != SDL_GAMEPAD_BUTTON_INVALID)
     {
-        const auto str = SDL_GetGamepadStringForButton((SDL_GamepadButton)mapping.button);
-        SetDlgItemText(g_ctx.hwnd, id, str);
+        std::string str;
+        if (GamepadManager::current_device_is_gamepad())
+        {
+            const char *name = SDL_GetGamepadStringForButton((SDL_GamepadButton)mapping.button);
+            str = name ? name : std::format("Button {}", mapping.button);
+        }
+        else
+        {
+            str = std::format("Button {}", mapping.button);
+        }
+        SetDlgItemText(g_ctx.hwnd, id, str.c_str());
         return;
     }
 
@@ -214,9 +266,18 @@ static void update_editbox(int id_negative, int id_positive, const AxisMapping &
 {
     if (mapping.axis != SDL_GAMEPAD_AXIS_INVALID)
     {
-        const auto str = SDL_GetGamepadStringForAxis((SDL_GamepadAxis)mapping.axis);
-        SetDlgItemText(g_ctx.hwnd, id_negative, str);
-        SetDlgItemText(g_ctx.hwnd, id_positive, str);
+        std::string str;
+        if (GamepadManager::current_device_is_gamepad())
+        {
+            const char *name = SDL_GetGamepadStringForAxis((SDL_GamepadAxis)mapping.axis);
+            str = name ? name : std::format("Axis {}", mapping.axis);
+        }
+        else
+        {
+            str = std::format("Axis {}", mapping.axis);
+        }
+        SetDlgItemText(g_ctx.hwnd, id_negative, str.c_str());
+        SetDlgItemText(g_ctx.hwnd, id_positive, str.c_str());
         return;
     }
 
@@ -340,6 +401,10 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(
         if (auto *mapping = std::get_if<ButtonMapping *>(&g_ctx.target_value))
         {
             (*mapping)->button = SDL_GAMEPAD_BUTTON_INVALID;
+            (*mapping)->axis = SDL_GAMEPAD_AXIS_INVALID;
+            (*mapping)->axis_direction = 0;
+            (*mapping)->hat = -1;
+            (*mapping)->hat_mask = SDL_HAT_CENTERED;
             (*mapping)->key = wparam;
             end_edit();
         }
@@ -376,10 +441,16 @@ static void refresh_device_list()
         return;
     }
 
+    const auto current_id = GamepadManager::current_gamepad_id();
     for (size_t i = 0; i < ListBox_GetCount(g_ctx.devices_hwnd); i++)
     {
         const auto &device = reg.devices[i];
-        if (device.guid != new_config.preferred_device_guid) continue;
+        const bool current = current_id.has_value() && device.instance_id == current_id;
+        const bool same_path = !current_id.has_value() && new_config.preferred_device_path.has_value() &&
+                               device.path == new_config.preferred_device_path;
+        const bool legacy_guid = !current_id.has_value() && !new_config.preferred_device_path.has_value() &&
+                                 device.guid == new_config.preferred_device_guid;
+        if (!current && !same_path && !legacy_guid) continue;
         ListBox_SetCurSel(g_ctx.devices_hwnd, i);
         break;
     }
@@ -532,14 +603,22 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 const auto &reg = GamepadManager::device_registry();
                 const auto &device = reg.devices[index];
                 new_config.preferred_device_guid = index == 0 ? std::nullopt : device.guid;
+                new_config.preferred_device_path = index == 0 ? std::nullopt : device.path;
 
-                GamepadManager::update_current_gamepad();
+                if (device.instance_id.has_value())
+                    GamepadManager::select_gamepad(*device.instance_id);
+                else
+                    GamepadManager::update_current_gamepad();
+                update_visuals();
             }
             break;
         }
         default:
             break;
         }
+        break;
+    case WM_DESTROY:
+        g_ctx.hwnd = nullptr;
         break;
     case WM_NOTIFY:
         switch (((LPNMHDR)lparam)->code)
@@ -628,53 +707,83 @@ void ConfigDialog::show(HWND parent)
 
 void ConfigDialog::on_sdl_event(const SDL_Event &e)
 {
-    if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED ||
+    if (e.type == SDL_EVENT_JOYSTICK_ADDED || e.type == SDL_EVENT_JOYSTICK_REMOVED ||
+        e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED ||
         e.type == SDL_EVENT_KEYBOARD_ADDED || e.type == SDL_EVENT_KEYBOARD_REMOVED)
     {
-        refresh_device_list();
+        if (g_ctx.hwnd) refresh_device_list();
     }
 
-    if (!is_editing())
-    {
-        return;
-    }
+    if (!is_editing()) return;
 
-    if (e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN)
-    {
+    const auto selected_id = GamepadManager::current_gamepad_id();
+    if (!selected_id.has_value()) return;
+
+    const bool is_gamepad = GamepadManager::current_device_is_gamepad();
+
+    const auto capture_button = [](int32_t button) {
         if (auto *mapping = std::get_if<ButtonMapping *>(&g_ctx.target_value))
         {
-            (*mapping)->button = e.gbutton.button;
+            (*mapping)->button = button;
+            (*mapping)->axis = SDL_GAMEPAD_AXIS_INVALID;
+            (*mapping)->axis_direction = 0;
+            (*mapping)->hat = -1;
+            (*mapping)->hat_mask = SDL_HAT_CENTERED;
             (*mapping)->key = 0;
             end_edit();
         }
-    }
+    };
 
-    if (e.type == SDL_EVENT_GAMEPAD_AXIS_MOTION)
-    {
-        const int16_t axis_value = e.gaxis.value;
-
-        const auto moved = std::abs(axis_value) > AXIS_THRESHOLD;
+    const auto capture_axis = [](int32_t axis, int16_t value) {
+        if (std::abs(value) <= AXIS_THRESHOLD) return;
 
         if (auto *mapping = std::get_if<AxisMapping *>(&g_ctx.target_value))
         {
-            if (moved)
-            {
-                (*mapping)->axis = e.gaxis.axis;
-                (*mapping)->key_negative = 0;
-                (*mapping)->key_positive = 0;
-                end_edit();
-            }
+            (*mapping)->axis = axis;
+            (*mapping)->key_negative = 0;
+            (*mapping)->key_positive = 0;
+            end_edit();
         }
+        else if (auto *mapping = std::get_if<ButtonMapping *>(&g_ctx.target_value))
+        {
+            (*mapping)->axis = axis;
+            (*mapping)->axis_direction = value < 0 ? -1 : 1;
+            (*mapping)->button = SDL_GAMEPAD_BUTTON_INVALID;
+            (*mapping)->hat = -1;
+            (*mapping)->hat_mask = SDL_HAT_CENTERED;
+            (*mapping)->key = 0;
+            end_edit();
+        }
+    };
 
+    if (is_gamepad && e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN && e.gbutton.which == *selected_id)
+    {
+        capture_button(e.gbutton.button);
+    }
+    else if (is_gamepad && e.type == SDL_EVENT_GAMEPAD_AXIS_MOTION && e.gaxis.which == *selected_id)
+    {
+        capture_axis(e.gaxis.axis, e.gaxis.value);
+    }
+    else if (!is_gamepad && e.type == SDL_EVENT_JOYSTICK_BUTTON_DOWN && e.jbutton.which == *selected_id)
+    {
+        capture_button(e.jbutton.button);
+    }
+    else if (!is_gamepad && e.type == SDL_EVENT_JOYSTICK_AXIS_MOTION && e.jaxis.which == *selected_id)
+    {
+        capture_axis(e.jaxis.axis, e.jaxis.value);
+    }
+    else if (!is_gamepad && e.type == SDL_EVENT_JOYSTICK_HAT_MOTION && e.jhat.which == *selected_id &&
+             e.jhat.value != SDL_HAT_CENTERED)
+    {
         if (auto *mapping = std::get_if<ButtonMapping *>(&g_ctx.target_value))
         {
-            if (moved)
-            {
-                (*mapping)->axis = e.gaxis.axis;
-                (*mapping)->button = SDL_GAMEPAD_BUTTON_INVALID;
-                (*mapping)->key = 0;
-                end_edit();
-            }
+            (*mapping)->button = SDL_GAMEPAD_BUTTON_INVALID;
+            (*mapping)->axis = SDL_GAMEPAD_AXIS_INVALID;
+            (*mapping)->axis_direction = 0;
+            (*mapping)->hat = e.jhat.hat;
+            (*mapping)->hat_mask = e.jhat.value;
+            (*mapping)->key = 0;
+            end_edit();
         }
     }
 }

@@ -12,40 +12,15 @@
 struct gamepad_manager_context
 {
     SDL_Gamepad *gamepad{};
+    SDL_Joystick *joystick{};
+    std::optional<SDL_JoystickID> gamepad_id;
+    std::optional<SDL_GUID> guid;
+    std::optional<std::string> path;
+    bool is_gamepad{};
     GamepadManager::DeviceRegistry reg{};
 };
 
 static gamepad_manager_context g_ctx;
-
-static SDL_GUID SDL_GetGamepadGUID(SDL_Gamepad *gamepad)
-{
-    const auto joystick = SDL_GetGamepadJoystick(gamepad);
-    return SDL_GetJoystickGUID(joystick);
-}
-
-SDL_Gamepad *SDL_OpenGamepadByGUID(SDL_GUID target_guid)
-{
-    int count = 0;
-    SDL_JoystickID *gamepad_ids = SDL_GetGamepads(&count);
-
-    if (!gamepad_ids) return NULL;
-
-    SDL_Gamepad *opened_gamepad = NULL;
-
-    for (int i = 0; i < count; i++)
-    {
-        SDL_JoystickID instance_id = gamepad_ids[i];
-        SDL_GUID current_guid = SDL_GetGamepadGUIDForID(instance_id);
-        if (SDL_memcmp(&current_guid, &target_guid, sizeof(SDL_GUID)) == 0)
-        {
-            opened_gamepad = SDL_OpenGamepad(instance_id);
-            break;
-        }
-    }
-
-    SDL_free(gamepad_ids);
-    return opened_gamepad;
-}
 
 static void refresh_registry()
 {
@@ -53,24 +28,114 @@ static void refresh_registry()
 
     g_ctx.reg.devices.emplace_back(GamepadManager::InputDevice{
         .type = GamepadManager::InputDeviceType::Keyboard,
+        .instance_id = std::nullopt,
         .guid = std::nullopt,
+        .path = std::nullopt,
         .name = "Keyboard",
     });
 
     int32_t count{};
-    const SDL_JoystickID *joy_ids = SDL_GetGamepads(&count);
+    SDL_JoystickID *joy_ids = SDL_GetJoysticks(&count);
+    if (!joy_ids) return;
+
     for (int32_t i = 0; i < count; ++i)
     {
         const auto id = joy_ids[i];
-        const auto name = SDL_GetJoystickNameForID(id);
+        const bool is_gamepad = SDL_IsGamepad(id);
+        const char *name = SDL_GetJoystickNameForID(id);
+        const char *path = SDL_GetJoystickPathForID(id);
 
         g_ctx.reg.devices.emplace_back(GamepadManager::InputDevice{
-            .type = GamepadManager::InputDeviceType::Gamepad,
+            .type = is_gamepad ? GamepadManager::InputDeviceType::Gamepad : GamepadManager::InputDeviceType::Joystick,
+            .instance_id = id,
             .guid = SDL_GetJoystickGUIDForID(id),
-            .name = name,
+            .path = path ? std::optional<std::string>(path) : std::nullopt,
+            .name = is_gamepad ? (name ? name : "Unknown gamepad")
+                               : std::format("{} (Joystick)", name ? name : "Unknown controller"),
         });
     }
-    SDL_free((void *)joy_ids);
+    SDL_free(joy_ids);
+}
+
+static void close_gamepad()
+{
+    if (g_ctx.gamepad)
+        SDL_CloseGamepad(g_ctx.gamepad);
+    else if (g_ctx.joystick)
+        SDL_CloseJoystick(g_ctx.joystick);
+
+    g_ctx.gamepad = nullptr;
+    g_ctx.joystick = nullptr;
+    g_ctx.gamepad_id.reset();
+    g_ctx.guid.reset();
+    g_ctx.path.reset();
+    g_ctx.is_gamepad = false;
+}
+
+static void log_guid(const char *action, SDL_GUID guid, bool is_gamepad)
+{
+    char guid_string[33]{};
+    SDL_GUIDToString(guid, guid_string, sizeof(guid_string));
+    g_plugin->log_info(std::format("{} {} {}", action, is_gamepad ? "gamepad" : "joystick", guid_string).c_str());
+}
+
+static bool open_device(SDL_JoystickID instance_id)
+{
+    close_gamepad();
+
+    g_ctx.is_gamepad = SDL_IsGamepad(instance_id);
+    if (g_ctx.is_gamepad)
+    {
+        g_ctx.gamepad = SDL_OpenGamepad(instance_id);
+        if (g_ctx.gamepad) g_ctx.joystick = SDL_GetGamepadJoystick(g_ctx.gamepad);
+    }
+    else
+    {
+        g_ctx.joystick = SDL_OpenJoystick(instance_id);
+    }
+
+    if (!g_ctx.joystick)
+    {
+        g_ctx.gamepad = nullptr;
+        g_ctx.is_gamepad = false;
+        return false;
+    }
+
+    g_ctx.gamepad_id = instance_id;
+    g_ctx.guid = SDL_GetJoystickGUID(g_ctx.joystick);
+    if (const char *path = SDL_GetJoystickPath(g_ctx.joystick)) g_ctx.path = path;
+    log_guid("Opened", *g_ctx.guid, g_ctx.is_gamepad);
+    return true;
+}
+
+static std::optional<SDL_JoystickID> find_configured_device()
+{
+    int count{};
+    SDL_JoystickID *ids = SDL_GetJoysticks(&count);
+    if (!ids) return std::nullopt;
+
+    std::optional<SDL_JoystickID> result;
+    for (int i = 0; i < count; ++i)
+    {
+        if (new_config.preferred_device_path.has_value())
+        {
+            const char *path = SDL_GetJoystickPathForID(ids[i]);
+            if (path && *new_config.preferred_device_path == path)
+            {
+                result = ids[i];
+                break;
+            }
+        }
+        else if (new_config.preferred_device_guid.has_value() &&
+                 SDL_GetJoystickGUIDForID(ids[i]) == *new_config.preferred_device_guid)
+        {
+            result = ids[i];
+            break;
+        }
+    }
+
+    SDL_free(ids);
+    return result;
 }
 
 static void refresh_registry_and_update_gamepad()
@@ -97,10 +162,18 @@ void GamepadManager::on_sdl_event(const SDL_Event &e)
 {
     switch (e.type)
     {
+    case SDL_EVENT_JOYSTICK_ADDED:
     case SDL_EVENT_GAMEPAD_ADDED:
-    case SDL_EVENT_GAMEPAD_REMOVED:
     case SDL_EVENT_KEYBOARD_ADDED:
     case SDL_EVENT_KEYBOARD_REMOVED:
+        refresh_registry_and_update_gamepad();
+        break;
+    case SDL_EVENT_JOYSTICK_REMOVED:
+        if (g_ctx.gamepad_id == e.jdevice.which) close_gamepad();
+        refresh_registry_and_update_gamepad();
+        break;
+    case SDL_EVENT_GAMEPAD_REMOVED:
+        if (g_ctx.gamepad_id == e.gdevice.which) close_gamepad();
         refresh_registry_and_update_gamepad();
         break;
     default:
@@ -108,24 +181,39 @@ void GamepadManager::on_sdl_event(const SDL_Event &e)
     }
 }
 
+static int16_t get_device_axis(int32_t axis)
+{
+    if (!g_ctx.joystick) return 0;
+    if (g_ctx.is_gamepad) return SDL_GetGamepadAxis(g_ctx.gamepad, static_cast<SDL_GamepadAxis>(axis));
+    return SDL_GetJoystickAxis(g_ctx.joystick, axis);
+}
+
+static bool get_device_button(int32_t button)
+{
+    if (!g_ctx.joystick) return false;
+    if (g_ctx.is_gamepad) return SDL_GetGamepadButton(g_ctx.gamepad, static_cast<SDL_GamepadButton>(button));
+    return SDL_GetJoystickButton(g_ctx.joystick, button);
+}
+
 static bool is_button_held(const ButtonMapping &mapping)
 {
+    if (mapping.hat >= 0)
+    {
+        if (!g_ctx.joystick || g_ctx.is_gamepad || mapping.hat_mask == SDL_HAT_CENTERED) return false;
+        return (SDL_GetJoystickHat(g_ctx.joystick, mapping.hat) & mapping.hat_mask) == mapping.hat_mask;
+    }
+
     if (mapping.axis != SDL_GAMEPAD_AXIS_INVALID)
     {
-        if (g_ctx.gamepad == nullptr) return false;
-        return std::abs(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis)) > AXIS_THRESHOLD;
+        const auto value = get_device_axis(mapping.axis);
+        if (mapping.axis_direction < 0) return value < -AXIS_THRESHOLD;
+        if (mapping.axis_direction > 0) return value > AXIS_THRESHOLD;
+        return std::abs(value) > AXIS_THRESHOLD;
     }
 
-    if (mapping.button != SDL_GAMEPAD_BUTTON_INVALID)
-    {
-        if (g_ctx.gamepad == nullptr) return false;
-        return SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)mapping.button) != 0;
-    }
+    if (mapping.button != SDL_GAMEPAD_BUTTON_INVALID) return get_device_button(mapping.button);
 
-    if (mapping.key != 0)
-    {
-        return (GetAsyncKeyState(mapping.key) & 0x8000) != 0;
-    }
+    if (mapping.key != 0) return (GetAsyncKeyState(mapping.key) & 0x8000) != 0;
 
     return false;
 }
@@ -137,20 +225,12 @@ static int32_t get_axis(const AxisMapping &mapping)
         const auto negative_held = GetAsyncKeyState(mapping.key_negative) & 0x8000;
         const auto positive_held = GetAsyncKeyState(mapping.key_positive) & 0x8000;
 
-        if (mapping.key_negative != 0 && negative_held)
-        {
-            return -128;
-        }
-        if (mapping.key_positive != 0 && positive_held)
-        {
-            return 127;
-        }
+        if (mapping.key_negative != 0 && negative_held) return -128;
+        if (mapping.key_positive != 0 && positive_held) return 127;
         return 0;
     }
 
-    if (g_ctx.gamepad == nullptr) return 0;
-
-    return remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis));
+    return remap_axis(get_device_axis(mapping.axis));
 }
 
 CoreButtons GamepadManager::get_input(const size_t i)
@@ -184,11 +264,7 @@ CoreButtons GamepadManager::get_input(const size_t i)
 
     if (is_button_held(controller_config.mag1))
     {
-        int32_t buttons_x = buttons.x;
-        int32_t buttons_y = buttons.y;
         float stick_mag = sqrtf(static_cast<float>(buttons.x * buttons.x + buttons.y * buttons.y));
-        // if magnitude is 128, this is the maximum magnitude along an axis, so treat it as a special case and don't
-        // scale it down
         if (stick_mag > 0.0f && controller_config.mag1_val < 128)
         {
             buttons.x = static_cast<int8_t>(static_cast<float>(buttons.x) * controller_config.mag1_val / stick_mag);
@@ -211,23 +287,65 @@ CoreButtons GamepadManager::get_input(const size_t i)
 
 void GamepadManager::update_current_gamepad()
 {
-    if (g_ctx.gamepad)
+    if (g_ctx.joystick)
     {
-        if (SDL_GetGamepadGUID(g_ctx.gamepad) == new_config.preferred_device_guid) return;
-        g_plugin->log_info(std::format("Closing gamepad {}", SDL_GetGamepadGUID(g_ctx.gamepad).data).c_str());
-        SDL_CloseGamepad(g_ctx.gamepad);
-        g_ctx.gamepad = nullptr;
+        const bool connected = SDL_JoystickConnected(g_ctx.joystick);
+        const bool same_device =
+            new_config.preferred_device_path.has_value()
+                ? g_ctx.path == new_config.preferred_device_path
+                : new_config.preferred_device_guid.has_value() && g_ctx.guid == new_config.preferred_device_guid;
+        const bool same_api =
+            connected && g_ctx.gamepad_id.has_value() && g_ctx.is_gamepad == SDL_IsGamepad(*g_ctx.gamepad_id);
+        if (connected && same_device && same_api) return;
+
+        if (g_ctx.guid.has_value()) log_guid("Closing", *g_ctx.guid, g_ctx.is_gamepad);
+        close_gamepad();
     }
 
-    if (!new_config.preferred_device_guid.has_value()) return;
+    if (!new_config.preferred_device_path.has_value() && !new_config.preferred_device_guid.has_value()) return;
 
-    g_ctx.gamepad = SDL_OpenGamepadByGUID(*new_config.preferred_device_guid);
-    if (!g_ctx.gamepad)
+    const auto id = find_configured_device();
+    if (!id.has_value())
     {
-        g_plugin->log_info(std::format("Failed to open gamepad {}", *new_config.preferred_device_guid->data).c_str());
+        g_plugin->log_warn("Configured input device is not connected");
         return;
     }
-    g_plugin->log_info(std::format("Opened gamepad {}", *new_config.preferred_device_guid->data).c_str());
+
+    if (!open_device(*id))
+    {
+        g_plugin->log_warn(std::format("Failed to open input device: {}", SDL_GetError()).c_str());
+        return;
+    }
+
+    if (!new_config.preferred_device_path.has_value() && g_ctx.path.has_value())
+        new_config.preferred_device_path = g_ctx.path;
+}
+
+void GamepadManager::select_gamepad(SDL_JoystickID instance_id)
+{
+    new_config.preferred_device_guid = SDL_GetJoystickGUIDForID(instance_id);
+    if (const char *path = SDL_GetJoystickPathForID(instance_id))
+        new_config.preferred_device_path = path;
+    else
+        new_config.preferred_device_path.reset();
+
+    if (!open_device(instance_id))
+        g_plugin->log_warn(std::format("Failed to open selected input device: {}", SDL_GetError()).c_str());
+}
+
+std::optional<SDL_JoystickID> GamepadManager::current_gamepad_id()
+{
+    return g_ctx.gamepad_id;
+}
+
+bool GamepadManager::current_device_is_gamepad()
+{
+    return g_ctx.joystick && g_ctx.is_gamepad;
+}
+
+void GamepadManager::shutdown()
+{
+    close_gamepad();
 }
 
 GamepadManager::DeviceRegistry &GamepadManager::device_registry()
