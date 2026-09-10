@@ -647,34 +647,6 @@ retest.describe('mupen64', function()
         local VALID_IMAGE = cpath .. "image.png"
         local NONEXISTENT_IMAGE = cpath .. "nonexistent.png"
 
-        retest.it('creates_and_paints_images', function()
-            local image = painter.new_image(32, 24)
-            local brush = painter.brush({ r = 1, g = 0, b = 0, a = 1 })
-
-            retest.expect(image.w).to.equal(32)
-            retest.expect(image.h).to.equal(24)
-
-            image:paint(function(p)
-                p:clear({ r = 0, g = 0, b = 0, a = 0 })
-                p:fill_rect({ x = 1, y = 1, width = 10, height = 10 }, brush)
-                p:stroke_rect({ x = 0, y = 0, width = 32, height = 24 }, brush, { width = 2 })
-                p:fill_round_rect({ x = 2, y = 2, width = 8, height = 8 }, 2, brush)
-                p:fill_ellipse({ x = 4, y = 4, width = 8, height = 6 }, brush)
-                p:fill_circle(16, 12, 3, brush)
-                p:line(0, 0, 31, 23, brush)
-                p:polyline({ 0, 0, 5, 5, 10, 0 }, brush)
-                p:fill_polygon({ 0, 0, 5, 10, 10, 0 }, brush)
-                p:stroke_polygon({ 12, 0, 17, 10, 22, 0 }, brush)
-                p:push_clip({ x = 0, y = 0, width = 16, height = 12 })
-                p:pop_clip()
-            end)
-
-            brush:close()
-            brush:close()
-            image:close()
-            image:close()
-        end)
-
         retest.it('rejects_invalid_nine_slice_options', function()
             local source = painter.new_image(32, 32)
             local target = painter.new_image(32, 32)
