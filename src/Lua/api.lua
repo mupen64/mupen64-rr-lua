@@ -1185,8 +1185,8 @@ function wgui.resetclip() end
 ---@class PainterRect
 ---@field x number The x-coordinate of the top-left corner.
 ---@field y number The y-coordinate of the top-left corner.
----@field width number The rectangle width.
----@field height number The rectangle height.
+---@field w number The rectangle width.
+---@field h number The rectangle height.
 
 ---An RGBA color table.
 ---@class PainterColorTable
@@ -1199,11 +1199,6 @@ function wgui.resetclip() end
 ---@alias PainterColor
 ---| PainterColorTable
 ---| string
-
----A fill or stroke paint source: either a reusable [PainterBrush](lua://PainterBrush) or a [PainterColor](lua://PainterColor).
----@alias PainterFill
----| PainterBrush
----| PainterColor
 
 ---A flat list of coordinates in the form `{ x1, y1, x2, y2, ... }`.
 ---A flat representation avoids allocating a table for every point and must contain at least two points.
@@ -1245,14 +1240,14 @@ function wgui.resetclip() end
 ---@field clip boolean? Whether glyphs are clipped to the layout rectangle. Defaults to true.
 
 ---@class PainterTextConstraints
----@field width number? Maximum layout width. If absent, width is unconstrained.
----@field height number? Maximum layout height. If absent, height is unconstrained.
----@field wrap PainterTextWrap? Wrapping mode. Defaults to `"word"` when `width` is present and `"none"` otherwise.
+---@field w number? Maximum layout width. If absent, width is unconstrained.
+---@field h number? Maximum layout height. If absent, height is unconstrained.
+---@field wrap PainterTextWrap? Wrapping mode. Defaults to `"word"` when `w` is present and `"none"` otherwise.
 ---@field max_lines integer? Maximum number of laid-out lines.
 
 ---@class PainterTextMetrics
----@field width number The width of the laid-out text, including trailing whitespace.
----@field height number The height of the laid-out text.
+---@field w number The width of the laid-out text, including trailing whitespace.
+---@field h number The height of the laid-out text.
 ---@field line_count integer The number of laid-out lines.
 ---@field baseline number The first line's baseline measured from the top of the layout.
 ---@field truncated boolean Whether width, height, or `max_lines` truncated the text.
@@ -1266,20 +1261,11 @@ function wgui.resetclip() end
 ---@field sampling PainterSampling? Sampling used when scaling. Defaults to `"linear"`.
 ---@field tint PainterColor? A color multiplied with the image pixels before blending.
 
----An immutable, reusable solid-color brush.
----Resources are garbage-collected, but `close` can be used for deterministic release.
----@class PainterBrush
-local PainterBrush = {}
-
----Releases the brush's native resources. Calling this more than once has no effect.
----Using the brush afterward is an error.
-function PainterBrush:close() end
-
 ---A decoded image which can also be used as a drawing target.
 ---Resources are garbage-collected, but `close` can be used for deterministic release.
 ---@class PainterImage
----@field width integer The natural width in pixels.
----@field height integer The natural height in pixels.
+---@field w integer The natural width in pixels.
+---@field h integer The natural height in pixels.
 local PainterImage = {}
 
 ---Invokes `callback` immediately with a painter targeting this image.
@@ -1290,27 +1276,6 @@ function PainterImage:paint(callback) end
 ---Releases the image's native resources. Calling this more than once has no effect.
 ---Using the image afterward is an error.
 function PainterImage:close() end
-
----An immutable, reusable text style.
----Resources are garbage-collected, but `close` can be used for deterministic release.
----@class PainterTextStyle
-local PainterTextStyle = {}
-
----Releases the text style's native resources. Calling this more than once has no effect.
----Using the style afterward is an error.
-function PainterTextStyle:close() end
-
----Creates a reusable solid-color brush.
----@nodiscard
----@param color PainterColor
----@return PainterBrush
-function painter.brush(color) end
-
----Creates a reusable text style.
----@nodiscard
----@param params PainterTextStyleParams
----@return PainterTextStyle
-function painter.text_style(params) end
 
 ---Creates a transparent image which can be drawn into with [PainterImage:paint](lua://PainterImage.paint).
 ---@nodiscard
@@ -1335,11 +1300,6 @@ function painter.load_image(path) end
 ---@return string? error_message
 function painter.decode_image(data) end
 
----Returns the lowercase names of encoded image formats supported by this implementation, such as `"png"` and `"jpeg"`.
----@nodiscard
----@return string[]
-function painter.image_formats() end
-
 ---The short-lived drawing context supplied to [emu.atpaint](lua://emu.atpaint).
 ---Methods must only be called while the callback which supplied this object is active.
 ---@class Painter
@@ -1350,81 +1310,82 @@ local Painter = {}
 ---@param color PainterColor
 function Painter:clear(color) end
 
----Fills `rect` with `paint`.
----@param rect PainterRect
----@param paint PainterFill
-function Painter:fill_rect(rect, paint) end
+---Begins a new drawing path.
+function Painter:begin_path() end
 
----Strokes the inside edge of `rect`.
+---Ends the current drawing path.
+function Painter:end_path() end
+
+---Saves the current transform.
+function Painter:save() end
+
+---Restores the last transform.
+function Painter:restore() end
+
+---Merges `rect` with the current clip.
+---Can be undone with [Painter:restore](lua://Painter.restore).
 ---@param rect PainterRect
----@param paint PainterFill
+function Painter:clip(rect) end
+
+---Translates the current transform by `x` and `y`.
+---Can be undone with [Painter:restore](lua://Painter.restore).
+---@param x number
+---@param y number
+function Painter:translate(x, y) end
+
+---Rotates the current transform by `angle` radians.
+---Can be undone with [Painter:restore](lua://Painter.restore).
+---@param angle number
+function Painter:rotate(angle) end
+
+---Scales the current transform by `x` and `y`.
+---Can be undone with [Painter:restore](lua://Painter.restore).
+---@param x number
+---@param y number
+function Painter:scale(x, y) end
+
+---Strokes the current path.
+---@param color PainterColor
 ---@param style PainterStrokeStyle?
-function Painter:stroke_rect(rect, paint, style) end
+function Painter:stroke(color, style) end
 
----Fills a rectangle with uniformly rounded corners.
+---Fills the current path.
+---@param color PainterColor
+function Painter:fill(color) end
+
+---Adds text to the current path.
+---@param text string
+---@param rect PainterRect
+---@param style PainterTextStyleParams
+function Painter:text(text, rect, style) end
+
+---Adds a rectangle to the current path.
+---@param rect PainterRect
+function Painter:rect(rect) end
+
+---Adds a rounded rectangle to the current path.
 ---@param rect PainterRect
 ---@param radius number The corner radius. Values are clamped to fit the rectangle.
----@param paint PainterFill
-function Painter:fill_round_rect(rect, radius, paint) end
+function Painter:round_rect(rect, radius) end
 
----Strokes a rectangle with uniformly rounded corners.
+---Adds a circle to the current path.
 ---@param rect PainterRect
----@param radius number The corner radius. Values are clamped to fit the rectangle.
----@param paint PainterFill
----@param style PainterStrokeStyle?
-function Painter:stroke_round_rect(rect, radius, paint, style) end
+function Painter:circle(rect) end
 
----Fills the ellipse inscribed in `rect`.
----@param rect PainterRect
----@param paint PainterFill
-function Painter:fill_ellipse(rect, paint) end
-
----Strokes the ellipse inscribed in `rect`.
----@param rect PainterRect
----@param paint PainterFill
----@param style PainterStrokeStyle?
-function Painter:stroke_ellipse(rect, paint, style) end
-
----Fills a circle.
----@param x number The center x-coordinate.
----@param y number The center y-coordinate.
----@param radius number
----@param paint PainterFill
-function Painter:fill_circle(x, y, radius, paint) end
-
----Strokes a circle.
----@param x number The center x-coordinate.
----@param y number The center y-coordinate.
----@param radius number
----@param paint PainterFill
----@param style PainterStrokeStyle?
-function Painter:stroke_circle(x, y, radius, paint, style) end
-
----Draws a line segment.
+---Adds a line to the current path.
 ---@param x1 number
 ---@param y1 number
 ---@param x2 number
 ---@param y2 number
----@param paint PainterFill
----@param style PainterStrokeStyle?
-function Painter:line(x1, y1, x2, y2, paint, style) end
+function Painter:line(x1, y1, x2, y2) end
 
----Draws connected line segments without closing the shape.
+---Adds connected line segments that don't close a shape to the current path.
 ---@param points PainterPoints
----@param paint PainterFill
----@param style PainterStrokeStyle?
-function Painter:polyline(points, paint, style) end
+function Painter:polyline(points) end
 
----Fills a closed polygon using the non-zero winding rule.
+---Adds a closed polygon using the non-zero winding rule to the current path.
 ---@param points PainterPoints
----@param paint PainterFill
-function Painter:fill_polygon(points, paint) end
-
----Strokes a closed polygon.
----@param points PainterPoints
----@param paint PainterFill
----@param style PainterStrokeStyle?
-function Painter:stroke_polygon(points, paint, style) end
+function Painter:polygon(points) end
 
 ---Draws an image into `destination`.
 ---When `options.center` is provided, the image is drawn in nine slices. Corners remain unscaled, edges scale along one axis, and the center scales along both axes.
@@ -1433,31 +1394,13 @@ function Painter:stroke_polygon(points, paint, style) end
 ---@param options PainterImageOptions?
 function Painter:image(image, destination, options) end
 
----Draws laid-out text inside `rect`.
----Explicit newline characters always start a new line. Text shaping, bidirectional text, and font fallback are implementation responsibilities.
----@param text string
----@param rect PainterRect
----@param style PainterTextStyle
----@param paint PainterFill
----@param layout PainterTextLayout?
-function Painter:text(text, rect, style, paint, layout) end
-
 ---Measures text using the same shaping and wrapping rules as [Painter:text](lua://Painter.text).
----No drawing context is required, so the result may be cached by an implementation.
 ---@nodiscard
 ---@param text string
----@param style PainterTextStyle
+---@param style PainterTextStyleParams
 ---@param constraints PainterTextConstraints?
 ---@return PainterTextMetrics
 function painter.measure_text(text, style, constraints) end
-
----Intersects `rect` with the current clip and pushes the result onto a stack.
----Clips are scoped to this painter and are automatically discarded when its callback returns.
----@param rect PainterRect
-function Painter:push_clip(rect) end
-
----Removes the most recently pushed clip. Calling this without a matching `push_clip` is an error.
-function Painter:pop_clip() end
 
 --#endregion
 

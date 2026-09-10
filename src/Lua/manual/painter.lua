@@ -182,8 +182,8 @@ emu.atpaint(function(p)
             { overflow = "ellipsis", wrap = "none" })
         q:text("clip: this line is too wide", rect(x + 15, y + 39, 155, 22), overflow_style, brushes.green,
             { overflow = "clip", wrap = "none", clip = true })
-        local metrics = painter.measure_text("measure me", loose_style, { width = 100, wrap = "word" })
-        q:text(string.format("%d line(s), %.0f px", metrics.line_count, metrics.width),
+        local metrics = painter.measure_text("measure me", loose_style, { w = 100, wrap = "word" })
+        q:text(string.format("%d line(s), %.0f px", metrics.line_count, metrics.w),
             rect(x + 15, y + 68, 155, 18), label_style, brushes.muted)
     end)
 

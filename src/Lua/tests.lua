@@ -651,8 +651,8 @@ retest.describe('mupen64', function()
             local image = painter.new_image(32, 24)
             local brush = painter.brush({ r = 1, g = 0, b = 0, a = 1 })
 
-            retest.expect(image.width).to.equal(32)
-            retest.expect(image.height).to.equal(24)
+            retest.expect(image.w).to.equal(32)
+            retest.expect(image.h).to.equal(24)
 
             image:paint(function(p)
                 p:clear({ r = 0, g = 0, b = 0, a = 0 })
@@ -681,16 +681,16 @@ retest.describe('mupen64', function()
 
             retest.expect(function()
                 target:paint(function(p)
-                    p:image(source, { x = 0, y = 0, width = 32, height = 32 }, {
-                        center = { x = 15, y = 15, width = 2, height = 2 },
+                    p:image(source, { x = 0, y = 0, w = 32, h = 32 }, {
+                        center = { x = 15, y = 15, w = 2, h = 2 },
                     })
                 end)
             end).to.fail()
             retest.expect(function()
                 target:paint(function(p)
-                    p:image(source, { x = 0, y = 0, width = 32, height = 32 }, {
-                        source = { x = 0, y = 0, width = 32, height = 32 },
-                        center = { x = 31, y = 31, width = 2, height = 2 },
+                    p:image(source, { x = 0, y = 0, w = 32, h = 32 }, {
+                        source = { x = 0, y = 0, w = 32, h = 32 },
+                        center = { x = 31, y = 31, w = 2, h = 2 },
                     })
                 end)
             end).to.fail()
@@ -716,8 +716,8 @@ retest.describe('mupen64', function()
             local image, message = painter.load_image(VALID_IMAGE)
             retest.expect(message).to.equal(nil)
             image = assert(image)
-            retest.expect(image.width > 0).to.equal(true)
-            retest.expect(image.height > 0).to.equal(true)
+            retest.expect(image.w > 0).to.equal(true)
+            retest.expect(image.h > 0).to.equal(true)
             image:close()
         end)
 
