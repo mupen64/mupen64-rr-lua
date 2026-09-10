@@ -1310,11 +1310,54 @@ local Painter = {}
 ---@param color PainterColor
 function Painter:clear(color) end
 
----Begins a new drawing path.
+---Begins a new drawing path, discarding any current path.
+---A path is a sequence of subpaths built by the primitives below. Shape functions such as [Painter:rect](lua://Painter.rect) append subpaths as well.
 function Painter:begin_path() end
 
----Ends the current drawing path.
-function Painter:end_path() end
+---Starts a new subpath at `(x, y)`.
+---@param x number
+---@param y number
+function Painter:move_to(x, y) end
+
+---Adds a line from the current point to `(x, y)`, which becomes the current point.
+---Starts a new subpath at `(x, y)` if there is no current point.
+---@param x number
+---@param y number
+function Painter:line_to(x, y) end
+
+---Adds a cubic Bézier curve from the current point to `(x, y)` with control points `(c1x, c1y)` and `(c2x, c2y)`. `(x, y)` becomes the current point.
+---Starts at `(c1x, c1y)` if there is no current point.
+---@param c1x number
+---@param c1y number
+---@param c2x number
+---@param c2y number
+---@param x number
+---@param y number
+function Painter:cubic_to(c1x, c1y, c2x, c2y, x, y) end
+
+---Adds a quadratic Bézier curve from the current point to `(x, y)` with control point `(cx, cy)`. `(x, y)` becomes the current point.
+---Starts at `(cx, cy)` if there is no current point.
+---@param cx number
+---@param cy number
+---@param x number
+---@param y number
+function Painter:quadratic_to(cx, cy, x, y) end
+
+---Adds a circular arc centered at `(x, y)` from `start_angle` to `end_angle` radians. The arc end point becomes the current point.
+---Angles start at the positive x axis and increase toward the positive y axis, which is clockwise on screen.
+---Adds a line from the current point to the arc start if there is one, otherwise starts a new subpath.
+---With `ccw` the arc sweeps counterclockwise. A zero sweep adds nothing and a full turn adds a full circle.
+---@param x number
+---@param y number
+---@param radius number
+---@param start_angle number
+---@param end_angle number
+---@param ccw boolean? Defaults to false.
+function Painter:arc(x, y, radius, start_angle, end_angle, ccw) end
+
+---Closes the current subpath with a line back to its start point, which becomes the current point.
+---Does nothing if the subpath is empty or already closed. This closes the subpath only. Later primitives start a new subpath.
+function Painter:close_path() end
 
 ---Saves the current transform.
 function Painter:save() end
@@ -1345,11 +1388,13 @@ function Painter:rotate(angle) end
 function Painter:scale(x, y) end
 
 ---Strokes the current path.
+---The path is not consumed and can be stroked or filled again until [Painter:begin_path](lua://Painter.begin_path) replaces it.
 ---@param color PainterColor
 ---@param style PainterStrokeStyle?
 function Painter:stroke(color, style) end
 
 ---Fills the current path.
+---The path is not consumed and can be stroked or filled again until [Painter:begin_path](lua://Painter.begin_path) replaces it.
 ---@param color PainterColor
 function Painter:fill(color) end
 
