@@ -11,6 +11,9 @@
 #include <QJSValue>
 #include <qqmlintegration.h>
 
+/**
+ * Global object for tracking key releases for HeldShortcut.
+ */
 class HeldShortcutMap : public QObject
 {
     Q_OBJECT
@@ -20,7 +23,9 @@ class HeldShortcutMap : public QObject
     HeldShortcutMap(QObject* parent = nullptr);
     virtual ~HeldShortcutMap();
 
+    // Binds a specific key to the provided object.
     Q_INVOKABLE bool addShortcut(Qt::Key key, QObject* object);
+    // Clears all keys bound to this object.
     Q_INVOKABLE void clearShortcuts(QObject* object);
 
     bool eventFilter(QObject *watched, QEvent *event) override;

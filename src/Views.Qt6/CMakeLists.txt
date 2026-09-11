@@ -42,20 +42,31 @@ set(qml_sources
     "Views/MainMenuBar.qml"
     "Views/MainWindow.qml"
 )
-set(qml_singleton_sources
-    "Views/SettingsCore.qml"
-    "Views/SettingsPaths.qml"
+set(qml_settings_sources
+    "Views/Settings/Core.qml"
+    "Views/Settings/Paths.qml"
 )
 set(qml_config_pages
     "Views/Config/EmulationPage.qml"
     "Views/Config/FoldersPage.qml"
 )
-# mark singletons
-set_source_files_properties(${qml_singleton_sources} PROPERTIES
-    QT_QML_SINGLETON_TYPE TRUE
-)
+# rename settings pages and mark singletons
+foreach(item IN LISTS qml_settings_sources)
+    string(REGEX REPLACE
+        "Views/Settings/(.+)\\.qml" "Settings\\1" page_typename
+        "${item}"
+    )
+    set_source_files_properties("${item}" PROPERTIES
+        QT_QML_SOURCE_TYPENAME "${page_typename}"
+        QT_QML_SINGLETON_TYPE TRUE
+    )
+endforeach()
+# rename config type names
 foreach(item IN LISTS qml_config_pages)
-    string(REGEX REPLACE "Views/Config/(.+)\\.qml" "Config\\1" page_typename "${item}")
+    string(REGEX REPLACE
+        "Views/Config/(.+)\\.qml" "Config\\1" page_typename
+        "${item}"
+    )
     # message(STATUS "${item} -> ${page_typename}")
     set_source_files_properties("${item}" PROPERTIES
         QT_QML_SOURCE_TYPENAME "${page_typename}"
@@ -66,7 +77,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6
     URI "Views"
     QML_FILES
         ${qml_sources}
-        ${qml_singleton_sources}
+        ${qml_settings_sources}
         ${qml_config_pages}
 )
 

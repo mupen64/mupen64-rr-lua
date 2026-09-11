@@ -104,7 +104,7 @@ ApplicationWindow {
         onOpenAskDialog: dialogService.queueAskDialog
         onOpenMultiDialog: dialogService.queueMultiDialog
 
-        // config options
+        // Config options
         options.coreType: SettingsCore.coreType
         options.stUndoLoad: SettingsCore.stUndoLoad
         options.maxLag: SettingsCore.maxLag
@@ -124,7 +124,7 @@ ApplicationWindow {
         options.vcrBackups: SettingsCore.vcrBackups
         options.vcrWriteExtendedFormat: SettingsCore.vcrWriteExtendedFormat
 
-        // config paths
+        // Config paths
         paths.romDir: SettingsPaths.romDir
         paths.saveDir: SettingsPaths.saveDir
         paths.screenshotDir: SettingsPaths.screenshotDir
@@ -145,17 +145,6 @@ ApplicationWindow {
         id: dialogService
     }
 
-    // Shortcut {
-    //     sequence: "\\"
-    //     sequences: ["+", "-"]
-    //     Component.onCompleted: {
-    //         console.log(`sequence: ${sequence}`);
-    //         console.log(`sequences: ${sequences}`);
-    //     }
-    //     onActivated: {
-    //         console.log("fired!");
-    //     }
-    // }
     HeldShortcut {
         sequence: "\\"
 

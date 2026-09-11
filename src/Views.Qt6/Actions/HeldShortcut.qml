@@ -19,6 +19,7 @@ Shortcut {
             var allSequences = [root.sequence] + root.sequences;
             return ActionHelpers.sequenceListToKeys(allSequences);
         }
+        property bool active
 
         onAllKeysChanged: {
             HeldShortcutMap.clearShortcuts(root);
@@ -28,7 +29,9 @@ Shortcut {
         }
     }
     // Whether the key(s) are being held or not.
-    property bool active
+    // You should always use this property and onActiveChanged as opposed to the
+    // activated/released signals which may trigger spuriously.
+    readonly property bool active: priv.active
     // True if the current set of sequences is valid.
     // TODO: support multiple keys
     readonly property bool valid: priv.allKeys != null && priv.allKeys.length == 1
@@ -36,9 +39,9 @@ Shortcut {
     signal released()
 
     onActivated: {
-        if (valid) active = true;
+        if (valid) priv.active = true;
     }
     onReleased: {
-        active = false
+        priv.active = false
     }
 }
