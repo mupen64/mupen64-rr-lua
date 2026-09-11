@@ -9,6 +9,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import Actions
 import Core
 import Views
 
@@ -60,12 +61,15 @@ ApplicationWindow {
             // TODO: replace with ROM browser
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Button {
+            // Button {
+            //     anchors.centerIn: parent
+            //     text: "MessageBox test"
+            //     onClicked: {
+            //         dialogService.queueInfoDialog(null, "Hello there.", "General Kenobi! You are a bold one.", CoreMessageTone.Error)
+            //     }
+            // }
+            TextField {
                 anchors.centerIn: parent
-                text: "MessageBox test"
-                onClicked: {
-                    dialogService.queueInfoDialog(null, "Hello there.", "General Kenobi! You are a bold one.", CoreMessageTone.Error)
-                }
             }
         }
         Item {
@@ -82,6 +86,7 @@ ApplicationWindow {
             }
             // TODO: Lua canvas management
         }
+
     }
 
     // Core context
@@ -139,15 +144,23 @@ ApplicationWindow {
     DialogService {
         id: dialogService
     }
-    ConfigDialog {
-        id: diaConfig
-    }
 
-    Shortcut {
-        sequence: "Alt+Z"
+    // Shortcut {
+    //     sequence: "\\"
+    //     sequences: ["+", "-"]
+    //     Component.onCompleted: {
+    //         console.log(`sequence: ${sequence}`);
+    //         console.log(`sequences: ${sequences}`);
+    //     }
+    //     onActivated: {
+    //         console.log("fired!");
+    //     }
+    // }
+    HeldShortcut {
+        sequence: "\\"
 
-        onActivated: {
-            console.log(`mainWindow.active: ${mainWindow.active}`);
+        onActiveChanged: {
+            console.log(`active = ${active}`);
         }
     }
 }

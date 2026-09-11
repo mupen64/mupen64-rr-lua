@@ -7,9 +7,6 @@
 
 #include <QObject>
 #include <QGuiApplication>
-#include <QString>
-#include <QUrl>
-#include <QVariant>
 #include <qqmlintegration.h>
 
 class ApplicationExt : public QObject
@@ -18,7 +15,7 @@ class ApplicationExt : public QObject
     QML_ELEMENT
     QML_SINGLETON
 
-    Q_PROPERTY(bool modalActive READ isModalActive NOTIFY modalWindowChanged)
+    Q_PROPERTY(bool modalActive READ isModalActive NOTIFY modalActiveChanged)
 public:
     explicit ApplicationExt(QObject *parent = nullptr) : QObject(parent) {
         // Force the property to re-evaluate whenever the application's focus shifts

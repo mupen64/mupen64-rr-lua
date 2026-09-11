@@ -14,6 +14,9 @@
 #include <QSettings>
 #include <QtQml/QQmlExtensionPlugin>
 
+#include <QQuickWindow>
+
+Q_IMPORT_QML_PLUGIN(ActionsPlugin)
 Q_IMPORT_QML_PLUGIN(CorePlugin)
 Q_IMPORT_QML_PLUGIN(ComponentsPlugin)
 Q_IMPORT_QML_PLUGIN(ConfigPlugin)
@@ -26,6 +29,7 @@ constexpr QLatin1StringView ORG_DOMAIN = "mupen64.com"_L1;
 constexpr QLatin1StringView ORG_NAME = "Mupen64"_L1;
 constexpr QLatin1StringView DESKTOP_FILE_NAME = "mupen64-rr-lua"_L1;
 constexpr QLatin1StringView DISPLAY_NAME = "Mupen64"_L1;
+
 } // namespace
 
 static int qt_main(int argc, char *argv[])
