@@ -643,6 +643,7 @@ struct TextLayoutCacheKey
     float width{};
     float height{};
     bool ellipsis{};
+    bool fit{};
 
     bool operator==(const TextLayoutCacheKey &) const = default;
 };
@@ -672,6 +673,7 @@ struct TextLayoutCacheKeyHash
         combine(hash, key.width);
         combine(hash, key.height);
         combine(hash, key.ellipsis);
+        combine(hash, key.fit);
         return hash;
     }
 };
@@ -1622,55 +1624,47 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
         const float layout_width = run.fit ? MAX_LAYOUT_SIZE : width;
         const float layout_height = run.fit ? MAX_LAYOUT_SIZE : height;
         const bool layout_ellipsis = run.ellipsis && !run.fit;
-        ComPtr<IDWriteTextLayout> fit_layout;
-        IDWriteTextLayout *layout = nullptr;
-        if (run.fit)
+        const auto layout_alignment = run.fit ? DWRITE_TEXT_ALIGNMENT_LEADING : format_resource.alignment;
+        const auto layout_paragraph_alignment =
+            run.fit ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR : format_resource.paragraph_alignment;
+        const TextLayoutCacheKey key{run.text, format_resource.style, layout_alignment, layout_paragraph_alignment,
+            format_resource.wrapping, layout_width, layout_height, layout_ellipsis, run.fit};
+        const auto cached = cache.get(key);
+        IDWriteTextLayout *layout = cached.has_value() ? cached->Get() : nullptr;
+        if (!layout)
         {
-            ensure_text_factory(text_factory);
-            ComPtr<IDWriteTextFormat> fit_format;
-            create_text_format(text_factory.Get(), format_resource.style, fit_format);
-            need(fit_format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING), "IDWriteTextFormat::SetTextAlignment");
-            need(fit_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR),
-                "IDWriteTextFormat::SetParagraphAlignment");
-            need(fit_format->SetWordWrapping(format_resource.wrapping), "IDWriteTextFormat::SetWordWrapping");
-            const UINT32 length = static_cast<UINT32>(std::min<size_t>(run.text.size(), UINT32_MAX));
-            need(text_factory->CreateTextLayout(
-                     run.text.data(), length, fit_format.Get(), layout_width, layout_height, &fit_layout),
-                "IDWriteFactory::CreateTextLayout");
-            need(fit_layout, "IDWriteFactory::CreateTextLayout returned null");
-            apply_text_style(fit_layout.Get(), format_resource.style, length);
-            layout = fit_layout.Get();
-        }
-        else
-        {
-            const TextLayoutCacheKey key{run.text, format_resource.style, format_resource.alignment,
-                format_resource.paragraph_alignment, format_resource.wrapping, layout_width, layout_height,
-                layout_ellipsis};
-            const auto cached = cache.get(key);
-            layout = cached.has_value() ? cached->Get() : nullptr;
-            if (!layout)
+            ComPtr<IDWriteTextFormat> format;
+            if (run.fit)
             {
-                ComPtr<IDWriteTextFormat> format;
-                realize_text_format(painter, run.format, text_factory, format);
-                const UINT32 length = static_cast<UINT32>(std::min<size_t>(run.text.size(), UINT32_MAX));
-                ComPtr<IDWriteTextLayout> new_layout;
-                need(text_factory->CreateTextLayout(
-                         run.text.data(), length, format.Get(), layout_width, layout_height, &new_layout),
-                    "IDWriteFactory::CreateTextLayout");
-                need(new_layout, "IDWriteFactory::CreateTextLayout returned null");
-                apply_text_style(new_layout.Get(), format_resource.style, length);
-                if (layout_ellipsis)
-                {
-                    ComPtr<IDWriteInlineObject> ellipsis;
-                    need(text_factory->CreateEllipsisTrimmingSign(format.Get(), &ellipsis),
-                        "IDWriteFactory::CreateEllipsisTrimmingSign");
-                    need(ellipsis, "IDWriteFactory::CreateEllipsisTrimmingSign returned null");
-                    const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
-                    need(new_layout->SetTrimming(&trimming, ellipsis.Get()), "IDWriteTextLayout::SetTrimming");
-                }
-                layout = new_layout.Get();
-                cache.add(key, std::move(new_layout));
+                ensure_text_factory(text_factory);
+                create_text_format(text_factory.Get(), format_resource.style, format);
+                need(format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING), "IDWriteTextFormat::SetTextAlignment");
+                need(format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR),
+                    "IDWriteTextFormat::SetParagraphAlignment");
+                need(format->SetWordWrapping(format_resource.wrapping), "IDWriteTextFormat::SetWordWrapping");
             }
+            else
+            {
+                realize_text_format(painter, run.format, text_factory, format);
+            }
+            const UINT32 length = static_cast<UINT32>(std::min<size_t>(run.text.size(), UINT32_MAX));
+            ComPtr<IDWriteTextLayout> new_layout;
+            need(text_factory->CreateTextLayout(
+                     run.text.data(), length, format.Get(), layout_width, layout_height, &new_layout),
+                "IDWriteFactory::CreateTextLayout");
+            need(new_layout, "IDWriteFactory::CreateTextLayout returned null");
+            apply_text_style(new_layout.Get(), format_resource.style, length);
+            if (layout_ellipsis)
+            {
+                ComPtr<IDWriteInlineObject> ellipsis;
+                need(text_factory->CreateEllipsisTrimmingSign(format.Get(), &ellipsis),
+                    "IDWriteFactory::CreateEllipsisTrimmingSign");
+                need(ellipsis, "IDWriteFactory::CreateEllipsisTrimmingSign returned null");
+                const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
+                need(new_layout->SetTrimming(&trimming, ellipsis.Get()), "IDWriteTextLayout::SetTrimming");
+            }
+            layout = new_layout.Get();
+            cache.add(key, std::move(new_layout));
         }
 
         if (!run.fit)
