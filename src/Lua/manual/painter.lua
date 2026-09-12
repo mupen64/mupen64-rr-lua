@@ -128,6 +128,18 @@ end
 
 local STROKE_SIMPLE <const> = { width = 2 }
 
+local function animated_stroke(style, time, phase)
+    local animated = {}
+    for key, value in pairs(style) do
+        animated[key] = value
+    end
+    animated.width = style.width * (0.82 + 0.24 * (0.5 + 0.5 * math.sin(time * 1.7 + phase)))
+    if style.dashes then
+        animated.dash_offset = (style.dash_offset or 0) + time * 8
+    end
+    return animated
+end
+
 local rows = {}
 
 local function shape_row(name, signature, path, stroke_a, stroke_b)
@@ -192,8 +204,15 @@ custom_row("text", "text(value, r, style)", {
     {
         caption = "weight / slant / decorations",
         draw = function(q, x, y)
-            draw_text(q, "bold", rect(x + 15, y + 16, 155, 18), bold_style, colors.text)
-            draw_text(q, "italic", rect(x + 15, y + 37, 155, 18), italic_style, colors.blue)
+            local time = os.clock()
+            draw_text(q, "bold", rect(x + 15, y + 16, 155, 18),
+                { size = 10 + 5 * (0.5 + 0.5 * math.sin(time * 2.0)), weight = 700 }, colors.text)
+            draw_text(q, "italic", rect(x + 15, y + 37, 155, 18),
+                {
+                    size = 10 + 4 * (0.5 + 0.5 * math.sin(time * 2.4 + 1)),
+                    slant = "italic",
+                    letter_spacing = 2 * (0.5 + 0.5 * math.sin(time * 1.3))
+                }, colors.blue)
             draw_text(q, "underline + strike", rect(x + 15, y + 58, 155, 20), decorated_style, colors.orange)
         end,
     },
@@ -257,7 +276,12 @@ custom_row("image", "image(image, destination, options)", {
     {
         caption = "opacity / tint",
         draw = function(q, x, y)
-            q:image(generated, rect(x + 34, y + 16, 116, 76), { opacity = 0.55, tint = color(0.75, 0.55, 0.65) })
+            local time = os.clock()
+            local opacity = 0.35 + 0.65 * (0.5 + 0.5 * math.sin(time * 1.4))
+            local tint = color(0.60 + 0.35 * (0.5 + 0.5 * math.sin(time * 1.1)),
+                0.45 + 0.40 * (0.5 + 0.5 * math.sin(time * 1.7 + 1)),
+                0.55 + 0.35 * (0.5 + 0.5 * math.sin(time * 1.3 + 2)))
+            q:image(generated, rect(x + 34, y + 16, 116, 76), { opacity = opacity, tint = tint })
         end,
     },
     {
@@ -269,11 +293,15 @@ custom_row("image", "image(image, destination, options)", {
     {
         caption = "load_image / decode_image",
         draw = function(q, x, y)
+            local time = os.clock()
             if loaded then
-                q:image(loaded, rect(x + 20, y + 28, 66, 52), { opacity = 0.85 })
+                q:image(loaded, rect(x + 20, y + 28, 66, 52),
+                    { opacity = 0.55 + 0.40 * (0.5 + 0.5 * math.sin(time * 1.6)) })
             end
             if decoded then
-                q:image(decoded, rect(x + 99, y + 28, 66, 52), { tint = color(0.55, 0.70, 0.72) })
+                q:image(decoded, rect(x + 99, y + 28, 66, 52), {
+                    tint = color(0.45 + 0.45 * (0.5 + 0.5 * math.sin(time * 1.2)), 0.70, 0.72),
+                })
             end
         end,
     },
@@ -295,9 +323,14 @@ custom_row("render target", "PainterImage:paint(callback)", {
     {
         caption = "render target",
         draw = function(q, x, y)
+            local time = os.clock()
             q:image(rt, rect(x + 24, y + 16, 48, 48))
-            q:image(rt, rect(x + 84, y + 16, 72, 72), { opacity = 0.85 })
-            q:image(rt, rect(x + 24, y + 74, 24, 24), { tint = color(0.60, 0.80, 0.70) })
+            q:image(rt, rect(x + 84, y + 16, 72, 72), {
+                opacity = 0.45 + 0.45 * (0.5 + 0.5 * math.sin(time * 1.5)),
+            })
+            q:image(rt, rect(x + 24, y + 74, 24, 24), {
+                tint = color(0.45 + 0.40 * (0.5 + 0.5 * math.sin(time * 1.1)), 0.80, 0.70),
+            })
         end,
     },
     {
@@ -328,13 +361,15 @@ custom_row("misc", "state, transforms and colors", {
     {
         caption = "translate / rotate / scale",
         draw = function(q, x, y)
+            local time = os.clock()
             q:save()
-            q:translate(x + 92, y + 50)
-            q:rotate(math.pi / 8)
-            q:scale(1.4, 0.8)
+            q:translate(x + 92 + 10 * math.sin(time * 1.1), y + 50 + 7 * math.cos(time * 1.4))
+            q:rotate(math.pi / 8 + 0.35 * math.sin(time * 0.9))
+            q:scale(1.15 + 0.35 * (0.5 + 0.5 * math.sin(time * 1.3)),
+                0.65 + 0.30 * (0.5 + 0.5 * math.cos(time * 1.7)))
             q:begin_path()
             q:round_rect(rect(-50, -22, 100, 44), 10)
-            q:fill(colors.blue)
+            q:fill(color(0.35 + 0.35 * (0.5 + 0.5 * math.sin(time * 1.2)), 0.63, 0.72))
             q:restore()
         end,
     },
@@ -409,14 +444,15 @@ end
 local function paint_variant(q, row, x, y, mode)
     q:begin_path()
     row.path(q, x, y, mode)
+    local time = os.clock()
     if mode == "fill" then
         q:fill(colors.orange)
     elseif mode == "stroke" then
-        q:stroke(colors.blue, STROKE_SIMPLE)
+        q:stroke(colors.blue, animated_stroke(STROKE_SIMPLE, time, 0))
     elseif mode == "complex_a" then
-        q:stroke(colors.green, row.stroke_a)
+        q:stroke(colors.green, animated_stroke(row.stroke_a, time, 0.8))
     else
-        q:stroke(colors.purple, row.stroke_b)
+        q:stroke(colors.purple, animated_stroke(row.stroke_b, time, 1.6))
     end
 end
 
