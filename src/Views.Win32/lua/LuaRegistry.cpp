@@ -105,7 +105,8 @@ const luaL_Reg WGUI_FUNCS[] = {{"setbrush", LuaCore::Wgui::set_brush}, {"setpen"
 const luaL_Reg PAINTER_FUNCS[] = {{"new_image", LuaCore::Painter::new_image},
     {"load_image", LuaCore::Painter::load_image}, {"decode_image", LuaCore::Painter::decode_image},
     {"image_formats", LuaCore::Painter::image_formats}, {"measure_text", LuaCore::Painter::measure_text},
-    {"hittest_text", LuaCore::Painter::hittest_text}, {NULL, NULL}};
+    {"hittest_text_position", LuaCore::Painter::hittest_text_position},
+    {"hitest_text_index", LuaCore::Painter::hitest_text_index}, {NULL, NULL}};
 
 const luaL_Reg INPUT_FUNCS[] = {{"get", LuaCore::Input::get_keys}, {"diff", LuaCore::Input::GetKeyDifference},
     {"prompt", LuaCore::Input::prompt}, {"get_key_name_text", LuaCore::Input::LuaGetKeyNameText}, {NULL, NULL}};

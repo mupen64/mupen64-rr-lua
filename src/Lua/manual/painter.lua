@@ -55,6 +55,16 @@ local overflow_clip_style = { size = 16, overflow = "clip", wrap = "none", clip 
 local arabic_hit_style = { size = 10, align_x = "right", wrap = "none" }
 local arabic_hit_label_style = { size = 9, align_x = "center" }
 local arabic_hit_text = "مرحبا بالعالم\nهذا اختبار للنص العربي\nاختبار تحديد موضع المؤشر"
+local arabic_hit_indices = {}
+do
+    local offset = 1
+    while offset <= #arabic_hit_text do
+        arabic_hit_indices[#arabic_hit_indices + 1] = offset
+        local first = string.byte(arabic_hit_text, offset)
+        offset = offset + (first < 0x80 and 1 or first < 0xE0 and 2 or first < 0xF0 and 3 or 4)
+    end
+    arabic_hit_indices[#arabic_hit_indices + 1] = #arabic_hit_text + 1
+end
 
 local function draw_text(p, value, r, style, fill)
     p:begin_path()
@@ -250,7 +260,7 @@ custom_row("text", "text(value, r, style)", {
     },
 })
 
-custom_row("text hit-test", "painter.hittest_text(text, x, y, style, options)", {
+custom_row("text hit-test", "painter.hittest_text_position(text, x, y, style, options)", {
     {
         caption = "RTL / multiline caret probes",
         draw = function(q, x, y)
@@ -266,18 +276,42 @@ custom_row("text hit-test", "painter.hittest_text(text, x, y, style, options)", 
             }
             local caret_colors = { colors.orange, colors.blue, colors.green }
             for i, point in ipairs(probes) do
-                local hit = painter.hittest_text(arabic_hit_text, point.x - bounds.x, point.y - bounds.y,
+                local hit = painter.hittest_text_position(arabic_hit_text, point.x - bounds.x, point.y - bounds.y,
                     arabic_hit_style, { w = bounds.w, h = bounds.h, wrap = "none", align_x = "right" })
                 if hit.inside then
-                    local line_y = bounds.y + (hit.line - 1) * 16
+                    local position = painter.hitest_text_index(arabic_hit_text, hit.index, arabic_hit_style,
+                        { w = bounds.w, h = bounds.h, wrap = "none", align_x = "right" })
+                    local caret_x = bounds.x + position.x
+                    local caret_y = bounds.y + position.y
                     q:begin_path()
-                    q:move_to(point.x, line_y)
-                    q:line_to(point.x, line_y + 14)
+                    q:move_to(caret_x, caret_y)
+                    q:line_to(caret_x, caret_y + 14)
                     q:stroke(caret_colors[i], { width = 2 })
                 end
                 draw_text(q, hit.inside and tostring(hit.index) or "-",
                     rect(x + 14 + (i - 1) * 48, y + 83, 40, 14), arabic_hit_label_style, caret_colors[i])
             end
+        end,
+    },
+    {
+        caption = "sweeping index to caret",
+        draw = function(q, x, y)
+            local bounds = rect(x + 15, y + 9, 155, 68)
+            draw_text(q, arabic_hit_text, bounds, arabic_hit_style, colors.text)
+
+            local time = os.clock()
+            local progress = 0.5 + 0.5 * math.sin(time * 0.9)
+            local index_number = 1 + math.floor(progress * (#arabic_hit_indices - 1))
+            local index = arabic_hit_indices[index_number]
+            local position = painter.hitest_text_index(arabic_hit_text, index, arabic_hit_style,
+                { w = bounds.w, h = bounds.h, wrap = "none", align_x = "right" })
+            local caret_x = bounds.x + position.x
+            local caret_y = bounds.y + position.y
+            q:begin_path()
+            q:move_to(caret_x, caret_y)
+            q:line_to(caret_x, caret_y + 14)
+            q:stroke(colors.orange, { width = 2 })
+            draw_text(q, tostring(index), rect(x + 60, y + 83, 65, 14), arabic_hit_label_style, colors.orange)
         end,
     },
 })

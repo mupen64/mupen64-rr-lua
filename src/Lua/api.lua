@@ -1266,6 +1266,11 @@ function wgui.resetclip() end
 ---@field line integer One-based laid-out line number.
 ---@field inside boolean Whether the point is inside the text layout.
 
+---@class PainterTextPositionResult
+---@field x number X-coordinate of the insertion position relative to the layout.
+---@field y number Y-coordinate of the insertion position relative to the layout.
+---@field line integer One-based laid-out line number.
+
 ---@alias PainterSampling "nearest"|"linear"
 
 ---@class PainterImageOptions
@@ -1469,7 +1474,16 @@ function painter.measure_text(text, style, constraints) end
 ---@param style PainterTextStyleParams
 ---@param options PainterTextHitTestOptions?
 ---@return PainterTextHitTestResult
-function painter.hittest_text(text, x, y, style, options) end
+function painter.hittest_text_position(text, x, y, style, options) end
+
+---Returns the layout coordinate for a byte insertion index in a UTF-8 Lua string.
+---@nodiscard
+---@param text string
+---@param index integer 1-based byte index into `text` at a UTF-8 codepoint boundary. The value after the final byte is valid.
+---@param style PainterTextStyleParams
+---@param options PainterTextHitTestOptions?
+---@return PainterTextPositionResult
+function painter.hitest_text_index(text, index, style, options) end
 
 --#endregion
 
