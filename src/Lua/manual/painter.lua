@@ -52,6 +52,9 @@ local wrap_justify_style = { size = 16, weight = 700, align_x = "justify", wrap 
 local wrap_character_style = { size = 16, weight = 700, wrap = "character" }
 local overflow_ellipsis_style = { size = 16, overflow = "ellipsis", wrap = "none" }
 local overflow_clip_style = { size = 16, overflow = "clip", wrap = "none", clip = true }
+local arabic_hit_style = { size = 10, align_x = "right", wrap = "none" }
+local arabic_hit_label_style = { size = 9, align_x = "center" }
+local arabic_hit_text = "مرحبا بالعالم\nهذا اختبار للنص العربي\nاختبار تحديد موضع المؤشر"
 
 local function draw_text(p, value, r, style, fill)
     p:begin_path()
@@ -243,6 +246,38 @@ custom_row("text", "text(value, r, style)", {
             local metrics = painter.measure_text("measure me", loose_style, { w = 100, wrap = "word" })
             draw_text(q, string.format("%d line(s), %.0f px", metrics.line_count, metrics.w),
                 rect(x + 15, y + 66, 155, 18), label_style, colors.muted)
+        end,
+    },
+})
+
+custom_row("text hit-test", "painter.hittest_text(text, x, y, style, options)", {
+    {
+        caption = "RTL / multiline caret probes",
+        draw = function(q, x, y)
+            local bounds = rect(x + 15, y + 9, 155, 68)
+            draw_text(q, arabic_hit_text, bounds, arabic_hit_style, colors.text)
+
+            local time = os.clock()
+            local sweep_width = bounds.w - 24
+            local probes = {
+                { x = bounds.x + 12 + sweep_width * (0.5 + 0.5 * math.sin(time * 1.1)), y = bounds.y + 6 },
+                { x = bounds.x + 12 + sweep_width * (0.5 + 0.5 * math.sin(time * 1.1 + 2.1)), y = bounds.y + 22 },
+                { x = bounds.x + 12 + sweep_width * (0.5 + 0.5 * math.sin(time * 1.1 + 4.2)), y = bounds.y + 38 },
+            }
+            local caret_colors = { colors.orange, colors.blue, colors.green }
+            for i, point in ipairs(probes) do
+                local hit = painter.hittest_text(arabic_hit_text, point.x - bounds.x, point.y - bounds.y,
+                    arabic_hit_style, { w = bounds.w, h = bounds.h, wrap = "none", align_x = "right" })
+                if hit.inside then
+                    local line_y = bounds.y + (hit.line - 1) * 16
+                    q:begin_path()
+                    q:move_to(point.x, line_y)
+                    q:line_to(point.x, line_y + 14)
+                    q:stroke(caret_colors[i], { width = 2 })
+                end
+                draw_text(q, hit.inside and tostring(hit.index) or "-",
+                    rect(x + 14 + (i - 1) * 48, y + 83, 40, 14), arabic_hit_label_style, caret_colors[i])
+            end
         end,
     },
 })

@@ -1254,6 +1254,18 @@ function wgui.resetclip() end
 ---@field baseline number The first line's baseline measured from the top of the layout.
 ---@field truncated boolean Whether width, height, or `max_lines` truncated the text.
 
+---@class PainterTextHitTestOptions
+---@field w number? Layout width. If absent, width is unconstrained.
+---@field h number? Layout height. If absent, height is unconstrained.
+---@field wrap PainterTextWrap? Wrapping mode. Defaults to `"word"` when `w` is present and `"none"` otherwise.
+---@field align_x PainterTextHorizontalAlign? Horizontal alignment. Defaults to `"left"`.
+---@field align_y PainterTextVerticalAlign? Vertical alignment. Defaults to `"top"`.
+
+---@class PainterTextHitTestResult
+---@field index integer 1-based byte index into the original Lua UTF-8 string. The value after the final byte is the string length plus one.
+---@field line integer One-based laid-out line number.
+---@field inside boolean Whether the point is inside the text layout.
+
 ---@alias PainterSampling "nearest"|"linear"
 
 ---@class PainterImageOptions
@@ -1448,6 +1460,16 @@ function Painter:image(image, destination, options) end
 ---@param constraints PainterTextConstraints?
 ---@return PainterTextMetrics
 function painter.measure_text(text, style, constraints) end
+
+---Hittests text at a point.
+---@nodiscard
+---@param text string
+---@param x number
+---@param y number
+---@param style PainterTextStyleParams
+---@param options PainterTextHitTestOptions?
+---@return PainterTextHitTestResult
+function painter.hittest_text(text, x, y, style, options) end
 
 --#endregion
 
@@ -2223,7 +2245,7 @@ function __mupen_apply_shims()
                            options, brush)
         local slant = fontstyle == 2 and "italic" or fontstyle == 1 and "oblique" or "normal"
         local align_x = horizalign == 1 and "right" or horizalign == 2 and "center" or horizalign == 3 and "justify" or
-        "left"
+            "left"
         local align_y = vertalign == 1 and "bottom" or vertalign == 2 and "center" or "top"
         local clipped = ((options or 0) & 0x2) ~= 0
         with_path(function(p)

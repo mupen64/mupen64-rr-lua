@@ -2059,6 +2059,137 @@ inline int measure_text(lua_State *L)
     return 1;
 }
 
+inline int hittest_text(lua_State *L)
+{
+    const auto lua_text = luaL_checkstlstring(L, 1);
+    const auto text = luaL_checkstlwstring(L, 1);
+    const float point_x = Detail::check_coordinate(L, 2, "x");
+    const float point_y = Detail::check_coordinate(L, 3, "y");
+    const auto style = Detail::check_text_style(L, 4);
+    float width = Detail::MAX_LAYOUT_SIZE;
+    float height = Detail::MAX_LAYOUT_SIZE;
+    bool has_width = false;
+    std::string wrap = "none";
+    DWRITE_TEXT_ALIGNMENT alignment = DWRITE_TEXT_ALIGNMENT_LEADING;
+    DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
+    if (!lua_isnoneornil(L, 5))
+    {
+        luaL_checktype(L, 5, LUA_TTABLE);
+        const int absolute = lua_absindex(L, 5);
+        lua_getfield(L, absolute, "w");
+        if (!lua_isnil(L, -1))
+        {
+            width = luaL_checkfinitenumber(L, -1, "w");
+            if (width < 0) luaL_error(L, "text constraint width must be non-negative");
+            width = std::min(width, Detail::MAX_LAYOUT_SIZE);
+            has_width = true;
+        }
+        lua_pop(L, 1);
+        lua_getfield(L, absolute, "h");
+        if (!lua_isnil(L, -1))
+        {
+            height = luaL_checkfinitenumber(L, -1, "h");
+            if (height < 0) luaL_error(L, "text constraint height must be non-negative");
+            height = std::min(height, Detail::MAX_LAYOUT_SIZE);
+        }
+        lua_pop(L, 1);
+        wrap = luaL_tablestring(L, absolute, "wrap", has_width ? "word" : "none");
+        const auto align_x = luaL_tablestring(L, absolute, "align_x", "left");
+        if (align_x == "left")
+            alignment = DWRITE_TEXT_ALIGNMENT_LEADING;
+        else if (align_x == "center")
+            alignment = DWRITE_TEXT_ALIGNMENT_CENTER;
+        else if (align_x == "right")
+            alignment = DWRITE_TEXT_ALIGNMENT_TRAILING;
+        else if (align_x == "justify")
+            alignment = DWRITE_TEXT_ALIGNMENT_JUSTIFIED;
+        else
+            luaL_error(L, "invalid horizontal text alignment '%s'", align_x.c_str());
+        const auto align_y = luaL_tablestring(L, absolute, "align_y", "top");
+        if (align_y == "top")
+            paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
+        else if (align_y == "center")
+            paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
+        else if (align_y == "bottom")
+            paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_FAR;
+        else
+            luaL_error(L, "invalid vertical text alignment '%s'", align_y.c_str());
+    }
+
+    const DWRITE_WORD_WRAPPING wrapping = Detail::parse_wrap(L, wrap);
+    ComPtr<IDWriteFactory> factory;
+    Detail::create_text_factory(factory);
+    ComPtr<IDWriteTextFormat> format;
+    Detail::create_text_format(factory.Get(), style, format);
+    need(format->SetTextAlignment(alignment), "IDWriteTextFormat::SetTextAlignment");
+    need(format->SetParagraphAlignment(paragraph_alignment), "IDWriteTextFormat::SetParagraphAlignment");
+    need(format->SetWordWrapping(wrapping), "IDWriteTextFormat::SetWordWrapping");
+
+    ComPtr<IDWriteTextLayout> layout;
+    const UINT32 length = static_cast<UINT32>(std::min<size_t>(text.size(), UINT32_MAX));
+    need(factory->CreateTextLayout(text.data(), length, format.Get(), width, height, &layout),
+        "IDWriteFactory::CreateTextLayout");
+    need(layout, "IDWriteFactory::CreateTextLayout returned null");
+    Detail::apply_text_style(layout.Get(), style, length);
+
+    BOOL is_trailing_hit = FALSE;
+    BOOL is_inside = FALSE;
+    DWRITE_HIT_TEST_METRICS hit{};
+    need(layout->HitTestPoint(point_x, point_y, &is_trailing_hit, &is_inside, &hit), "IDWriteTextLayout::HitTestPoint");
+
+    UINT32 line = 1;
+    UINT32 line_count{};
+    layout->GetLineMetrics(nullptr, 0, &line_count);
+    std::vector<DWRITE_LINE_METRICS> lines(line_count);
+    if (line_count)
+    {
+        HRESULT hr = layout->GetLineMetrics(lines.data(), line_count, &line_count);
+        need(hr, "IDWriteTextLayout::GetLineMetrics");
+        UINT32 line_start = 0;
+        for (UINT32 i = 0; i < line_count; ++i)
+        {
+            if (hit.textPosition < line_start + lines[i].length || i + 1 == line_count)
+            {
+                line = i + 1;
+                break;
+            }
+            line_start += lines[i].length;
+        }
+    }
+
+    const UINT32 hit_position = std::min(hit.textPosition, length);
+    const UINT32 hit_end = hit.length > length - hit_position ? length : hit_position + hit.length;
+    const UINT32 caret_position = is_trailing_hit ? hit_end : hit_position;
+    const auto lua_index = [&lua_text](UINT32 utf16_position) {
+        size_t code_units = 0;
+        size_t byte_offset = 0;
+        while (byte_offset < lua_text.size() && code_units < utf16_position)
+        {
+            const auto first = static_cast<unsigned char>(lua_text[byte_offset]);
+            size_t byte_length = 1;
+            if (first >= 0xF0)
+                byte_length = 4;
+            else if (first >= 0xE0)
+                byte_length = 3;
+            else if (first >= 0xC0)
+                byte_length = 2;
+            const size_t utf16_length = byte_length == 4 ? 2 : 1;
+            if (code_units + utf16_length > utf16_position) break;
+            code_units += utf16_length;
+            byte_offset += byte_length;
+        }
+        return static_cast<lua_Integer>(byte_offset + 1);
+    };
+    lua_createtable(L, 0, 2);
+    lua_pushinteger(L, lua_index(caret_position));
+    lua_setfield(L, -2, "index");
+    lua_pushinteger(L, static_cast<lua_Integer>(line));
+    lua_setfield(L, -2, "line");
+    lua_pushboolean(L, is_inside != FALSE);
+    lua_setfield(L, -2, "inside");
+    return 1;
+}
+
 inline void register_types(lua_State *L)
 {
     static const luaL_Reg image_methods[] = {
