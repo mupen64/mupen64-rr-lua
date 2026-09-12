@@ -227,6 +227,26 @@ custom_row("text", "text(value, r, style)", {
     },
 })
 
+custom_row("fit text", "text(value, r, { fit = true })", {
+    {
+        caption = "uniform scale to fit",
+        draw = function(q, x, y)
+            local time = os.clock()
+            local width = 48 + (112 * (0.5 + 0.5 * math.sin(time * 2.5)))
+            local height = 22 + (62 * (0.5 + 0.5 * math.sin(time * 3.2 + 1.2)))
+            local bounds = rect(x + (TILE_W - width) / 2, y + 14 + (68 - height) / 2, width, height)
+            q:begin_path()
+            q:round_rect(bounds, 6)
+            q:fill(color(0.20, 0.24, 0.30, 0.8))
+            q:begin_path()
+            q:round_rect(bounds, 6)
+            q:stroke(colors.blue, { width = 1 })
+            draw_text(q, "uniform fit", bounds,
+                { size = 28, fit = true, align_x = "center", align_y = "center", wrap = "none" }, colors.text)
+        end,
+    },
+})
+
 custom_row("image", "image(image, destination, options)", {
     {
         caption = "sampling = nearest",

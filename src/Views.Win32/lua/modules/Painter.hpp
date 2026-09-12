@@ -155,6 +155,7 @@ struct TextRun
     D2D1_RECT_F rect{};
     UINT32 format{};
     bool ellipsis{};
+    bool fit{};
     D2D1_DRAW_TEXT_OPTIONS options{D2D1_DRAW_TEXT_OPTIONS_NONE};
 };
 
@@ -1422,6 +1423,7 @@ inline int painter_text(lua_State *L)
     run.rect = rect;
     run.format = intern_text_format(painter, style, alignment, paragraph_alignment, wrapping);
     run.ellipsis = overflow == "ellipsis";
+    run.fit = luaL_tablebool(L, 4, "fit", false);
     if (clip && overflow != "visible") run.options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
     painter->path_texts.push_back(std::move(run));
     return 0;
@@ -1690,7 +1692,7 @@ inline void realize_text_format(
 }
 
 inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, ID2D1SolidColorBrush *brush,
-    ComPtr<IDWriteFactory> &text_factory, TextLayoutCache &cache)
+    ComPtr<IDWriteFactory> &text_factory, TextLayoutCache &cache, const D2D1::Matrix3x2F &command_transform)
 {
     for (const auto &run : runs)
     {
@@ -1699,30 +1701,90 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
         const float height = run.rect.bottom - run.rect.top;
         if (!(width > 0) || !(height > 0)) continue;
         const auto &format_resource = painter->text_formats[run.format];
-        IDWriteTextLayout *layout = cache.get(run.text, format_resource, width, height, run.ellipsis);
-        if (!layout)
+        const float layout_width = run.fit ? MAX_LAYOUT_SIZE : width;
+        const float layout_height = run.fit ? MAX_LAYOUT_SIZE : height;
+        const bool layout_ellipsis = run.ellipsis && !run.fit;
+        ComPtr<IDWriteTextLayout> fit_layout;
+        IDWriteTextLayout *layout = nullptr;
+        if (run.fit)
         {
-            ComPtr<IDWriteTextFormat> format;
-            realize_text_format(painter, run.format, text_factory, format);
+            ensure_text_factory(text_factory);
+            ComPtr<IDWriteTextFormat> fit_format;
+            create_text_format(text_factory.Get(), format_resource.style, fit_format);
+            need(fit_format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING), "IDWriteTextFormat::SetTextAlignment");
+            need(fit_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR),
+                "IDWriteTextFormat::SetParagraphAlignment");
+            need(fit_format->SetWordWrapping(format_resource.wrapping), "IDWriteTextFormat::SetWordWrapping");
             const UINT32 length = static_cast<UINT32>(std::min<size_t>(run.text.size(), UINT32_MAX));
-            ComPtr<IDWriteTextLayout> new_layout;
-            need(text_factory->CreateTextLayout(run.text.data(), length, format.Get(), width, height, &new_layout),
+            need(text_factory->CreateTextLayout(
+                     run.text.data(), length, fit_format.Get(), layout_width, layout_height, &fit_layout),
                 "IDWriteFactory::CreateTextLayout");
-            need(new_layout, "IDWriteFactory::CreateTextLayout returned null");
-            apply_text_style(new_layout.Get(), format_resource.style, length);
-            if (run.ellipsis)
-            {
-                ComPtr<IDWriteInlineObject> ellipsis;
-                need(text_factory->CreateEllipsisTrimmingSign(format.Get(), &ellipsis),
-                    "IDWriteFactory::CreateEllipsisTrimmingSign");
-                need(ellipsis, "IDWriteFactory::CreateEllipsisTrimmingSign returned null");
-                const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
-                need(new_layout->SetTrimming(&trimming, ellipsis.Get()), "IDWriteTextLayout::SetTrimming");
-            }
-            layout = new_layout.Get();
-            cache.add(run.text, format_resource, width, height, run.ellipsis, std::move(new_layout));
+            need(fit_layout, "IDWriteFactory::CreateTextLayout returned null");
+            apply_text_style(fit_layout.Get(), format_resource.style, length);
+            layout = fit_layout.Get();
         }
-        painter->target->DrawTextLayout(D2D1::Point2F(run.rect.left, run.rect.top), layout, brush, run.options);
+        else
+        {
+            layout = cache.get(run.text, format_resource, layout_width, layout_height, layout_ellipsis);
+            if (!layout)
+            {
+                ComPtr<IDWriteTextFormat> format;
+                realize_text_format(painter, run.format, text_factory, format);
+                const UINT32 length = static_cast<UINT32>(std::min<size_t>(run.text.size(), UINT32_MAX));
+                ComPtr<IDWriteTextLayout> new_layout;
+                need(text_factory->CreateTextLayout(
+                         run.text.data(), length, format.Get(), layout_width, layout_height, &new_layout),
+                    "IDWriteFactory::CreateTextLayout");
+                need(new_layout, "IDWriteFactory::CreateTextLayout returned null");
+                apply_text_style(new_layout.Get(), format_resource.style, length);
+                if (layout_ellipsis)
+                {
+                    ComPtr<IDWriteInlineObject> ellipsis;
+                    need(text_factory->CreateEllipsisTrimmingSign(format.Get(), &ellipsis),
+                        "IDWriteFactory::CreateEllipsisTrimmingSign");
+                    need(ellipsis, "IDWriteFactory::CreateEllipsisTrimmingSign returned null");
+                    const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
+                    need(new_layout->SetTrimming(&trimming, ellipsis.Get()), "IDWriteTextLayout::SetTrimming");
+                }
+                layout = new_layout.Get();
+                cache.add(
+                    run.text, format_resource, layout_width, layout_height, layout_ellipsis, std::move(new_layout));
+            }
+        }
+
+        if (!run.fit)
+        {
+            painter->target->DrawTextLayout(D2D1::Point2F(run.rect.left, run.rect.top), layout, brush, run.options);
+            continue;
+        }
+
+        DWRITE_TEXT_METRICS metrics{};
+        need(layout->GetMetrics(&metrics), "IDWriteTextLayout::GetMetrics");
+        const float scale = std::min(1.0f,
+            std::min(
+                metrics.widthIncludingTrailingWhitespace > 0 ? width / metrics.widthIncludingTrailingWhitespace : 1.0f,
+                metrics.height > 0 ? height / metrics.height : 1.0f));
+        float x = run.rect.left;
+        float y = run.rect.top;
+        const float fitted_width = metrics.widthIncludingTrailingWhitespace * scale;
+        const float fitted_height = metrics.height * scale;
+        if (format_resource.alignment == DWRITE_TEXT_ALIGNMENT_CENTER)
+            x += (width - fitted_width) * 0.5f;
+        else if (format_resource.alignment == DWRITE_TEXT_ALIGNMENT_TRAILING)
+            x += width - fitted_width;
+        if (format_resource.paragraph_alignment == DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
+            y += (height - fitted_height) * 0.5f;
+        else if (format_resource.paragraph_alignment == DWRITE_PARAGRAPH_ALIGNMENT_FAR)
+            y += height - fitted_height;
+
+        if (scale != 1.0f)
+        {
+            painter->target->SetTransform(D2D1::Matrix3x2F::Scale(scale, scale) * command_transform);
+            x /= scale;
+            y /= scale;
+        }
+        painter->target->DrawTextLayout(D2D1::Point2F(x, y), layout, brush, run.options);
+        if (scale != 1.0f) painter->target->SetTransform(command_transform);
     }
 }
 
@@ -1826,7 +1888,7 @@ inline void execute_commands(Painter *painter)
         if (command.type == CommandType::FillPath)
         {
             if (geometry) painter->target->FillGeometry(geometry.Get(), brush);
-            draw_text_runs(painter, payload.texts, brush, text_factory, *text_layout_cache);
+            draw_text_runs(painter, payload.texts, brush, text_factory, *text_layout_cache, command.transform);
         }
         else
         {
