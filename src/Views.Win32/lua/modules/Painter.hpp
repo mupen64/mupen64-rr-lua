@@ -1627,49 +1627,6 @@ inline int painter_image(lua_State *L)
     return 0;
 }
 
-// Command optimization.
-
-inline bool is_provable_noop(const Painter *painter, const Command &command)
-{
-    switch (command.type)
-    {
-    case CommandType::FillPath:
-    case CommandType::StrokePath: {
-        if (painter->brushes[command.brush].color.a == 0) return true;
-        const auto &payload = painter->paths[command.path];
-        if (!payload.ops.empty()) return false;
-        for (const auto &text : payload.texts)
-            if (!text.text.empty()) return false;
-        return true;
-    }
-    case CommandType::Image: {
-        const auto &payload = painter->image_payloads[command.payload];
-        return payload.slices.empty() || payload.opacity == 0 || (payload.tinted && payload.tint.a == 0);
-    }
-    default:
-        return false;
-    }
-}
-
-inline void optimize_commands(Painter *painter)
-{
-    size_t latest_clear = painter->commands.size();
-    for (size_t i = 0; i < painter->commands.size(); ++i)
-        if (painter->commands[i].type == CommandType::Clear) latest_clear = i;
-
-    std::vector<Command> optimized;
-    optimized.reserve(painter->commands.size());
-    for (size_t i = 0; i < painter->commands.size(); ++i)
-    {
-        auto command = std::move(painter->commands[i]);
-        const bool is_clip = command.type == CommandType::PushClip || command.type == CommandType::PopClip;
-        if (latest_clear != painter->commands.size() && i < latest_clear && !is_clip) continue;
-        if (is_provable_noop(painter, command)) continue;
-        optimized.push_back(std::move(command));
-    }
-    painter->commands = std::move(optimized);
-}
-
 // Command execution.
 
 inline void ensure_d2d_factory(Painter *painter, ComPtr<ID2D1Factory> &factory)
@@ -1959,11 +1916,7 @@ inline int screen_paint(lua_State *L)
     lua_pushvalue(L, 1);
     auto *painter = push_painter(L, context, target);
     const int status = lua_pcall(L, 1, 0, 0);
-    if (status == LUA_OK)
-    {
-        optimize_commands(painter);
-        execute_commands(painter);
-    }
+    if (status == LUA_OK) execute_commands(painter);
     invalidate_painter(painter);
     const HRESULT hr = target->EndDraw();
 
@@ -1985,11 +1938,7 @@ inline int image_paint(lua_State *L)
     lua_pushvalue(L, 2);
     auto *painter = push_painter(L, context, image->target.Get());
     const int status = lua_pcall(L, 1, 0, 0);
-    if (status == LUA_OK)
-    {
-        optimize_commands(painter);
-        execute_commands(painter);
-    }
+    if (status == LUA_OK) execute_commands(painter);
     invalidate_painter(painter);
     context->d2d_render_target_stack.pop();
     const HRESULT hr = image->target->EndDraw();
