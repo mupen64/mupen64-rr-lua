@@ -104,8 +104,9 @@ if file then
 end
 
 local TILE_W, TILE_H = 185, 125
-local GAP = 14
+local GAP = 0
 local MARGIN = 14
+local BOTTOM_MARGIN = 40
 local HEADER_W = 132
 local SCROLLBAR_W = 12
 local WHEEL_STEP = 70
@@ -489,7 +490,7 @@ local function draw_scrollbar(p, view_w, view_h, max_scroll)
         return
     end
     local track_x <const> = view_w - SCROLLBAR_W - 8
-    local track_h <const> = view_h - 2 * MARGIN
+    local track_h = view_h - MARGIN - BOTTOM_MARGIN
     if track_h <= 0 then
         return
     end
@@ -510,7 +511,7 @@ emu.atmouse(function(ev)
         return
     end
     ev.y_wheel = -ev.y_wheel
-    local max_scroll = math.max(0, CONTENT_H - wgui.info().height + 30)
+    local max_scroll = math.max(0, CONTENT_H - wgui.info().height + BOTTOM_MARGIN)
     if max_scroll <= 0 then
         return
     end
@@ -521,7 +522,7 @@ end)
 emu.atpaint(function(p)
     local info = wgui.info()
     local view_w, view_h = info.width, info.height
-    local max_scroll = math.max(0, CONTENT_H - view_h + 30)
+    local max_scroll = math.max(0, CONTENT_H - view_h + BOTTOM_MARGIN)
     if scroll_y > max_scroll then
         scroll_y = max_scroll
     end
