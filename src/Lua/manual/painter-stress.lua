@@ -52,21 +52,23 @@ local PALETTE <const> = {
     color(0.10, 0.85, 0.85, 0.32),
 }
 local TEXT_STYLE <const> = { size = 18 }
+local STRING_COUNT <const> = 128
 
 local SMALL_STYLE <const> = { size = 13 }
 
 local MEASURE_IDENTICAL_TEXT <const> = "This is an identical string measured repeatedly."
 local MEASURE_DIFFERENT_TEXT <const> = {}
-for i = 1, 500 do
+for i = 1, STRING_COUNT do
     MEASURE_DIFFERENT_TEXT[i] = string.format("This is different string number %04d.", i)
 end
 
 local TEXT_OPTIONS <const> = { overflow = "visible", wrap = "none", clip = false }
 local TEXT_STYLE_WITH_OPTIONS <const> = merge(TEXT_STYLE, TEXT_OPTIONS)
+local TEXT_STYLE_WITH_FIT <const> = merge(TEXT_STYLE_WITH_OPTIONS, { fit = true })
 local TEXT_DIFFERENT <const> = {}
 local TEXT_CELLS_LEFT <const> = {}
 local TEXT_CELLS_RIGHT <const> = {}
-for i = 1, 500 do
+for i = 1, STRING_COUNT do
     TEXT_DIFFERENT[i] = string.format("value %05d / item %03d", 10000 + i, i)
     local cell = (i - 1) % 50
     local column = cell % 5
@@ -201,21 +203,26 @@ local function draw_primitives(p)
 end
 
 local function draw_text_cells(p)
-    for i = 1, 500 do
+    for i = 1, STRING_COUNT do
         local c = PALETTE[((i + frame) % #PALETTE) + 1]
         paint_text(p, TEXT_DIFFERENT[i], TEXT_CELLS_LEFT[i], TEXT_STYLE_WITH_OPTIONS, c)
     end
 
-    for i = 1, 500 do
+    for i = 1, STRING_COUNT do
         paint_text(p, TEXT_IDENTICAL, TEXT_CELLS_RIGHT[i], TEXT_STYLE_WITH_OPTIONS,
             PALETTE[(i % #PALETTE) + 1])
+    end
+
+    for i = 1, STRING_COUNT do
+        paint_text(p, TEXT_IDENTICAL, TEXT_CELLS_RIGHT[i], TEXT_STYLE_WITH_FIT,
+            PALETTE[((i + 2) % #PALETTE) + 1])
     end
 end
 
 local function draw_measure_text(p)
     local identical_lines = 0
     local identical_start = os.clock()
-    for _ = 1, 500 do
+    for _ = 1, STRING_COUNT do
         local metrics = painter.measure_text(MEASURE_IDENTICAL_TEXT, TEXT_STYLE)
         identical_lines = identical_lines + metrics.line_count
     end
@@ -223,7 +230,7 @@ local function draw_measure_text(p)
 
     local different_lines = 0
     local different_start = os.clock()
-    for i = 1, 500 do
+    for i = 1, STRING_COUNT do
         local metrics = painter.measure_text(MEASURE_DIFFERENT_TEXT[i], TEXT_STYLE)
         different_lines = different_lines + metrics.line_count
     end
@@ -231,13 +238,13 @@ local function draw_measure_text(p)
 
     paint_text(p, "measure_text stress test", MEASURE_TITLE_RECT, TEXT_STYLE, WHITE)
 
-    paint_text(p, "500 identical strings", MEASURE_IDENTICAL_TITLE_RECT, TEXT_STYLE, PALETTE[2])
+    paint_text(p, "128 identical strings", MEASURE_IDENTICAL_TITLE_RECT, TEXT_STYLE, PALETTE[2])
     paint_text(p, string.format("time: %.2f ms", identical_time_ms), MEASURE_IDENTICAL_TIME_RECT,
         SMALL_STYLE, WHITE)
     paint_text(p, string.format("total lines: %d", identical_lines), MEASURE_IDENTICAL_LINES_RECT,
         SMALL_STYLE, WHITE)
 
-    paint_text(p, "500 different strings", MEASURE_DIFFERENT_TITLE_RECT, TEXT_STYLE, PALETTE[3])
+    paint_text(p, "128 different strings", MEASURE_DIFFERENT_TITLE_RECT, TEXT_STYLE, PALETTE[3])
     paint_text(p, string.format("time: %.2f ms", different_time_ms), MEASURE_DIFFERENT_TIME_RECT,
         SMALL_STYLE, WHITE)
     paint_text(p, string.format("total lines: %d", different_lines), MEASURE_DIFFERENT_LINES_RECT,
