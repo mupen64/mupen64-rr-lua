@@ -8,9 +8,8 @@
 #include <Common.Views/App.hpp>
 
 #include <Common.Views/Messages.hpp>
-#include <microlru.h>
-
 #include <Common.Views/Config.hpp>
+#include <Common/LRUCache.hpp>
 
 using ActionParam = ActionManager::ActionParam;
 using ActionAddParams = ActionManager::ActionAddParams;
@@ -38,10 +37,8 @@ struct ActionManagerContext
     bool batched_work{};
     bool work_happened{};
     bool lock_hotkeys{};
-    MicroLRU::Cache<action_filter, std::vector<std::string>> segment_cache{
-        256, [](const std::vector<std::string> &) {}};
-    MicroLRU::Cache<action_filter, std::vector<Action *>> filter_result_cache{
-        256, [](const std::vector<Action *> &) {}};
+    LRU::Cache<action_filter, std::vector<std::string>> segment_cache{256, [](const std::vector<std::string> &) {}};
+    LRU::Cache<action_filter, std::vector<Action *>> filter_result_cache{256, [](const std::vector<Action *> &) {}};
 };
 
 static ActionManagerContext g_mgr{};

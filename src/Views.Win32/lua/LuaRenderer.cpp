@@ -96,23 +96,8 @@ static void draw_lua(bool force)
 
         bool success = true;
 
-        // D2D Graphics
-        if (!lua->rctx.presenter)
-        {
-            // NOTE: We have to invoke the callback because we're waiting for the script to issue a d2d call
-            success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
-        }
-        else
-        {
-            const auto dc = lua->rctx.presenter->dc();
-            dc->BeginDraw();
-            dc->SetTransform(D2D1::Matrix3x2F::Identity());
-
-            success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
-            dc->EndDraw();
-
-            lua->rctx.presenter->present();
-        }
+        success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATPAINT);
+        if (lua->rctx.presenter) lua->rctx.presenter->present();
 
         // GDI Graphics. Ugh.
         success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATUPDATESCREEN);
@@ -395,8 +380,8 @@ void LuaRenderer::destroy_renderer(LuaRenderingContext *ctx)
         delete bmp;
     }
 
-    ctx->dw_text_layouts.clear();
-    ctx->dw_text_sizes.clear();
+    ctx->painter_text_layouts.reset();
+    ctx->painter_text_measurements.reset();
     ctx->image_pool.clear();
     ctx->d2d_render_target_stack = {};
 
@@ -431,8 +416,6 @@ void LuaRenderer::ensure_d2d_renderer_created(LuaRenderingContext *ctx)
 
     g_view_logger->trace("[Lua] Creating D2D renderer...");
 
-    DWriteCreateFactory(
-        DWRITE_FACTORY_TYPE_SHARED, __uuidof(ctx->dw_factory), reinterpret_cast<IUnknown **>(&ctx->dw_factory));
 
     if (g_config.presenter_type != (int32_t)Config::PresenterType::GDI)
         ctx->presenter = new DCompPresenter();
@@ -448,8 +431,6 @@ void LuaRenderer::ensure_d2d_renderer_created(LuaRenderingContext *ctx)
     }
 
     ctx->d2d_render_target_stack.push(ctx->presenter->dc());
-    ctx->dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout *>(512, [&](auto value) { value->Release(); });
-    ctx->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
 }
 
 void LuaRenderer::mark_gdi_content_present(LuaRenderingContext *ctx)
