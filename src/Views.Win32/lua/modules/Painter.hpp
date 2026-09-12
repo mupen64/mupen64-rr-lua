@@ -44,7 +44,6 @@ constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 2048;
 constexpr std::uint64_t TEXT_LAYOUT_CACHE_MAX_UNUSED_GENERATIONS = 120;
 constexpr size_t TEXT_MEASUREMENT_CACHE_CAPACITY = 2048;
 
-
 struct Image
 {
     ComPtr<ID2D1BitmapRenderTarget> target;
@@ -186,16 +185,44 @@ enum class CommandType : std::uint8_t
 
 struct Command
 {
+    struct ClearData
+    {
+        D2D1_COLOR_F color;
+    };
+    struct ClipData
+    {
+        D2D1_RECT_F bounds;
+    };
+    struct PathData
+    {
+        D2D1_MATRIX_3X2_F transform;
+        D2D1_COLOR_F color;
+        UINT32 brush;
+        UINT32 stroke;
+        UINT32 path;
+    };
+    struct ImageData
+    {
+        D2D1_MATRIX_3X2_F transform;
+        UINT32 resource;
+        UINT32 payload;
+    };
+
     CommandType type{};
-    D2D1::Matrix3x2F transform = D2D1::Matrix3x2F::Identity();
-    D2D1_RECT_F bounds{};
-    D2D1_COLOR_F color{};
-    UINT32 brush{};
-    UINT32 stroke{};
-    UINT32 path{};
-    UINT32 resource{};
-    UINT32 payload{};
+    union {
+        ClearData clear;
+        ClipData clip;
+        PathData path;
+        ImageData image;
+    };
+
+    Command() : type(CommandType::Clear), clear{} {}
 };
+
+inline D2D1::Matrix3x2F to_matrix(const D2D1_MATRIX_3X2_F &matrix)
+{
+    return D2D1::Matrix3x2F(matrix._11, matrix._12, matrix._21, matrix._22, matrix._31, matrix._32);
+}
 
 struct StateSnapshot
 {
@@ -299,8 +326,7 @@ inline void validate_transform(lua_State *L, const D2D1::Matrix3x2F &transform)
 {
     const float values[] = {transform._11, transform._12, transform._21, transform._22, transform._31, transform._32};
     for (const float value : values)
-        if (!std::isfinite(value) || std::fabs(value) > MAX_LAYOUT_SIZE)
-            luaL_error(L, "transform is out of range");
+        if (!std::isfinite(value) || std::fabs(value) > MAX_LAYOUT_SIZE) luaL_error(L, "transform is out of range");
 }
 
 inline D2D1_RECT_F check_rect(lua_State *L, int index)
@@ -430,8 +456,7 @@ inline Stroke check_stroke(lua_State *L, int index)
     luaL_checktype(L, index, LUA_TTABLE);
     result.specified = true;
     result.width = luaL_tablenumber(L, index, "width", 1);
-    if (!(result.width > 0) || result.width > MAX_LAYOUT_SIZE)
-        luaL_error(L, "stroke width is out of range");
+    if (!(result.width > 0) || result.width > MAX_LAYOUT_SIZE) luaL_error(L, "stroke width is out of range");
 
     const auto cap = parse_cap(L, luaL_tablestring(L, index, "cap", "butt"));
     const auto join = parse_join(L, luaL_tablestring(L, index, "join", "miter"));
@@ -520,8 +545,7 @@ inline TextStyle check_text_style(lua_State *L, int index)
     style.underline = luaL_tablebool(L, absolute, "underline", false);
     style.strikethrough = luaL_tablebool(L, absolute, "strikethrough", false);
     style.letter_spacing = luaL_tablenumber(L, absolute, "letter_spacing", 0);
-    if (std::fabs(style.letter_spacing) > MAX_LAYOUT_SIZE)
-        luaL_error(L, "letter_spacing is out of range");
+    if (std::fabs(style.letter_spacing) > MAX_LAYOUT_SIZE) luaL_error(L, "letter_spacing is out of range");
     lua_getfield(L, absolute, "line_height");
     if (!lua_isnil(L, -1))
     {
@@ -1229,10 +1253,12 @@ inline void emit_path_command(Painter *painter, CommandType type, const D2D1_COL
 {
     Command command{};
     command.type = type;
-    command.transform = painter->transform;
-    command.brush = intern_brush(painter, color);
-    command.stroke = stroke;
-    command.path = static_cast<UINT32>(painter->paths.size());
+    command.path.transform = {painter->transform._11, painter->transform._12, painter->transform._21,
+        painter->transform._22, painter->transform._31, painter->transform._32};
+    command.path.color = color;
+    command.path.brush = intern_brush(painter, color);
+    command.path.stroke = stroke;
+    command.path.path = static_cast<UINT32>(painter->paths.size());
     painter->paths.push_back({painter->path_ops, painter->path_texts});
     painter->commands.push_back(std::move(command));
 }
@@ -1268,7 +1294,7 @@ inline int painter_clear(lua_State *L)
     auto *painter = check_painter(L, 1);
     Command command{};
     command.type = CommandType::Clear;
-    command.color = check_color(L, 2);
+    command.clear.color = check_color(L, 2);
     painter->commands.push_back(std::move(command));
     return 0;
 }
@@ -1298,9 +1324,9 @@ inline int painter_line_to(lua_State *L)
 inline int painter_cubic_to(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    painter->path_ops.push_back(make_cubic(check_coordinate(L, 2, "c1x"), check_coordinate(L, 3, "c1y"),
-        check_coordinate(L, 4, "c2x"), check_coordinate(L, 5, "c2y"), check_coordinate(L, 6, "x"),
-        check_coordinate(L, 7, "y")));
+    painter->path_ops.push_back(
+        make_cubic(check_coordinate(L, 2, "c1x"), check_coordinate(L, 3, "c1y"), check_coordinate(L, 4, "c2x"),
+            check_coordinate(L, 5, "c2y"), check_coordinate(L, 6, "x"), check_coordinate(L, 7, "y")));
     return 0;
 }
 
@@ -1360,7 +1386,7 @@ inline int painter_clip(lua_State *L)
     const D2D1_RECT_F device = transform_rect(painter->transform, check_rect(L, 2));
     Command command{};
     command.type = CommandType::PushClip;
-    command.bounds = device;
+    command.clip.bounds = device;
     painter->commands.push_back(std::move(command));
     painter->clips.push_back(device);
     return 0;
@@ -1619,9 +1645,10 @@ inline int painter_image(lua_State *L)
     const UINT32 image_resource = intern_image(painter, *image);
     Command command{};
     command.type = CommandType::Image;
-    command.transform = painter->transform;
-    command.resource = image_resource;
-    command.payload = static_cast<UINT32>(painter->image_payloads.size());
+    command.image.transform = {painter->transform._11, painter->transform._12, painter->transform._21,
+        painter->transform._22, painter->transform._31, painter->transform._32};
+    command.image.resource = image_resource;
+    command.image.payload = static_cast<UINT32>(painter->image_payloads.size());
     painter->image_payloads.push_back({std::move(slices), tint, opacity, interpolation, tinted});
     painter->commands.push_back(std::move(command));
     return 0;
@@ -1834,8 +1861,8 @@ inline void execute_commands(Painter *painter)
         if (command.type == CommandType::PushClip)
         {
             painter->target->SetTransform(D2D1::Matrix3x2F::Identity());
-            painter->target->PushAxisAlignedClip(command.bounds, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-            active_clips.push_back(command.bounds);
+            painter->target->PushAxisAlignedClip(command.clip.bounds, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+            active_clips.push_back(command.clip.bounds);
             continue;
         }
         if (command.type == CommandType::PopClip)
@@ -1851,32 +1878,33 @@ inline void execute_commands(Painter *painter)
         {
             painter->target->SetTransform(D2D1::Matrix3x2F::Identity());
             for (size_t i = 0; i < active_clips.size(); ++i) painter->target->PopAxisAlignedClip();
-            painter->target->Clear(command.color);
+            painter->target->Clear(command.clear.color);
             for (const auto &clip : active_clips)
                 painter->target->PushAxisAlignedClip(clip, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
             continue;
         }
 
-        painter->target->SetTransform(command.transform);
+        painter->target->SetTransform(
+            command.type == CommandType::Image ? command.image.transform : command.path.transform);
 
         if (command.type == CommandType::Image)
         {
-            const auto &payload = painter->image_payloads[command.payload];
+            const auto &payload = painter->image_payloads[command.image.payload];
             if (!payload.tinted)
             {
                 for (const auto &slice : payload.slices)
-                    painter->target->DrawBitmap(painter->images[command.resource].bitmap.Get(), slice.destination,
+                    painter->target->DrawBitmap(painter->images[command.image.resource].bitmap.Get(), slice.destination,
                         payload.opacity, payload.interpolation, slice.source);
             }
             else
-                execute_tinted_image(painter, command.resource, payload, command.transform);
+                execute_tinted_image(painter, command.image.resource, payload, to_matrix(command.image.transform));
             continue;
         }
 
         ID2D1SolidColorBrush *brush = nullptr;
-        realize_brush(painter, command.brush, &brush);
+        realize_brush(painter, command.path.brush, &brush);
 
-        const auto &payload = painter->paths[command.path];
+        const auto &payload = painter->paths[command.path.path];
         ComPtr<ID2D1PathGeometry> geometry;
         if (!payload.ops.empty())
         {
@@ -1887,13 +1915,14 @@ inline void execute_commands(Painter *painter)
         if (command.type == CommandType::FillPath)
         {
             if (geometry) painter->target->FillGeometry(geometry.Get(), brush);
-            draw_text_runs(painter, payload.texts, brush, text_factory, *text_layout_cache, command.transform);
+            draw_text_runs(
+                painter, payload.texts, brush, text_factory, *text_layout_cache, to_matrix(command.path.transform));
         }
         else
         {
             ID2D1StrokeStyle *stroke_style = nullptr;
             float stroke_width = 1.0f;
-            realize_stroke(painter, command.stroke, d2d_factory, &stroke_style, &stroke_width);
+            realize_stroke(painter, command.path.stroke, d2d_factory, &stroke_style, &stroke_width);
             if (geometry) painter->target->DrawGeometry(geometry.Get(), brush, stroke_width, stroke_style);
         }
     }
@@ -2039,8 +2068,7 @@ inline int measure_text(lua_State *L)
         if (!lua_isnil(L, -1))
         {
             width = luaL_checkfinitenumber(L, -1, "w");
-            if (width < 0 || width > Detail::MAX_LAYOUT_SIZE)
-                luaL_error(L, "text constraint width is out of range");
+            if (width < 0 || width > Detail::MAX_LAYOUT_SIZE) luaL_error(L, "text constraint width is out of range");
             has_width = true;
         }
         lua_pop(L, 1);
@@ -2048,8 +2076,7 @@ inline int measure_text(lua_State *L)
         if (!lua_isnil(L, -1))
         {
             height = luaL_checkfinitenumber(L, -1, "h");
-            if (height < 0 || height > Detail::MAX_LAYOUT_SIZE)
-                luaL_error(L, "text constraint height is out of range");
+            if (height < 0 || height > Detail::MAX_LAYOUT_SIZE) luaL_error(L, "text constraint height is out of range");
             has_height = true;
         }
         lua_pop(L, 1);
