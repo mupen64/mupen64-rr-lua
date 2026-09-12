@@ -8,6 +8,7 @@
 
 #include <Common.hpp>
 #include <Common/Assert.hpp>
+#include <Common/LRUCache.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/LuaRenderer.hpp>
 
@@ -18,13 +19,10 @@
 #include <dwrite_1.h>
 #include <format>
 #include <iterator>
-#include <limits>
-#include <list>
 #include <memory>
 #include <new>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -41,7 +39,7 @@ constexpr const char *IMAGE_MT = "mupen64.PainterImage";
 constexpr const char *PAINTER_MT = "mupen64.Painter";
 constexpr float MAX_LAYOUT_SIZE = 10000000.0f;
 constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 2048;
-constexpr std::uint64_t TEXT_LAYOUT_CACHE_MAX_UNUSED_GENERATIONS = 120;
+
 constexpr size_t TEXT_MEASUREMENT_CACHE_CAPACITY = 2048;
 
 struct Image
@@ -645,122 +643,46 @@ struct TextLayoutCacheKey
     float width{};
     float height{};
     bool ellipsis{};
+
+    bool operator==(const TextLayoutCacheKey &) const = default;
 };
 
-class TextLayoutCache
+struct TextLayoutCacheKeyHash
 {
-  public:
-    ~TextLayoutCache() { clear(); }
-
-    void begin_generation()
-    {
-        if (m_generation == std::numeric_limits<std::uint64_t>::max())
-        {
-            m_generation = 1;
-            for (auto &entry : m_lru) entry.generation = 0;
-        }
-        else
-        {
-            ++m_generation;
-        }
-
-        while (!m_lru.empty() && m_generation - m_lru.back().generation > TEXT_LAYOUT_CACHE_MAX_UNUSED_GENERATIONS)
-            evict(std::prev(m_lru.end()));
-    }
-
-    IDWriteTextLayout *get(
-        const std::wstring &text, const TextFormatResource &format, float width, float height, bool ellipsis)
-    {
-        const size_t hash = hash_key(text, format, width, height, ellipsis);
-        const auto [first, last] = m_index.equal_range(hash);
-        for (auto candidate = first; candidate != last; ++candidate)
-        {
-            const auto entry = candidate->second;
-            if (!equal_key(entry->key, text, format, width, height, ellipsis)) continue;
-            entry->generation = m_generation;
-            m_lru.splice(m_lru.begin(), m_lru, entry);
-            return entry->layout.Get();
-        }
-        return nullptr;
-    }
-
-    void add(const std::wstring &text, const TextFormatResource &format, float width, float height, bool ellipsis,
-        ComPtr<IDWriteTextLayout> layout)
-    {
-        const size_t hash = hash_key(text, format, width, height, ellipsis);
-        TextLayoutCacheKey key{
-            text, format.style, format.alignment, format.paragraph_alignment, format.wrapping, width, height, ellipsis};
-        m_lru.push_front({std::move(key), std::move(layout), m_generation, hash});
-        m_index.emplace(hash, m_lru.begin());
-        while (m_lru.size() > TEXT_LAYOUT_CACHE_CAPACITY) evict(std::prev(m_lru.end()));
-    }
-
-    void clear()
-    {
-        m_index.clear();
-        m_lru.clear();
-        m_generation = 0;
-    }
-
-  private:
-    struct Entry
-    {
-        TextLayoutCacheKey key{};
-        ComPtr<IDWriteTextLayout> layout;
-        std::uint64_t generation{};
-        size_t hash{};
-    };
-
-    template <typename T> static void hash_combine(size_t &seed, const T &value)
+    template <typename T> static void combine(size_t &seed, const T &value)
     {
         seed ^= std::hash<T>{}(value) + static_cast<size_t>(0x9e3779b9) + (seed << 6) + (seed >> 2);
     }
 
-    static size_t hash_key(
-        const std::wstring &text, const TextFormatResource &format, float width, float height, bool ellipsis)
+    size_t operator()(const TextLayoutCacheKey &key) const
     {
-        size_t hash = std::hash<std::wstring>{}(text);
-        hash_combine(hash, format.style.family);
-        hash_combine(hash, format.style.size);
-        hash_combine(hash, static_cast<int>(format.style.weight));
-        hash_combine(hash, static_cast<int>(format.style.slant));
-        hash_combine(hash, format.style.underline);
-        hash_combine(hash, format.style.strikethrough);
-        hash_combine(hash, format.style.letter_spacing);
-        hash_combine(hash, format.style.line_height);
-        hash_combine(hash, format.style.has_line_height);
-        hash_combine(hash, static_cast<int>(format.alignment));
-        hash_combine(hash, static_cast<int>(format.paragraph_alignment));
-        hash_combine(hash, static_cast<int>(format.wrapping));
-        hash_combine(hash, width);
-        hash_combine(hash, height);
-        hash_combine(hash, ellipsis);
+        size_t hash = std::hash<std::wstring>{}(key.text);
+        combine(hash, key.style.family);
+        combine(hash, key.style.size);
+        combine(hash, static_cast<int>(key.style.weight));
+        combine(hash, static_cast<int>(key.style.slant));
+        combine(hash, key.style.underline);
+        combine(hash, key.style.strikethrough);
+        combine(hash, key.style.letter_spacing);
+        combine(hash, key.style.line_height);
+        combine(hash, key.style.has_line_height);
+        combine(hash, static_cast<int>(key.alignment));
+        combine(hash, static_cast<int>(key.paragraph_alignment));
+        combine(hash, static_cast<int>(key.wrapping));
+        combine(hash, key.width);
+        combine(hash, key.height);
+        combine(hash, key.ellipsis);
         return hash;
     }
+};
 
-    static bool equal_key(const TextLayoutCacheKey &key, const std::wstring &text, const TextFormatResource &format,
-        float width, float height, bool ellipsis)
-    {
-        return key.text == text && key.style == format.style && key.alignment == format.alignment &&
-               key.paragraph_alignment == format.paragraph_alignment && key.wrapping == format.wrapping &&
-               key.width == width && key.height == height && key.ellipsis == ellipsis;
-    }
+class TextLayoutCache : public LRU::Cache<TextLayoutCacheKey, ComPtr<IDWriteTextLayout>, TextLayoutCacheKeyHash>
+{
+    using Base = LRU::Cache<TextLayoutCacheKey, ComPtr<IDWriteTextLayout>, TextLayoutCacheKeyHash>;
 
-    void evict(std::list<Entry>::iterator entry)
-    {
-        const auto [first, last] = m_index.equal_range(entry->hash);
-        for (auto candidate = first; candidate != last; ++candidate)
-        {
-            if (candidate->second != entry) continue;
-            m_index.erase(candidate);
-            break;
-        }
-        m_lru.erase(entry);
-    }
-
-    std::uint64_t m_generation{};
-    std::list<Entry> m_lru;
-    std::unordered_multimap<size_t, std::list<Entry>::iterator> m_index;
+  public:
+    TextLayoutCache() : Base(TEXT_LAYOUT_CACHE_CAPACITY, {}) {}
+    using Base::Base;
 };
 
 struct TextMeasurement
@@ -782,96 +704,46 @@ struct TextMeasurementCacheKey
     DWRITE_WORD_WRAPPING wrapping{};
     bool has_width{};
     bool has_height{};
+
+    bool operator==(const TextMeasurementCacheKey &) const = default;
 };
 
-class TextMeasurementCache
+struct TextMeasurementCacheKeyHash
 {
-  public:
-    bool get(const std::wstring &text, const TextStyle &style, float width, float height, lua_Integer max_lines,
-        DWRITE_WORD_WRAPPING wrapping, bool has_width, bool has_height, TextMeasurement *measurement)
-    {
-        const size_t hash = hash_key(text, style, width, height, max_lines, wrapping, has_width, has_height);
-        const auto [first, last] = m_index.equal_range(hash);
-        for (auto candidate = first; candidate != last; ++candidate)
-        {
-            const auto entry = candidate->second;
-            if (!equal_key(entry->key, text, style, width, height, max_lines, wrapping, has_width, has_height))
-                continue;
-            *measurement = entry->measurement;
-            m_lru.splice(m_lru.begin(), m_lru, entry);
-            return true;
-        }
-        return false;
-    }
-
-    void add(const std::wstring &text, const TextStyle &style, float width, float height, lua_Integer max_lines,
-        DWRITE_WORD_WRAPPING wrapping, bool has_width, bool has_height, const TextMeasurement &measurement)
-    {
-        const size_t hash = hash_key(text, style, width, height, max_lines, wrapping, has_width, has_height);
-        TextMeasurementCacheKey key{text, style, width, height, max_lines, wrapping, has_width, has_height};
-        m_lru.push_front({std::move(key), measurement, hash});
-        m_index.emplace(hash, m_lru.begin());
-        while (m_lru.size() > TEXT_MEASUREMENT_CACHE_CAPACITY) evict(std::prev(m_lru.end()));
-    }
-
-  private:
-    struct Entry
-    {
-        TextMeasurementCacheKey key{};
-        TextMeasurement measurement{};
-        size_t hash{};
-    };
-
-    template <typename T> static void hash_combine(size_t &seed, const T &value)
+    template <typename T> static void combine(size_t &seed, const T &value)
     {
         seed ^= std::hash<T>{}(value) + static_cast<size_t>(0x9e3779b9) + (seed << 6) + (seed >> 2);
     }
 
-    static size_t hash_key(const std::wstring &text, const TextStyle &style, float width, float height,
-        lua_Integer max_lines, DWRITE_WORD_WRAPPING wrapping, bool has_width, bool has_height)
+    size_t operator()(const TextMeasurementCacheKey &key) const
     {
-        size_t hash = std::hash<std::wstring>{}(text);
-        hash_combine(hash, style.family);
-        hash_combine(hash, style.size);
-        hash_combine(hash, static_cast<int>(style.weight));
-        hash_combine(hash, static_cast<int>(style.slant));
-        hash_combine(hash, style.underline);
-        hash_combine(hash, style.strikethrough);
-        hash_combine(hash, style.letter_spacing);
-        hash_combine(hash, style.line_height);
-        hash_combine(hash, style.has_line_height);
-        hash_combine(hash, width);
-        hash_combine(hash, height);
-        hash_combine(hash, max_lines);
-        hash_combine(hash, static_cast<int>(wrapping));
-        hash_combine(hash, has_width);
-        hash_combine(hash, has_height);
+        size_t hash = std::hash<std::wstring>{}(key.text);
+        combine(hash, key.style.family);
+        combine(hash, key.style.size);
+        combine(hash, static_cast<int>(key.style.weight));
+        combine(hash, static_cast<int>(key.style.slant));
+        combine(hash, key.style.underline);
+        combine(hash, key.style.strikethrough);
+        combine(hash, key.style.letter_spacing);
+        combine(hash, key.style.line_height);
+        combine(hash, key.style.has_line_height);
+        combine(hash, key.width);
+        combine(hash, key.height);
+        combine(hash, key.max_lines);
+        combine(hash, static_cast<int>(key.wrapping));
+        combine(hash, key.has_width);
+        combine(hash, key.has_height);
         return hash;
     }
+};
 
-    static bool equal_key(const TextMeasurementCacheKey &key, const std::wstring &text, const TextStyle &style,
-        float width, float height, lua_Integer max_lines, DWRITE_WORD_WRAPPING wrapping, bool has_width,
-        bool has_height)
-    {
-        return key.text == text && key.style == style && key.width == width && key.height == height &&
-               key.max_lines == max_lines && key.wrapping == wrapping && key.has_width == has_width &&
-               key.has_height == has_height;
-    }
+class TextMeasurementCache : public LRU::Cache<TextMeasurementCacheKey, TextMeasurement, TextMeasurementCacheKeyHash>
+{
+    using Base = LRU::Cache<TextMeasurementCacheKey, TextMeasurement, TextMeasurementCacheKeyHash>;
 
-    void evict(std::list<Entry>::iterator entry)
-    {
-        const auto [first, last] = m_index.equal_range(entry->hash);
-        for (auto candidate = first; candidate != last; ++candidate)
-        {
-            if (candidate->second != entry) continue;
-            m_index.erase(candidate);
-            break;
-        }
-        m_lru.erase(entry);
-    }
-
-    std::list<Entry> m_lru;
-    std::unordered_multimap<size_t, std::list<Entry>::iterator> m_index;
+  public:
+    TextMeasurementCache() : Base(TEXT_MEASUREMENT_CACHE_CAPACITY, {}) {}
+    using Base::Base;
 };
 
 inline void push_text_measurement(lua_State *L, const TextMeasurement &measurement)
@@ -1771,7 +1643,11 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
         }
         else
         {
-            layout = cache.get(run.text, format_resource, layout_width, layout_height, layout_ellipsis);
+            const TextLayoutCacheKey key{run.text, format_resource.style, format_resource.alignment,
+                format_resource.paragraph_alignment, format_resource.wrapping, layout_width, layout_height,
+                layout_ellipsis};
+            const auto cached = cache.get(key);
+            layout = cached.has_value() ? cached->Get() : nullptr;
             if (!layout)
             {
                 ComPtr<IDWriteTextFormat> format;
@@ -1793,8 +1669,7 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
                     need(new_layout->SetTrimming(&trimming, ellipsis.Get()), "IDWriteTextLayout::SetTrimming");
                 }
                 layout = new_layout.Get();
-                cache.add(
-                    run.text, format_resource, layout_width, layout_height, layout_ellipsis, std::move(new_layout));
+                cache.add(key, std::move(new_layout));
             }
         }
 
@@ -1875,7 +1750,6 @@ inline void execute_commands(Painter *painter)
 
     auto &text_layout_cache = painter->context->painter_text_layouts;
     if (!text_layout_cache) text_layout_cache = std::make_shared<TextLayoutCache>();
-    text_layout_cache->begin_generation();
 
     for (auto &command : painter->commands)
     {
@@ -2127,11 +2001,16 @@ inline int measure_text(lua_State *L)
     }
 
     Detail::TextMeasurement measurement{};
-    if (measurement_cache &&
-        measurement_cache->get(text, style, width, height, max_lines, wrapping, has_width, has_height, &measurement))
+    const Detail::TextMeasurementCacheKey measurement_key{
+        text, style, width, height, max_lines, wrapping, has_width, has_height};
+    if (measurement_cache)
     {
-        Detail::push_text_measurement(L, measurement);
-        return 1;
+        if (const auto cached = measurement_cache->get(measurement_key); cached.has_value())
+        {
+            measurement = *cached;
+            Detail::push_text_measurement(L, measurement);
+            return 1;
+        }
     }
 
     ComPtr<IDWriteFactory> factory;
@@ -2181,8 +2060,7 @@ inline int measure_text(lua_State *L)
     measurement.line_count = reported_lines;
     measurement.baseline = lines.empty() ? 0 : lines.front().baseline;
     measurement.truncated = truncated;
-    if (measurement_cache)
-        measurement_cache->add(text, style, width, height, max_lines, wrapping, has_width, has_height, measurement);
+    if (measurement_cache) measurement_cache->add(measurement_key, measurement);
     Detail::push_text_measurement(L, measurement);
     return 1;
 }

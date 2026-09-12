@@ -18,7 +18,7 @@ namespace LRU
 /**
  * \brief A simple LRU cache with a maximum size and an optional deleter for evicted values.
  */
-template <typename K, typename V> class Cache
+template <typename K, typename V, typename Hash = std::hash<K>> class Cache
 {
   public:
     Cache() = default;
@@ -106,7 +106,7 @@ template <typename K, typename V> class Cache
   private:
     using ListIterator = typename std::list<std::pair<K, V>>::iterator;
 
-    void touch(typename std::unordered_map<K, ListIterator>::iterator it)
+    void touch(typename std::unordered_map<K, ListIterator, Hash>::iterator it)
     {
         m_list.splice(m_list.begin(), m_list, it->second);
         it->second = m_list.begin();
@@ -125,6 +125,6 @@ template <typename K, typename V> class Cache
     size_t m_size{};
     std::function<void(V)> m_deleter{};
     std::list<std::pair<K, V>> m_list{};
-    std::unordered_map<K, ListIterator> m_map{};
+    std::unordered_map<K, ListIterator, Hash> m_map{};
 };
 } // namespace LRU
