@@ -556,6 +556,8 @@ function emu.atupdatescreen(f, unregister) end
 ---@return nil
 function emu.atpaint(f, unregister) end
 
+
+---Calls `f` with a platform-agnostic painter after every VI frame.
 ---Calls the function `f` every input frame.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(controller: integer): nil The function to be called every input frame. `controller` is the controller index (0-based!).
