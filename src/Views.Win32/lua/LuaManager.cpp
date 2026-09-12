@@ -19,7 +19,6 @@ size_t g_input_count{};
 
 std::string g_mupen_api_lua_code{};
 std::string g_inspect_lua_code{};
-std::string g_shims_lua_code{};
 std::string g_sandbox_lua_code{};
 
 std::vector<LuaEnvironment *> g_lua_environments{};
@@ -48,7 +47,6 @@ void LuaManager::init()
 {
     g_mupen_api_lua_code = load_resource_as_string(IDR_API_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
     g_inspect_lua_code = load_resource_as_string(IDR_INSPECT_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
-    g_shims_lua_code = load_resource_as_string(IDR_SHIMS_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
     g_sandbox_lua_code = load_resource_as_string(IDR_SANDBOX_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
 }
 
@@ -108,11 +106,14 @@ std::expected<void, std::string> LuaManager::start_environment(LuaEnvironment *e
         goto fail;
     }
 
-    if (luaL_dostring(env->L, g_shims_lua_code.c_str()))
+    lua_getglobal(env->L, "__mupen_apply_shims");
+    if (!lua_isfunction(env->L, -1) || lua_pcall(env->L, 0, 0, 0))
     {
         has_error = true;
         goto fail;
     }
+    lua_pushnil(env->L);
+    lua_setglobal(env->L, "__mupen_apply_shims");
 
     if (!trusted)
     {
