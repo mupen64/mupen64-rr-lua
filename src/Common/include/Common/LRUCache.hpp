@@ -93,6 +93,16 @@ template <typename K, typename V, typename Hash = std::hash<K>> class Cache
         return it->second->second;
     }
 
+    /** Gets a cached value without copying it, marking it as most recently used. */
+    V *get_ref(const K &key)
+    {
+        auto it = m_map.find(key);
+        if (it == m_map.end()) return nullptr;
+
+        touch(it);
+        return &it->second->second;
+    }
+
     /**
      * \brief Checks if the cache contains a key
      */

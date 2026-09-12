@@ -639,6 +639,9 @@ struct TextHitTestOptions
     float height = MAX_LAYOUT_SIZE;
     bool has_width = false;
     std::string wrap = "none";
+    std::string overflow = "clip";
+    bool clip = true;
+    bool fit = false;
     DWRITE_TEXT_ALIGNMENT alignment = DWRITE_TEXT_ALIGNMENT_LEADING;
     DWRITE_PARAGRAPH_ALIGNMENT paragraph_alignment = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
 };
@@ -667,6 +670,11 @@ inline TextHitTestOptions check_text_hit_test_options(lua_State *L, int index)
     }
     lua_pop(L, 1);
     options.wrap = luaL_tablestring(L, absolute, "wrap", options.has_width ? "word" : "none");
+    options.overflow = luaL_tablestring(L, absolute, "overflow", "clip");
+    if (options.overflow != "visible" && options.overflow != "clip" && options.overflow != "ellipsis")
+        luaL_error(L, "invalid text overflow mode '%s'", options.overflow.c_str());
+    options.clip = luaL_tablebool(L, absolute, "clip", true);
+    options.fit = luaL_tablebool(L, absolute, "fit", false);
     const auto align_x = luaL_tablestring(L, absolute, "align_x", "left");
     if (align_x == "left")
         options.alignment = DWRITE_TEXT_ALIGNMENT_LEADING;
@@ -1086,6 +1094,13 @@ inline ComPtr<IDWriteTextLayout> create_text_hit_test_layout(
         "IDWriteFactory::CreateTextLayout");
     need(layout, "IDWriteFactory::CreateTextLayout returned null");
     apply_text_style(layout.Get(), style, length);
+    if (options.overflow == "ellipsis" && !options.fit)
+    {
+        ComPtr<IDWriteInlineObject> ellipsis;
+        need(factory->CreateEllipsisTrimmingSign(format.Get(), &ellipsis), "IDWriteFactory::CreateEllipsisTrimmingSign");
+        const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
+        need(layout->SetTrimming(&trimming, ellipsis.Get()), "IDWriteTextLayout::SetTrimming");
+    }
     return layout;
 }
 
@@ -1707,8 +1722,8 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
             run.fit ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR : format_resource.paragraph_alignment;
         const TextLayoutCacheKey key{run.text, format_resource.style, layout_alignment, layout_paragraph_alignment,
             format_resource.wrapping, layout_width, layout_height, layout_ellipsis, run.fit};
-        const auto cached = cache.get(key);
-        IDWriteTextLayout *layout = cached.has_value() ? cached->Get() : nullptr;
+        const auto cached = cache.get_ref(key);
+        IDWriteTextLayout *layout = cached ? cached->Get() : nullptr;
         if (!layout)
         {
             ComPtr<IDWriteTextFormat> format;
@@ -2176,6 +2191,19 @@ inline int hittest_text_position(lua_State *L)
     const UINT32 hit_position = std::min(hit.textPosition, length);
     const UINT32 hit_end = hit.length > length - hit_position ? length : hit_position + hit.length;
     const UINT32 caret_position = is_trailing_hit ? hit_end : hit_position;
+    if (line_count)
+    {
+        UINT32 line_start = 0;
+        for (UINT32 i = 0; i < line_count; ++i)
+        {
+            if (caret_position < line_start + lines[i].length || i + 1 == line_count)
+            {
+                line = i + 1;
+                break;
+            }
+            line_start += lines[i].length;
+        }
+    }
     const auto lua_index = [&lua_text](UINT32 utf16_position) {
         size_t code_units = 0;
         size_t byte_offset = 0;
@@ -2206,7 +2234,7 @@ inline int hittest_text_position(lua_State *L)
     return 1;
 }
 
-inline int hitest_text_index(lua_State *L)
+inline int hittest_text_index(lua_State *L)
 {
     const auto lua_text = luaL_checkstlstring(L, 1);
     const auto text = luaL_checkstlwstring(L, 1);

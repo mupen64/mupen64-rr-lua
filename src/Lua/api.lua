@@ -1228,18 +1228,17 @@ function wgui.resetclip() end
 ---@field letter_spacing number? Extra spacing between characters. Defaults to 0.
 ---@field line_height number? Line height as a multiplier of the font size. If absent, the font's natural line height is used.
 ---@field fit boolean? Whether to uniformly scale the text down to fit its layout rectangle. Defaults to false.
+---@field align_x PainterTextHorizontalAlign? Horizontal alignment. Defaults to "left".
+---@field align_y PainterTextVerticalAlign? Vertical alignment. Defaults to "top".
+---@field wrap PainterTextWrap? Wrapping mode. Defaults to "word".
+---@field overflow PainterTextOverflow? Behavior when text does not fit. Defaults to "clip".
+---@field clip boolean? Whether glyphs are clipped to the layout rectangle. Defaults to true.
 
 ---@alias PainterTextHorizontalAlign "left"|"center"|"right"|"justify"
 ---@alias PainterTextVerticalAlign "top"|"center"|"bottom"
 ---@alias PainterTextWrap "none"|"word"|"character"
 ---@alias PainterTextOverflow "visible"|"clip"|"ellipsis"
 
----@class PainterTextLayout
----@field align_x PainterTextHorizontalAlign? Horizontal alignment. Defaults to `"left"`.
----@field align_y PainterTextVerticalAlign? Vertical alignment. Defaults to `"top"`.
----@field wrap PainterTextWrap? Wrapping mode. Defaults to `"word"`.
----@field overflow PainterTextOverflow? Behavior when text does not fit. Defaults to `"clip"`.
----@field clip boolean? Whether glyphs are clipped to the layout rectangle. Defaults to true.
 
 ---@class PainterTextConstraints
 ---@field w number? Maximum layout width. If absent, width is unconstrained.
@@ -1483,6 +1482,9 @@ function painter.hittest_text_position(text, x, y, style, options) end
 ---@param style PainterTextStyleParams
 ---@param options PainterTextHitTestOptions?
 ---@return PainterTextPositionResult
+function painter.hittest_text_index(text, index, style, options) end
+
+---Compatibility alias with the historical misspelling.
 function painter.hitest_text_index(text, index, style, options) end
 
 --#endregion
