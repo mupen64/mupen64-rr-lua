@@ -138,14 +138,27 @@ struct PathOp
         Close,
     };
 
+    struct CurveData
+    {
+        D2D1_POINT_2F point1;
+        D2D1_POINT_2F point2;
+    };
+    struct ArcData
+    {
+        float radius;
+        float start_angle;
+        float end_angle;
+        bool ccw;
+    };
+
     Kind kind{};
     D2D1_POINT_2F point0{};
-    D2D1_POINT_2F point1{};
-    D2D1_POINT_2F point2{};
-    float radius{};
-    float start_angle{};
-    float end_angle{};
-    bool ccw{};
+    union {
+        CurveData curve;
+        ArcData arc;
+    };
+
+    PathOp() : kind(Kind::Move), point0{}, curve{} {}
 };
 
 struct TextRun
@@ -164,9 +177,12 @@ struct PathPayload
     std::vector<TextRun> texts;
 };
 
+constexpr std::uint8_t MAX_IMAGE_SLICES = 9;
+
 struct ImagePayload
 {
-    std::vector<ImageSlice> slices;
+    std::array<ImageSlice, MAX_IMAGE_SLICES> slices{};
+    std::uint8_t slice_count{};
     D2D1_COLOR_F tint{D2D1::ColorF(1, 1, 1, 1)};
     float opacity{1.0f};
     D2D1_BITMAP_INTERPOLATION_MODE interpolation{D2D1_BITMAP_INTERPOLATION_MODE_LINEAR};
@@ -894,8 +910,8 @@ inline PathOp make_cubic(float c1x, float c1y, float c2x, float c2y, float x, fl
     PathOp op{};
     op.kind = PathOp::Kind::Cubic;
     op.point0 = D2D1::Point2F(c1x, c1y);
-    op.point1 = D2D1::Point2F(c2x, c2y);
-    op.point2 = D2D1::Point2F(x, y);
+    op.curve.point1 = D2D1::Point2F(c2x, c2y);
+    op.curve.point2 = D2D1::Point2F(x, y);
     return op;
 }
 
@@ -904,7 +920,7 @@ inline PathOp make_quadratic(float cx, float cy, float x, float y)
     PathOp op{};
     op.kind = PathOp::Kind::Quadratic;
     op.point0 = D2D1::Point2F(cx, cy);
-    op.point1 = D2D1::Point2F(x, y);
+    op.curve.point1 = D2D1::Point2F(x, y);
     return op;
 }
 
@@ -913,10 +929,10 @@ inline PathOp make_arc(float x, float y, float radius, float start_angle, float 
     PathOp op{};
     op.kind = PathOp::Kind::Arc;
     op.point0 = D2D1::Point2F(x, y);
-    op.radius = radius;
-    op.start_angle = start_angle;
-    op.end_angle = end_angle;
-    op.ccw = ccw;
+    op.arc.radius = radius;
+    op.arc.start_angle = start_angle;
+    op.arc.end_angle = end_angle;
+    op.arc.ccw = ccw;
     return op;
 }
 
@@ -1018,14 +1034,14 @@ inline ComPtr<ID2D1PathGeometry> build_geometry(ID2D1Factory *factory, const std
             break;
         case PathOp::Kind::Cubic:
             if (!figure_open) begin(op.point0);
-            sink->AddBezier(D2D1_BEZIER_SEGMENT{op.point0, op.point1, op.point2});
-            current = op.point2;
+            sink->AddBezier(D2D1_BEZIER_SEGMENT{op.point0, op.curve.point1, op.curve.point2});
+            current = op.curve.point2;
             break;
         case PathOp::Kind::Quadratic: {
             const D2D1_POINT_2F start = figure_open ? current : op.point0;
             if (!figure_open) begin(start);
             const D2D1_POINT_2F control = op.point0;
-            const D2D1_POINT_2F end = op.point1;
+            const D2D1_POINT_2F end = op.curve.point1;
             const D2D1_POINT_2F c1 = D2D1::Point2F(
                 start.x + (2.0f / 3.0f) * (control.x - start.x), start.y + (2.0f / 3.0f) * (control.y - start.y));
             const D2D1_POINT_2F c2 =
@@ -1035,40 +1051,40 @@ inline ComPtr<ID2D1PathGeometry> build_geometry(ID2D1Factory *factory, const std
             break;
         }
         case PathOp::Kind::Arc: {
-            if (!(op.radius > 0)) break;
+            if (!(op.arc.radius > 0)) break;
             const float two_pi = 2 * std::numbers::pi;
-            const float delta = op.end_angle - op.start_angle;
+            const float delta = op.arc.end_angle - op.arc.start_angle;
             if (std::fabs(delta) < 1e-6f) break;
             float sweep = std::fmod(delta, two_pi);
             if (std::fabs(sweep) < 1e-6f)
-                sweep = op.ccw ? -two_pi : two_pi;
-            else if (op.ccw && sweep > 0)
+                sweep = op.arc.ccw ? -two_pi : two_pi;
+            else if (op.arc.ccw && sweep > 0)
                 sweep -= two_pi;
-            else if (!op.ccw && sweep < 0)
+            else if (!op.arc.ccw && sweep < 0)
                 sweep += two_pi;
             const D2D1_POINT_2F center = op.point0;
-            const D2D1_POINT_2F start = D2D1::Point2F(
-                center.x + op.radius * std::cos(op.start_angle), center.y + op.radius * std::sin(op.start_angle));
+            const D2D1_POINT_2F start = D2D1::Point2F(center.x + op.arc.radius * std::cos(op.arc.start_angle),
+                center.y + op.arc.radius * std::sin(op.arc.start_angle));
             if (!figure_open)
                 begin(start);
             else if (!points_equal(current, start))
                 sink->AddLine(start);
             const int segments = std::max(1, static_cast<int>(std::ceil(std::fabs(sweep) / (std::numbers::pi * 0.5f))));
-            const auto direction = op.ccw ? D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE;
+            const auto direction = op.arc.ccw ? D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE;
             for (int i = 1; i <= segments; ++i)
             {
-                const float angle = op.start_angle + sweep * static_cast<float>(i) / static_cast<float>(segments);
+                const float angle = op.arc.start_angle + sweep * static_cast<float>(i) / static_cast<float>(segments);
                 D2D1_ARC_SEGMENT segment{};
-                segment.point =
-                    D2D1::Point2F(center.x + op.radius * std::cos(angle), center.y + op.radius * std::sin(angle));
-                segment.size = D2D1::SizeF(op.radius, op.radius);
+                segment.point = D2D1::Point2F(
+                    center.x + op.arc.radius * std::cos(angle), center.y + op.arc.radius * std::sin(angle));
+                segment.size = D2D1::SizeF(op.arc.radius, op.arc.radius);
                 segment.rotationAngle = 0;
                 segment.sweepDirection = direction;
                 segment.arcSize = D2D1_ARC_SIZE_SMALL;
                 sink->AddArc(segment);
             }
-            current = D2D1::Point2F(center.x + op.radius * std::cos(op.start_angle + sweep),
-                center.y + op.radius * std::sin(op.start_angle + sweep));
+            current = D2D1::Point2F(center.x + op.arc.radius * std::cos(op.arc.start_angle + sweep),
+                center.y + op.arc.radius * std::sin(op.arc.start_angle + sweep));
             break;
         }
         case PathOp::Kind::Close:
@@ -1600,8 +1616,12 @@ inline int painter_image(lua_State *L)
             luaL_error(L, "image tinting is unavailable on this drawing target");
     }
 
-    std::vector<ImageSlice> slices;
-    slices.reserve(nine_sliced ? 9 : 1);
+    ImagePayload image_payload{};
+    image_payload.tint = tint;
+    image_payload.opacity = opacity;
+    image_payload.interpolation = interpolation;
+    image_payload.tinted = tinted;
+    const auto add_slice = [&](const ImageSlice &slice) { image_payload.slices[image_payload.slice_count++] = slice; };
     if (nine_sliced)
     {
         const float left_width = center.left - source.left;
@@ -1612,7 +1632,7 @@ inline int painter_image(lua_State *L)
         const float destination_height = destination.bottom - destination.top;
         if (destination_width < left_width + right_width || destination_height < top_height + bottom_height)
         {
-            slices.push_back({center, destination});
+            add_slice({center, destination});
         }
         else
         {
@@ -1632,14 +1652,14 @@ inline int painter_image(lua_State *L)
                     if (slice_source.right > slice_source.left && slice_source.bottom > slice_source.top &&
                         slice_destination.right > slice_destination.left &&
                         slice_destination.bottom > slice_destination.top)
-                        slices.push_back({slice_source, slice_destination});
+                        add_slice({slice_source, slice_destination});
                 }
             }
         }
     }
     else
     {
-        slices.push_back({source, destination});
+        add_slice({source, destination});
     }
 
     const UINT32 image_resource = intern_image(painter, *image);
@@ -1649,7 +1669,7 @@ inline int painter_image(lua_State *L)
         painter->transform._22, painter->transform._31, painter->transform._32};
     command.image.resource = image_resource;
     command.image.payload = static_cast<UINT32>(painter->image_payloads.size());
-    painter->image_payloads.push_back({std::move(slices), tint, opacity, interpolation, tinted});
+    painter->image_payloads.push_back(std::move(image_payload));
     painter->commands.push_back(std::move(command));
     return 0;
 }
@@ -1833,8 +1853,9 @@ inline void execute_tinted_image(
     const auto interpolation = payload.interpolation == D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
                                    ? D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR
                                    : D2D1_INTERPOLATION_MODE_LINEAR;
-    for (const auto &slice : payload.slices)
+    for (std::uint8_t i = 0; i < payload.slice_count; ++i)
     {
+        const auto &slice = payload.slices[i];
         const float source_width = slice.source.right - slice.source.left;
         const float source_height = slice.source.bottom - slice.source.top;
         const float sx = source_width > 0 ? (slice.destination.right - slice.destination.left) / source_width : 1;
@@ -1892,9 +1913,12 @@ inline void execute_commands(Painter *painter)
             const auto &payload = painter->image_payloads[command.image.payload];
             if (!payload.tinted)
             {
-                for (const auto &slice : payload.slices)
+                for (std::uint8_t i = 0; i < payload.slice_count; ++i)
+                {
+                    const auto &slice = payload.slices[i];
                     painter->target->DrawBitmap(painter->images[command.image.resource].bitmap.Get(), slice.destination,
                         payload.opacity, payload.interpolation, slice.source);
+                }
             }
             else
                 execute_tinted_image(painter, command.image.resource, payload, to_matrix(command.image.transform));
