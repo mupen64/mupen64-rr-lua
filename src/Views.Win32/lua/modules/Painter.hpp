@@ -2068,7 +2068,8 @@ inline int measure_text(lua_State *L)
         if (!lua_isnil(L, -1))
         {
             width = luaL_checkfinitenumber(L, -1, "w");
-            if (width < 0 || width > Detail::MAX_LAYOUT_SIZE) luaL_error(L, "text constraint width is out of range");
+            if (width < 0) luaL_error(L, "text constraint width must be non-negative");
+            width = std::min(width, Detail::MAX_LAYOUT_SIZE);
             has_width = true;
         }
         lua_pop(L, 1);
@@ -2076,7 +2077,8 @@ inline int measure_text(lua_State *L)
         if (!lua_isnil(L, -1))
         {
             height = luaL_checkfinitenumber(L, -1, "h");
-            if (height < 0 || height > Detail::MAX_LAYOUT_SIZE) luaL_error(L, "text constraint height is out of range");
+            if (height < 0) luaL_error(L, "text constraint height must be non-negative");
+            height = std::min(height, Detail::MAX_LAYOUT_SIZE);
             has_height = true;
         }
         lua_pop(L, 1);
