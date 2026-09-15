@@ -413,6 +413,9 @@ class EmuOptions : public QObject
     EmuContext *m_context;
 };
 
+/**
+ *
+ */
 class EmuPaths : public QObject
 {
     Q_OBJECT

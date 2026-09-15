@@ -12,7 +12,7 @@ Shortcut {
     id: root
     autoRepeat: false
 
-    property QtObject _priv: QtObject {
+    property QtObject _HeldShortcut_priv: QtObject {
         id: priv
 
         property var allKeys: {

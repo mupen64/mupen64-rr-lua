@@ -13,6 +13,8 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Actions
         "ActionHelpers.cpp"
         "HeldShortcutMap.cpp"
     QML_FILES
+        "ActionManager.qml"
+        "HeldActions.qml"
         "HeldShortcut.qml"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Actions PUBLIC cxx_std_23)

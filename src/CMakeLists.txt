@@ -63,7 +63,6 @@ if (MUPEN64RR_BUILD_WIN32)
 
     # Windows-based TAS plugins.
     # TASInput relies heavily on Windows APIs to work.
-    # Note that we can't port config dialogs until we settle on a GUI frontend framework.
     add_subdirectory(Plugins.Win32.TASInput)
 
     # VIEW
