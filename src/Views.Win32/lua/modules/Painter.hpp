@@ -348,18 +348,28 @@ inline void validate_transform(lua_State *L, const D2D1::Matrix3x2F &transform)
 inline D2D1_RECT_F check_rect(lua_State *L, int index)
 {
     luaL_checktype(L, index, LUA_TTABLE);
-    const float x = luaL_tablenumber(L, index, "x", 0, true);
-    const float y = luaL_tablenumber(L, index, "y", 0, true);
-    const float width = luaL_tablenumber(L, index, "w", 0, true);
-    const float height = luaL_tablenumber(L, index, "h", 0, true);
+    float x = luaL_tablenumber(L, index, "x", 0, true);
+    float y = luaL_tablenumber(L, index, "y", 0, true);
+    float width = luaL_tablenumber(L, index, "w", 0, true);
+    float height = luaL_tablenumber(L, index, "h", 0, true);
+    if (width < 0)
+    {
+        x += width;
+        width = -width;
+    }
+    if (height < 0)
+    {
+        y += height;
+        height = -height;
+    }
     const float right = x + width;
     const float bottom = y + height;
-    if (width < 0 || height < 0) luaL_error(L, "rectangle width and height must be non-negative");
     if (!std::isfinite(right) || !std::isfinite(bottom) || std::fabs(x) > MAX_LAYOUT_SIZE ||
         std::fabs(y) > MAX_LAYOUT_SIZE || std::fabs(right) > MAX_LAYOUT_SIZE || std::fabs(bottom) > MAX_LAYOUT_SIZE)
         luaL_error(L, "rectangle coordinates are out of range");
     return D2D1::RectF(x, y, right, bottom);
 }
+
 
 inline LuaRenderingContext *check_context(lua_State *L)
 {
@@ -1371,7 +1381,8 @@ inline int painter_restore(lua_State *L)
 inline int painter_clip(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const D2D1_RECT_F device = transform_rect(painter->transform, check_rect(L, 2));
+    const auto rect = check_rect(L, 2);
+    const D2D1_RECT_F device = transform_rect(painter->transform, rect);
     Command command{};
     command.type = CommandType::PushClip;
     command.clip.bounds = device;
@@ -1483,21 +1494,24 @@ inline int painter_text(lua_State *L)
 inline int painter_rect(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    append_rect(painter->path_ops, check_rect(L, 2));
+    const auto rect = check_rect(L, 2);
+    append_rect(painter->path_ops, rect);
     return 0;
 }
 
 inline int painter_round_rect(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    append_round_rect(painter->path_ops, check_rect(L, 2), luaL_checkfinitenumber(L, 3, "radius"));
+    const auto rect = check_rect(L, 2);
+    append_round_rect(painter->path_ops, rect, luaL_checkfinitenumber(L, 3, "radius"));
     return 0;
 }
 
 inline int painter_circle(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    append_circle(painter->path_ops, check_rect(L, 2));
+    const auto rect = check_rect(L, 2);
+    append_circle(painter->path_ops, rect);
     return 0;
 }
 

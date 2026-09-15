@@ -1186,8 +1186,8 @@ function wgui.resetclip() end
 ---@class PainterRect
 ---@field x number The x-coordinate of the top-left corner.
 ---@field y number The y-coordinate of the top-left corner.
----@field w number The rectangle width.
----@field h number The rectangle height.
+---@field w number The rectangle width. If negative, the rectangle's left edge moves left by `abs(w)` and `w` becomes `abs(w)`.
+---@field h number The rectangle height. If negative, the rectangle's top edge moves up by `abs(h)` and `h` becomes `abs(h)`.
 
 ---An RGBA color table.
 ---@class PainterColorTable
