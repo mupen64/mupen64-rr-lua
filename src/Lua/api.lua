@@ -1227,6 +1227,7 @@ function wgui.resetclip() end
 ---@field strikethrough boolean? Defaults to false.
 ---@field letter_spacing number? Extra spacing between characters. Defaults to 0.
 ---@field line_height number? Line height as a multiplier of the font size. If absent, the font's natural line height is used.
+---@field antialiased boolean? Whether to render text with grayscale antialiasing. Defaults to true. ClearType is never used.
 ---@field fit boolean? Whether to uniformly scale the text down to fit its layout rectangle. Defaults to false.
 ---@field align_x PainterTextHorizontalAlign? Horizontal alignment. Defaults to "left".
 ---@field align_y PainterTextVerticalAlign? Vertical alignment. Defaults to "top".

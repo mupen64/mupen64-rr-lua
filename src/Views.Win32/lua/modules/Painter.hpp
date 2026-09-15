@@ -63,13 +63,14 @@ struct TextStyle
     float letter_spacing{};
     float line_height{};
     bool has_line_height{};
+    bool antialiased{true};
 };
 
 inline bool operator==(const TextStyle &a, const TextStyle &b)
 {
     return a.family == b.family && a.size == b.size && a.weight == b.weight && a.slant == b.slant &&
            a.underline == b.underline && a.strikethrough == b.strikethrough && a.letter_spacing == b.letter_spacing &&
-           a.line_height == b.line_height && a.has_line_height == b.has_line_height;
+           a.line_height == b.line_height && a.has_line_height == b.has_line_height && a.antialiased == b.antialiased;
 }
 
 struct Stroke
@@ -166,6 +167,7 @@ struct TextRun
     UINT32 format{};
     bool ellipsis{};
     bool fit{};
+    bool antialiased{true};
     D2D1_DRAW_TEXT_OPTIONS options{D2D1_DRAW_TEXT_OPTIONS_NONE};
 };
 
@@ -570,6 +572,7 @@ inline TextStyle check_text_style(lua_State *L, int index)
         style.has_line_height = true;
     }
     lua_pop(L, 1);
+    style.antialiased = luaL_tablebool(L, absolute, "antialiased", true);
     return style;
 }
 
@@ -732,6 +735,7 @@ struct TextLayoutCacheKeyHash
         combine(hash, key.style.letter_spacing);
         combine(hash, key.style.line_height);
         combine(hash, key.style.has_line_height);
+        combine(hash, key.style.antialiased);
         combine(hash, static_cast<int>(key.alignment));
         combine(hash, static_cast<int>(key.paragraph_alignment));
         combine(hash, static_cast<int>(key.wrapping));
@@ -794,6 +798,7 @@ struct TextMeasurementCacheKeyHash
         combine(hash, key.style.letter_spacing);
         combine(hash, key.style.line_height);
         combine(hash, key.style.has_line_height);
+        combine(hash, key.style.antialiased);
         combine(hash, key.width);
         combine(hash, key.height);
         combine(hash, key.max_lines);
@@ -1469,6 +1474,7 @@ inline int painter_text(lua_State *L)
     run.format = intern_text_format(painter, style, alignment, paragraph_alignment, wrapping);
     run.ellipsis = overflow == "ellipsis";
     run.fit = luaL_tablebool(L, 4, "fit", false);
+    run.antialiased = style.antialiased;
     if (clip && overflow != "visible") run.options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
     painter->path_texts.push_back(std::move(run));
     return 0;
@@ -1760,6 +1766,8 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
             cache.add(key, std::move(new_layout));
         }
 
+        painter->target->SetTextAntialiasMode(
+            run.antialiased ? D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE : D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
         if (!run.fit)
         {
             painter->target->DrawTextLayout(D2D1::Point2F(run.rect.left, run.rect.top), layout, brush, run.options);

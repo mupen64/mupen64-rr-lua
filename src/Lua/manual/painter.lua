@@ -336,6 +336,25 @@ custom_row("fit text", "text(value, r, { fit = true })", {
     },
 })
 
+custom_row("text antialiasing", "text(value, r, { antialiased = true|false })", {
+    {
+        caption = "grayscale AA (default)",
+        draw = function(q, x, y)
+            draw_text(q, "Smooth edges", rect(x + 15, y + 18, 155, 30),
+                { size = 22, antialiased = true }, colors.text)
+            draw_text(q, "grayscale antialiasing", rect(x + 15, y + 52, 155, 16), label_style, colors.muted)
+        end,
+    },
+    {
+        caption = "no AA",
+        draw = function(q, x, y)
+            draw_text(q, "Sharp edges", rect(x + 15, y + 18, 155, 30),
+                { size = 22, antialiased = false }, colors.text)
+            draw_text(q, "antialiased = false", rect(x + 15, y + 52, 155, 16), label_style, colors.muted)
+        end,
+    },
+})
+
 custom_row("image", "image(image, destination, options)", {
     {
         caption = "sampling = nearest",
