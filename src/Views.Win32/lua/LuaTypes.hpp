@@ -14,6 +14,7 @@
 namespace LuaCore::Painter::Detail
 {
 class TextLayoutCache;
+class TextBitmapCache;
 class TextMeasurementCache;
 } // namespace LuaCore::Painter::Detail
 
@@ -45,6 +46,9 @@ struct LuaRenderingContext
 
     // The LRU cache for painter text layouts
     std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts{};
+
+    // The LRU cache for rasterized painter text layouts
+    std::shared_ptr<LuaCore::Painter::Detail::TextBitmapCache> painter_text_bitmaps{};
 
     // The LRU cache for painter text measurements
     std::shared_ptr<LuaCore::Painter::Detail::TextMeasurementCache> painter_text_measurements{};
