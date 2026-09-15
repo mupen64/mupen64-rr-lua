@@ -39,8 +39,6 @@ constexpr const char *IMAGE_MT = "mupen64.PainterImage";
 constexpr const char *PAINTER_MT = "mupen64.Painter";
 constexpr float MAX_LAYOUT_SIZE = 10000000.0f;
 constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 2048;
-constexpr size_t TEXT_BITMAP_CACHE_CAPACITY = 512;
-constexpr size_t TEXT_BITMAP_PROMOTION_THRESHOLD = 64;
 
 constexpr size_t TEXT_MEASUREMENT_CACHE_CAPACITY = 2048;
 
@@ -749,81 +747,13 @@ struct TextLayoutCacheKeyHash
     }
 };
 
-struct CachedTextLayout
+class TextLayoutCache : public LRU::Cache<TextLayoutCacheKey, ComPtr<IDWriteTextLayout>, TextLayoutCacheKeyHash>
 {
-    ComPtr<IDWriteTextLayout> layout;
-    size_t uses{};
-    size_t bitmap_generation{};
-};
-
-class TextLayoutCache : public LRU::Cache<TextLayoutCacheKey, CachedTextLayout, TextLayoutCacheKeyHash>
-{
-    using Base = LRU::Cache<TextLayoutCacheKey, CachedTextLayout, TextLayoutCacheKeyHash>;
+    using Base = LRU::Cache<TextLayoutCacheKey, ComPtr<IDWriteTextLayout>, TextLayoutCacheKeyHash>;
 
   public:
     TextLayoutCache() : Base(TEXT_LAYOUT_CACHE_CAPACITY, {}) {}
     using Base::Base;
-};
-
-struct TextBitmapCacheKey
-{
-    TextLayoutCacheKey layout{};
-    D2D1_COLOR_F brush{};
-    D2D1_DRAW_TEXT_OPTIONS options{};
-
-    bool operator==(const TextBitmapCacheKey &other) const
-    {
-        return layout == other.layout && brush == other.brush && options == other.options;
-    }
-};
-
-struct TextBitmapCacheKeyHash
-{
-    template <typename T> static void combine(size_t &seed, const T &value)
-    {
-        seed ^= std::hash<T>{}(value) + static_cast<size_t>(0x9e3779b9) + (seed << 6) + (seed >> 2);
-    }
-
-    size_t operator()(const TextBitmapCacheKey &key) const
-    {
-        size_t hash = TextLayoutCacheKeyHash{}(key.layout);
-        combine(hash, key.brush.r);
-        combine(hash, key.brush.g);
-        combine(hash, key.brush.b);
-        combine(hash, key.brush.a);
-        combine(hash, static_cast<int>(key.options));
-        return hash;
-    }
-};
-
-struct TextBitmapCacheValue
-{
-    ComPtr<ID2D1Bitmap> bitmap;
-    float width{};
-    float height{};
-};
-
-class TextBitmapCache : public LRU::Cache<TextBitmapCacheKey, TextBitmapCacheValue, TextBitmapCacheKeyHash>
-{
-    using Base = LRU::Cache<TextBitmapCacheKey, TextBitmapCacheValue, TextBitmapCacheKeyHash>;
-
-  public:
-    TextBitmapCache() : Base(TEXT_BITMAP_CACHE_CAPACITY, {}) {}
-    using Base::Base;
-
-    void prepare(ID2D1RenderTarget *target)
-    {
-        if (m_target == target) return;
-        clear();
-        m_target = target;
-        ++m_generation;
-    }
-
-    size_t generation() const { return m_generation; }
-
-  private:
-    ID2D1RenderTarget *m_target{};
-    size_t m_generation{};
 };
 
 struct TextMeasurement
@@ -1172,8 +1102,7 @@ inline ComPtr<IDWriteTextLayout> create_text_hit_test_layout(
     if (options.overflow == "ellipsis" && !options.fit)
     {
         ComPtr<IDWriteInlineObject> ellipsis;
-        need(
-            factory->CreateEllipsisTrimmingSign(format.Get(), &ellipsis), "IDWriteFactory::CreateEllipsisTrimmingSign");
+        need(factory->CreateEllipsisTrimmingSign(format.Get(), &ellipsis), "IDWriteFactory::CreateEllipsisTrimmingSign");
         const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
         need(layout->SetTrimming(&trimming, ellipsis.Get()), "IDWriteTextLayout::SetTrimming");
     }
@@ -1781,39 +1710,8 @@ inline void realize_text_format(
     format = resource.native;
 }
 
-inline TextBitmapCacheValue create_text_bitmap(ID2D1RenderTarget *target, IDWriteTextLayout *layout,
-    ID2D1SolidColorBrush *brush, D2D1_DRAW_TEXT_OPTIONS options, float width, float height, bool antialiased)
-{
-    const D2D1_SIZE_F size = D2D1::SizeF(width, height);
-    ComPtr<ID2D1BitmapRenderTarget> bitmap_target;
-    need(target->CreateCompatibleRenderTarget(
-             &size, nullptr, nullptr, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &bitmap_target),
-        "ID2D1RenderTarget::CreateCompatibleRenderTarget");
-    need(bitmap_target, "ID2D1RenderTarget::CreateCompatibleRenderTarget returned null");
-
-    const auto color = brush->GetColor();
-    ComPtr<ID2D1SolidColorBrush> bitmap_brush;
-    need(bitmap_target->CreateSolidColorBrush(color, &bitmap_brush), "ID2D1RenderTarget::CreateSolidColorBrush");
-    need(bitmap_brush, "ID2D1RenderTarget::CreateSolidColorBrush returned null");
-
-    bitmap_target->BeginDraw();
-    bitmap_target->Clear(D2D1::ColorF(0, 0, 0, 0));
-    bitmap_target->SetTextAntialiasMode(
-        antialiased ? D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE : D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
-    bitmap_target->DrawTextLayout(D2D1::Point2F(0, 0), layout, bitmap_brush.Get(), options);
-    need(bitmap_target->EndDraw(), "ID2D1BitmapRenderTarget::EndDraw");
-
-    TextBitmapCacheValue result{};
-    need(bitmap_target->GetBitmap(&result.bitmap), "ID2D1BitmapRenderTarget::GetBitmap");
-    need(result.bitmap, "ID2D1BitmapRenderTarget::GetBitmap returned null");
-    result.width = width;
-    result.height = height;
-    return result;
-}
-
 inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, ID2D1SolidColorBrush *brush,
-    ComPtr<IDWriteFactory> &text_factory, TextLayoutCache &cache, TextBitmapCache &bitmap_cache,
-    const D2D1::Matrix3x2F &command_transform)
+    ComPtr<IDWriteFactory> &text_factory, TextLayoutCache &cache, const D2D1::Matrix3x2F &command_transform)
 {
     for (const auto &run : runs)
     {
@@ -1830,15 +1728,8 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
             run.fit ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR : format_resource.paragraph_alignment;
         const TextLayoutCacheKey key{run.text, format_resource.style, layout_alignment, layout_paragraph_alignment,
             format_resource.wrapping, layout_width, layout_height, layout_ellipsis, run.fit};
-        auto *cached = cache.get_ref(key);
-        IDWriteTextLayout *layout = nullptr;
-        size_t layout_uses = 0;
-        if (cached)
-        {
-            ++cached->uses;
-            layout = cached->layout.Get();
-            layout_uses = cached->uses;
-        }
+        const auto cached = cache.get_ref(key);
+        IDWriteTextLayout *layout = cached ? cached->Get() : nullptr;
         if (!layout)
         {
             ComPtr<IDWriteTextFormat> format;
@@ -1872,71 +1763,7 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
                 need(new_layout->SetTrimming(&trimming, ellipsis.Get()), "IDWriteTextLayout::SetTrimming");
             }
             layout = new_layout.Get();
-            cache.add(key, {std::move(new_layout), 1});
-            layout_uses = 1;
-        }
-
-        DWRITE_TEXT_METRICS metrics{};
-        float bitmap_width = width;
-        float bitmap_height = height;
-        if (run.fit)
-        {
-            need(layout->GetMetrics(&metrics), "IDWriteTextLayout::GetMetrics");
-            bitmap_width = metrics.widthIncludingTrailingWhitespace;
-            bitmap_height = metrics.height;
-        }
-
-        if (layout_uses > TEXT_BITMAP_PROMOTION_THRESHOLD)
-        {
-            const TextBitmapCacheKey bitmap_key{key, brush->GetColor(), run.options};
-            auto *cached_bitmap = bitmap_cache.get_ref(bitmap_key);
-            if (!cached_bitmap && cached->bitmap_generation != bitmap_cache.generation())
-            {
-                auto bitmap = create_text_bitmap(
-                    painter->target, layout, brush, run.options, bitmap_width, bitmap_height, run.antialiased);
-                bitmap_cache.add(bitmap_key, std::move(bitmap));
-                cached->bitmap_generation = bitmap_cache.generation();
-                cached_bitmap = bitmap_cache.get_ref(bitmap_key);
-            }
-
-            if (cached_bitmap)
-            {
-                if (!run.fit)
-                {
-                    const D2D1_RECT_F destination =
-                        D2D1::RectF(run.rect.left, run.rect.top, run.rect.right, run.rect.bottom);
-                    painter->target->DrawBitmap(cached_bitmap->bitmap.Get(), &destination, 1.0f,
-                        D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
-                    continue;
-                }
-
-                const float scale = std::min(1.0f, std::min(bitmap_width > 0 ? width / bitmap_width : 1.0f,
-                                                       bitmap_height > 0 ? height / bitmap_height : 1.0f));
-                float x = run.rect.left;
-                float y = run.rect.top;
-                const float fitted_width = bitmap_width * scale;
-                const float fitted_height = bitmap_height * scale;
-                if (format_resource.alignment == DWRITE_TEXT_ALIGNMENT_CENTER)
-                    x += (width - fitted_width) * 0.5f;
-                else if (format_resource.alignment == DWRITE_TEXT_ALIGNMENT_TRAILING)
-                    x += width - fitted_width;
-                if (format_resource.paragraph_alignment == DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
-                    y += (height - fitted_height) * 0.5f;
-                else if (format_resource.paragraph_alignment == DWRITE_PARAGRAPH_ALIGNMENT_FAR)
-                    y += height - fitted_height;
-
-                if (scale != 1.0f)
-                {
-                    painter->target->SetTransform(D2D1::Matrix3x2F::Scale(scale, scale) * command_transform);
-                    x /= scale;
-                    y /= scale;
-                }
-                const D2D1_RECT_F destination = D2D1::RectF(x, y, x + bitmap_width, y + bitmap_height);
-                painter->target->DrawBitmap(
-                    cached_bitmap->bitmap.Get(), &destination, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
-                if (scale != 1.0f) painter->target->SetTransform(command_transform);
-                continue;
-            }
+            cache.add(key, std::move(new_layout));
         }
 
         painter->target->SetTextAntialiasMode(
@@ -1947,6 +1774,8 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
             continue;
         }
 
+        DWRITE_TEXT_METRICS metrics{};
+        need(layout->GetMetrics(&metrics), "IDWriteTextLayout::GetMetrics");
         const float scale = std::min(1.0f,
             std::min(
                 metrics.widthIncludingTrailingWhitespace > 0 ? width / metrics.widthIncludingTrailingWhitespace : 1.0f,
@@ -2016,9 +1845,6 @@ inline void execute_commands(Painter *painter)
 
     auto &text_layout_cache = painter->context->painter_text_layouts;
     if (!text_layout_cache) text_layout_cache = std::make_shared<TextLayoutCache>();
-    auto &text_bitmap_cache = painter->context->painter_text_bitmaps;
-    if (!text_bitmap_cache) text_bitmap_cache = std::make_shared<TextBitmapCache>();
-    text_bitmap_cache->prepare(painter->target);
 
     for (auto &command : painter->commands)
     {
@@ -2082,8 +1908,8 @@ inline void execute_commands(Painter *painter)
         if (command.type == CommandType::FillPath)
         {
             if (geometry) painter->target->FillGeometry(geometry.Get(), brush);
-            draw_text_runs(painter, payload.texts, brush, text_factory, *text_layout_cache, *text_bitmap_cache,
-                to_matrix(command.path.transform));
+            draw_text_runs(
+                painter, payload.texts, brush, text_factory, *text_layout_cache, to_matrix(command.path.transform));
         }
         else
         {

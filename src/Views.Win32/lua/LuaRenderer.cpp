@@ -381,7 +381,6 @@ void LuaRenderer::destroy_renderer(LuaRenderingContext *ctx)
     }
 
     ctx->painter_text_layouts.reset();
-    ctx->painter_text_bitmaps.reset();
     ctx->painter_text_measurements.reset();
     ctx->image_pool.clear();
     ctx->d2d_render_target_stack = {};
@@ -416,6 +415,7 @@ void LuaRenderer::ensure_d2d_renderer_created(LuaRenderingContext *ctx)
     }
 
     g_view_logger->trace("[Lua] Creating D2D renderer...");
+
 
     if (g_config.presenter_type != (int32_t)Config::PresenterType::GDI)
         ctx->presenter = new DCompPresenter();
