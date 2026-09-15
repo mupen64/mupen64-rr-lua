@@ -11,10 +11,10 @@ dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_p
 local ROOT <const> = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+$", "")
 local WIDTH <const> = 800
 local HEIGHT <const> = 600
+local CONTENT_Y_OFFSET <const> = 50
 
 local frame = 0
-local last_paint_time
-local frame_time_ms = 0
+local section_times = {}
 
 local function color(r, g, b, a)
     return { r = r, g = g, b = b, a = a }
@@ -73,8 +73,8 @@ for i = 1, STRING_COUNT do
     local cell = (i - 1) % 50
     local column = cell % 5
     local row = math.floor(cell / 5)
-    TEXT_CELLS_LEFT[i] = rect(10 + column * 79, 55 + row * 50, 75, 42)
-    TEXT_CELLS_RIGHT[i] = rect(405 + column * 79, 55 + row * 50, 75, 42)
+    TEXT_CELLS_LEFT[i] = rect(10 + column * 79, 55 + row * 50 + CONTENT_Y_OFFSET, 75, 42)
+    TEXT_CELLS_RIGHT[i] = rect(405 + column * 79, 55 + row * 50 + CONTENT_Y_OFFSET, 75, 42)
 end
 local TEXT_IDENTICAL <const> = "This is intentionally unchanged painter text. " ..
     "It should exercise caching of immutable layout and glyph data."
@@ -82,7 +82,7 @@ local TEXT_IDENTICAL <const> = "This is intentionally unchanged painter text. " 
 local PRIMITIVE_CASES <const> = {}
 for i = 1, 140 do
     local x = 70 + ((i * 37) % 660)
-    local y = 95 + ((i * 61) % 410)
+    local y = 95 + ((i * 61) % 410) + CONTENT_Y_OFFSET
     local w = 35 + ((i * 19) % 150)
     local h = 25 + ((i * 13) % 115)
     PRIMITIVE_CASES[i] = {
@@ -111,17 +111,23 @@ for i = 1, 1000 do
     local cell = (i - 1) % 100
     local column = cell % 10
     local row = math.floor(cell / 10)
-    IMAGE_CELLS[i] = rect(10 + column * 79, 55 + row * 50, 75, 42)
+    IMAGE_CELLS[i] = rect(10 + column * 79, 55 + row * 50 + CONTENT_Y_OFFSET, 75, 42)
 end
 
-local HEADER_FRAME_RECT <const> = rect(20, 16, 220, 20)
-local MEASURE_TITLE_RECT <const> = rect(40, 80, 720, 35)
-local MEASURE_IDENTICAL_TITLE_RECT <const> = rect(55, 190, 300, 28)
-local MEASURE_IDENTICAL_TIME_RECT <const> = rect(75, 235, 300, 25)
-local MEASURE_IDENTICAL_LINES_RECT <const> = rect(75, 295, 300, 25)
-local MEASURE_DIFFERENT_TITLE_RECT <const> = rect(425, 190, 300, 28)
-local MEASURE_DIFFERENT_TIME_RECT <const> = rect(445, 235, 300, 25)
-local MEASURE_DIFFERENT_LINES_RECT <const> = rect(445, 295, 300, 25)
+local SECTION_TIMING_TITLE_RECT <const> = rect(20, 16, 300, 18)
+local SECTION_TIMING_RECTS <const> = {
+    rect(20, 36, 300, 16),
+    rect(20, 52, 300, 16),
+    rect(20, 68, 300, 16),
+    rect(20, 84, 300, 16),
+}
+local MEASURE_TITLE_RECT <const> = rect(40, 80 + CONTENT_Y_OFFSET, 720, 35)
+local MEASURE_IDENTICAL_TITLE_RECT <const> = rect(55, 190 + CONTENT_Y_OFFSET, 300, 28)
+local MEASURE_IDENTICAL_TIME_RECT <const> = rect(75, 235 + CONTENT_Y_OFFSET, 300, 25)
+local MEASURE_IDENTICAL_LINES_RECT <const> = rect(75, 295 + CONTENT_Y_OFFSET, 300, 25)
+local MEASURE_DIFFERENT_TITLE_RECT <const> = rect(425, 190 + CONTENT_Y_OFFSET, 300, 28)
+local MEASURE_DIFFERENT_TIME_RECT <const> = rect(445, 235 + CONTENT_Y_OFFSET, 300, 25)
+local MEASURE_DIFFERENT_LINES_RECT <const> = rect(445, 295 + CONTENT_Y_OFFSET, 300, 25)
 
 local ELLIPSE_KAPPA <const> = 0.5522847498307936
 local function ellipse_path(p, r)
@@ -151,16 +157,29 @@ local function paint_text(p, value, r, style, fill)
     p:fill(fill)
 end
 
-local function draw_header(p)
-    paint_text(p, string.format("Frame time: %.2f ms", frame_time_ms), HEADER_FRAME_RECT,
-        SMALL_STYLE, WHITE)
+local SECTION_NAMES <const> = {
+    "draw_primitives",
+    "draw_text_cells",
+    "draw_ninesliced",
+    "draw_measure_text",
+}
+
+local function time_section(p, name, draw)
+    local start = os.clock()
+    draw(p)
+    section_times[name] = (os.clock() - start) * 1000
+end
+
+local function draw_section_times(p)
+    paint_text(p, "Time to submit drawcalls", SECTION_TIMING_TITLE_RECT, SMALL_STYLE, WHITE)
+    for i, name in ipairs(SECTION_NAMES) do
+        paint_text(p, string.format("%s: %.2f ms", name, section_times[name] or 0),
+            SECTION_TIMING_RECTS[i], SMALL_STYLE, WHITE)
+    end
 end
 
 local function draw_primitives(p)
-    p:clear(BACKGROUND_COLOR)
-    draw_header(p)
-
-    for i = 1, 140 do
+    for i = 1, 60 do
         local primitive = PRIMITIVE_CASES[i]
         local c = primitive.color
         local s = primitive.stroke
@@ -202,12 +221,7 @@ local function draw_primitives(p)
     end
 end
 
-local function draw_text_cells(p)
-    for i = 1, STRING_COUNT do
-        local c = PALETTE[((i + frame) % #PALETTE) + 1]
-        paint_text(p, TEXT_DIFFERENT[i], TEXT_CELLS_LEFT[i], TEXT_STYLE_WITH_OPTIONS, c)
-    end
-
+local function draw_static_text(p)
     for i = 1, STRING_COUNT do
         paint_text(p, TEXT_IDENTICAL, TEXT_CELLS_RIGHT[i], TEXT_STYLE_WITH_OPTIONS,
             PALETTE[(i % #PALETTE) + 1])
@@ -219,54 +233,34 @@ local function draw_text_cells(p)
     end
 end
 
-local function draw_measure_text(p)
+local function measure_text(p)
     local identical_lines = 0
-    local identical_start = os.clock()
     for _ = 1, STRING_COUNT do
         local metrics = painter.measure_text(MEASURE_IDENTICAL_TEXT, TEXT_STYLE)
         identical_lines = identical_lines + metrics.line_count
     end
-    local identical_time_ms = (os.clock() - identical_start) * 1000
 
     local different_lines = 0
-    local different_start = os.clock()
     for i = 1, STRING_COUNT do
         local metrics = painter.measure_text(MEASURE_DIFFERENT_TEXT[i], TEXT_STYLE)
         different_lines = different_lines + metrics.line_count
     end
-    local different_time_ms = (os.clock() - different_start) * 1000
-
-    paint_text(p, "measure_text stress test", MEASURE_TITLE_RECT, TEXT_STYLE, WHITE)
-
-    paint_text(p, "128 identical strings", MEASURE_IDENTICAL_TITLE_RECT, TEXT_STYLE, PALETTE[2])
-    paint_text(p, string.format("time: %.2f ms", identical_time_ms), MEASURE_IDENTICAL_TIME_RECT,
-        SMALL_STYLE, WHITE)
-    paint_text(p, string.format("total lines: %d", identical_lines), MEASURE_IDENTICAL_LINES_RECT,
-        SMALL_STYLE, WHITE)
-
-    paint_text(p, "128 different strings", MEASURE_DIFFERENT_TITLE_RECT, TEXT_STYLE, PALETTE[3])
-    paint_text(p, string.format("time: %.2f ms", different_time_ms), MEASURE_DIFFERENT_TIME_RECT,
-        SMALL_STYLE, WHITE)
-    paint_text(p, string.format("total lines: %d", different_lines), MEASURE_DIFFERENT_LINES_RECT,
-        SMALL_STYLE, WHITE)
 end
 
 local function draw_ninesliced(p)
-    for i = 1, 500 do
+    for i = 1, 250 do
         p:image(NINESLICED, IMAGE_CELLS[i], NINESLICE_OPTIONS)
     end
 end
 
 
 emu.atpaint(function(p)
-    local paint_time = os.clock()
-    if last_paint_time then
-        frame_time_ms = (paint_time - last_paint_time) * 1000
-    end
-    last_paint_time = paint_time
     frame = frame + 1
-    draw_primitives(p)
-    draw_text_cells(p)
-    draw_ninesliced(p)
-    draw_measure_text(p)
+
+    p:clear(BACKGROUND_COLOR)
+    time_section(p, "draw_primitives", draw_primitives)
+    time_section(p, "draw_ninesliced", draw_ninesliced)
+    time_section(p, "draw_static_text", draw_static_text)
+    time_section(p, "measure_text", measure_text)
+    draw_section_times(p)
 end)
