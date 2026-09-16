@@ -355,6 +355,7 @@ custom_row("text antialiasing", "text(value, r, { antialiased = true|false })", 
     },
 })
 
+
 custom_row("image", "image(image, destination, options)", {
     {
         caption = "sampling = nearest",
@@ -486,6 +487,33 @@ custom_row("misc", "state, transforms and colors", {
             q:round_rect(rect(x + 30, y + 24, 125, 52), 12)
             q:fill(colors.orange)
             q:stroke(colors.text, { width = 2 })
+        end,
+    },
+})
+
+custom_row("misc", "rect({ x = x, y = y, w = ±w, h = ±h })", {
+    {
+        caption = "negative sizes move the origin",
+        draw = function(q, x, y)
+            local time = os.clock()
+            local width = 76 * math.sin(time * 5)
+            local height = 42 * math.cos(time * 5)
+            local anchor_x = x + TILE_W / 2
+            local anchor_y = y + 50
+            local bounds = rect(anchor_x, anchor_y, width, height)
+
+            q:begin_path()
+            q:rect(bounds)
+            q:fill(color(0.40, 0.63, 0.72, 0.75))
+            q:begin_path()
+            q:rect(bounds)
+            q:stroke(colors.blue, { width = 1 })
+
+            q:begin_path()
+            q:circle(rect(anchor_x - 3, anchor_y - 3, 6, 6))
+            q:fill(colors.orange)
+            draw_text(q, string.format("w = %+.0f, h = %+.0f", width, height),
+                rect(x + 15, y + 84, 155, 14), label_style, colors.muted)
         end,
     },
 })
