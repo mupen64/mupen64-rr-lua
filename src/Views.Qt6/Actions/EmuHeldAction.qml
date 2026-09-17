@@ -6,9 +6,8 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls
 
-Action {
+EmuAction {
     id: root
 
     property QtObject _HeldAction_priv: QtObject {

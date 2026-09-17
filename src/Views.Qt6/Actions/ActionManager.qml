@@ -23,7 +23,7 @@ QtObject {
             category: root.settingsCategory
         }
         property var _bindInst: Instantiator {
-            model: root.actions
+            model: root.children
             // Update settings whenever action shortcut is changed.
             // This cannot be done using traditional property bindings.
             delegate: Connections {
@@ -31,12 +31,12 @@ QtObject {
                 target: modelData
                 function onShortcutChanged() {
                     // update settings from the shortcut
-                    if (modelData instanceof HeldAction) {
-                        // heldShortcut takes priority
-                        settings.setValue(modelData.objectName, (modelData as HeldAction).heldShortcut);
-                    } else {
-                        // otherwise store normal shortcut
-                        settings.setValue(modelData.objectName, modelData.shortcut);
+                    if (modelData instanceof EmuHeldAction) {
+                        let action = modelData as EmuHeldAction
+                        settings.setValue(action.key, action.heldShortcut);
+                    } else if (modelData instanceof EmuAction) {
+                        let action = modelData as EmuAction
+                        settings.setValue(action.key, action.shortcut);
                     }
                 }
                 function onHeldShortcutChanged() {
@@ -44,15 +44,28 @@ QtObject {
                 }
             }
 
-            onObjectAdded: (index, obj) => {
+            onObjectAdded: (_index, obj) => {
                 // perform initial update from settings
-                obj.shortcut = settings.value(obj.objectName, null);
-                priv._bindList.splice(index, 0, obj);
+                let data = obj.modelData;
+                let isAction = false;
+                if (data instanceof EmuHeldAction) {
+                    let heldAction = data as EmuHeldAction;
+                    heldAction.heldShortcut = settings.value(heldAction.key, heldAction.defaultShortcut);
+                    isAction = true;
+                } else if (data instanceof EmuAction) {
+                    let action = data as EmuAction;
+                    action.shortcut = settings.value(action.key, action.defaultShortcut);
+                    isAction = true;
+                }
+                priv._bindSet.add(obj);
             }
-            onObjectRemoved: (index, obj) => priv._bindList.splice(index, 1)
+            onObjectRemoved: (_index, obj) => {
+                // remove from binding list
+                priv._bindSet.delete(obj);
+            }
         }
-        property list<QtObject> _bindList
+        property var _bindSet: new Set()
     }
     required property string settingsCategory
-    default property list<Action> actions
+    default property list<QtObject> children
 }

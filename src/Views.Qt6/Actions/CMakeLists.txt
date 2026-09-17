@@ -14,7 +14,8 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Actions
         "HeldShortcutMap.cpp"
     QML_FILES
         "ActionManager.qml"
-        "HeldActions.qml"
+        "EmuAction.qml"
+        "EmuHeldAction.qml"
         "HeldShortcut.qml"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Actions PUBLIC cxx_std_23)

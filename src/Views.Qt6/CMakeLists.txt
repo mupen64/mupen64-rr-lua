@@ -43,6 +43,7 @@ set(qml_sources
     "Views/MainWindow.qml"
 )
 set(qml_settings_sources
+    "Views/Settings/Actions.qml"
     "Views/Settings/Core.qml"
     "Views/Settings/Paths.qml"
 )
