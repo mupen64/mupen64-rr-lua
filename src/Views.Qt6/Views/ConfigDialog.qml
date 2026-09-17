@@ -14,6 +14,9 @@ import Config as Config
 DialogBase {
     id: dialog
 
+    required property SettingsCore settingsCore
+    required property SettingsPaths settingsPaths
+
     header: TabBar {
         id: tabs
         TabButton {
@@ -32,7 +35,11 @@ DialogBase {
         anchors.fill: parent
         currentIndex: tabs.currentIndex
 
-        ConfigEmulationPage {}
-        ConfigFoldersPage {}
+        ConfigEmulationPage {
+            settingsCore: dialog.settingsCore
+        }
+        ConfigFoldersPage {
+            settingsPaths: dialog.settingsPaths
+        }
     }
 }

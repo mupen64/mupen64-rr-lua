@@ -15,6 +15,7 @@ MenuBar {
     id: root
     required property EmuContext core
     required property DialogService dialogService
+    required property ConfigDialog diaConfig
 
     // True if the menu has been opened in any capacity.
     readonly property bool opened: priv.opened
@@ -285,12 +286,6 @@ MenuBar {
         onAccepted: {
             root.core.saveFile(selectedFile);
         }
-    }
-
-    // Other dialogs
-    ConfigDialog {
-        id: diaConfig
-        title: "Settings"
     }
 
     Binding {

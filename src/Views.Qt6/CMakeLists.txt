@@ -43,7 +43,7 @@ set(qml_sources
     "Views/MainWindow.qml"
 )
 set(qml_settings_sources
-    "Views/Settings/Actions.qml"
+    # "Views/Settings/Actions.qml"
     "Views/Settings/Core.qml"
     "Views/Settings/Paths.qml"
 )
@@ -59,7 +59,6 @@ foreach(item IN LISTS qml_settings_sources)
     )
     set_source_files_properties("${item}" PROPERTIES
         QT_QML_SOURCE_TYPENAME "${page_typename}"
-        QT_QML_SINGLETON_TYPE TRUE
     )
 endforeach()
 # rename config type names

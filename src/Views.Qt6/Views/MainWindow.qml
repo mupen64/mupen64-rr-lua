@@ -36,8 +36,8 @@ ApplicationWindow {
     // INITIALIZATION
     // =====================================
     Component.onCompleted: {
-        SettingsCore.sync();
-        SettingsPaths.sync();
+        settingsCore.sync();
+        settingsPaths.sync();
     }
 
     // MENU BAR
@@ -46,6 +46,7 @@ ApplicationWindow {
     header: MainMenuBar {
         core: core
         dialogService: dialogService
+        diaConfig: diaConfig
     }
 
     // CONTENT VIEW
@@ -105,30 +106,30 @@ ApplicationWindow {
         onOpenMultiDialog: dialogService.queueMultiDialog
 
         // Config options
-        options.coreType: SettingsCore.coreType
-        options.stUndoLoad: SettingsCore.stUndoLoad
-        options.maxLag: SettingsCore.maxLag
-        options.wiiVCEmulation: SettingsCore.wiiVCEmulation
-        options.rcpLagEmulation: SettingsCore.rcpLagEmulation
-        options.cpuCF: SettingsCore.cpuCF
-        options.rcpLagFactor: SettingsCore.rcpLagFactor
-        options.floatExceptionEmulation: SettingsCore.floatExceptionEmulation
-        options.useSummercart: SettingsCore.useSummercart
-        options.stScreenshot: SettingsCore.stScreenshot
-        options.stLZ4: SettingsCore.stLZ4
-        options.romCacheSize: SettingsCore.romCacheSize
-        options.audioDelayEnabled: SettingsCore.audioDelayEnabled
-        options.compiledJumpEnabled: SettingsCore.compiledJumpEnabled
-        options.ceqsNaNAccurate: SettingsCore.ceqsNaNAccurate
-        options.accurateRDPCompletion: SettingsCore.accurateRDPCompletion
-        options.vcrBackups: SettingsCore.vcrBackups
-        options.vcrWriteExtendedFormat: SettingsCore.vcrWriteExtendedFormat
+        options.coreType: settingsCore.coreType
+        options.stUndoLoad: settingsCore.stUndoLoad
+        options.maxLag: settingsCore.maxLag
+        options.wiiVCEmulation: settingsCore.wiiVCEmulation
+        options.rcpLagEmulation: settingsCore.rcpLagEmulation
+        options.cpuCF: settingsCore.cpuCF
+        options.rcpLagFactor: settingsCore.rcpLagFactor
+        options.floatExceptionEmulation: settingsCore.floatExceptionEmulation
+        options.useSummercart: settingsCore.useSummercart
+        options.stScreenshot: settingsCore.stScreenshot
+        options.stLZ4: settingsCore.stLZ4
+        options.romCacheSize: settingsCore.romCacheSize
+        options.audioDelayEnabled: settingsCore.audioDelayEnabled
+        options.compiledJumpEnabled: settingsCore.compiledJumpEnabled
+        options.ceqsNaNAccurate: settingsCore.ceqsNaNAccurate
+        options.accurateRDPCompletion: settingsCore.accurateRDPCompletion
+        options.vcrBackups: settingsCore.vcrBackups
+        options.vcrWriteExtendedFormat: settingsCore.vcrWriteExtendedFormat
 
         // Config paths
-        paths.romDir: SettingsPaths.romDir
-        paths.saveDir: SettingsPaths.saveDir
-        paths.screenshotDir: SettingsPaths.screenshotDir
-        paths.backupDir: SettingsPaths.backupDir
+        paths.romDir: settingsPaths.romDir
+        paths.saveDir: settingsPaths.saveDir
+        paths.screenshotDir: settingsPaths.screenshotDir
+        paths.backupDir: settingsPaths.backupDir
     }
 
     // invalidateVisuals() must be called on each UI frame to
@@ -141,15 +142,17 @@ ApplicationWindow {
     // Auxiliary dialogs
     // =====================================
 
-    DialogService {
-        id: dialogService
+    DialogService { id: dialogService }
+
+    ConfigDialog {
+        id: diaConfig
+        settingsCore: settingsCore
+        settingsPaths: settingsPaths
     }
 
-    HeldShortcut {
-        sequence: "\\"
+    // Settings objects
+    // =====================================
 
-        onActiveChanged: {
-            console.log(`active = ${active}`);
-        }
-    }
+    SettingsCore { id: settingsCore }
+    SettingsPaths { id: settingsPaths }
 }
