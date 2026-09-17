@@ -1,0 +1,292 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs as Dialogs
+
+import Actions
+import Core
+
+ActionManager {
+    id: root
+
+    required property EmuContext core
+    required property DialogService dialogService
+    required property ConfigDialog diaConfig
+
+    property bool menuOpen: false
+
+    settingsCategory: "hotkeys"
+
+    QtObject {
+        id: priv
+        property bool opened: false
+        function findBaseItemIndex(menu, target) {
+            return menu.contentChildren.findIndex(item => item == target) + 1
+        }
+        function showDialogForError(result) {
+            let message = CoreResult.message(result);
+            if (message == null)
+                return;
+
+            let title = `${message.module} Error ${result}`;
+            root.dialogService.queueInfoDialog(null, title, message.error, CoreDialogType.Error);
+        }
+    }
+
+    // ACTIONS
+    // ================================
+
+    // FILE
+    EmuAction {
+        key: "file/loadROM"
+        text: qsTr("Load ROM...")
+        onTriggered: diaOpenRom.open()
+    }
+    EmuAction {
+        key: "file/closeROM"
+        text: qsTr("Close ROM")
+        enabled: root.core.launched
+        onTriggered: {
+            let result = root.core.closeROM();
+            priv.showDialogForError(result);
+        }
+    }
+    EmuAction {
+        key: "file/resetROM"
+        text: qsTr("Reset ROM")
+        enabled: root.core.launched
+        onTriggered: {
+            let result = root.core.resetROM();
+            priv.showDialogForError(result);
+        }
+    }
+
+    // EMULATION (PAUSE/SPEED)
+    EmuAction {
+        id: actPause
+        key: "emu/pause"
+        text: qsTr("Pause")
+        checkable: true
+        enabled: root.core.launched
+    }
+    EmuAction {
+        key: "emu/speedDown"
+        text: qsTr("Speed Down")
+        enabled: root.core.launched
+        onTriggered: root.core.speedModifier -= 5
+    }
+    EmuAction {
+        key: "emu/speedUp"
+        text: qsTr("Speed Up")
+        enabled: root.core.launched
+        onTriggered: root.core.speedModifier += 5
+    }
+    EmuAction {
+        key: "emu/speedReset"
+        text: qsTr("Reset Speed")
+        enabled: root.core.launched
+        onTriggered: root.core.speedModifier = 100
+    }
+    EmuHeldAction {
+        key: "emu/gsButton"
+        id: actGSButton
+        enabled: root.core.launched
+        text: qsTr("GS Button")
+        checkable: true
+    }
+
+    // EMULATION (FRAME ADVANCE)
+    EmuAction {
+        key: "emu/advance"
+        text: qsTr("Frame Advance")
+        enabled: root.core.launched
+        onTriggered: {
+            actPause.checked = true;
+            root.core.frameAdvance(1);
+        }
+    }
+    EmuAction {
+        id: actMultiFrameAdvance
+        property int frameCount: 0
+
+        key: "emu/multiAdvance"
+        text: qsTr("Multi-Frame Advance")
+        enabled: root.core.launched
+        onTriggered: {
+            if (frameCount == 0) return;
+            actPause.checked = true;
+            root.core.frameAdvance(frameCount);
+        }
+    }
+    EmuAction {
+        key: "emu/multiAdvanceAdd"
+        text: qsTr("Multi-Frame Advance +1")
+        enabled: root.core.launched
+        onTriggered: {
+            // TODO: should this be capped?
+            actMultiFrameAdvance.frameCount += 1;
+        }
+    }
+    EmuAction {
+        key: "emu/multiAdvanceSub"
+        text: qsTr("Multi-Frame Advance -1")
+        enabled: root.core.launched
+        onTriggered: {
+            if (actMultiFrameAdvance.frameCount > 0)
+                actMultiFrameAdvance.frameCount -= 1;
+        }
+    }
+    EmuAction {
+        key: "emu/multiAdvanceReset"
+        text: qsTr("Multi-Frame Advance Reset")
+        enabled: root.core.launched
+        onTriggered: {
+            // TODO: supply this from config
+            actMultiFrameAdvance.frameCount = 0;
+        }
+    }
+
+
+    EmuAction {
+        key: "emu/saveCurrentSlot"
+        text: qsTr("Save Current Slot")
+        enabled: root.core.launched
+    }
+    EmuAction {
+        key: "emu/saveFile"
+        text: qsTr("Save as File...")
+        enabled: root.core.launched
+        onTriggered: diaSaveState.open()
+    }
+    ActionRepeater {
+        parent: root
+
+        model: 10
+        delegate: EmuAction {
+            required property int index
+            key: `emu/saveSlotN/${index + 1}`
+            text: `Save Slot ${index + 1}`
+            onTriggered: {
+                root.core.saveSlot(index);
+            }
+        }
+    }
+
+    EmuAction {
+        key: "emu/loadCurrentSlot"
+        text: qsTr("Load Current Slot")
+        enabled: root.core.launched
+        onTriggered: {
+            let currSlot = groupCurrentSlot.index;
+            root.core.saveSlot(currSlot);
+        }
+    }
+    EmuAction {
+        key: "emu/loadFile"
+        text: qsTr("Load from File...")
+        enabled: root.core.launched
+        onTriggered: diaLoadState.open()
+    }
+    ActionRepeater {
+        parent: root
+
+        model: 10
+        delegate: EmuAction {
+            required property int index
+            key: `emu/loadSlotN/${index + 1}`
+            text: `Load Slot ${index + 1}`
+        }
+    }
+
+    ActionGroup {
+        id: groupCurrentSlot
+        readonly property int index: checkedAction.index
+    }
+    ActionRepeater {
+        parent: root
+
+        model: 10
+        delegate: EmuAction {
+            required property int index
+            ActionGroup.group: groupCurrentSlot
+
+            checkable: true
+            key: `emu/setCurrentSlot/${index + 1}`
+            text: `Slot ${index + 1}`
+
+            Component.onCompleted: {
+                // select slot 1 by default
+                checked = (index == 0);
+            }
+        }
+    }
+
+    EmuAction {
+        key: "opts/settings"
+        text: qsTr("Settings...")
+        onTriggered: root.diaConfig.open()
+    }
+
+    // Dialogs
+    // ================================
+
+    Dialogs.FileDialog {
+        id: diaOpenRom
+        title: qsTr("Open ROM...")
+        fileMode: Dialogs.FileDialog.OpenFile
+        nameFilters: [`${qsTr("N64 ROMs")} (*.n64 *.z64 *.v64)`]
+        onAccepted: {
+            let result = root.core.startROM(selectedFile);
+            priv.showDialogForError(result);
+        }
+    }
+    Dialogs.FileDialog {
+        id: diaLoadState
+        title: qsTr("Load from File")
+        fileMode: Dialogs.FileDialog.OpenFile
+        nameFilters: [`${qsTr("Savestates")} (*.st *.savestate)`]
+        onAccepted: {
+            root.core.loadFile(selectedFile);
+        }
+    }
+    Dialogs.FileDialog {
+        id: diaSaveState
+        title: qsTr("Save to File")
+        fileMode: Dialogs.FileDialog.SaveFile
+        nameFilters: [`${qsTr("Savestates")} (*.st *.savestate)`]
+        onAccepted: {
+            root.core.saveFile(selectedFile);
+        }
+    }
+
+    // Bindings
+    // ================================
+
+    Binding {
+        // Pause the core if we're interacting with the menu or its items
+        root.core.paused: [
+            actPause.checked,
+            // menu interactions
+            root.menuOpen,
+            diaLoadState.visible,
+            diaSaveState.visible
+        ].some(value => value)
+        // Tie GS button state to the GSButton item
+        root.core.gsButton: actGSButton.checked
+    }
+    Connections {
+        target: root.core
+
+        // reset toggleable actions on startup and shutdown
+        function onLaunchedChanged() {
+            actPause.checked = false;
+            actGSButton.checked = false;
+        }
+    }
+}

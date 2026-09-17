@@ -14,6 +14,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Actions
         "HeldShortcutMap.cpp"
     QML_FILES
         "ActionManager.qml"
+        "ActionRepeater.qml"
         "EmuAction.qml"
         "EmuHeldAction.qml"
         "HeldShortcut.qml"

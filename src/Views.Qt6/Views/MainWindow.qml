@@ -5,11 +5,11 @@
  */
 pragma ComponentBehavior: Bound
 
+import QtQml
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Actions
 import Core
 import Views
 
@@ -38,15 +38,17 @@ ApplicationWindow {
     Component.onCompleted: {
         settingsCore.sync();
         settingsPaths.sync();
+
+        // menu bar initialization must be deferred to ensure
+        // actions are registered inside the ActionManager
+        header = menuBarTemplate.createObject();
     }
 
     // MENU BAR
     // =====================================
 
-    header: MainMenuBar {
-        core: core
-        dialogService: dialogService
-        diaConfig: diaConfig
+    property Component menuBarTemplate: MainMenuBar {
+        actions: settingsActions
     }
 
     // CONTENT VIEW
@@ -155,4 +157,12 @@ ApplicationWindow {
 
     SettingsCore { id: settingsCore }
     SettingsPaths { id: settingsPaths }
+    SettingsActions {
+        id: settingsActions
+
+        // core objects
+        core: core
+        dialogService: dialogService
+        diaConfig: diaConfig
+    }
 }
