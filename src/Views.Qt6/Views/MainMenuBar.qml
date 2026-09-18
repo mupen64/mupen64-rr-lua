@@ -8,6 +8,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
+import Components
+
 MenuBar {
     id: root
     required property SettingsActions actions
@@ -68,20 +70,14 @@ MenuBar {
             MenuSeparator {
                 id: sepSaveSlots
             }
-            Instantiator {
+            MenuRepeater {
+                parent: menuSaveState
+                baseItem: sepSaveSlots
                 model: 10
-
                 delegate: MenuItem {
                     required property int index
-                    action: root.actions.get(`emu/saveSlotN/${index + 1}`)
+                    action: root.actions.get(`emu/saveSlotN/${index}`)
                 }
-
-                onObjectAdded: (index, object) => {
-                    // ensure object is added to correct position relative to separator
-                    let baseIndex = priv.findBaseItemIndex(menuSaveState, sepSaveSlots);
-                    menuSaveState.insertItem(baseIndex + index, object);
-                }
-                onObjectRemoved: (index, object) => menuSaveState.removeItem(object)
             }
         }
         Menu {
@@ -92,20 +88,14 @@ MenuBar {
             MenuSeparator {
                 id: sepLoadSlots
             }
-            Instantiator {
+            MenuRepeater {
+                parent: menuLoadState
+                baseItem: sepLoadSlots
                 model: 10
-
                 delegate: MenuItem {
                     required property int index
-                    action: root.actions.get(`emu/loadSlotN/${index + 1}`)
+                    action: root.actions.get(`emu/loadSlotN/${index}`)
                 }
-
-                onObjectAdded: (index, object) => {
-                    // ensure object is added to correct position relative to separator
-                    let baseIndex = priv.findBaseItemIndex(menuLoadState, sepLoadSlots);
-                    menuLoadState.insertItem(baseIndex + index, object);
-                }
-                onObjectRemoved: (index, object) => menuLoadState.removeItem(object)
             }
         }
         MenuSeparator {}
@@ -113,22 +103,18 @@ MenuBar {
             id: menuCurrSlot
             title: qsTr("Current State Slot")
 
-            Instantiator {
+            MenuRepeater {
+                parent: menuCurrSlot
                 model: 10
-
                 delegate: MenuItem {
                     required property int index
-                    action: root.actions.get(`emu/setCurrentSlot/${index + 1}`)
+                    action: root.actions.get(`emu/setCurrentSlot/${index}`)
                 }
-
-                onObjectAdded: (index, object) => menuCurrSlot.insertItem(index, object)
-                onObjectRemoved: (index, object) => menuCurrSlot.removeItem(object)
             }
         }
     }
     Menu {
         title: qsTr("Options")
-
         MenuItem { action: root.actions.get("opts/settings") }
     }
 }

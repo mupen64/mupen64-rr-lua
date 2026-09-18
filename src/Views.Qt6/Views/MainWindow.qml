@@ -48,6 +48,7 @@ ApplicationWindow {
     // =====================================
 
     property Component menuBarTemplate: MainMenuBar {
+        id: blap
         actions: settingsActions
     }
 
@@ -164,5 +165,13 @@ ApplicationWindow {
         core: core
         dialogService: dialogService
         diaConfig: diaConfig
+    }
+
+    // LATE BINDINGS
+    // =====================================
+
+    Binding {
+        when: mainWindow.header instanceof MainMenuBar
+        settingsActions.menuOpen: (mainWindow.header as MainMenuBar).opened
     }
 }

@@ -35,7 +35,7 @@ ActionManager {
                 return;
 
             let title = `${message.module} Error ${result}`;
-            root.dialogService.queueInfoDialog(null, title, message.error, CoreDialogType.Error);
+            root.dialogService.queueInfoDialog(null, title, message.error, CoreMessageTone.Error);
         }
     }
 
@@ -170,7 +170,7 @@ ActionManager {
         model: 10
         delegate: EmuAction {
             required property int index
-            key: `emu/saveSlotN/${index + 1}`
+            key: `emu/saveSlotN/${index}`
             text: `Save Slot ${index + 1}`
             onTriggered: {
                 root.core.saveSlot(index);
@@ -199,14 +199,14 @@ ActionManager {
         model: 10
         delegate: EmuAction {
             required property int index
-            key: `emu/loadSlotN/${index + 1}`
+            key: `emu/loadSlotN/${index}`
             text: `Load Slot ${index + 1}`
         }
     }
 
     ActionGroup {
         id: groupCurrentSlot
-        readonly property int index: checkedAction.index
+        readonly property int index: checkedAction.index // qmllint disable missing-property
     }
     ActionRepeater {
         parent: root
@@ -217,7 +217,7 @@ ActionManager {
             ActionGroup.group: groupCurrentSlot
 
             checkable: true
-            key: `emu/setCurrentSlot/${index + 1}`
+            key: `emu/setCurrentSlot/${index}`
             text: `Slot ${index + 1}`
 
             Component.onCompleted: {

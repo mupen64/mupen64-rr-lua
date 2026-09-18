@@ -10,6 +10,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Components
     QML_FILES
         "DoubleSpinBox.qml"
         "DialogBase.qml"
+        "MenuRepeater.qml"
         "MessageBox.qml"
         "ToolTipLabel.qml"
 )

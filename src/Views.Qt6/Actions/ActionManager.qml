@@ -53,30 +53,35 @@ QtObject {
                 }
 
                 function update() {
+                    if (!(modelData instanceof EmuAction))
+                        return;
+
                     // update settings from the shortcut
-                    if (modelData instanceof EmuHeldAction) {
-                        let action = modelData as EmuHeldAction
-                        settings.setValue(action.key, action.heldShortcut);
-                    } else if (modelData instanceof EmuAction) {
-                        let action = modelData as EmuAction
-                        settings.setValue(action.key, action.shortcut);
-                    }
+                    let action = modelData as EmuAction;
+                    let shortcut = (action instanceof EmuHeldAction) ?
+                        (action as EmuHeldAction).heldShortcut :
+                        action.shortcut;
+
+                    settings.setValue(action.key, JSON.stringify(shortcut));
                 }
             }
 
             onObjectAdded: (_index, obj) => {
                 // perform initial update from settings
-                let data = obj.modelData;
+                if (!(obj.modelData instanceof EmuAction))
+                    return;
+
+                let action = obj.modelData as EmuAction;
                 let isAction = false;
-                if (data instanceof EmuHeldAction) {
-                    let heldAction = data as EmuHeldAction;
-                    heldAction.heldShortcut = settings.value(heldAction.key, heldAction.defaultShortcut);
-                    isAction = true;
-                } else if (data instanceof EmuAction) {
-                    let action = data as EmuAction;
-                    action.shortcut = settings.value(action.key, action.defaultShortcut);
-                    isAction = true;
-                }
+
+                let setShortcut = settings.value(action.key, null);
+                let shortcut = (setShortcut == null) ? action.defaultShortcut : JSON.parse(setShortcut);
+
+                if (action instanceof EmuHeldAction)
+                    (action as EmuHeldAction).heldShortcut = shortcut;
+                else
+                    action.shortcut = shortcut;
+
                 priv.bindSet.add(obj);
             }
             onObjectRemoved: (_index, obj) => {
