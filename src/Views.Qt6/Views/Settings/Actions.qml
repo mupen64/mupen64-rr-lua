@@ -192,6 +192,7 @@ ActionManager {
                 "1", "2", "3", "4", "5",
                 "6", "7", "8", "9", "0"
             ][index]
+            enabled: root.core.launched
             onTriggered: {
                 root.core.saveSlot(index);
             }
@@ -226,6 +227,10 @@ ActionManager {
                 "F1", "F2", "F3", "F4", "F5",
                 "F6", "F7", "F8", "F9", "F10"
             ][index]
+            enabled: root.core.launched
+            onTriggered: {
+                root.core.loadSlot(index);
+            }
         }
     }
 
@@ -248,6 +253,7 @@ ActionManager {
                 "1", "2", "3", "4", "5",
                 "6", "7", "8", "9", "0"
             ][index]
+            enabled: root.core.launched
 
             Component.onCompleted: {
                 // select slot 1 by default

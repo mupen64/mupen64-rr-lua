@@ -7,7 +7,7 @@
 #include <Common/VersionNameHelpers.hpp>
 #include <Common.Views/App.hpp>
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QSettings>
 #include <QtQml/QQmlExtensionPlugin>
@@ -41,13 +41,16 @@ static int qt_main(int argc, char *argv[])
         qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
     }
 #endif
-    // TODO: provide and package .desktop file for Linux
-    QGuiApplication app(argc, argv);
-    QGuiApplication::setOrganizationDomain(ORG_DOMAIN);
-    QGuiApplication::setOrganizationName(ORG_NAME);
-    QGuiApplication::setApplicationName(DESKTOP_FILE_NAME);
-    QGuiApplication::setApplicationVersion(CURRENT_VERSION);
-    QGuiApplication::setApplicationDisplayName(DISPLAY_NAME);
+    // NOTE: QApplication is used here specifically to ensure KDE's desktop styles are loaded.
+    // When a QGuiApplication is used, KDE switches to its fallback Breeze theme, which
+    // is slightly bugged.
+    // TODO: provide and package .desktop file for Linux.
+    QApplication app(argc, argv);
+    QApplication::setOrganizationDomain(ORG_DOMAIN);
+    QApplication::setOrganizationName(ORG_NAME);
+    QApplication::setApplicationName(DESKTOP_FILE_NAME);
+    QApplication::setApplicationVersion(CURRENT_VERSION);
+    QApplication::setApplicationDisplayName(DISPLAY_NAME);
 
     QQmlApplicationEngine engine;
 

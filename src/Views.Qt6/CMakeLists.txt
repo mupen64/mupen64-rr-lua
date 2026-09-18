@@ -33,6 +33,7 @@ target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE
     Mupen64RR_Views_Qt6_Utils
     Mupen64RR_Views_Qt6_Utilsplugin
 
+    Qt::Widgets
     Qt::Quick
     Qt::QuickControls2
 )
