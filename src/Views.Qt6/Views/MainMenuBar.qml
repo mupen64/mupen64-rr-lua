@@ -26,31 +26,33 @@ MenuBar {
     }
 
     // FIXME (MacOS): May not work as intended with native menus.
-    delegate: MenuBarItem {
-        id: item
-        Connections {
-            target: item.menu
-            enabled: item.menu != null
-            function onAboutToShow() {
-                item.updateOpened();
-            }
-            function onClosed() {
-                item.updateOpened();
-            }
-        }
-        function updateOpened() {
-            priv.opened = root.menus.some(child => child.visible);
-        }
-    }
+    // delegate: MenuBarItem {
+    //     id: item
+    //     Connections {
+    //         target: item.menu
+    //         enabled: item.menu != null
+    //         function onAboutToShow() {
+    //             item.updateOpened();
+    //         }
+    //         function onClosed() {
+    //             item.updateOpened();
+    //         }
+    //     }
+    //     function updateOpened() {
+    //         priv.opened = root.menus.some(child => child.visible);
+    //     }
+    // }
 
     Menu {
         title: qsTr("File")
+
         MenuItem { action: root.actions.get("file/loadROM") }
         MenuItem { action: root.actions.get("file/closeROM") }
         MenuItem { action: root.actions.get("file/resetROM") }
     }
     Menu {
         title: qsTr("Emulation")
+
         MenuItem { action: root.actions.get("emu/pause") }
         MenuItem { action: root.actions.get("emu/speedDown") }
         MenuItem { action: root.actions.get("emu/speedUp") }

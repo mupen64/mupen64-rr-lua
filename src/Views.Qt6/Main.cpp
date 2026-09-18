@@ -7,14 +7,12 @@
 #include <Common/VersionNameHelpers.hpp>
 #include <Common.Views/App.hpp>
 
-#include <print>
-
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QSettings>
 #include <QtQml/QQmlExtensionPlugin>
 
-#include <QQuickWindow>
+#include <QKeySequence>
 
 Q_IMPORT_QML_PLUGIN(ActionsPlugin)
 Q_IMPORT_QML_PLUGIN(CorePlugin)

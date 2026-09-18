@@ -46,11 +46,13 @@ ActionManager {
     EmuAction {
         key: "file/loadROM"
         text: qsTr("Load ROM...")
+        defaultShortcut: "Ctrl+O"
         onTriggered: diaOpenRom.open()
     }
     EmuAction {
         key: "file/closeROM"
         text: qsTr("Close ROM")
+        defaultShortcut: "Ctrl+W"
         enabled: root.core.launched
         onTriggered: {
             let result = root.core.closeROM();
@@ -60,6 +62,7 @@ ActionManager {
     EmuAction {
         key: "file/resetROM"
         text: qsTr("Reset ROM")
+        defaultShortcut: "Ctrl+R"
         enabled: root.core.launched
         onTriggered: {
             let result = root.core.resetROM();
@@ -72,30 +75,37 @@ ActionManager {
         id: actPause
         key: "emu/pause"
         text: qsTr("Pause")
+        defaultShortcut: "Pause"
         checkable: true
         enabled: root.core.launched
     }
     EmuAction {
         key: "emu/speedDown"
         text: qsTr("Speed Down")
+        // note: Qt represents numpad keys as "Num+[key]"
+        // e.g. numpad 0 -> "Num+0"
+        defaultShortcut: "Num+-"
         enabled: root.core.launched
         onTriggered: root.core.speedModifier -= 5
     }
     EmuAction {
         key: "emu/speedUp"
         text: qsTr("Speed Up")
+        defaultShortcut: "Num++"
         enabled: root.core.launched
         onTriggered: root.core.speedModifier += 5
     }
     EmuAction {
         key: "emu/speedReset"
         text: qsTr("Reset Speed")
+        defaultShortcut: "Ctrl+Num++"
         enabled: root.core.launched
         onTriggered: root.core.speedModifier = 100
     }
     EmuHeldAction {
-        key: "emu/gsButton"
         id: actGSButton
+        key: "emu/gsButton"
+        defaultShortcut: "G"
         enabled: root.core.launched
         text: qsTr("GS Button")
         checkable: true
@@ -105,6 +115,7 @@ ActionManager {
     EmuAction {
         key: "emu/advance"
         text: qsTr("Frame Advance")
+        defaultShortcut: "Num+5"
         enabled: root.core.launched
         onTriggered: {
             actPause.checked = true;
@@ -117,6 +128,7 @@ ActionManager {
 
         key: "emu/multiAdvance"
         text: qsTr("Multi-Frame Advance")
+        defaultShortcut: "Ctrl+Num+5"
         enabled: root.core.launched
         onTriggered: {
             if (frameCount == 0) return;
@@ -127,6 +139,7 @@ ActionManager {
     EmuAction {
         key: "emu/multiAdvanceAdd"
         text: qsTr("Multi-Frame Advance +1")
+        defaultShortcut: "Ctrl+Q"
         enabled: root.core.launched
         onTriggered: {
             // TODO: should this be capped?
@@ -136,6 +149,7 @@ ActionManager {
     EmuAction {
         key: "emu/multiAdvanceSub"
         text: qsTr("Multi-Frame Advance -1")
+        defaultShortcut: "Ctrl+E"
         enabled: root.core.launched
         onTriggered: {
             if (actMultiFrameAdvance.frameCount > 0)
@@ -145,6 +159,7 @@ ActionManager {
     EmuAction {
         key: "emu/multiAdvanceReset"
         text: qsTr("Multi-Frame Advance Reset")
+        defaultShortcut: "Ctrl+Shift+E"
         enabled: root.core.launched
         onTriggered: {
             // TODO: supply this from config
@@ -156,6 +171,7 @@ ActionManager {
     EmuAction {
         key: "emu/saveCurrentSlot"
         text: qsTr("Save Current Slot")
+        defaultShortcut: "I"
         enabled: root.core.launched
     }
     EmuAction {
@@ -172,6 +188,10 @@ ActionManager {
             required property int index
             key: `emu/saveSlotN/${index}`
             text: `Save Slot ${index + 1}`
+            defaultShortcut: "Shift+" + [
+                "1", "2", "3", "4", "5",
+                "6", "7", "8", "9", "0"
+            ][index]
             onTriggered: {
                 root.core.saveSlot(index);
             }
@@ -182,6 +202,7 @@ ActionManager {
         key: "emu/loadCurrentSlot"
         text: qsTr("Load Current Slot")
         enabled: root.core.launched
+        defaultShortcut: "P"
         onTriggered: {
             let currSlot = groupCurrentSlot.index;
             root.core.saveSlot(currSlot);
@@ -201,6 +222,10 @@ ActionManager {
             required property int index
             key: `emu/loadSlotN/${index}`
             text: `Load Slot ${index + 1}`
+            defaultShortcut: [
+                "F1", "F2", "F3", "F4", "F5",
+                "F6", "F7", "F8", "F9", "F10"
+            ][index]
         }
     }
 
@@ -219,6 +244,10 @@ ActionManager {
             checkable: true
             key: `emu/setCurrentSlot/${index}`
             text: `Slot ${index + 1}`
+            defaultShortcut: [
+                "1", "2", "3", "4", "5",
+                "6", "7", "8", "9", "0"
+            ][index]
 
             Component.onCompleted: {
                 // select slot 1 by default
