@@ -307,8 +307,38 @@ static int GetKeyDifference(lua_State *L)
 
 static int LuaGetKeyNameText(lua_State *L)
 {
-    const auto keycode = static_cast<SDL_Keycode>(luaL_checkinteger(L, 1));
-    lua_pushstring(L, SDL_GetKeyName(keycode));
+    const auto vk = luaL_checkinteger(L, 1);
+
+    UINT scan_code = MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, GetKeyboardLayout(0));
+
+    switch (vk)
+    {
+    case VK_LEFT:
+    case VK_UP:
+    case VK_RIGHT:
+    case VK_DOWN:
+    case VK_PRIOR:
+    case VK_NEXT:
+    case VK_END:
+    case VK_HOME:
+    case VK_INSERT:
+    case VK_DELETE:
+    case VK_DIVIDE:
+    case VK_NUMLOCK:
+        scan_code |= 0x100;
+        break;
+    default:
+        break;
+    }
+
+    TCHAR name[64]{};
+    if (!GetKeyNameText(scan_code << 16, name, sizeof(name) / sizeof(TCHAR)))
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_pushstring(L, name);
     return 1;
 }
 

@@ -1772,8 +1772,9 @@ function input.diff(t1, t2) end
 function input.prompt(title, placeholder) end
 
 ---Gets the name of a key.
+---@deprecated This function shouldn't be used.
 ---@nodiscard
----@param key Keycode
+---@param key VKeycode
 ---@return string
 function input.get_key_name_text(key) end
 
