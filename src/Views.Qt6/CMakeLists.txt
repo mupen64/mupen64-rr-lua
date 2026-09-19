@@ -94,6 +94,8 @@ windeployqt6(
     DEPLOY_TO_BUILD_DIR
     ARGS --qmldir .
 )
+# clang-cl generates a faulty UAC manifest section. Since Qt is generating
+# it already, we just ignore it.
 if (MSVC)
     target_link_options(Mupen64RR_Views_Qt6 PRIVATE "/MANIFESTUAC:NO")
 endif()

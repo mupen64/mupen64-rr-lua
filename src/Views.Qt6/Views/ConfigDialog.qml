@@ -34,6 +34,7 @@ ApplicationWindow {
     // windowResizable: true
 
     StackLayout {
+        id: mainStack
         anchors.fill: parent
         currentIndex: tabs.currentIndex
 
