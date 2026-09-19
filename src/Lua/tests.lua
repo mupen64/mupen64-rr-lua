@@ -824,11 +824,11 @@ retest.describe('mupen64', function()
         retest.describe('get_key_name_text', function()
             -- NOTE: This test only works on an en-us locale.
             retest.it('returns_correct_value', function()
-                retest.expect(input.get_key_name_text(Mupen.keycode.SDLK_1)).to.equal("1")
-                retest.expect(input.get_key_name_text(Mupen.keycode.SDLK_RETURN)).to.equal("Enter")
-                retest.expect(input.get_key_name_text(Mupen.keycode.SDLK_SPACE)).to.equal("Space")
-                retest.expect(input.get_key_name_text(Mupen.keycode.SDLK_DOWN)).to.equal("Down")
-                retest.expect(input.get_key_name_text(string.byte('W'))).to.equal("W")
+                retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_1)).to.equal("1")
+                retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_RETURN)).to.equal("Enter")
+                retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_SPACE)).to.equal("Space")
+                retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_DOWN)).to.equal("Down")
+                retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_W)).to.equal("W")
             end)
         end)
     end)
@@ -1023,6 +1023,31 @@ retest.describe('mupen64', function()
                 })
                 local func = function()
                     action.associate_hotkey("Test > Something", {})
+                end
+                retest.expect(func).to.fail()
+            end)
+            retest.it('works_with_legacy_key', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    key = Mupen.VKeycodes.VK_F1,
+                    alt = true,
+                }, true)
+                retest.expect(result).to.be.truthy()
+            end)
+            retest.it('errors_when_key_and_trigger_are_both_present', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local func = function()
+                    action.associate_hotkey("Test > Something", {
+                        key = Mupen.VKeycodes.VK_F1,
+                        trigger = {
+                            type = "keycode",
+                            value = Mupen.keycode.SDLK_F1,
+                        },
+                    })
                 end
                 retest.expect(func).to.fail()
             end)

@@ -73,6 +73,12 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
                 lua_pushinteger(l, atkey_ctx.keycode.value());
                 lua_settable(l, -3);
             }
+            if (atkey_ctx.keycode2.has_value())
+            {
+                lua_pushstring(l, "keycode2");
+                lua_pushinteger(l, atkey_ctx.keycode2.value());
+                lua_settable(l, -3);
+            }
             if (atkey_ctx.pressed.has_value())
             {
                 lua_pushstring(l, "pressed");

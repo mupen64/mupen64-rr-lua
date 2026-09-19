@@ -37,6 +37,24 @@ static void push_trigger(lua_State *L, const ::Hotkey::Trigger &trigger)
     lua_setfield(L, -2, "type");
 }
 
+static void push_legacy_hotkey(lua_State *L, const ::Hotkey &hotkey)
+{
+    lua_newtable(L);
+
+    const auto key = HotkeyUtils::trigger_to_vk(hotkey.trigger).value_or(0);
+    lua_pushinteger(L, key);
+    lua_setfield(L, -2, "key");
+
+    lua_pushboolean(L, hotkey.ctrl);
+    lua_setfield(L, -2, "ctrl");
+
+    lua_pushboolean(L, hotkey.shift);
+    lua_setfield(L, -2, "shift");
+
+    lua_pushboolean(L, hotkey.alt);
+    lua_setfield(L, -2, "alt");
+}
+
 static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
 {
     lua_newtable(L);
@@ -82,8 +100,38 @@ static ::Hotkey check_hotkey(lua_State *L, int i)
     luaL_checktype(L, i, LUA_TTABLE);
 
     lua_getfield(L, i, "trigger");
-    ::Hotkey hotkey(check_trigger(L, -1));
+    const bool has_trigger = !lua_isnil(L, -1);
     lua_pop(L, 1);
+
+    lua_getfield(L, i, "key");
+    const bool has_key = !lua_isnil(L, -1);
+    lua_pop(L, 1);
+
+    if (has_trigger == has_key)
+    {
+        luaL_error(L, "Expected exactly one of 'trigger' or deprecated 'key'");
+    }
+
+    ::Hotkey hotkey = ::Hotkey::make_empty();
+    if (has_trigger)
+    {
+        lua_getfield(L, i, "trigger");
+        hotkey.trigger = check_trigger(L, -1);
+        lua_pop(L, 1);
+    }
+    else
+    {
+        lua_getfield(L, i, "key");
+        const auto key = static_cast<uint32_t>(luaL_checkinteger(L, -1));
+        const auto trigger = HotkeyUtils::vk_to_trigger(key);
+        lua_pop(L, 1);
+
+        if (!trigger.has_value())
+        {
+            luaL_error(L, "Unknown Windows virtual keycode: %u", key);
+        }
+        hotkey.trigger = *trigger;
+    }
 
     lua_getfield(L, i, "ctrl");
     hotkey.ctrl = luaL_opt(L, lua_toboolean, -1, false);
@@ -115,7 +163,8 @@ static int prompt(lua_State *L)
         return 0;
     }
 
+    push_legacy_hotkey(L, hotkey);
     push_hotkey(L, hotkey);
-    return 1;
+    return 2;
 }
 } // namespace LuaCore::Hotkey
