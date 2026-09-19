@@ -1999,11 +1999,12 @@ function avi.stopcapture() end
 ---@class LegacyHotkey: HotkeyModifiers
 ---@field key VKeycode The deprecated Windows virtual keycode that triggers the hotkey.
 ---@field trigger nil The legacy key field cannot be used with `trigger`.
----A legacy hotkey accepted by `action.associate_hotkey` for compatibility.
+---A legacy hotkey returned as the first result by `hotkey.prompt` and accepted by `action.associate_hotkey` for compatibility.
 
 ---Shows a dialog prompting the user to enter a hotkey.
 ---@param caption string The headline to display in the dialog.
----@return Hotkey|nil The hotkey that was entered, or `nil` if the user cancelled the dialog.
+---@return LegacyHotkey|nil legacy_hotkey The deprecated legacy hotkey, or `nil` if the user cancelled the dialog.
+---@return Hotkey|nil hotkey The modern hotkey, or `nil` if the user cancelled the dialog.
 function hotkey.prompt(caption) end
 
 --#endregion

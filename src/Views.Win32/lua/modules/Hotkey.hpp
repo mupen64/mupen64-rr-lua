@@ -37,6 +37,24 @@ static void push_trigger(lua_State *L, const ::Hotkey::Trigger &trigger)
     lua_setfield(L, -2, "type");
 }
 
+static void push_legacy_hotkey(lua_State *L, const ::Hotkey &hotkey)
+{
+    lua_newtable(L);
+
+    const auto key = HotkeyUtils::trigger_to_vk(hotkey.trigger).value_or(0);
+    lua_pushinteger(L, key);
+    lua_setfield(L, -2, "key");
+
+    lua_pushboolean(L, hotkey.ctrl);
+    lua_setfield(L, -2, "ctrl");
+
+    lua_pushboolean(L, hotkey.shift);
+    lua_setfield(L, -2, "shift");
+
+    lua_pushboolean(L, hotkey.alt);
+    lua_setfield(L, -2, "alt");
+}
+
 static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
 {
     lua_newtable(L);
@@ -145,7 +163,8 @@ static int prompt(lua_State *L)
         return 0;
     }
 
+    push_legacy_hotkey(L, hotkey);
     push_hotkey(L, hotkey);
-    return 1;
+    return 2;
 }
 } // namespace LuaCore::Hotkey
