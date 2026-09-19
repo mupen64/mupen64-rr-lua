@@ -416,7 +416,6 @@ void LuaRenderer::ensure_d2d_renderer_created(LuaRenderingContext *ctx)
 
     g_view_logger->trace("[Lua] Creating D2D renderer...");
 
-
     if (g_config.presenter_type != (int32_t)Config::PresenterType::GDI)
         ctx->presenter = new DCompPresenter();
     else

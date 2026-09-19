@@ -370,7 +370,6 @@ inline D2D1_RECT_F check_rect(lua_State *L, int index)
     return D2D1::RectF(x, y, right, bottom);
 }
 
-
 inline LuaRenderingContext *check_context(lua_State *L)
 {
     auto *environment = LuaManager::get_environment_for_state(L);
@@ -1112,7 +1111,8 @@ inline ComPtr<IDWriteTextLayout> create_text_hit_test_layout(
     if (options.overflow == "ellipsis" && !options.fit)
     {
         ComPtr<IDWriteInlineObject> ellipsis;
-        need(factory->CreateEllipsisTrimmingSign(format.Get(), &ellipsis), "IDWriteFactory::CreateEllipsisTrimmingSign");
+        need(
+            factory->CreateEllipsisTrimmingSign(format.Get(), &ellipsis), "IDWriteFactory::CreateEllipsisTrimmingSign");
         const DWRITE_TRIMMING trimming{DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0};
         need(layout->SetTrimming(&trimming, ellipsis.Get()), "IDWriteTextLayout::SetTrimming");
     }
