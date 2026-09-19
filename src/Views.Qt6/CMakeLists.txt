@@ -94,3 +94,6 @@ windeployqt6(
     DEPLOY_TO_BUILD_DIR
     ARGS --qmldir .
 )
+if (MSVC)
+    target_link_options(Mupen64RR_Views_Qt6 PRIVATE "/MANIFESTUAC:NO")
+endif()

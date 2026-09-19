@@ -36,6 +36,10 @@ ApplicationWindow {
     // INITIALIZATION
     // =====================================
     Component.onCompleted: {
+        width = 640;
+        height = 480;
+
+        // sync settings
         settingsCore.sync();
         settingsPaths.sync();
 

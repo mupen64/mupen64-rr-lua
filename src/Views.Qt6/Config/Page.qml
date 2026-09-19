@@ -21,6 +21,9 @@ ScrollView {
     default property list<Item> rows
 
     ColumnLayout {
+        Layout.leftMargin: 10
+        Layout.rightMargin: 10
+        Layout.topMargin: 20
         id: pageRoot
         width: root.width
         children: root.rows

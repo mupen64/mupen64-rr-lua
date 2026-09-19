@@ -36,7 +36,7 @@ GroupBox {
             text: root.target
         }
         Button {
-            icon.name: "folder-open-symbolic"
+            icon.name: "folder-open"
             onClicked: root.dialog.open()
         }
     }

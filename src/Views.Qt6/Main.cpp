@@ -12,7 +12,7 @@
 #include <QSettings>
 #include <QtQml/QQmlExtensionPlugin>
 
-#include <QKeySequence>
+#include <QQuickStyle>
 
 Q_IMPORT_QML_PLUGIN(ActionsPlugin)
 Q_IMPORT_QML_PLUGIN(CorePlugin)
@@ -62,6 +62,11 @@ static int qt_main(int argc, char *argv[])
             QCoreApplication::exit(-1);
         },
         Qt::QueuedConnection);
+
+#if defined(_WIN32)
+    // Windows: default to Fusion, as the system theme isn't exactly nice.
+    QQuickStyle::setStyle("Fusion");
+#endif
 
     // provider for system icons
     engine.addImageProvider(u"icons"_s, new QtIconImageProvider);

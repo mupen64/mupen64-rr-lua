@@ -265,7 +265,7 @@ ActionManager {
     EmuAction {
         key: "opts/settings"
         text: qsTr("Settings...")
-        onTriggered: root.diaConfig.open()
+        onTriggered: root.diaConfig.show()
     }
 
     // Dialogs

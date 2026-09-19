@@ -27,7 +27,9 @@ add_subdirectory(Common.Views)
 
 # common settings
 include("${CMAKE_CURRENT_LIST_DIR}/Plugins.Common.cmake")
-
+if (MUPEN64RR_BUILD_WIN32)
+    include("${CMAKE_CURRENT_LIST_DIR}/Plugins.Win32.Common.cmake")
+endif()
 # dummy plugins
 add_subdirectory(Plugins.DummyAudio)
 add_subdirectory(Plugins.DummyInput)
@@ -59,7 +61,6 @@ if (MUPEN64RR_BUILD_WIN32)
     # ============================
 
     # common settings
-    include("${CMAKE_CURRENT_LIST_DIR}/Plugins.Win32.Common.cmake")
 
     # Windows-based TAS plugins.
     # TASInput relies heavily on Windows APIs to work.

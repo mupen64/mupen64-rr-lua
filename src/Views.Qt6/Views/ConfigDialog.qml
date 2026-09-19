@@ -11,11 +11,15 @@ import QtQuick.Layouts
 import Components
 import Config as Config
 
-DialogBase {
+ApplicationWindow {
     id: dialog
 
     required property SettingsCore settingsCore
     required property SettingsPaths settingsPaths
+
+    // ensure window fits content
+    minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
+    minimumHeight: mainStack.implicitHeight + topPadding + bottomPadding
 
     header: TabBar {
         id: tabs
@@ -27,9 +31,7 @@ DialogBase {
         }
     }
 
-    windowResizable: true
-
-    padding: 10
+    // windowResizable: true
 
     StackLayout {
         anchors.fill: parent
