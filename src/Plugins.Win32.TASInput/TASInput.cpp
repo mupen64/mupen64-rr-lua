@@ -1254,6 +1254,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             SDL_RemoveEventWatch(event_watch, nullptr);
             g_event_watch_attached = false;
         }
+        GamepadManager::shutdown();
 
         break;
     }
