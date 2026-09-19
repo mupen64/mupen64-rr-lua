@@ -115,7 +115,8 @@ struct LuaEnvironment
  */
 struct LuaKeyEventArgs
 {
-    std::optional<SDL_Keycode> keycode;
+    std::optional<uint64_t> keycode;
+    std::optional<SDL_Keycode> keycode2;
     bool ctrl{};
     bool alt{};
     bool shift{};

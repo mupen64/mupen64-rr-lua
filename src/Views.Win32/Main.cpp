@@ -601,8 +601,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
 
         LuaKeyEventArgs args = get_base_key_event_args();
+        args.keycode = wParam;
         if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
-            args.keycode = keycode;
+            args.keycode2 = keycode;
         args.pressed = true;
         args.repeat = repeat;
 
@@ -613,8 +614,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYUP:
     case WM_KEYUP: {
         LuaKeyEventArgs args = get_base_key_event_args();
+        args.keycode = wParam;
         if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
-            args.keycode = keycode;
+            args.keycode2 = keycode;
         args.pressed = false;
         args.repeat = false;
 
@@ -1149,7 +1151,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 {
     enable_mitigations();
     set_error_mode();
-    setlocale(LC_ALL, ".UTF-8");
+    setlocale(LC_CTYPE, ".UTF-8");
+    setlocale(LC_NUMERIC, "C"); // Lua scripts expect `.` decimal separator
 
     g_main_ctx.wine = is_running_under_wine();
 
