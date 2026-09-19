@@ -9,6 +9,13 @@
 #include <Common.Views/ActionManager.hpp>
 #include <SDL3/SDL_keycode.h>
 #include <lua/presenters/Presenter.hpp>
+#include <memory>
+
+namespace LuaCore::Painter::Detail
+{
+class TextLayoutCache;
+class TextMeasurementCache;
+} // namespace LuaCore::Painter::Detail
 
 /**
  * \brief Represents a Lua rendering context.
@@ -36,14 +43,11 @@ struct LuaRenderingContext
     // Dimensions of the drawing surfaces
     D2D1_SIZE_U dc_size{};
 
-    // The DirectWrite factory, whose lifetime is the renderer's
-    IDWriteFactory *dw_factory{};
+    // The LRU cache for painter text layouts
+    std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts{};
 
-    // The cache for DirectWrite text layouts
-    MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts{};
-
-    // The cache for DirectWrite text size measurements
-    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
+    // The LRU cache for painter text measurements
+    std::shared_ptr<LuaCore::Painter::Detail::TextMeasurementCache> painter_text_measurements{};
 
     // The stack of render targets. The top is used for D2D calls.
     std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
