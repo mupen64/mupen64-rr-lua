@@ -685,7 +685,8 @@ Mupen = {
 ---@alias tostringusable string|number
 
 ---@class KeyEventArgs
----@field keycode Keycode? The SDL keycode, if the event is a key event.
+---@field keycode VKeycode? The deprecated Windows virtual keycode, if the event is a key event.
+---@field keycode2 Keycode? The SDL keycode, if the event is a key event and the key has an SDL equivalent.
 ---@field ctrl boolean Whether the Ctrl key is held down.
 ---@field alt boolean Whether the Alt key is held down.
 ---@field shift boolean Whether the Shift key is held down.
