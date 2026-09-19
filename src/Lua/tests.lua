@@ -1026,6 +1026,31 @@ retest.describe('mupen64', function()
                 end
                 retest.expect(func).to.fail()
             end)
+            retest.it('works_with_legacy_key', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    key = Mupen.VKeycodes.VK_F1,
+                    alt = true,
+                }, true)
+                retest.expect(result).to.be.truthy()
+            end)
+            retest.it('errors_when_key_and_trigger_are_both_present', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local func = function()
+                    action.associate_hotkey("Test > Something", {
+                        key = Mupen.VKeycodes.VK_F1,
+                        trigger = {
+                            type = "keycode",
+                            value = Mupen.keycode.SDLK_F1,
+                        },
+                    })
+                end
+                retest.expect(func).to.fail()
+            end)
             retest.it('works_with_keycode_trigger', function()
                 action.add({
                     path = "Test > Something",
