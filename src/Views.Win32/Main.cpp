@@ -601,8 +601,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
 
         LuaKeyEventArgs args = get_base_key_event_args();
+        args.keycode = wParam;
         if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
-            args.keycode = keycode;
+            args.keycode2 = keycode;
         args.pressed = true;
         args.repeat = repeat;
 
@@ -613,8 +614,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYUP:
     case WM_KEYUP: {
         LuaKeyEventArgs args = get_base_key_event_args();
+        args.keycode = wParam;
         if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
-            args.keycode = keycode;
+            args.keycode2 = keycode;
         args.pressed = false;
         args.repeat = false;
 
@@ -1079,9 +1081,11 @@ void Main::init_sdl()
     if (!g_sdl_initialized)
     {
         g_main_ctx.dispatcher->invoke([] {
+            SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
             need(
                 SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), "Failed to init SDL");
         });
+        g_sdl_initialized = true;
     }
 }
 void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
