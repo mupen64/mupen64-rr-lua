@@ -110,6 +110,8 @@ FARPROC M64RRPlugin::get_proc(const char *name) const
 
 std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type type, bool dummy)
 {
+    Main::init_sdl();
+
     auto plugin = std::make_unique<M64RRPlugin>();
     plugin->m_builtin = true;
     plugin->m_module = nullptr;
