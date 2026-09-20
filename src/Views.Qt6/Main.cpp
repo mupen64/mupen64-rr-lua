@@ -34,13 +34,6 @@ static int qt_main(int argc, char *argv[])
 {
     using namespace Qt::Literals;
 
-#ifdef __linux__
-    // use xdg-desktop-portal for platform dialogs where possible
-    if (qgetenv("QT_QPA_PLATFORMTHEME").isEmpty())
-    {
-        qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
-    }
-#endif
     // NOTE: QApplication is used here specifically to ensure KDE's desktop styles are loaded.
     // When a QGuiApplication is used, KDE switches to its fallback Breeze theme, which
     // is slightly bugged.

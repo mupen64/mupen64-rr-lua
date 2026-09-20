@@ -29,14 +29,13 @@ GroupBox {
     RowLayout {
         anchors.fill: parent
 
-        // onWidthChanged: console.log(`width: ${width}`)
         TextField {
             Layout.fillWidth: true
             readOnly: true
             text: root.target
         }
         Button {
-            icon.name: "folder-open"
+            icon.name: "folder-open-symbolic"
             onClicked: root.dialog.open()
         }
     }
