@@ -1107,8 +1107,8 @@ inline float normalize_text_layout_size(float value)
 inline HRESULT create_text_layout(IDWriteFactory *factory, const wchar_t *text, UINT32 length,
     IDWriteTextFormat *format, float width, float height, ComPtr<IDWriteTextLayout> &layout)
 {
-    return factory->CreateTextLayout(text, length, format, normalize_text_layout_size(width),
-        normalize_text_layout_size(height), &layout);
+    return factory->CreateTextLayout(
+        text, length, format, normalize_text_layout_size(width), normalize_text_layout_size(height), &layout);
 }
 
 inline void apply_text_style(IDWriteTextLayout *layout, const TextStyle &style, UINT32 length)
@@ -1134,8 +1134,7 @@ inline ComPtr<IDWriteTextLayout> create_text_hit_test_layout(
     const float layout_width = options.fit ? MAX_LAYOUT_SIZE : options.width;
     const float layout_height = options.fit ? MAX_LAYOUT_SIZE : options.height;
     const auto layout_alignment = options.fit ? DWRITE_TEXT_ALIGNMENT_LEADING : options.alignment;
-    const auto layout_paragraph_alignment =
-        options.fit ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR : options.paragraph_alignment;
+    const auto layout_paragraph_alignment = options.fit ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR : options.paragraph_alignment;
     auto *factory_cache = get_text_factory_cache(L);
     ComPtr<IDWriteFactory> local_factory;
     ComPtr<IDWriteTextFormat> format;
@@ -1147,8 +1146,7 @@ inline ComPtr<IDWriteTextLayout> create_text_hit_test_layout(
     }
     create_text_format(factory, style, format);
     need(format->SetTextAlignment(layout_alignment), "IDWriteTextFormat::SetTextAlignment");
-    need(format->SetParagraphAlignment(layout_paragraph_alignment),
-        "IDWriteTextFormat::SetParagraphAlignment");
+    need(format->SetParagraphAlignment(layout_paragraph_alignment), "IDWriteTextFormat::SetParagraphAlignment");
     need(format->SetWordWrapping(wrapping), "IDWriteTextFormat::SetWordWrapping");
 
     ComPtr<IDWriteTextLayout> layout;
@@ -1175,15 +1173,13 @@ struct TextFitTransform
     float offset_y{};
 };
 
-inline TextFitTransform get_text_fit_transform(
-    IDWriteTextLayout *layout, const TextHitTestOptions &options)
+inline TextFitTransform get_text_fit_transform(IDWriteTextLayout *layout, const TextHitTestOptions &options)
 {
     DWRITE_TEXT_METRICS metrics{};
     need(layout->GetMetrics(&metrics), "IDWriteTextLayout::GetMetrics");
     const float scale = std::min(1.0f,
-        std::min(metrics.widthIncludingTrailingWhitespace > 0
-                         ? options.width / metrics.widthIncludingTrailingWhitespace
-                         : 1.0f,
+        std::min(metrics.widthIncludingTrailingWhitespace > 0 ? options.width / metrics.widthIncludingTrailingWhitespace
+                                                              : 1.0f,
             metrics.height > 0 ? options.height / metrics.height : 1.0f));
     if (!(scale > 0) || !std::isfinite(scale)) return {};
     const float fitted_width = metrics.widthIncludingTrailingWhitespace * scale;
@@ -1784,7 +1780,6 @@ inline void realize_stroke(
     *style = resource.native.Get();
 }
 
-
 inline void realize_text_format(
     Painter *painter, UINT32 index, ComPtr<IDWriteFactory> &factory, ComPtr<IDWriteTextFormat> &format)
 {
@@ -1843,8 +1838,8 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
             }
             const UINT32 length = static_cast<UINT32>(std::min<size_t>(run.text.size(), UINT32_MAX));
             ComPtr<IDWriteTextLayout> new_layout;
-            need(create_text_layout(
-                     text_factory.Get(), run.text.data(), length, format.Get(), layout_width, layout_height, new_layout),
+            need(create_text_layout(text_factory.Get(), run.text.data(), length, format.Get(), layout_width,
+                     layout_height, new_layout),
                 "IDWriteFactory::CreateTextLayout");
             need(new_layout, "IDWriteFactory::CreateTextLayout returned null");
             apply_text_style(new_layout.Get(), format_resource.style, length);
@@ -2241,8 +2236,7 @@ inline int measure_text(lua_State *L)
     need(format->SetWordWrapping(wrapping), "IDWriteTextFormat::SetWordWrapping");
     ComPtr<IDWriteTextLayout> layout;
     const UINT32 length = static_cast<UINT32>(std::min<size_t>(text.size(), UINT32_MAX));
-    need(Detail::create_text_layout(
-             factory, text.data(), length, format.Get(), width, Detail::MAX_LAYOUT_SIZE, layout),
+    need(Detail::create_text_layout(factory, text.data(), length, format.Get(), width, Detail::MAX_LAYOUT_SIZE, layout),
         "IDWriteFactory::CreateTextLayout");
     need(layout, "IDWriteFactory::CreateTextLayout returned null");
     Detail::apply_text_style(layout.Get(), style, length);
@@ -2298,7 +2292,8 @@ inline int hittest_text_position(lua_State *L)
     const auto layout = Detail::create_text_hit_test_layout(L, text, style, options);
     const UINT32 length = static_cast<UINT32>(std::min<size_t>(text.size(), UINT32_MAX));
 
-    const auto fit_transform = options.fit ? Detail::get_text_fit_transform(layout.Get(), options) : Detail::TextFitTransform{};
+    const auto fit_transform =
+        options.fit ? Detail::get_text_fit_transform(layout.Get(), options) : Detail::TextFitTransform{};
     const float layout_point_x = options.fit ? (point_x - fit_transform.offset_x) / fit_transform.scale : point_x;
     const float layout_point_y = options.fit ? (point_y - fit_transform.offset_y) / fit_transform.scale : point_y;
     BOOL is_trailing_hit = FALSE;
@@ -2394,7 +2389,8 @@ inline int hittest_text_index(lua_State *L)
     const auto style = Detail::check_text_style(L, 3);
     const auto options = Detail::check_text_hit_test_options(L, 4);
     const auto layout = Detail::create_text_hit_test_layout(L, text, style, options);
-    const auto fit_transform = options.fit ? Detail::get_text_fit_transform(layout.Get(), options) : Detail::TextFitTransform{};
+    const auto fit_transform =
+        options.fit ? Detail::get_text_fit_transform(layout.Get(), options) : Detail::TextFitTransform{};
     FLOAT x = 0;
     FLOAT y = 0;
     DWRITE_HIT_TEST_METRICS hit{};
