@@ -1550,6 +1550,16 @@ function painter.load_image(path) end
 ---@return string? error_message
 function painter.decode_image(data) end
 
+---Gets the target frame rate for Lua painting.
+---Returns `nil` when the renderer uses the monitor refresh rate.
+---@return number? target_fps
+function painter.get_target_fps() end
+
+---Sets the target frame rate for Lua painting.
+---Pass `nil` to use the monitor refresh rate. Values below 1 are clamped to 1.
+---@param target_fps number?
+function painter.set_target_fps(target_fps) end
+
 ---The short-lived drawing context supplied to [emu.atpaint](lua://emu.atpaint).
 ---Methods must only be called while the callback which supplied this object is active.
 ---@class Painter
@@ -2358,6 +2368,10 @@ function __mupen_apply_shims()
     end
 
     d2d = {}
+    -- Deprecated aliases for painter target-FPS control.
+    d2d.get_target_fps = painter.get_target_fps
+    d2d.set_target_fps = painter.set_target_fps
+
     local brushes = {}
     local images = {}
     local next_brush = 1

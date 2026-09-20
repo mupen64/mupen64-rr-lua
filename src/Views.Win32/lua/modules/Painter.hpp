@@ -2067,6 +2067,31 @@ inline int image_paint(lua_State *L)
 
 } // namespace Detail
 
+inline int get_target_fps(lua_State *L)
+{
+    auto *environment = LuaManager::get_environment_for_state(L);
+    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua environment");
+    if (environment->rctx.target_fps.has_value())
+        lua_pushnumber(L, environment->rctx.target_fps.value());
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+inline int set_target_fps(lua_State *L)
+{
+    auto *environment = LuaManager::get_environment_for_state(L);
+    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua environment");
+    if (lua_isnoneornil(L, 1))
+    {
+        LuaRenderer::set_target_fps(&environment->rctx, std::nullopt);
+        return 0;
+    }
+    const float fps = std::max(1.0f, luaL_checkfinitenumber(L, 1, "target fps"));
+    LuaRenderer::set_target_fps(&environment->rctx, fps);
+    return 0;
+}
+
 inline int new_image(lua_State *L)
 {
     const lua_Integer width_value = luaL_checkinteger(L, 1);
