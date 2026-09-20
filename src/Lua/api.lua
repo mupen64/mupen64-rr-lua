@@ -1486,6 +1486,9 @@ function wgui.resetclip() end
 ---@field w number? Layout width. If absent, width is unconstrained.
 ---@field h number? Layout height. If absent, height is unconstrained.
 ---@field wrap PainterTextWrap? Wrapping mode. Defaults to `"word"` when `w` is present and `"none"` otherwise.
+---@field overflow PainterTextOverflow? Overflow behavior. Defaults to `"clip"`.
+---@field clip boolean? Whether hit points outside the layout rectangle are reported as outside. Defaults to true.
+---@field fit boolean? Whether to uniformly scale the text to fit the layout rectangle. Defaults to false.
 ---@field align_x PainterTextHorizontalAlign? Horizontal alignment. Defaults to `"left"`.
 ---@field align_y PainterTextVerticalAlign? Vertical alignment. Defaults to `"top"`.
 

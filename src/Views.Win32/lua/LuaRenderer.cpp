@@ -382,6 +382,7 @@ void LuaRenderer::destroy_renderer(LuaRenderingContext *ctx)
 
     ctx->painter_text_layouts.reset();
     ctx->painter_text_measurements.reset();
+    ctx->painter_text_factory.reset();
     ctx->image_pool.clear();
     ctx->d2d_render_target_stack = {};
 
