@@ -2077,12 +2077,8 @@ inline int set_target_fps(lua_State *L)
 {
     auto *environment = LuaManager::get_environment_for_state(L);
     if (!environment) return luaL_error(L, "painter is unavailable outside a Lua environment");
-    if (lua_isnoneornil(L, 1))
-    {
-        LuaRenderer::set_target_fps(&environment->rctx, std::nullopt);
-        return 0;
-    }
-    const float fps = std::max(1.0f, luaL_checkfinitenumber(L, 1, "target fps"));
+    std::optional<float> fps;
+    if (!lua_isnoneornil(L, 1)) fps = static_cast<float>(luaL_checknumber(L, 1));
     LuaRenderer::set_target_fps(&environment->rctx, fps);
     return 0;
 }

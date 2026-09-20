@@ -1556,8 +1556,7 @@ function painter.decode_image(data) end
 function painter.get_target_fps() end
 
 ---Sets the target frame rate for Lua painting.
----Pass `nil` to use the monitor refresh rate. Values below 1 are clamped to 1.
----@param target_fps number?
+---@param target_fps number? The target FPS, or `nil` to use the monitor refresh rate. Non-finite or non-positive values are ignored.
 function painter.set_target_fps(target_fps) end
 
 ---The short-lived drawing context supplied to [emu.atpaint](lua://emu.atpaint).
@@ -2375,20 +2374,10 @@ function __mupen_apply_shims()
         end
         legacy_d2d_warning_printed = true
         print(
-        "[Mupen64] This script utilizes the legacy d2d API instead of the modern painter API. Performance might be degraded.")
+            "[Mupen64] This script utilizes the legacy d2d API instead of the modern painter API. Performance might be degraded.")
         print("[Mupen64] If you're a user, update to a newer version of the script if available.")
         print("[Mupen64] If you're a developer, see the Mupen64 Lua migration guide for more information.")
         print("[Mupen64] " .. debug.traceback("", 3))
-    end
-
-    -- Deprecated aliases for painter target-FPS control.
-    d2d.get_target_fps = function()
-        warn_legacy_d2d()
-        return painter.get_target_fps()
-    end
-    d2d.set_target_fps = function(fps)
-        warn_legacy_d2d()
-        return painter.set_target_fps(fps)
     end
 
     local brushes = {}
@@ -2476,7 +2465,19 @@ function __mupen_apply_shims()
         table.insert(atdrawd2d_callbacks, f)
     end
 
-    ---@deprecated Use painter colors and Painter:fill instead.
+    ---@deprecated Use [painter.get_target_fps](lua://painter.get_target_fps) instead.
+    d2d.get_target_fps = function()
+        warn_legacy_d2d()
+        return painter.get_target_fps()
+    end
+
+    ---@deprecated Use [painter.set_target_fps](lua://painter.set_target_fps) instead.
+    d2d.set_target_fps = function(fps)
+        warn_legacy_d2d()
+        return painter.set_target_fps(fps)
+    end
+
+    ---@deprecated Use painter colors and [Painter:fill](lua://Painter:fill) instead.
     function d2d.create_brush(r, g, b, a)
         warn_legacy_d2d()
         local handle = next_brush
@@ -2485,7 +2486,7 @@ function __mupen_apply_shims()
         return handle
     end
 
-    ---@deprecated Use Lua garbage collection or PainterImage:close instead.
+    ---@deprecated Use Lua garbage collection or [PainterImage:close](lua://PainterImage:close) instead.
     function d2d.free_brush(handle)
         warn_legacy_d2d()
         if handle ~= 0 and not brushes[handle] then
@@ -2494,13 +2495,13 @@ function __mupen_apply_shims()
         brushes[handle] = nil
     end
 
-    ---@deprecated Use Painter:clear instead.
+    ---@deprecated Use [Painter:clear](lua://Painter:clear) instead.
     function d2d.clear(r, g, b, a)
         warn_legacy_d2d()
         require_painter():clear({ r = r, g = g, b = b, a = a })
     end
 
-    ---@deprecated Use Painter:rect and Painter:fill instead.
+    ---@deprecated Use [Painter:rect](lua://Painter:rect) and [Painter:fill](lua://Painter:fill) instead.
     function d2d.fill_rectangle(x1, y1, x2, y2, brush)
         warn_legacy_d2d()
         with_path(function(p)
@@ -2509,7 +2510,7 @@ function __mupen_apply_shims()
         end)
     end
 
-    ---@deprecated Use Painter:rect and Painter:stroke instead.
+    ---@deprecated Use [Painter:rect](lua://Painter:rect) and [Painter:stroke](lua://Painter:stroke) instead.
     function d2d.draw_rectangle(x1, y1, x2, y2, thickness, brush)
         warn_legacy_d2d()
         with_path(function(p)
@@ -2518,7 +2519,7 @@ function __mupen_apply_shims()
         end)
     end
 
-    ---@deprecated Use Painter:circle and Painter:fill instead.
+    ---@deprecated Use [Painter:circle](lua://Painter:circle) and [Painter:fill](lua://Painter:fill) instead.
     function d2d.fill_ellipse(x, y, radiusX, radiusY, brush)
         warn_legacy_d2d()
         with_path(function(p)
@@ -2527,7 +2528,7 @@ function __mupen_apply_shims()
         end)
     end
 
-    ---@deprecated Use Painter:circle and Painter:stroke instead.
+    ---@deprecated Use [Painter:circle](lua://Painter:circle) and [Painter:stroke](lua://Painter:stroke) instead.
     function d2d.draw_ellipse(x, y, radiusX, radiusY, thickness, brush)
         warn_legacy_d2d()
         with_path(function(p)
@@ -2536,7 +2537,7 @@ function __mupen_apply_shims()
         end)
     end
 
-    ---@deprecated Use Painter:line and Painter:stroke instead.
+    ---@deprecated Use [Painter:line](lua://Painter:line) and [Painter:stroke](lua://Painter:stroke) instead.
     function d2d.draw_line(x1, y1, x2, y2, thickness, brush)
         warn_legacy_d2d()
         with_path(function(p)
@@ -2545,7 +2546,7 @@ function __mupen_apply_shims()
         end)
     end
 
-    ---@deprecated Use Painter:text with PainterTextStyleParams instead.
+    ---@deprecated Use [Painter:text](lua://Painter:text) with [PainterTextStyleParams](lua://PainterTextStyleParams) instead.
     function d2d.draw_text(x1, y1, x2, y2, text, fontname, fontsize, fontweight, fontstyle, horizalign, vertalign,
                            options, brush)
         warn_legacy_d2d()
@@ -2569,7 +2570,7 @@ function __mupen_apply_shims()
         end)
     end
 
-    ---@deprecated Use painter.measure_text instead.
+    ---@deprecated Use [painter.measure_text](lua://painter.measure_text) instead.
     function d2d.get_text_size(text, fontname, fontsize, max_width, max_height)
         warn_legacy_d2d()
         local metrics = painter.measure_text(text, { family = fontname, size = fontsize }, {
@@ -2580,7 +2581,7 @@ function __mupen_apply_shims()
         return { width = math.ceil(metrics.w), height = math.ceil(metrics.h) }
     end
 
-    ---@deprecated Use Painter:save and Painter:clip instead.
+    ---@deprecated Use [Painter:save](lua://Painter:save) and [Painter:clip](lua://Painter:clip) instead.
     function d2d.push_clip(x1, y1, x2, y2)
         warn_legacy_d2d()
         local p = require_painter()
@@ -2588,13 +2589,13 @@ function __mupen_apply_shims()
         p:clip({ x = x1, y = y1, w = x2 - x1, h = y2 - y1 })
     end
 
-    ---@deprecated Use Painter:restore instead.
+    ---@deprecated Use [Painter:restore](lua://Painter:restore) instead.
     function d2d.pop_clip()
         warn_legacy_d2d()
         require_painter():restore()
     end
 
-    ---@deprecated Use Painter:round_rect and Painter:fill instead.
+    ---@deprecated Use [Painter:round_rect](lua://Painter:round_rect) and [Painter:fill](lua://Painter:fill) instead.
     function d2d.fill_rounded_rectangle(x1, y1, x2, y2, radiusX, radiusY, brush)
         warn_legacy_d2d()
         with_path(function(p)
@@ -2603,7 +2604,7 @@ function __mupen_apply_shims()
         end)
     end
 
-    ---@deprecated Use Painter:round_rect and Painter:stroke instead.
+    ---@deprecated Use [Painter:round_rect](lua://Painter:round_rect) and [Painter:stroke](lua://Painter:stroke) instead.
     function d2d.draw_rounded_rectangle(x1, y1, x2, y2, radiusX, radiusY, thickness, brush)
         warn_legacy_d2d()
         with_path(function(p)
@@ -2622,7 +2623,7 @@ function __mupen_apply_shims()
         warn_legacy_d2d()
     end
 
-    ---@deprecated Use painter.load_image instead.
+    ---@deprecated Use [painter.load_image](lua://painter.load_image) instead.
     function d2d.load_image(path)
         warn_legacy_d2d()
         local image, error_message = painter.load_image(path)
@@ -2635,7 +2636,7 @@ function __mupen_apply_shims()
         return identifier
     end
 
-    ---@deprecated Use PainterImage:close instead.
+    ---@deprecated Use [PainterImage:close](lua://PainterImage:close) instead.
     function d2d.free_image(identifier)
         warn_legacy_d2d()
         local image = require_image(identifier)
@@ -2643,7 +2644,7 @@ function __mupen_apply_shims()
         images[identifier] = nil
     end
 
-    ---@deprecated Use PainterImage:paint and painter.new_image instead.
+    ---@deprecated Use [PainterImage:paint](lua://PainterImage:paint) and [painter.new_image](lua://painter.new_image) instead.
     function d2d.draw_to_image(width, height, callback)
         warn_legacy_d2d()
         local image = painter.new_image(math.max(1, width), math.max(1, height))
@@ -2662,7 +2663,7 @@ function __mupen_apply_shims()
         return identifier
     end
 
-    ---@deprecated Use Painter:image instead.
+    ---@deprecated Use [Painter:image](lua://Painter:image) instead.
     function d2d.draw_image2(params)
         warn_legacy_d2d()
         local image = require_image(params.identifier)
@@ -2685,7 +2686,6 @@ function __mupen_apply_shims()
             options)
     end
 
-    ---Draws an image by taking the pixels in the source rectangle of the image, and drawing them to the destination rectangle on the screen.
     ---@deprecated Use [d2d.draw_image2](lua://d2d.draw_image2) instead.
     ---@param destx1 integer
     ---@param desty1 integer
@@ -2696,7 +2696,7 @@ function __mupen_apply_shims()
     ---@param srcx2 integer
     ---@param srcy2 integer
     ---@param opacity number
-    ---@param interpolation integer 0: nearest neighbor, 1: linear, -1: don't use.
+    ---@param interpolation integer 0: nearest neighbor, 1: linear
     ---@param identifier number
     ---@return nil
     function d2d.draw_image(destx1, desty1, destx2, desty2, srcx1, srcy1, srcx2,
@@ -2717,7 +2717,7 @@ function __mupen_apply_shims()
         })
     end
 
-    ---@deprecated Use PainterImage.w and PainterImage.h instead.
+    ---@deprecated Use [PainterImage.w](lua://PainterImage.w) and [PainterImage.h](lua://PainterImage.h) instead.
     function d2d.get_image_info(identifier)
         warn_legacy_d2d()
         local image = require_image(identifier)
