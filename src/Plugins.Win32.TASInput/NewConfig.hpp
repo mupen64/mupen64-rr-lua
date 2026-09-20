@@ -71,6 +71,9 @@ struct ButtonMapping
 {
     int32_t button = SDL_GAMEPAD_BUTTON_INVALID;
     int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
+    int32_t axis_direction = 0;
+    int32_t hat = -1;
+    int32_t hat_mask = SDL_HAT_CENTERED;
     int32_t key = 0;
 
     friend void to_json(nlohmann::json &j, const ButtonMapping &self)
@@ -79,6 +82,9 @@ struct ButtonMapping
         j = nlohmann::json::object({
             TASINPUT_FIELD(button),
             TASINPUT_FIELD(axis),
+            TASINPUT_FIELD(axis_direction),
+            TASINPUT_FIELD(hat),
+            TASINPUT_FIELD(hat_mask),
             TASINPUT_FIELD(key),
         });
 #undef TASINPUT_FIELD
@@ -88,9 +94,12 @@ struct ButtonMapping
     {
 #define TASINPUT_FIELD(field) .field = j[#field]
         self = {
-            TASINPUT_FIELD(button),
-            TASINPUT_FIELD(axis),
-            TASINPUT_FIELD(key),
+            .button = j.at("button"),
+            .axis = j.at("axis"),
+            .axis_direction = j.value("axis_direction", 0),
+            .hat = j.value("hat", -1),
+            .hat_mask = j.value("hat_mask", static_cast<int32_t>(SDL_HAT_CENTERED)),
+            .key = j.at("key"),
         };
 #undef TASINPUT_FIELD
     }
@@ -254,6 +263,7 @@ struct InputConfig
     int32_t wrap_joystick = false;
     ControllerConfig controller_config[4] = {ControllerConfig::keyboard_config(), {}, {}, {}};
     std::optional<SDL_GUID> preferred_device_guid;
+    std::optional<std::string> preferred_device_path;
 
     friend void to_json(nlohmann::json &j, const InputConfig &self)
     {
@@ -270,6 +280,7 @@ struct InputConfig
             TASINPUT_FIELD(approach_mode),
             TASINPUT_FIELD(wrap_joystick),
             TASINPUT_FIELD(preferred_device_guid),
+            TASINPUT_FIELD(preferred_device_path),
         });
         TASINPUT_ARRAY_FIELD(dialog_expanded);
         TASINPUT_ARRAY_FIELD(controller_active);
@@ -302,6 +313,7 @@ struct InputConfig
             TASINPUT_FIELD(controller_rumblepak);
             TASINPUT_FIELD(controller_config);
             TASINPUT_FIELD(preferred_device_guid);
+            self.preferred_device_path = j.value("preferred_device_path", std::optional<std::string>{});
         }
 #undef TASINPUT_FIELD
     }
