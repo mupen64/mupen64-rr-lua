@@ -2494,6 +2494,12 @@ function __mupen_apply_shims()
         brushes[handle] = nil
     end
 
+    ---@deprecated Use Painter:clear instead.
+    function d2d.clear(r, g, b, a)
+        warn_legacy_d2d()
+        require_painter():clear({ r = r, g = g, b = b, a = a })
+    end
+
     ---@deprecated Use Painter:rect and Painter:fill instead.
     function d2d.fill_rectangle(x1, y1, x2, y2, brush)
         warn_legacy_d2d()
@@ -2606,7 +2612,12 @@ function __mupen_apply_shims()
         end)
     end
 
-    ---@deprecated Painter controls text antialiasing automatically; no replacement is needed.
+    ---@deprecated There's no alternative to this function in the painter API.
+    function d2d.set_antialias_mode(_)
+        warn_legacy_d2d()
+    end
+
+    ---@deprecated There's no alternative to this function in the painter API.
     function d2d.set_text_antialias_mode(_)
         warn_legacy_d2d()
     end
