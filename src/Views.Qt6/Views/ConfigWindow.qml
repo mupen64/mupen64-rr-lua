@@ -13,13 +13,14 @@ import Config as Config
 
 ApplicationWindow {
     id: dialog
+    modality: Qt.WindowModal
 
     required property SettingsCore settingsCore
     required property SettingsPaths settingsPaths
 
     // ensure window fits content
     minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
-    minimumHeight: mainStack.implicitHeight + topPadding + bottomPadding
+    // height: mainStack.implicitHeight
 
     header: TabBar {
         id: tabs

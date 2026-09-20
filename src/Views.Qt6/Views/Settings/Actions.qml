@@ -17,7 +17,7 @@ ActionManager {
 
     required property EmuContext core
     required property DialogService dialogService
-    required property ConfigDialog diaConfig
+    required property ConfigWindow winConfig
 
     property bool menuOpen: false
 
@@ -265,7 +265,7 @@ ActionManager {
     EmuAction {
         key: "opts/settings"
         text: qsTr("Settings...")
-        onTriggered: root.diaConfig.show()
+        onTriggered: root.winConfig.show()
     }
 
     // Dialogs

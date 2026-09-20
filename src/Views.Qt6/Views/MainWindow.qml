@@ -151,8 +151,8 @@ ApplicationWindow {
 
     DialogService { id: dialogService }
 
-    ConfigDialog {
-        id: diaConfig
+    ConfigWindow {
+        id: winConfig
         settingsCore: settingsCore
         settingsPaths: settingsPaths
     }
@@ -168,7 +168,7 @@ ApplicationWindow {
         // core objects
         core: core
         dialogService: dialogService
-        diaConfig: diaConfig
+        winConfig: winConfig
     }
 
     // LATE BINDINGS

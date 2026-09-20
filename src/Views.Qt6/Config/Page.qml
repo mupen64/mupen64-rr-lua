@@ -16,16 +16,20 @@ ScrollView {
 
     Layout.fillWidth: true
     Layout.fillHeight: true
-    Layout.minimumWidth: 350
+
+    contentWidth: availableWidth
+    implicitWidth: 320
 
     default property list<Item> rows
 
     ColumnLayout {
-        Layout.leftMargin: 10
-        Layout.rightMargin: 10
-        Layout.topMargin: 20
-        id: pageRoot
-        width: root.width
-        children: root.rows
+        id: contentRoot
+        anchors.fill: parent
+        ColumnLayout {
+            Layout.minimumWidth: 300
+            Layout.margins: 10
+            children: root.rows
+        }
     }
+
 }
