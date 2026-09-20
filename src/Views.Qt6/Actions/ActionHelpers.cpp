@@ -17,13 +17,13 @@ static QVariant sequenceToKeyImpl(const QKeySequence &seq)
     return combo.key();
 }
 
-QVariant ActionHelpers::sequenceToKey(const QVariant& variant)
+QVariant ActionHelpers::sequenceToKey(const QVariant &variant)
 {
     // bool converted = false;
     auto type = variant.metaType();
     if (type.id() == QMetaType::Int)
     {
-        return sequenceToKeyImpl(QKeySequence::keyBindings((QKeySequence::StandardKey) variant.toInt())[0]);
+        return sequenceToKeyImpl(QKeySequence::keyBindings((QKeySequence::StandardKey)variant.toInt())[0]);
     }
 
     if (type.id() == QMetaType::QString || type.id() == QMetaType::QChar)
@@ -33,7 +33,7 @@ QVariant ActionHelpers::sequenceToKey(const QVariant& variant)
     return {};
 }
 
-QVariant ActionHelpers::sequenceListToKeys(const QVariantList& qmlSequence)
+QVariant ActionHelpers::sequenceListToKeys(const QVariantList &qmlSequence)
 {
     QVariantList output{};
     output.reserve(qmlSequence.size());
@@ -41,20 +41,20 @@ QVariant ActionHelpers::sequenceListToKeys(const QVariantList& qmlSequence)
     for (qsizetype i = 0; i < qmlSequence.size(); ++i)
     {
         auto key = sequenceToKey(qmlSequence[i]);
-        if (key.isNull())
-            return {};
+        if (key.isNull()) return {};
         output.push_back(key);
     }
 
     return output;
 }
 
-QString ActionHelpers::fromIntKeys(const QVariantList& keyList) {
-    if (keyList.size() >= 4)
-        throw std::logic_error("Invalid key sequence!");
+QString ActionHelpers::fromIntKeys(const QVariantList &keyList)
+{
+    if (keyList.size() >= 4) throw std::logic_error("Invalid key sequence!");
 
-    std::array<QKeyCombination, 4> combos {};
-    for (qsizetype i = 0; i < keyList.size(); i++) {
+    std::array<QKeyCombination, 4> combos{};
+    for (qsizetype i = 0; i < keyList.size(); i++)
+    {
         combos[i] = QKeyCombination::fromCombined(keyList[i].toInt());
     }
 

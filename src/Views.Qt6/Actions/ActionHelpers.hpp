@@ -18,7 +18,7 @@ class ActionHelpers : public QObject
     QML_ELEMENT
     QML_SINGLETON
   public:
-    ActionHelpers(QObject* parent = nullptr) : QObject(parent) {}
+    ActionHelpers(QObject *parent = nullptr) : QObject(parent) {}
 
     /**
      * @brief Convert a Shortcut::sequence property value to a single Qt::Key, if possible.
@@ -29,7 +29,7 @@ class ActionHelpers : public QObject
      * - The sequence only contains one combination
      * - The sequence does not use any modifiers whatsoever
      */
-    Q_INVOKABLE QVariant sequenceToKey(const QVariant& qmlSequence);
+    Q_INVOKABLE QVariant sequenceToKey(const QVariant &qmlSequence);
 
     /**
      * @brief Convert a Shortcut::sequences property value to a list of keys, if possible.
@@ -38,13 +38,13 @@ class ActionHelpers : public QObject
      *
      * @note See sequenceToKey() for more details.
      */
-    Q_INVOKABLE QVariant sequenceListToKeys(const QVariantList& qmlSequences);
+    Q_INVOKABLE QVariant sequenceListToKeys(const QVariantList &qmlSequences);
 
     /**
      * Converts a sequence of combined Qt key codes (e.g. Qt.Key_5 | Qt.KeypadModifier) to
      * a string key sequence.
      */
-    Q_INVOKABLE QString fromIntKeys(const QVariantList& keyList);
+    Q_INVOKABLE QString fromIntKeys(const QVariantList &keyList);
 };
 
 constexpr size_t bleh = sizeof(QVariant);

@@ -34,8 +34,7 @@ QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
     auto *window = this->window();
 
-    if (m_frame.isNull())
-        return nullptr;
+    if (m_frame.isNull()) return nullptr;
 
     auto *imageNode = (oldNode) ? static_cast<QSGImageNode *>(oldNode) : window->createImageNode();
 

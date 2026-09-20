@@ -110,14 +110,14 @@ EmuContext::EmuContext(QObject *parent)
         std::promise<bool> promise;
         auto future = promise.get_future();
 
-        QMetaObject::invokeMethod(this, [=, this, promise = std::move(promise), str = QString(str),
-                                            title = QString(title)] mutable {
-            // JS objects should be instantiated on the event thread
-            auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
-                [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
+        QMetaObject::invokeMethod(
+            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
+                // JS objects should be instantiated on the event thread
+                auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
+                    [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
 
-            openAskDialog(done_callback, title, str, warning ? QtCoreMessageTone::Warn : QtCoreMessageTone::Info);
-        });
+                openAskDialog(done_callback, title, str, warning ? QtCoreMessageTone::Warn : QtCoreMessageTone::Info);
+            });
 
         return future.get();
     };

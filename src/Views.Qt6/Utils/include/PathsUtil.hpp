@@ -17,7 +17,7 @@ class PathsUtil : public QObject
     QML_NAMED_ELEMENT(Paths)
     QML_SINGLETON
   public:
-    PathsUtil(QObject* parent = nullptr) : QObject(parent) {}
+    PathsUtil(QObject *parent = nullptr) : QObject(parent) {}
 
     Q_INVOKABLE QVariant toLocalFile(QUrl url)
     {

@@ -16,16 +16,15 @@ class ApplicationExt : public QObject
     QML_SINGLETON
 
     Q_PROPERTY(bool modalActive READ isModalActive NOTIFY modalActiveChanged)
-public:
-    explicit ApplicationExt(QObject *parent = nullptr) : QObject(parent) {
+  public:
+    explicit ApplicationExt(QObject *parent = nullptr) : QObject(parent)
+    {
         // Force the property to re-evaluate whenever the application's focus shifts
         connect(qGuiApp, &QGuiApplication::focusWindowChanged, this, &ApplicationExt::modalActiveChanged);
     }
 
-    bool isModalActive() const {
-        return QGuiApplication::modalWindow() != nullptr;
-    }
+    bool isModalActive() const { return QGuiApplication::modalWindow() != nullptr; }
 
-signals:
+  signals:
     void modalActiveChanged();
 };

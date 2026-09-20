@@ -20,17 +20,18 @@ class HeldShortcutMap : public QObject
     QML_ELEMENT
     QML_SINGLETON
   public:
-    HeldShortcutMap(QObject* parent = nullptr);
+    HeldShortcutMap(QObject *parent = nullptr);
     virtual ~HeldShortcutMap();
 
     // Binds a specific key to the provided object.
-    Q_INVOKABLE bool addShortcut(Qt::Key key, QObject* object);
+    Q_INVOKABLE bool addShortcut(Qt::Key key, QObject *object);
     // Clears all keys bound to this object.
-    Q_INVOKABLE void clearShortcuts(QObject* object);
+    Q_INVOKABLE void clearShortcuts(QObject *object);
 
     bool eventFilter(QObject *watched, QEvent *event) override;
+
   private:
-    std::unordered_map<Qt::Key, QObject*> m_shortcuts;
+    std::unordered_map<Qt::Key, QObject *> m_shortcuts;
 };
 
 Q_DECLARE_METATYPE(HeldShortcutMap)
