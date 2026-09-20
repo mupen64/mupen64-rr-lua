@@ -322,8 +322,7 @@ void on_task_changed(CoreVCRTask value)
         }
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) ||
-            task_is_playback(value) && !task_is_playback(previous_value) &&
-                !g_main_ctx.CoreCtx->vcr_get_path().empty())
+            task_is_playback(value) && !task_is_playback(previous_value) && !g_main_ctx.CoreCtx->vcr_get_path().empty())
         {
             RecentMenu::add(AppActions::RECENT_MOVIES, g_config.recent_movie_paths,
                 g_main_ctx.CoreCtx->vcr_get_path().string(), g_config.is_recent_movie_paths_frozen);
@@ -603,6 +602,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         LuaKeyEventArgs args = get_base_key_event_args();
         args.keycode = wParam;
+        if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
+            args.keycode2 = keycode;
         args.pressed = true;
         args.repeat = repeat;
 
@@ -614,6 +615,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_KEYUP: {
         LuaKeyEventArgs args = get_base_key_event_args();
         args.keycode = wParam;
+        if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
+            args.keycode2 = keycode;
         args.pressed = false;
         args.repeat = false;
 
@@ -1148,7 +1151,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 {
     enable_mitigations();
     set_error_mode();
-    setlocale(LC_ALL, ".UTF-8");
+    setlocale(LC_CTYPE, ".UTF-8");
+    setlocale(LC_NUMERIC, "C"); // Lua scripts expect `.` decimal separator
 
     g_main_ctx.wine = is_running_under_wine();
 

@@ -22,10 +22,287 @@ action = {}
 clipboard = {}
 
 Mupen = {
-    _VERSION = '1.5.0-2',
+    _VERSION = '1.5.0-3',
     _URL = 'https://github.com/mupen64/mupen64-rr-lua',
     _DESCRIPTION = 'Mupen64 Lua Scripting API',
     _LICENSE = 'GPL-2',
+
+    ---@enum Keycode
+    ---SDL keycodes used by hotkeys and keyboard events.
+    keycode = {
+        SDLK_UNKNOWN = 0x00000000,
+        SDLK_RETURN = 0x0000000D,
+        SDLK_ESCAPE = 0x0000001B,
+        SDLK_BACKSPACE = 0x00000008,
+        SDLK_TAB = 0x00000009,
+        SDLK_SPACE = 0x00000020,
+        SDLK_DELETE = 0x0000007F,
+
+        SDLK_0 = 0x00000030,
+        SDLK_1 = 0x00000031,
+        SDLK_2 = 0x00000032,
+        SDLK_3 = 0x00000033,
+        SDLK_4 = 0x00000034,
+        SDLK_5 = 0x00000035,
+        SDLK_6 = 0x00000036,
+        SDLK_7 = 0x00000037,
+        SDLK_8 = 0x00000038,
+        SDLK_9 = 0x00000039,
+        SDLK_A = 0x00000061,
+        SDLK_B = 0x00000062,
+        SDLK_C = 0x00000063,
+        SDLK_D = 0x00000064,
+        SDLK_E = 0x00000065,
+        SDLK_F = 0x00000066,
+        SDLK_G = 0x00000067,
+        SDLK_H = 0x00000068,
+        SDLK_I = 0x00000069,
+        SDLK_J = 0x0000006A,
+        SDLK_K = 0x0000006B,
+        SDLK_L = 0x0000006C,
+        SDLK_M = 0x0000006D,
+        SDLK_N = 0x0000006E,
+        SDLK_O = 0x0000006F,
+        SDLK_P = 0x00000070,
+        SDLK_Q = 0x00000071,
+        SDLK_R = 0x00000072,
+        SDLK_S = 0x00000073,
+        SDLK_T = 0x00000074,
+        SDLK_U = 0x00000075,
+        SDLK_V = 0x00000076,
+        SDLK_W = 0x00000077,
+        SDLK_X = 0x00000078,
+        SDLK_Y = 0x00000079,
+        SDLK_Z = 0x0000007A,
+
+        SDLK_PLUS = 0x0000002B,
+        SDLK_COMMA = 0x0000002C,
+        SDLK_MINUS = 0x0000002D,
+        SDLK_PERIOD = 0x0000002E,
+        SDLK_SLASH = 0x0000002F,
+        SDLK_SEMICOLON = 0x0000003B,
+        SDLK_EQUALS = 0x0000003D,
+        SDLK_LEFTBRACKET = 0x0000005B,
+        SDLK_BACKSLASH = 0x0000005C,
+        SDLK_RIGHTBRACKET = 0x0000005D,
+        SDLK_GRAVE = 0x00000060,
+        SDLK_APOSTROPHE = 0x00000027,
+
+        SDLK_CAPSLOCK = 0x40000039,
+        SDLK_F1 = 0x4000003A,
+        SDLK_F2 = 0x4000003B,
+        SDLK_F3 = 0x4000003C,
+        SDLK_F4 = 0x4000003D,
+        SDLK_F5 = 0x4000003E,
+        SDLK_F6 = 0x4000003F,
+        SDLK_F7 = 0x40000040,
+        SDLK_F8 = 0x40000041,
+        SDLK_F9 = 0x40000042,
+        SDLK_F10 = 0x40000043,
+        SDLK_F11 = 0x40000044,
+        SDLK_F12 = 0x40000045,
+        SDLK_F13 = 0x40000068,
+        SDLK_F14 = 0x40000069,
+        SDLK_F15 = 0x4000006A,
+        SDLK_F16 = 0x4000006B,
+        SDLK_F17 = 0x4000006C,
+        SDLK_F18 = 0x4000006D,
+        SDLK_F19 = 0x4000006E,
+        SDLK_F20 = 0x4000006F,
+        SDLK_F21 = 0x40000070,
+        SDLK_F22 = 0x40000071,
+        SDLK_F23 = 0x40000072,
+        SDLK_F24 = 0x40000073,
+        SDLK_PRINTSCREEN = 0x40000046,
+        SDLK_SCROLLLOCK = 0x40000047,
+        SDLK_PAUSE = 0x40000048,
+        SDLK_INSERT = 0x40000049,
+        SDLK_HOME = 0x4000004A,
+        SDLK_PAGEUP = 0x4000004B,
+        SDLK_END = 0x4000004D,
+        SDLK_PAGEDOWN = 0x4000004E,
+        SDLK_RIGHT = 0x4000004F,
+        SDLK_LEFT = 0x40000050,
+        SDLK_DOWN = 0x40000051,
+        SDLK_UP = 0x40000052,
+
+        SDLK_NUMLOCKCLEAR = 0x40000053,
+        SDLK_KP_DIVIDE = 0x40000054,
+        SDLK_KP_MULTIPLY = 0x40000055,
+        SDLK_KP_MINUS = 0x40000056,
+        SDLK_KP_PLUS = 0x40000057,
+        SDLK_KP_ENTER = 0x40000058,
+        SDLK_KP_1 = 0x40000059,
+        SDLK_KP_2 = 0x4000005A,
+        SDLK_KP_3 = 0x4000005B,
+        SDLK_KP_4 = 0x4000005C,
+        SDLK_KP_5 = 0x4000005D,
+        SDLK_KP_6 = 0x4000005E,
+        SDLK_KP_7 = 0x4000005F,
+        SDLK_KP_8 = 0x40000060,
+        SDLK_KP_9 = 0x40000061,
+        SDLK_KP_0 = 0x40000062,
+        SDLK_KP_PERIOD = 0x40000063,
+        SDLK_APPLICATION = 0x40000065,
+        SDLK_KP_EQUALS = 0x40000067,
+
+        SDLK_LCTRL = 0x400000E0,
+        SDLK_LSHIFT = 0x400000E1,
+        SDLK_LALT = 0x400000E2,
+        SDLK_LGUI = 0x400000E3,
+        SDLK_RCTRL = 0x400000E4,
+        SDLK_RSHIFT = 0x400000E5,
+        SDLK_RALT = 0x400000E6,
+        SDLK_RGUI = 0x400000E7,
+        SDLK_SLEEP = 0x40000102,
+        SDLK_HELP = 0x40000075,
+        SDLK_MENU = 0x40000076,
+        SDLK_SELECT = 0x40000077,
+        SDLK_EXECUTE = 0x40000074,
+        SDLK_CLEAR = 0x4000009C,
+        SDLK_PRIOR = 0x4000009D,
+        SDLK_SEPARATOR = 0x4000009F,
+        SDLK_MUTE = 0x4000007F,
+        SDLK_VOLUMEUP = 0x40000080,
+        SDLK_VOLUMEDOWN = 0x40000081,
+
+        SDLK_EXCLAIM = 0x00000021,
+        SDLK_DBLAPOSTROPHE = 0x00000022,
+        SDLK_HASH = 0x00000023,
+        SDLK_DOLLAR = 0x00000024,
+        SDLK_PERCENT = 0x00000025,
+        SDLK_AMPERSAND = 0x00000026,
+        SDLK_LEFTPAREN = 0x00000028,
+        SDLK_RIGHTPAREN = 0x00000029,
+        SDLK_ASTERISK = 0x0000002A,
+        SDLK_COLON = 0x0000003A,
+        SDLK_LESS = 0x0000003C,
+        SDLK_GREATER = 0x0000003E,
+        SDLK_QUESTION = 0x0000003F,
+        SDLK_AT = 0x00000040,
+        SDLK_CARET = 0x0000005E,
+        SDLK_UNDERSCORE = 0x0000005F,
+        SDLK_LEFTBRACE = 0x0000007B,
+        SDLK_PIPE = 0x0000007C,
+        SDLK_RIGHTBRACE = 0x0000007D,
+        SDLK_TILDE = 0x0000007E,
+        SDLK_PLUSMINUS = 0x000000B1,
+        SDLK_POWER = 0x40000066,
+        SDLK_STOP = 0x40000078,
+        SDLK_AGAIN = 0x40000079,
+        SDLK_UNDO = 0x4000007A,
+        SDLK_CUT = 0x4000007B,
+        SDLK_COPY = 0x4000007C,
+        SDLK_PASTE = 0x4000007D,
+        SDLK_FIND = 0x4000007E,
+        SDLK_KP_COMMA = 0x40000085,
+        SDLK_KP_EQUALSAS400 = 0x40000086,
+        SDLK_ALTERASE = 0x40000099,
+        SDLK_SYSREQ = 0x4000009A,
+        SDLK_CANCEL = 0x4000009B,
+        SDLK_RETURN2 = 0x4000009E,
+        SDLK_OUT = 0x400000A0,
+        SDLK_OPER = 0x400000A1,
+        SDLK_CLEARAGAIN = 0x400000A2,
+        SDLK_CRSEL = 0x400000A3,
+        SDLK_EXSEL = 0x400000A4,
+        SDLK_KP_00 = 0x400000B0,
+        SDLK_KP_000 = 0x400000B1,
+        SDLK_THOUSANDSSEPARATOR = 0x400000B2,
+        SDLK_DECIMALSEPARATOR = 0x400000B3,
+        SDLK_CURRENCYUNIT = 0x400000B4,
+        SDLK_CURRENCYSUBUNIT = 0x400000B5,
+        SDLK_KP_LEFTPAREN = 0x400000B6,
+        SDLK_KP_RIGHTPAREN = 0x400000B7,
+        SDLK_KP_LEFTBRACE = 0x400000B8,
+        SDLK_KP_RIGHTBRACE = 0x400000B9,
+        SDLK_KP_TAB = 0x400000BA,
+        SDLK_KP_BACKSPACE = 0x400000BB,
+        SDLK_KP_A = 0x400000BC,
+        SDLK_KP_B = 0x400000BD,
+        SDLK_KP_C = 0x400000BE,
+        SDLK_KP_D = 0x400000BF,
+        SDLK_KP_E = 0x400000C0,
+        SDLK_KP_F = 0x400000C1,
+        SDLK_KP_XOR = 0x400000C2,
+        SDLK_KP_POWER = 0x400000C3,
+        SDLK_KP_PERCENT = 0x400000C4,
+        SDLK_KP_LESS = 0x400000C5,
+        SDLK_KP_GREATER = 0x400000C6,
+        SDLK_KP_AMPERSAND = 0x400000C7,
+        SDLK_KP_DBLAMPERSAND = 0x400000C8,
+        SDLK_KP_VERTICALBAR = 0x400000C9,
+        SDLK_KP_DBLVERTICALBAR = 0x400000CA,
+        SDLK_KP_COLON = 0x400000CB,
+        SDLK_KP_HASH = 0x400000CC,
+        SDLK_KP_SPACE = 0x400000CD,
+        SDLK_KP_AT = 0x400000CE,
+        SDLK_KP_EXCLAM = 0x400000CF,
+        SDLK_KP_MEMSTORE = 0x400000D0,
+        SDLK_KP_MEMRECALL = 0x400000D1,
+        SDLK_KP_MEMCLEAR = 0x400000D2,
+        SDLK_KP_MEMADD = 0x400000D3,
+        SDLK_KP_MEMSUBTRACT = 0x400000D4,
+        SDLK_KP_MEMMULTIPLY = 0x400000D5,
+        SDLK_KP_MEMDIVIDE = 0x400000D6,
+        SDLK_KP_PLUSMINUS = 0x400000D7,
+        SDLK_KP_CLEAR = 0x400000D8,
+        SDLK_KP_CLEARENTRY = 0x400000D9,
+        SDLK_KP_BINARY = 0x400000DA,
+        SDLK_KP_OCTAL = 0x400000DB,
+        SDLK_KP_DECIMAL = 0x400000DC,
+        SDLK_KP_HEXADECIMAL = 0x400000DD,
+        SDLK_MODE = 0x40000101,
+        SDLK_WAKE = 0x40000103,
+        SDLK_CHANNEL_INCREMENT = 0x40000104,
+        SDLK_CHANNEL_DECREMENT = 0x40000105,
+        SDLK_MEDIA_PLAY = 0x40000106,
+        SDLK_MEDIA_PAUSE = 0x40000107,
+        SDLK_MEDIA_RECORD = 0x40000108,
+        SDLK_MEDIA_FAST_FORWARD = 0x40000109,
+        SDLK_MEDIA_REWIND = 0x4000010A,
+        SDLK_MEDIA_NEXT_TRACK = 0x4000010B,
+        SDLK_MEDIA_PREVIOUS_TRACK = 0x4000010C,
+        SDLK_MEDIA_STOP = 0x4000010D,
+        SDLK_MEDIA_EJECT = 0x4000010E,
+        SDLK_MEDIA_PLAY_PAUSE = 0x4000010F,
+        SDLK_MEDIA_SELECT = 0x40000110,
+        SDLK_AC_NEW = 0x40000111,
+        SDLK_AC_OPEN = 0x40000112,
+        SDLK_AC_CLOSE = 0x40000113,
+        SDLK_AC_EXIT = 0x40000114,
+        SDLK_AC_SAVE = 0x40000115,
+        SDLK_AC_PRINT = 0x40000116,
+        SDLK_AC_PROPERTIES = 0x40000117,
+        SDLK_AC_SEARCH = 0x40000118,
+        SDLK_AC_HOME = 0x40000119,
+        SDLK_AC_BACK = 0x4000011A,
+        SDLK_AC_FORWARD = 0x4000011B,
+        SDLK_AC_STOP = 0x4000011C,
+        SDLK_AC_REFRESH = 0x4000011D,
+        SDLK_AC_BOOKMARKS = 0x4000011E,
+        SDLK_SOFTLEFT = 0x4000011F,
+        SDLK_SOFTRIGHT = 0x40000120,
+        SDLK_CALL = 0x40000121,
+        SDLK_ENDCALL = 0x40000122,
+        SDLK_LEFT_TAB = 0x20000001,
+        SDLK_LEVEL5_SHIFT = 0x20000002,
+        SDLK_MULTI_KEY_COMPOSE = 0x20000003,
+        SDLK_LMETA = 0x20000004,
+        SDLK_RMETA = 0x20000005,
+        SDLK_LHYPER = 0x20000006,
+        SDLK_RHYPER = 0x20000007,
+    },
+
+    ---@enum MouseButtonFlags
+    ---SDL mouse-button bitmasks.
+    mousebutton = {
+        SDL_BUTTON_LMASK = 0x01,
+        SDL_BUTTON_MMASK = 0x02,
+        SDL_BUTTON_RMASK = 0x04,
+        SDL_BUTTON_X1MASK = 0x08,
+        SDL_BUTTON_X2MASK = 0x10,
+    },
 
     ---@enum Result
     ---An enum containing results that can be returned by the core.
@@ -93,76 +370,77 @@ Mupen = {
         -- The provided input buffer is empty
         vcr_warp_modify_empty_input_buffer = 18,
 
-        -- Another seek operation is already running
-        vcr_seek_already_running = 19,
-
         -- The seek operation could not be initiated due to a savestate not being loaded successfully
-        vcr_seek_savestate_load_failed = 20,
+        vcr_seek_savestate_load_failed = 19,
 
         -- The seek operation can't be initiated because the seek savestate interval is 0
-        vcr_seek_savestate_interval_zero = 21,
+        vcr_seek_savestate_interval_zero = 20,
 
         -- The seek string is malformed
-        vcr_seek_string_malformed = 22,
+        vcr_seek_string_malformed = 21,
 
         -- VR
         -- ==========================================
 
         -- Couldn't find a rom matching the provided movie
-        vr_no_matching_rom = 23,
+        vr_no_matching_rom = 22,
 
         -- An error occured during plugin loading
-        vr_plugin_error = 24,
+        vr_plugin_error = 23,
 
         -- The ROM or alternative rom source is invalid
-        vr_rom_invalid = 25,
+        vr_rom_invalid = 24,
 
         -- The emulator isn't running yet
-        vr_not_running = 26,
+        vr_not_running = 25,
 
         -- Failed to open core streams
-        vr_file_open_failed = 27,
+        vr_file_open_failed = 26,
 
         -- Savestates
         -- ==========================================
 
         -- The core isn't launched
-        st_core_not_launched = 28,
+        st_core_not_launched = 27,
 
         -- The savestate file wasn't found
-        st_not_found = 29,
+        st_not_found = 28,
 
         -- The savestate couldn't be written to disk
-        st_file_write_error = 30,
+        st_file_write_error = 29,
 
         -- Couldn't decompress the savestate
-        st_decompression_error = 31,
+        st_decompression_error = 30,
 
         -- The event queue was too long
-        st_event_queue_too_long = 32,
+        st_event_queue_too_long = 31,
 
         -- The CPU registers contained invalid values
-        st_invalid_registers = 33,
+        st_invalid_registers = 32,
 
         -- Plugins
         -- ==========================================
 
         -- The plugin library couldn't be loaded
-        pl_load_library_failed = 34,
+        pl_load_library_failed = 33,
 
         -- The plugin doesn't export a GetDllInfo function
-        pl_no_get_dll_info = 35,
+        pl_no_get_dll_info = 34,
 
         -- Init
         -- ==========================================
 
         -- The core params are missing a critical component.
-        in_missing_component = 36,
+        in_missing_component = 35,
     },
 
+
+
+    ---@deprecated Use `Mupen.keycode` instead.
     ---@alias VKeycode integer
     ---A virtual keycode.
 
+    ---@deprecated Use `Mupen.keycode` instead.
     ---@enum VKeycodes
     -- A complete enum of Windows Virtual-Key codes.
     VKeycodes = {
@@ -407,7 +685,8 @@ Mupen = {
 ---@alias tostringusable string|number
 
 ---@class KeyEventArgs
----@field keycode VKeycode? The virtual keycode, if the event is a key event.
+---@field keycode VKeycode? The deprecated Windows virtual keycode, if the event is a key event.
+---@field keycode2 Keycode? The SDL keycode, if the event is a key event and the key has an SDL equivalent.
 ---@field ctrl boolean Whether the Ctrl key is held down.
 ---@field alt boolean Whether the Alt key is held down.
 ---@field shift boolean Whether the Shift key is held down.
@@ -1493,8 +1772,9 @@ function input.diff(t1, t2) end
 function input.prompt(title, placeholder) end
 
 ---Gets the name of a key.
+---@deprecated This function shouldn't be used.
 ---@nodiscard
----@param key integer
+---@param key VKeycode
 ---@return string
 function input.get_key_name_text(key) end
 
@@ -1691,16 +1971,42 @@ function avi.stopcapture() end
 -- hotkey functions
 --#region
 
----@class Hotkey Represents a combination of keys.
----@field key VKeycode? The key that is pressed to trigger the hotkey. Note that this is a virtual keycode.
----@field ctrl boolean? Whether the control modifier is pressed.
----@field shift boolean? Whether the shift modifier is pressed.
----@field alt boolean? Whether the alt modifier is pressed.
----@field assigned boolean? Whether the hotkey is assigned. Defaults to `true`.
+---@class HotkeyNoTrigger
+---@field type "none"
+---Represents an unassigned hotkey trigger.
+
+---@class HotkeyKeyCodeTrigger
+---@field type "keycode"
+---@field value Keycode The SDL keycode that triggers the hotkey.
+---Represents a keyboard hotkey trigger.
+
+---@class HotkeyMouseButtonTrigger
+---@field type "mousebutton"
+---@field value MouseButtonFlags The SDL mouse-button flag that triggers the hotkey.
+---Represents a mouse hotkey trigger.
+
+---@alias HotkeyTrigger HotkeyNoTrigger|HotkeyKeyCodeTrigger|HotkeyMouseButtonTrigger
+
+---@class HotkeyModifiers
+---@field ctrl boolean? Whether the control modifier is pressed. Defaults to `false`.
+---@field shift boolean? Whether the shift modifier is pressed. Defaults to `false`.
+---@field alt boolean? Whether the alt modifier is pressed. Defaults to `false`.
+
+---@class Hotkey: HotkeyModifiers
+---@field trigger HotkeyTrigger The event that triggers the hotkey.
+---@field key nil The deprecated legacy key field cannot be used with `trigger`.
+---Represents a trigger and its keyboard modifiers. Can invoke an action.
+
+---@deprecated Use `trigger` instead.
+---@class LegacyHotkey: HotkeyModifiers
+---@field key VKeycode The deprecated Windows virtual keycode that triggers the hotkey.
+---@field trigger nil The legacy key field cannot be used with `trigger`.
+---A legacy hotkey returned as the first result by `hotkey.prompt` and accepted by `action.associate_hotkey` for compatibility.
 
 ---Shows a dialog prompting the user to enter a hotkey.
 ---@param caption string The headline to display in the dialog.
----@return Hotkey|nil The hotkey that was entered, or `nil` if the user cancelled the dialog.
+---@return LegacyHotkey|nil legacy_hotkey The deprecated legacy hotkey, or `nil` if the user cancelled the dialog.
+---@return Hotkey|nil hotkey The modern hotkey, or `nil` if the user cancelled the dialog.
 function hotkey.prompt(caption) end
 
 --#endregion
@@ -1757,7 +2063,7 @@ function action.remove(filter) end
 
 ---Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
 ---@param path ActionPath A path.
----@param hotkey Hotkey The hotkey to associate with the action.
+---@param hotkey Hotkey|LegacyHotkey The hotkey to associate with the action. `LegacyHotkey` is deprecated; its `key` field is mutually exclusive with `trigger`.
 ---@param overwrite_existing boolean? Whether the any existing hotkey association will be overwritten. If false, the hotkey will only be associated if the action has no hotkey associated with it already.
 ---@return boolean # Whether the operation succeeded.
 function action.associate_hotkey(path, hotkey, overwrite_existing) end
@@ -1854,3 +2160,137 @@ function clipboard.set(type, value) end
 function clipboard.clear() end
 
 --#endregion
+
+function __mupen_apply_shims()
+    -- printx deprecated, forwarded to print
+    printx = print
+
+    -- table.getn deprecated, replaced by # prefix
+    table.getn = table.getn or function(t)
+        return #t
+    end
+
+    -- unpack -> table.unpack
+    unpack = unpack or table.unpack
+
+    -- math.atan2 shim
+    math.atan2 = math.atan2 or function(y, x)
+        if x > 0 then
+            return math.atan(y / x)
+        elseif x < 0 then
+            return math.atan(y / x) + (y >= 0 and math.pi or -math.pi)
+        elseif y > 0 then
+            return math.pi / 2
+        elseif y < 0 then
+            return -math.pi / 2
+        else
+            return 0
+        end
+    end
+
+    -- math.pow shim
+    math.pow = math.pow or function(x, y)
+        return x ^ y
+    end
+
+    -- emu.debugview deprecated, forwarded to print
+    emu.debugview = print
+
+    -- emu.setgfx deprecated, no-op
+    emu.setgfx = function(_) end
+
+    -- emu.isreadonly deprecated, forwarded to movie.get_readonly
+    emu.isreadonly = movie.get_readonly
+
+    -- emu.getsystemmetrics is not available anymore due to WinAPI coupling concerns.
+    emu.getsystemmetrics = function() print('emu.getsystemmetrics has been deprecated') end
+
+    -- movie.playmovie deprecated, forwarded to movie.play
+    movie.playmovie = movie.play
+
+    -- movie.stopmovie deprecated, forwarded to movie.stop
+    movie.stopmovie = movie.stop
+
+    -- movie.getmoviefilename deprecated, forwarded to movie.get_filename
+    movie.getmoviefilename = movie.get_filename
+
+    -- movie.isreadonly deprecated, forwarded to movie.get_readonly
+    movie.isreadonly = movie.get_readonly
+
+    -- movie.begin_seek_to is not available anymore due to fundamental unshimmable changes in the seek API.
+    movie.begin_seek_to = function() print('movie.begin_seek_to has been deprecated, use movie.begin_seek instead') end
+
+    -- movie.get_seek_info is not available anymore due to fundamental unshimmable changes in the seek API.
+    movie.get_seek_info = function() print('movie.get_seek_info has been deprecated, use movie.begin_seek instead') end
+
+    -- input.map_virtual_key_ex is not available anymore due to WinAPI coupling concerns.
+    input.map_virtual_key_ex = function() print('input.map_virtual_key_ex has been deprecated') end
+
+    -- memory.recompilenow deprecated, forwarded to memory.recompile
+    memory.recompilenow = memory.recompile
+
+    -- memory.recompilenext deprecated, forwarded to memory.recompile
+    memory.recompilenext = memory.recompile
+
+    ---Gets whether fast forward is active.
+    ---@deprecated Use `emu.get_speed_mode` instead.
+    ---@return boolean
+    function emu.get_ff()
+        local mode = emu.get_speed_mode()
+        return mode ~= Mupen.CoreSpeedMode.Normal
+    end
+
+    ---Sets whether fast forward is active.
+    ---@deprecated Use `emu.set_speed_mode` instead.
+    ---@param fast_forward boolean
+    function emu.set_ff(fast_forward)
+        emu.set_speed_mode(fast_forward and Mupen.CoreSpeedMode.FastForward or Mupen.CoreSpeedMode.Normal)
+    end
+
+    ---Saves a savestate to `filename`.
+    ---@param filename string
+    ---@return nil
+    ---@deprecated This function is not guaranteed to succeed successfully or at any specific point in time. Use `savestate.do_file` instead.
+    function savestate.savefile(filename)
+        savestate.do_file(filename, "save", function() end)
+    end
+
+    ---Loads a savestate from `filename`.
+    ---@param filename string
+    ---@return nil
+    ---@deprecated This function is not guaranteed to succeed successfully or at any specific point in time. Use `savestate.do_file` instead.
+    function savestate.loadfile(filename)
+        savestate.do_file(filename, "load", function() end)
+    end
+
+    ---Draws an image by taking the pixels in the source rectangle of the image, and drawing them to the destination rectangle on the screen.
+    ---@deprecated Use [d2d.draw_image2](lua://d2d.draw_image2) instead.
+    ---@param destx1 integer
+    ---@param desty1 integer
+    ---@param destx2 integer
+    ---@param desty2 integer
+    ---@param srcx1 integer
+    ---@param srcy1 integer
+    ---@param srcx2 integer
+    ---@param srcy2 integer
+    ---@param opacity number
+    ---@param interpolation integer 0: nearest neighbor, 1: linear, -1: don't use.
+    ---@param identifier number
+    ---@return nil
+    function d2d.draw_image(destx1, desty1, destx2, desty2, srcx1, srcy1, srcx2,
+                            srcy2, opacity, interpolation, identifier)
+        d2d.draw_image2({
+            identifier = identifier,
+            destx1 = destx1,
+            desty1 = desty1,
+            destx2 = destx2,
+            desty2 = desty2,
+            srcx1 = srcx1,
+            srcy1 = srcy1,
+            srcx2 = srcx2,
+            srcy2 = srcy2,
+            color = opacity == 1 and nil or { r = 1, g = 1, b = 1, a = opacity },
+            interpolation = interpolation,
+        })
+    end
+end

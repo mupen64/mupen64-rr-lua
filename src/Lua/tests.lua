@@ -828,7 +828,7 @@ retest.describe('mupen64', function()
                 retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_RETURN)).to.equal("Enter")
                 retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_SPACE)).to.equal("Space")
                 retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_DOWN)).to.equal("Down")
-                retest.expect(input.get_key_name_text(string.byte('W'))).to.equal("W")
+                retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_W)).to.equal("W")
             end)
         end)
     end)
@@ -1003,21 +1003,86 @@ retest.describe('mupen64', function()
                 retest.expect(func).to.fail()
             end)
             retest.it('returns_false_when_action_doesnt_exist', function()
-                local result = action.associate_hotkey("Test > Something", {})
+                local result = action.associate_hotkey("Test > Something", {
+                    trigger = { type = "none" },
+                })
                 retest.expect(result).to.equal(false)
             end)
             retest.it('returns_false_when_path_isnt_fully_qualified', function()
                 action.add({
                     path = "Test > Something",
                 })
-                local result = action.associate_hotkey("Test > *", {})
+                local result = action.associate_hotkey("Test > *", {
+                    trigger = { type = "none" },
+                })
                 retest.expect(result).to.equal(false)
             end)
-            retest.it('works_when_parameters_valid', function()
+            retest.it('errors_when_trigger_is_missing', function()
                 action.add({
                     path = "Test > Something",
                 })
-                local result = action.associate_hotkey("Test > Something", { key = Mupen.VKeycodes.VK_TAB }, true)
+                local func = function()
+                    action.associate_hotkey("Test > Something", {})
+                end
+                retest.expect(func).to.fail()
+            end)
+            retest.it('works_with_legacy_key', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    key = Mupen.VKeycodes.VK_F1,
+                    alt = true,
+                }, true)
+                retest.expect(result).to.be.truthy()
+            end)
+            retest.it('errors_when_key_and_trigger_are_both_present', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local func = function()
+                    action.associate_hotkey("Test > Something", {
+                        key = Mupen.VKeycodes.VK_F1,
+                        trigger = {
+                            type = "keycode",
+                            value = Mupen.keycode.SDLK_F1,
+                        },
+                    })
+                end
+                retest.expect(func).to.fail()
+            end)
+            retest.it('works_with_keycode_trigger', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    trigger = {
+                        type = "keycode",
+                        value = Mupen.keycode.SDLK_F1,
+                    },
+                    alt = true,
+                }, true)
+                retest.expect(result).to.be.truthy()
+            end)
+            retest.it('works_with_mousebutton_trigger', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    trigger = {
+                        type = "mousebutton",
+                        value = Mupen.mousebutton.SDL_BUTTON_X1MASK,
+                    },
+                }, true)
+                retest.expect(result).to.be.truthy()
+            end)
+            retest.it('works_with_no_trigger', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    trigger = { type = "none" },
+                }, true)
                 retest.expect(result).to.be.truthy()
             end)
         end)

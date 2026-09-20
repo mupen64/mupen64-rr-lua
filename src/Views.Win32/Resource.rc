@@ -72,8 +72,6 @@ IDR_INSPECT_LUA_FILE    TEXTFILE                "../../vendor/lua-modules/inspec
 
 IDR_API_LUA_FILE        TEXTFILE                "../Lua/api.lua"
 
-IDR_SHIMS_LUA_FILE      TEXTFILE                "../Lua/shims.lua"
-
 IDR_SANDBOX_LUA_FILE    TEXTFILE                "../Lua/sandbox.lua"
 
 /////////////////////////////////////////////////////////////////////////////

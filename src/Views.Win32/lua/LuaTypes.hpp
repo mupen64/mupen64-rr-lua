@@ -7,6 +7,7 @@
 #pragma once
 
 #include <Common.Views/ActionManager.hpp>
+#include <SDL3/SDL_keycode.h>
 #include <lua/presenters/Presenter.hpp>
 
 /**
@@ -111,6 +112,7 @@ struct LuaEnvironment
 struct LuaKeyEventArgs
 {
     std::optional<uint64_t> keycode;
+    std::optional<SDL_Keycode> keycode2;
     bool ctrl{};
     bool alt{};
     bool shift{};
