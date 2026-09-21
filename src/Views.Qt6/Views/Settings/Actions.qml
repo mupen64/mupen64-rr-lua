@@ -265,6 +265,7 @@ ActionManager {
     EmuAction {
         key: "opts/settings"
         text: qsTr("Settings...")
+        defaultShortcut: "Ctrl+S"
         onTriggered: root.winConfig.show()
     }
 

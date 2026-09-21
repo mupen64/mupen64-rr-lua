@@ -26,22 +26,23 @@ ScrollView {
         id: list
         model: root.settingsActions.actions
 
+        width: 310
         spacing: 10
-        leftMargin: 10
-        rightMargin: 10
-
 
         flickableDirection: Flickable.VerticalFlick
 
         delegate: Config.Row {
             id: row
-            width: list.width - list.leftMargin
-
             required property EmuAction modelData
+
+            width: list.width
+
+            label.leftPadding: 10
             name: modelData.text
 
             Config.Hotkey {
                 dialog: diaHotkey
+                rightPadding: 10
                 allowModifiers: !(row.modelData instanceof EmuHeldAction)
                 combo: {
                     if (row.modelData instanceof EmuHeldAction)

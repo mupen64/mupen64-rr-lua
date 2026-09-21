@@ -17,10 +17,13 @@ RowLayout {
     property string tooltip
     default required property Item control
 
+    property alias label: label
+
     Layout.fillWidth: true
     Layout.minimumHeight: 30
 
     ToolTipLabel {
+        id: label
         Layout.fillWidth: true
         text: row.name
         tooltip: row.tooltip

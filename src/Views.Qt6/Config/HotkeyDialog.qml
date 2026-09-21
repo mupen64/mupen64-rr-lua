@@ -17,7 +17,8 @@ DialogBase {
     property var currentCombo: null
     property bool allowModifiers: true
 
-    standardButtons: Dialog.Cancel
+    title: `Recording${(allowModifiers)? "" : " (no modifiers)"}`
+
     onOpened: {
         lblDisplay.lineTwo = "...";
     }
@@ -30,12 +31,16 @@ DialogBase {
             id: lblDisplay
             focus: true
             textFormat: Qt.MarkdownText
-            text: `Recording: ${lineTwo}`
+            text: `Recording (press Esc to unbind): ${lineTwo}`
             horizontalAlignment: Text.AlignHCenter
 
             property string lineTwo: "..."
 
             function updateDisplay(key: int, modifiers: int) {
+                if (key == Qt.Key_Escape) {
+
+                }
+
                 let combined = modifiers;
                 if (![Qt.Key_Control, Qt.Key_Alt, Qt.Key_Shift, Qt.Key_Meta].includes(key)) {
                     combined |= key;
@@ -54,22 +59,25 @@ DialogBase {
                 if (event.key == Qt.Key_Escape) {
                     dialog.currentCombo = null;
                     dialog.accept();
+                    return;
                 }
                 if (event.isAutoRepeat) {
                     return;
                 }
+
+                lblDisplay.updateDisplay(event.key, event.modifiers);
                 if (!dialog.allowModifiers && event.modifiers !== Qt.NoModifier) {
                     return;
                 }
-
-                lblDisplay.updateDisplay(event.key, event.modifiers);
-
                 if ([Qt.Key_Control, Qt.Key_Alt, Qt.Key_Shift, Qt.Key_Meta].includes(event.key)) {
                     return;
                 }
 
                 dialog.currentCombo = ActionHelpers.fromIntKeys([event.key | event.modifiers]);
                 dialog.accept();
+            }
+            Keys.onReleased: function(event: KeyEvent) {
+                lblDisplay.updateDisplay(event.key, event.modifiers);
             }
         }
     }
