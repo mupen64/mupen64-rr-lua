@@ -105,7 +105,9 @@ QtObject {
 
                 if (priv.registerMap.has(action.key))
                     throw new Error(`Key ${action.key} is already present. Keys should be unique.`);
+
                 priv.registerMap.set(action.key, action);
+                priv.actions.push(action);
             }
             onObjectRemoved: (_index, obj) => {
                 if (!(obj.modelData instanceof EmuAction))
@@ -113,13 +115,17 @@ QtObject {
                 let action = obj.modelData as EmuAction;
 
                 priv.registerMap.delete(action.key);
+                let index = priv.actions.findIndex(a => a.key === action.key);
+                if (index >= 0)
+                    priv.actions.splice(index, 1);
             }
         }
         property var registerMap: new Map()
+        property list<EmuAction> actions
     }
     required property string settingsCategory
     default property list<QtObject> children
-    readonly property list<EmuAction> actions: children.filter(c => c instanceof EmuAction)
+    readonly property list<EmuAction> actions: priv.actions
 
     function get(key) {
         return priv.registerMap.get(key);

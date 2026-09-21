@@ -53,10 +53,13 @@ QString ActionHelpers::fromIntKeys(const QVariantList &keyList)
     if (keyList.size() >= 4) throw std::logic_error("Invalid key sequence!");
 
     std::array<QKeyCombination, 4> combos{};
-    for (qsizetype i = 0; i < keyList.size(); i++)
+    for (qsizetype i = 0; i < 4; i++)
     {
-        combos[i] = QKeyCombination::fromCombined(keyList[i].toInt());
+        if (i < keyList.size())
+            combos[i] = QKeyCombination::fromCombined(keyList[i].toInt());
+        else
+            combos[i] = QKeyCombination::fromCombined(0);
     }
 
-    return QKeySequence(combos[0], combos[1], combos[2], combos[3]).toString();
+    return QKeySequence(combos[0], combos[1], combos[2], combos[3]).toString(QKeySequence::NativeText);
 }
