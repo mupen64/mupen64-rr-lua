@@ -125,7 +125,7 @@ const char *get_input_text()
     if (b.z) strcat(text, "Z");
     if (b.a) strcat(text, "A");
     if (b.b) strcat(text, "B");
-    if (b.l) strcat(text, "");
+    if (b.l) strcat(text, "L");
     if (b.r) strcat(text, "R");
     if (b.cu || b.cd || b.cl || b.cr)
     {
@@ -1081,9 +1081,11 @@ void Main::init_sdl()
     if (!g_sdl_initialized)
     {
         g_main_ctx.dispatcher->invoke([] {
+            SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
             need(
                 SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), "Failed to init SDL");
         });
+        g_sdl_initialized = true;
     }
 }
 void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
