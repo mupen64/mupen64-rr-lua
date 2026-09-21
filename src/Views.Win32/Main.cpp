@@ -125,7 +125,7 @@ const char *get_input_text()
     if (b.z) strcat(text, "Z");
     if (b.a) strcat(text, "A");
     if (b.b) strcat(text, "B");
-    if (b.l) strcat(text, "");
+    if (b.l) strcat(text, "L");
     if (b.r) strcat(text, "R");
     if (b.cu || b.cd || b.cl || b.cr)
     {
