@@ -1982,7 +1982,7 @@ void core_start()
     }
 
     debug_count += core_Count;
-    print_stop_debug();
+    // print_stop_debug();
     for (i = 0; i < 0x100000; i++)
     {
         if (blocks[i] != NULL)

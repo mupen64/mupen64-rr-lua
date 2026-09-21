@@ -18,7 +18,7 @@ ScrollView {
     Layout.fillHeight: true
 
     contentWidth: availableWidth
-    implicitWidth: 320
+    implicitWidth: contentRoot.implicitWidth + ScrollBar.vertical.implicitWidth
 
     default property list<Item> rows
 

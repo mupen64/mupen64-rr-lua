@@ -146,17 +146,6 @@ ApplicationWindow {
         onTriggered: core.invalidateVisuals()
     }
 
-    // Auxiliary dialogs
-    // =====================================
-
-    DialogService { id: dialogService }
-
-    ConfigWindow {
-        id: winConfig
-        settingsCore: settingsCore
-        settingsPaths: settingsPaths
-    }
-
     // Settings objects
     // =====================================
 
@@ -169,6 +158,17 @@ ApplicationWindow {
         core: core
         dialogService: dialogService
         winConfig: winConfig
+    }
+
+    // Auxiliary dialogs
+    // =====================================
+
+    DialogService { id: dialogService }
+
+    ConfigWindow {
+        id: winConfig
+        settingsCore: settingsCore
+        settingsPaths: settingsPaths
     }
 
     // LATE BINDINGS

@@ -119,8 +119,13 @@ QtObject {
     }
     required property string settingsCategory
     default property list<QtObject> children
+    readonly property list<EmuAction> actions: children.filter(c => c instanceof EmuAction)
 
     function get(key) {
         return priv.registerMap.get(key);
+    }
+
+    function sync() {
+        settings.sync();
     }
 }

@@ -46,4 +46,11 @@ ApplicationWindow {
             settingsPaths: dialog.settingsPaths
         }
     }
+
+    onVisibleChanged: {
+        if (!visible) {
+            settingsCore.sync();
+            settingsPaths.sync();
+        }
+    }
 }
