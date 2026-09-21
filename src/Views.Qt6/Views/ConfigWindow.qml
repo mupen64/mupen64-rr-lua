@@ -15,6 +15,7 @@ ApplicationWindow {
     id: dialog
     modality: Qt.WindowModal
 
+    required property SettingsActions settingsActions
     required property SettingsCore settingsCore
     required property SettingsPaths settingsPaths
 
@@ -30,6 +31,9 @@ ApplicationWindow {
         TabButton {
             text: qsTr("Folders")
         }
+        TabButton {
+            text: qsTr("Hotkeys")
+        }
     }
 
     // windowResizable: true
@@ -44,6 +48,9 @@ ApplicationWindow {
         }
         ConfigFoldersPage {
             settingsPaths: dialog.settingsPaths
+        }
+        ConfigHotkeysPage {
+            settingsActions: dialog.settingsActions
         }
     }
 

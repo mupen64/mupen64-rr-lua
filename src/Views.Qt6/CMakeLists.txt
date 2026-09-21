@@ -51,6 +51,7 @@ set(qml_settings_sources
 set(qml_config_pages
     "Views/Config/EmulationPage.qml"
     "Views/Config/FoldersPage.qml"
+    "Views/Config/HotkeysPage.qml"
 )
 # rename settings pages and mark singletons
 foreach(item IN LISTS qml_settings_sources)

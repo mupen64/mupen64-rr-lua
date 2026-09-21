@@ -31,5 +31,4 @@ ScrollView {
             children: root.rows
         }
     }
-
 }

@@ -167,6 +167,7 @@ ApplicationWindow {
 
     ConfigWindow {
         id: winConfig
+        settingsActions: settingsActions
         settingsCore: settingsCore
         settingsPaths: settingsPaths
     }
