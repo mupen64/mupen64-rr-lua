@@ -776,10 +776,10 @@ function emu.atvi(f, unregister) end
 ---@return nil
 function emu.atupdatescreen(f, unregister) end
 
----Calls `f` with a platform-agnostic painter after every VI frame.
+---Calls `f` after every VI frame. Use [painter.current](lua://painter.current) inside the callback to access the active painter.
 ---The painter is only valid for the duration of the callback. Resources such as brushes, images, and text styles may be retained and reused across frames.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
----@param f fun(p: Painter): nil The function to be called after every VI frame.
+---@param f fun(): nil The function to be called after every VI frame.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
 function emu.atpaint(f, unregister) end
@@ -1549,6 +1549,11 @@ function painter.load_image(path) end
 ---@return PainterImage? image
 ---@return string? error_message
 function painter.decode_image(data) end
+
+---Returns the active painter for the current callback scope.
+---@nodiscard
+---@return Painter
+function painter.current() end
 
 ---Gets the target frame rate for Lua painting.
 ---Returns `nil` when the renderer uses the monitor refresh rate.

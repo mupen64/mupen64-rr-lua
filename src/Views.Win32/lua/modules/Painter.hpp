@@ -2027,7 +2027,14 @@ inline int screen_paint(lua_State *L)
     target->SetTransform(D2D1::Matrix3x2F::Identity());
     lua_pushvalue(L, 1);
     auto *painter = push_painter(L, context, target);
-    const int status = lua_pcall(L, 1, 0, 0);
+    const int painter_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    context->active_painter = painter;
+    context->active_painter_ref = painter_ref;
+    lua_pushvalue(L, 1);
+    const int status = lua_pcall(L, 0, 0, 0);
+    context->active_painter = nullptr;
+    context->active_painter_ref = 0;
+    luaL_unref(L, LUA_REGISTRYINDEX, painter_ref);
     if (status == LUA_OK) execute_commands(painter);
     invalidate_painter(painter);
     const HRESULT hr = target->EndDraw();
@@ -2049,7 +2056,16 @@ inline int image_paint(lua_State *L)
     context->d2d_render_target_stack.push(image->target.Get());
     lua_pushvalue(L, 2);
     auto *painter = push_painter(L, context, image->target.Get());
-    const int status = lua_pcall(L, 1, 0, 0);
+    const int painter_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    auto *previous_painter = context->active_painter;
+    const int previous_painter_ref = context->active_painter_ref;
+    context->active_painter = painter;
+    context->active_painter_ref = painter_ref;
+    lua_pushvalue(L, 2);
+    const int status = lua_pcall(L, 0, 0, 0);
+    context->active_painter = previous_painter;
+    context->active_painter_ref = previous_painter_ref;
+    luaL_unref(L, LUA_REGISTRYINDEX, painter_ref);
     if (status == LUA_OK) execute_commands(painter);
     invalidate_painter(painter);
     context->d2d_render_target_stack.pop();
@@ -2061,6 +2077,15 @@ inline int image_paint(lua_State *L)
 }
 
 } // namespace Detail
+
+inline int current(lua_State *L)
+{
+    auto *context = Detail::check_context(L);
+    if (!context->active_painter_ref)
+        return luaL_error(L, "painter.current() must be called from an active painter callback");
+    lua_rawgeti(L, LUA_REGISTRYINDEX, context->active_painter_ref);
+    return 1;
+}
 
 inline int get_target_fps(lua_State *L)
 {

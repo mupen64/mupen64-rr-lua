@@ -27,7 +27,7 @@ dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_p
 
 local once = false
 
-emu.atpaint(function(_)
+emu.atpaint(function()
     if once then
         return
     end
