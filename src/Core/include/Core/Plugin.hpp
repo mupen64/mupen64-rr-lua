@@ -23,7 +23,7 @@
 
 #include <windows.h>
 
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 #define EXPORT
 #define CALL
 #else
@@ -41,7 +41,8 @@ extern "C"
     {
         Windows,
         X11,
-        Wayland
+        Wayland,
+        Cocoa
     };
 
     struct WindowHandle
