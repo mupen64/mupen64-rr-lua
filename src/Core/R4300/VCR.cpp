@@ -235,17 +235,13 @@ CoreResult vcr_read_movie_header(std::vector<uint8_t> buf, CoreVCRMovieHeader *h
                     if (i != 56 + 64)
                         memmove(new_header.rsp_plugin_name, new_header.reserved_bytes + i, 256 - 64 - 64 - 64);
                     else
-                        strncpy_s(new_header.rsp_plugin_name, sizeof(new_header.rsp_plugin_name), "(unknown)",
-                            sizeof(new_header.rsp_plugin_name));
+                        strcpy_s(new_header.rsp_plugin_name, sizeof(new_header.rsp_plugin_name), "(unknown)");
 
-                    strncpy_s(new_header.input_plugin_name, sizeof(new_header.input_plugin_name), "(unknown)",
-                        sizeof(new_header.input_plugin_name));
+                    strcpy_s(new_header.input_plugin_name, sizeof(new_header.input_plugin_name), "(unknown)");
                 }
-                strncpy_s(new_header.audio_plugin_name, sizeof(new_header.audio_plugin_name), "(unknown)",
-                    sizeof(new_header.audio_plugin_name));
+                strcpy_s(new_header.audio_plugin_name, sizeof(new_header.audio_plugin_name), "(unknown)");
             }
-            strncpy_s(new_header.video_plugin_name, sizeof(new_header.video_plugin_name), "(unknown)",
-                sizeof(new_header.video_plugin_name));
+            strcpy_s(new_header.video_plugin_name, sizeof(new_header.video_plugin_name), "(unknown)");
         }
         // attempt to convert old author and description to utf8
         std::memcpy(new_header.author, new_header.old_author_info, sizeof(new_header.old_author_info));
