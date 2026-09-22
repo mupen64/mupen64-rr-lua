@@ -11,8 +11,7 @@ dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_p
 local img = assert(painter.load_image(
     debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\peppers.png'))
 
-emu.atpaint(function()
-    local p = painter.current()
+emu.atpaint(function(p)
     local w = img.w
     local h = img.h
 

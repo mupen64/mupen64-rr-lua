@@ -254,8 +254,7 @@ local function draw_ninesliced(p)
 end
 
 
-emu.atpaint(function()
-    local p = painter.current()
+emu.atpaint(function(p)
     frame = frame + 1
 
     p:clear(BACKGROUND_COLOR)

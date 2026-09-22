@@ -635,8 +635,7 @@ emu.atmouse(function(ev)
     scroll_y = math.max(0, math.min(max_scroll, scroll_y + step))
 end)
 
-emu.atpaint(function()
-    local p = painter.current()
+emu.atpaint(function(p)
     local info = wgui.info()
     local view_w, view_h = info.width, info.height
     local max_scroll = math.max(0, CONTENT_H - view_h + BOTTOM_MARGIN)

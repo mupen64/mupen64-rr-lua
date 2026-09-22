@@ -13,7 +13,6 @@
 
 namespace LuaCore::Painter::Detail
 {
-struct Painter;
 class TextLayoutCache;
 class TextMeasurementCache;
 class TextFactoryCache;
@@ -53,10 +52,6 @@ struct LuaRenderingContext
 
     // The shared DirectWrite factory
     std::shared_ptr<LuaCore::Painter::Detail::TextFactoryCache> painter_text_factory{};
-
-    // The currently active painter callback scope.
-    LuaCore::Painter::Detail::Painter *active_painter{};
-    int active_painter_ref{};
 
     // The stack of render targets. The top is used for D2D calls.
     std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
