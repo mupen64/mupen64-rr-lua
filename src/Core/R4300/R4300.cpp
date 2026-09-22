@@ -1988,7 +1988,11 @@ void core_start()
         {
             if (blocks[i]->block)
             {
+#if MUPEN64RR_PRECOMP_NEEDS_EXEC
                 free_exec(blocks[i]->block);
+#else
+                free(blocks[i]->block);
+#endif
                 blocks[i]->block = NULL;
             }
             if (blocks[i]->code)
