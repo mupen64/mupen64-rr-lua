@@ -776,10 +776,10 @@ function emu.atvi(f, unregister) end
 ---@return nil
 function emu.atupdatescreen(f, unregister) end
 
----Calls `f` with a platform-agnostic painter after every VI frame.
+---Calls `f` after every VI frame. Use [painter.current](lua://painter.current) to get the painter for the callback's scope.
 ---The painter is only valid for the duration of the callback. Resources such as brushes, images, and text styles may be retained and reused across frames.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
----@param f fun(p: Painter): nil The function to be called after every VI frame.
+---@param f fun(): nil The function to be called after every VI frame.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
 function emu.atpaint(f, unregister) end
@@ -1550,6 +1550,12 @@ function painter.load_image(path) end
 ---@return string? error_message
 function painter.decode_image(data) end
 
+---Gets the painter for the currently active painter scope.
+---This is valid in an [emu.atpaint](lua://emu.atpaint) or [PainterImage:paint](lua://PainterImage.paint) callback and errors outside one.
+---@nodiscard
+---@return Painter
+function painter.current() end
+
 ---Gets the target frame rate for Lua painting.
 ---Returns `nil` when the renderer uses the monitor refresh rate.
 ---@return number? target_fps
@@ -1559,8 +1565,8 @@ function painter.get_target_fps() end
 ---@param target_fps number? The target FPS, or `nil` to use the monitor refresh rate. Non-finite or non-positive values are ignored.
 function painter.set_target_fps(target_fps) end
 
----The short-lived drawing context supplied to [emu.atpaint](lua://emu.atpaint).
----Methods must only be called while the callback which supplied this object is active.
+---The short-lived drawing context returned by [painter.current](lua://painter.current).
+---Methods must only be called while its painter scope is active.
 ---@class Painter
 local Painter = {}
 
@@ -2423,8 +2429,8 @@ function __mupen_apply_shims()
     local atdrawd2d_callbacks = {}
     local atdrawd2d_dispatch_registered = false
 
-    local function dispatch_atdrawd2d(p)
-        active_painter = p
+    local function dispatch_atdrawd2d()
+        active_painter = painter.current()
         local callbacks = {}
         for i, callback in ipairs(atdrawd2d_callbacks) do
             callbacks[i] = callback

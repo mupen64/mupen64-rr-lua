@@ -102,8 +102,9 @@ const luaL_Reg WGUI_FUNCS[] = {{"setbrush", LuaCore::Wgui::set_brush}, {"setpen"
     {"info", LuaCore::Wgui::GetGUIInfo}, {"resize", LuaCore::Wgui::ResizeWindow}, {"setclip", LuaCore::Wgui::SetClip},
     {"resetclip", LuaCore::Wgui::ResetClip}, {NULL, NULL}};
 
-const luaL_Reg PAINTER_FUNCS[] = {{"new_image", LuaCore::Painter::new_image},
-    {"load_image", LuaCore::Painter::load_image}, {"decode_image", LuaCore::Painter::decode_image},
+const luaL_Reg PAINTER_FUNCS[] = {{"current", LuaCore::Painter::current},
+    {"new_image", LuaCore::Painter::new_image}, {"load_image", LuaCore::Painter::load_image},
+    {"decode_image", LuaCore::Painter::decode_image},
     {"image_formats", LuaCore::Painter::image_formats}, {"get_target_fps", LuaCore::Painter::get_target_fps},
     {"set_target_fps", LuaCore::Painter::set_target_fps}, {"measure_text", LuaCore::Painter::measure_text},
     {"hittest_text_position", LuaCore::Painter::hittest_text_position},

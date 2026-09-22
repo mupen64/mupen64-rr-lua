@@ -37,6 +37,7 @@ namespace Detail
 {
 constexpr const char *IMAGE_MT = "mupen64.PainterImage";
 constexpr const char *PAINTER_MT = "mupen64.Painter";
+inline char current_painter_registry;
 constexpr float MAX_LAYOUT_SIZE = 10000000.0f;
 constexpr float MAX_TEXT_LAYOUT_SIZE = 1000000.0f;
 constexpr float MIN_TEXT_LAYOUT_SIZE = 0.001f;
@@ -404,6 +405,21 @@ inline Painter *check_painter(lua_State *L, int index)
         painter->context->d2d_render_target_stack.top() != painter->target)
         luaL_error(L, "Painter target is no longer active");
     return painter;
+}
+
+inline int set_current_painter(lua_State *L, int index)
+{
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &current_painter_registry);
+    const int previous = lua_gettop(L);
+    lua_pushvalue(L, index);
+    lua_rawsetp(L, LUA_REGISTRYINDEX, &current_painter_registry);
+    return previous;
+}
+
+inline void restore_current_painter(lua_State *L, int previous)
+{
+    lua_pushvalue(L, previous);
+    lua_rawsetp(L, LUA_REGISTRYINDEX, &current_painter_registry);
 }
 
 inline UINT32 intern_brush(Painter *painter, const D2D1_COLOR_F &color)
@@ -2025,12 +2041,17 @@ inline int screen_paint(lua_State *L)
 
     target->BeginDraw();
     target->SetTransform(D2D1::Matrix3x2F::Identity());
-    lua_pushvalue(L, 1);
     auto *painter = push_painter(L, context, target);
-    const int status = lua_pcall(L, 1, 0, 0);
+    const int painter_index = lua_gettop(L);
+    const int previous_painter = set_current_painter(L, painter_index);
+    lua_pushvalue(L, 1);
+    const int status = lua_pcall(L, 0, 0, 0);
     if (status == LUA_OK) execute_commands(painter);
     invalidate_painter(painter);
+    restore_current_painter(L, previous_painter);
     const HRESULT hr = target->EndDraw();
+    lua_remove(L, previous_painter);
+    lua_remove(L, painter_index);
 
     if (status != LUA_OK) return lua_error(L);
     if (FAILED(hr)) return fail_hr(L, "ID2D1RenderTarget::EndDraw", hr);
@@ -2047,20 +2068,34 @@ inline int image_paint(lua_State *L)
     image->target->BeginDraw();
     image->target->SetTransform(D2D1::Matrix3x2F::Identity());
     context->d2d_render_target_stack.push(image->target.Get());
-    lua_pushvalue(L, 2);
     auto *painter = push_painter(L, context, image->target.Get());
+    const int painter_index = lua_gettop(L);
+    const int previous_painter = set_current_painter(L, painter_index);
+    lua_pushvalue(L, 2);
+    lua_pushvalue(L, painter_index);
     const int status = lua_pcall(L, 1, 0, 0);
     if (status == LUA_OK) execute_commands(painter);
     invalidate_painter(painter);
+    restore_current_painter(L, previous_painter);
     context->d2d_render_target_stack.pop();
     const HRESULT hr = image->target->EndDraw();
     image->painting = false;
+    lua_remove(L, previous_painter);
+    lua_remove(L, painter_index);
     if (status != LUA_OK) return lua_error(L);
     if (FAILED(hr)) return fail_hr(L, "ID2D1BitmapRenderTarget::EndDraw", hr);
     return 0;
 }
 
 } // namespace Detail
+
+inline int current(lua_State *L)
+{
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &Detail::current_painter_registry);
+    if (lua_isnil(L, -1)) return luaL_error(L, "painter.current() must be called from a painter scope");
+    Detail::check_painter(L, -1);
+    return 1;
+}
 
 inline int get_target_fps(lua_State *L)
 {
