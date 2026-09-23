@@ -280,6 +280,18 @@ TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_cheats", "vcr_get_gene
     REQUIRE(info.cht_path == "test.cht");
 }
 
+TEST_CASE_METHOD(VcrFixture, "stores_zero_rcp_lag_factor_when_emulation_is_disabled", "vcr_start_record")
+{
+    g_cfg.rcp_lag_emulation = 0;
+    g_cfg.rcp_lag_factor = 1.0;
+
+    const auto result = vcr_start_record("test.m64", MOVIE_START_FROM_NOTHING, "author", "description");
+
+    REQUIRE(result == CoreResult::Res_Ok);
+    REQUIRE(vcr.hdr.extended_data.rcp_lag_factor == 0.0);
+    REQUIRE(vcr.hdr.extended_data.rcp_lag_factor != 1.0);
+}
+
 #pragma endregion
 
 #pragma region Unit

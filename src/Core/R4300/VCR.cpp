@@ -1036,7 +1036,7 @@ CoreResult vcr_start_record(std::filesystem::path path, uint16_t flags, std::str
 
     vcr.hdr.extended_data = default_hdr.extended_data;
     vcr.hdr.extended_data.cpu_cf = g_core->cfg->cpu_cf;
-    vcr.hdr.extended_data.rcp_lag_factor = g_core->cfg->rcp_lag_factor;
+    vcr.hdr.extended_data.rcp_lag_factor = g_core->cfg->rcp_lag_emulation ? g_core->cfg->rcp_lag_factor : 0.0;
 
     vcr.hdr.uid = (uint32_t)time(nullptr);
     vcr.hdr.length_vis = 0;
