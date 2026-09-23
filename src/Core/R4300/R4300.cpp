@@ -1965,7 +1965,6 @@ void core_start()
 
         code = (void (*)(void))(code_addr);
         dyna_start(code);
-        PC++;
     }
     break;
 #endif
