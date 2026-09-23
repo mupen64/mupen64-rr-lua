@@ -10,6 +10,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import Actions
 import Core
 import Views
 
@@ -43,15 +44,15 @@ ApplicationWindow {
         settingsCore.sync();
         settingsPaths.sync();
 
-        // menu bar initialization must be deferred to ensure
-        // actions are registered inside the ActionManager
-        header = menuBarTemplate.createObject();
+        // rebuild menu bar
+        menuBar.rebuildMenu();
     }
 
     // MENU BAR
     // =====================================
 
-    property Component menuBarTemplate: MainMenuBar {
+    header: ActionMenuBar {
+        id: menuBar
         actions: settingsActions
     }
 

@@ -128,6 +128,8 @@ if(MUPEN64RR_BUILD_QT6)
     qt_policy(SET QTP0005 NEW)
     qt_standard_project_setup(
         I18N_SOURCE_LANGUAGE "en_US"
+        I18N_TRANSLATED_LANGUAGES
+        "en_US"
     )
 
     include(cmake/Windeployqt.cmake)

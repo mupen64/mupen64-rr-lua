@@ -197,7 +197,7 @@ ActionManager {
         delegate: EmuAction {
             required property int index
             key: `menu.emu.saveState.slot${index}`
-            //% "Slot %n"
+            //% "Slot %1"
             text: qsTrId("menu.emu.saveState.slot").arg(index + 1)
             defaultShortcut: "Shift+" + [
                 "1", "2", "3", "4", "5",
@@ -237,7 +237,7 @@ ActionManager {
         delegate: EmuAction {
             required property int index
             key: `menu.emu.loadState.slot${index}`
-            //% "Slot %n"
+            //% "Slot %1"
             text: qsTrId("menu.emu.loadState.slot").arg(index + 1)
             defaultShortcut: [
                 "F1", "F2", "F3", "F4", "F5",
@@ -267,7 +267,7 @@ ActionManager {
 
             checkable: true
             key: `menu.emu.currentSlot.slot${index}`
-            //% "Slot %n"
+            //% "Slot %1"
             text: qsTrId("menu.emu.currentState.slot").arg(index + 1)
             defaultShortcut: [
                 "1", "2", "3", "4", "5",
@@ -282,6 +282,10 @@ ActionManager {
         }
     }
 
+    EmuMenu {
+        //% "Options"
+        key: QT_TRID_NOOP("menu.opts")
+    }
     EmuAction {
         //% "Settings..."
         key: QT_TRID_NOOP("menu.opts.settings")
