@@ -8,12 +8,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
-Action {
+QtObject {
     id: root
-
     required property string key
-    property var defaultShortcut: null
+    property string text: qsTrId(key)
     property bool addSeparator: false
-
-    text: qsTrId(key)
 }

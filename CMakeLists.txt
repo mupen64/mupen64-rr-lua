@@ -121,11 +121,14 @@ if(MUPEN64RR_BUILD_QT6)
     find_package(Qt6 CONFIG REQUIRED COMPONENTS
         Core Gui Widgets
         Qml Quick QuickControls2
+        LinguistTools
     )
     qt_policy(SET QTP0001 NEW)
     qt_policy(SET QTP0004 NEW)
     qt_policy(SET QTP0005 NEW)
-    qt_standard_project_setup()
+    qt_standard_project_setup(
+        I18N_SOURCE_LANGUAGE "en_US"
+    )
 
     include(cmake/Windeployqt.cmake)
 endif()
