@@ -8,8 +8,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Config as Config
-
 // Scrollable column.
 ScrollView {
     id: root

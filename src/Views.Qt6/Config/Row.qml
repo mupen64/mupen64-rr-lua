@@ -11,7 +11,7 @@ import Components
 
 // Single-row option with a control on the right side.
 // Designed for use with Config.Bool, Config.Choices, Config.Int, and Config.Double.
-RowLayout {
+Item {
     id: row
     required property string name
     property string tooltip
@@ -20,11 +20,14 @@ RowLayout {
     property alias label: label
 
     Layout.fillWidth: true
-    Layout.minimumHeight: 30
+
+    implicitHeight: Math.max(label.height, control.height, 30)
+    implicitWidth: label.width + control.width
 
     ToolTipLabel {
         id: label
-        Layout.fillWidth: true
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
         text: row.name
         tooltip: row.tooltip
     }
@@ -32,6 +35,10 @@ RowLayout {
     // We can't declaratively make it a child, so
     // reattach every time this changes.
     onControlChanged: {
-        control.parent = row
+        // parent control
+        control.parent = row;
+        // bind anchors
+        control.anchors.right = row.right;
+        control.anchors.verticalCenter = row.verticalCenter;
     }
 }

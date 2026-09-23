@@ -52,7 +52,6 @@ ApplicationWindow {
     // =====================================
 
     property Component menuBarTemplate: MainMenuBar {
-        id: blap
         actions: settingsActions
     }
 
@@ -69,15 +68,17 @@ ApplicationWindow {
             // TODO: replace with ROM browser
             Layout.fillHeight: true
             Layout.fillWidth: true
-            // Button {
-            //     anchors.centerIn: parent
-            //     text: "MessageBox test"
-            //     onClicked: {
-            //         dialogService.queueInfoDialog(null, "Hello there.", "General Kenobi! You are a bold one.", CoreMessageTone.Error)
-            //     }
-            // }
-            TextField {
+            Button {
                 anchors.centerIn: parent
+                text: "MessageBox test"
+                onClicked: {
+                    dialogService.queueInfoDialog(
+                        null,
+                        "Hello there.",
+                        "General Kenobi! You are a bold one.",
+                        CoreMessageTone.Error
+                    );
+                }
             }
         }
         Item {
@@ -94,7 +95,6 @@ ApplicationWindow {
             }
             // TODO: Lua canvas management
         }
-
     }
 
     // Core context

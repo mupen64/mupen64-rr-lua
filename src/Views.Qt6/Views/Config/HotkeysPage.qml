@@ -12,50 +12,45 @@ import QtQuick.Controls
 import Actions
 import Config as Config
 
-ScrollView {
+ListView {
     id: root
     required property SettingsActions settingsActions
+    model: root.settingsActions.actions
 
-    contentWidth: availableWidth
-    implicitWidth: 320
+    spacing: 10
+    leftMargin: 10
+    rightMargin: 10 + scrollBar.width
+
+    flickableDirection: Flickable.VerticalFlick
+    ScrollBar.vertical: ScrollBar {
+        id: scrollBar
+        active: true
+    }
+
     clip: true
 
-    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+    delegate: Config.Row {
+        id: row
+        required property EmuAction modelData
 
-    ListView {
-        id: list
-        model: root.settingsActions.actions
+        width: root.width - root.leftMargin - root.rightMargin
 
-        width: 310
-        spacing: 10
+        name: modelData.text
 
-        flickableDirection: Flickable.VerticalFlick
-
-        delegate: Config.Row {
-            id: row
-            required property EmuAction modelData
-
-            width: list.width
-
-            label.leftPadding: 10
-            name: modelData.text
-
-            Config.Hotkey {
-                dialog: diaHotkey
-                rightPadding: 10
-                allowModifiers: !(row.modelData instanceof EmuHeldAction)
-                combo: {
-                    if (row.modelData instanceof EmuHeldAction)
-                        return (row.modelData as EmuHeldAction).heldShortcut;
-                    else
-                        return row.modelData.shortcut;
-                }
-                onComboModified: {
-                    if (row.modelData instanceof EmuHeldAction)
-                        (row.modelData as EmuHeldAction).heldShortcut = combo;
-                    else
-                        row.modelData.shortcut = combo;
-                }
+        Config.Hotkey {
+            dialog: diaHotkey
+            allowModifiers: !(row.modelData instanceof EmuHeldAction)
+            combo: {
+                if (row.modelData instanceof EmuHeldAction)
+                    return (row.modelData as EmuHeldAction).heldShortcut;
+                else
+                    return row.modelData.shortcut;
+            }
+            onComboModified: {
+                if (row.modelData instanceof EmuHeldAction)
+                    (row.modelData as EmuHeldAction).heldShortcut = combo;
+                else
+                    row.modelData.shortcut = combo;
             }
         }
     }
