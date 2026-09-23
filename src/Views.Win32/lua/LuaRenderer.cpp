@@ -22,6 +22,7 @@ static bool g_detached_overlays{};
 static HBRUSH g_alpha_mask_brush;
 
 static std::jthread s_draw_thread;
+static std::atomic s_refresh_rate_invalidated{true};
 
 static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds = std::nullopt);
 
@@ -45,6 +46,10 @@ static LRESULT CALLBACK main_window_subclass_proc(
 {
     switch (msg)
     {
+    case WM_MOVE:
+    case WM_DISPLAYCHANGE:
+        s_refresh_rate_invalidated = true;
+        break;
     case WM_ACTIVATE:
         switch (LOWORD(wparam))
         {
@@ -133,16 +138,35 @@ static void draw_lua(bool force)
     }
 }
 
+static UINT get_screen_refresh_rate()
+{
+    static HMONITOR cached_monitor{};
+    static UINT cached_refresh_rate = 60;
+
+    if (!s_refresh_rate_invalidated.exchange(false)) return cached_refresh_rate;
+
+    const HMONITOR monitor = MonitorFromWindow(g_main_ctx.hwnd, MONITOR_DEFAULTTONEAREST);
+
+    cached_monitor = monitor;
+    cached_refresh_rate = 60;
+    MONITORINFOEX monitor_info{};
+    monitor_info.cbSize = sizeof(monitor_info);
+    DEVMODE display_mode{};
+    display_mode.dmSize = sizeof(display_mode);
+    if (monitor && GetMonitorInfo(monitor, &monitor_info) &&
+        EnumDisplaySettings(monitor_info.szDevice, ENUM_CURRENT_SETTINGS, &display_mode) &&
+        display_mode.dmDisplayFrequency > 1)
+        cached_refresh_rate = display_mode.dmDisplayFrequency;
+
+    return cached_refresh_rate;
+}
+
 static void draw_clock_proc(std::stop_token stop_token)
 {
     while (!stop_token.stop_requested())
     {
         g_main_ctx.dispatcher->invoke([]() { draw_lua(false); });
-
-        if (g_main_ctx.wine)
-            Sleep(16);
-        else
-            DwmFlush();
+        std::this_thread::sleep_for(std::chrono::duration<double>(1.0 / get_screen_refresh_rate()));
     }
 }
 
@@ -261,10 +285,10 @@ static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnd
 
 void LuaRenderer::init()
 {
+    SetWindowSubclass(g_main_ctx.hwnd, main_window_subclass_proc, 0, 0);
     if (g_main_ctx.wine)
     {
         g_detached_overlays = true;
-        SetWindowSubclass(g_main_ctx.hwnd, main_window_subclass_proc, 0, 0);
         g_view_logger->warn("Detected Wine environment, using detached Lua overlays");
     }
 
