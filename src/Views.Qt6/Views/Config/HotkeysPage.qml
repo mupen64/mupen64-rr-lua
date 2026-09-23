@@ -17,6 +17,8 @@ ListView {
     required property SettingsActions settingsActions
     model: root.settingsActions.actions
 
+    // maximumFlickVelocity:
+
     spacing: 10
     leftMargin: 10
     rightMargin: 10 + scrollBar.width

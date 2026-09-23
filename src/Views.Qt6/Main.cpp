@@ -45,13 +45,16 @@ static int qt_main(int argc, char *argv[])
     QApplication::setApplicationName(DESKTOP_FILE_NAME);
     QApplication::setApplicationVersion(CURRENT_VERSION);
     QApplication::setApplicationDisplayName(DISPLAY_NAME);
-    QTranslator translator;
 
+
+    QTranslator translator;
     bool loaded =
         translator.load(QLocale(), "mupen64-rr", "_", ":/i18n") &&
         translator.load("mupen64-rr_en_US.qm", ":/i18n");
     if (!loaded)
         throw std::runtime_error("Translation failed to load!");
+
+    QApplication::installTranslator(&translator);
 
     QQmlApplicationEngine engine;
 

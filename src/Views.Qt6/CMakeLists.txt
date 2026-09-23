@@ -111,7 +111,9 @@ qt_add_qml_module(Mupen64RR_Views_Qt6
 
 # LOCALIZATION
 # ===================================
-
+# note: there is a zero-width space as the 2nd option to `lrelease`.
+# This is a workaround to CMake not letting me pass the empty string.
 qt_add_translations(Mupen64RR_Views_Qt6
     TS_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Translations"
+    LRELEASE_OPTIONS "-markuntranslated" "​"
 )

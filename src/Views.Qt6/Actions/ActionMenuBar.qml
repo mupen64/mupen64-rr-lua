@@ -41,6 +41,11 @@ MenuBar {
     // Rebuilds the menu based on the currently-present actions.
     // This only needs to occur when items or menus are added/removed.
     function rebuildMenu() {
+        // clear out all the old menus
+        while (root.count > 0) {
+            root.takeMenu(root.count - 1);
+        }
+        // construct the new menu
         let menuCache = {};
         let itemCache = {};
         for (const item of actions.children) {
@@ -55,8 +60,10 @@ MenuBar {
 
                 let parentKey = priv.parentKey(item.key);
                 if (parentKey == "menu") {
+                    // menu is a root menu, add to self
                     root.addMenu(viewMenu);
                 } else {
+                    // menu is a submenu
                     if (!(parentKey in menuCache))
                         throw Error(`parent menu ${parentKey} does not exist`);
                     menuCache[parentKey].addMenu(viewMenu);
