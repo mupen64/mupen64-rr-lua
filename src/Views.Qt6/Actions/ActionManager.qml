@@ -58,9 +58,7 @@ QtObject {
 
                     // update settings from the shortcut
                     let action = modelData as EmuAction;
-                    let shortcut = (action instanceof EmuHeldAction) ?
-                        (action as EmuHeldAction).heldShortcut :
-                        action.shortcut;
+                    let shortcut = (action instanceof EmuHeldAction) ? (action as EmuHeldAction).heldShortcut : action.shortcut;
 
                     settings.setValue(action.key, JSON.stringify(shortcut));
                 }
@@ -68,11 +66,13 @@ QtObject {
 
             onObjectAdded: (_index, obj) => {
                 // perform initial update from settings
+                // qmllint disable missing-property
                 if (!(obj.modelData instanceof EmuAction))
                     return;
 
                 let action = obj.modelData as EmuAction;
                 let isAction = false;
+                // qmllint enable missing-property
 
                 let setShortcut = settings.value(action.key, null);
                 let shortcut = (setShortcut == null) ? action.defaultShortcut : JSON.parse(setShortcut);
@@ -99,9 +99,11 @@ QtObject {
             }
 
             onObjectAdded: (_index, obj) => {
+                // qmllint disable missing-property
                 if (!(obj.modelData instanceof EmuAction))
                     return;
                 let action = obj.modelData as EmuAction;
+                // qmllint enable missing-property
 
                 if (priv.registerMap.has(action.key))
                     throw new Error(`Key ${action.key} is already present. Keys should be unique.`);
@@ -110,9 +112,11 @@ QtObject {
                 priv.actions.push(action);
             }
             onObjectRemoved: (_index, obj) => {
+                // qmllint disable missing-property
                 if (!(obj.modelData instanceof EmuAction))
                     return;
                 let action = obj.modelData as EmuAction;
+                // qmllint enable missing-property
 
                 priv.registerMap.delete(action.key);
                 let index = priv.actions.findIndex(a => a.key === action.key);
