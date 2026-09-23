@@ -54,13 +54,22 @@ bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
 bool g_emu_starting;
 DWORD g_ui_thread_id{};
-
+bool awaiting_triple_click[3]{};
 ULONG_PTR gdi_plus_token;
 
 // See App.hpp
 HWND g_main_hwnd;
 
 constexpr auto wnd_class = "myWindowClass";
+constexpr UINT_PTR triple_click_timer_base = 0x4D00;
+
+static void CALLBACK clear_triple_click_timer(HWND hwnd, UINT, UINT_PTR timer_id, DWORD)
+{
+    const auto button = timer_id - triple_click_timer_base;
+    if (button >= std::size(awaiting_triple_click)) return;
+    KillTimer(hwnd, timer_id);
+    awaiting_triple_click[button] = false;
+}
 
 BetterEmulationLock::BetterEmulationLock()
 {
@@ -1088,6 +1097,7 @@ void Main::init_sdl()
         g_sdl_initialized = true;
     }
 }
+
 void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
@@ -1119,7 +1129,22 @@ void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP || msg == WM_MBUTTONDBLCLK) args.button = 2;
         if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN) args.pressed = true;
         if (msg == WM_LBUTTONUP || msg == WM_RBUTTONUP || msg == WM_MBUTTONUP) args.pressed = false;
-        if (msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDBLCLK) args.double_click = true;
+        if (msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDBLCLK)
+        {
+            args.double_click = true;
+            const auto button = *args.button;
+            const auto timer_id = triple_click_timer_base + button;
+            KillTimer(hwnd, timer_id);
+            awaiting_triple_click[button] =
+                SetTimer(hwnd, timer_id, GetDoubleClickTime(), clear_triple_click_timer) != 0;
+        }
+        else if (args.pressed.value_or(false) && args.button && awaiting_triple_click[*args.button])
+        {
+            const auto button = *args.button;
+            KillTimer(hwnd, triple_click_timer_base + button);
+            awaiting_triple_click[button] = false;
+            args.triple_click = true;
+        }
         args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
         args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
         args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;

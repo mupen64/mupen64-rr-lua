@@ -175,6 +175,13 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
                 lua_settable(l, -3);
             }
 
+            if (atmouse_ctx.triple_click.has_value())
+            {
+                lua_pushstring(l, "triple_click");
+                lua_pushboolean(l, atmouse_ctx.triple_click.value());
+                lua_settable(l, -3);
+            }
+
             return lua_pcall(l, 1, 0, 0);
         }},
 
