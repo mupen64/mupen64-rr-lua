@@ -1,0 +1,61 @@
+name: Build (experiment)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows
+    if: ${{ github.ref_type == 'branch' && github.ref != 'refs/heads/main' }}
+    environment: maintainers
+    strategy:
+      matrix:
+        arch: [x86, x64]
+
+    runs-on: windows-latest
+
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
+    steps:
+      - name: Checkout experiment branch
+        uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-windows
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Set experiment version suffix
+        id: experiment
+        shell: pwsh
+        env:
+          EXPERIMENT_BRANCH: ${{ github.ref_name }}
+        run: |
+          $branch = $env:EXPERIMENT_BRANCH -replace '[^A-Za-z0-9._-]', '-'
+          "VERSION_SUFFIX=-experiment-$branch" >> $env:GITHUB_ENV
+          "branch=$branch" >> $env:GITHUB_OUTPUT
+
+      - name: CMake Setup
+        working-directory: ${{ env.GITHUB_WORKSPACE }}
+        run: cmake --preset vcpkg-win64-${{ matrix.arch }} -DCMAKE_BUILD_TYPE=Release
+
+      - name: CMake Build
+        working-directory: ${{ env.GITHUB_WORKSPACE }}
+        run: cmake --build build
+
+      - name: Delete PDB files
+        run: Get-ChildItem build/out -Recurse -Filter *.pdb | Remove-Item -Force
+
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: mupen-release-experiment-windows-${{ matrix.arch }}-${{ steps.experiment.outputs.branch }}
+          path: build/out
+          retention-days: 14
