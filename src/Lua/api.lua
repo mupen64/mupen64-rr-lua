@@ -1411,6 +1411,7 @@ function wgui.resetclip() end
 --#region
 
 ---All painter coordinates and sizes are expressed in device-independent pixels.
+---Painter does not impose the old `MAX_LAYOUT_SIZE` input cap or silently clamp numeric drawing values. Floating-point inputs are passed to Direct2D/DirectWrite as floats; native APIs may reject extreme, non-finite, or unsupported values, or produce renderer-defined output. Type and API-specific checks still apply.
 ---@class PainterRect
 ---@field x number The x-coordinate of the top-left corner.
 ---@field y number The y-coordinate of the top-left corner.
@@ -1419,10 +1420,10 @@ function wgui.resetclip() end
 
 ---An RGBA color table.
 ---@class PainterColorTable
----@field r number The red component in the range [0, 1].
----@field g number The green component in the range [0, 1].
----@field b number The blue component in the range [0, 1].
----@field a number? The alpha component in the range [0, 1]. Defaults to 1.
+---@field r number The red component, normally in [0, 1].
+---@field g number The green component, normally in [0, 1].
+---@field b number The blue component, normally in [0, 1].
+---@field a number? The alpha component, normally in [0, 1]. Defaults to 1.
 
 ---A color, either an RGBA table or a hex string `"#RRGGBBAA"` or `"#RRGGBB"`.
 ---@alias PainterColor
@@ -1473,7 +1474,7 @@ function wgui.resetclip() end
 ---@field w number? Maximum layout width. If absent, width is unconstrained.
 ---@field h number? Maximum layout height. If absent, height is unconstrained.
 ---@field wrap PainterTextWrap? Wrapping mode. Defaults to `"word"` when `w` is present and `"none"` otherwise.
----@field max_lines integer? Maximum number of laid-out lines.
+---@field max_lines integer? Maximum number of laid-out lines. Non-positive values disable this limit.
 
 ---@class PainterTextMetrics
 ---@field w number The width of the laid-out text, including trailing whitespace.
@@ -1505,9 +1506,9 @@ function wgui.resetclip() end
 ---@alias PainterSampling "nearest"|"linear"
 
 ---@class PainterImageOptions
----@field source PainterRect? The source rectangle in image pixels. Defaults to the whole image. Required when `center` is provided.
----@field center PainterRect? The center rectangle in image pixels for nine-sliced drawing. It must be contained by `source`; the surrounding corners retain their original size and aspect ratio. If the destination cannot fit the corners, only this center is stretched over it.
----@field opacity number? Opacity in the range [0, 1]. Defaults to 1.
+---@field source PainterRect? The source rectangle in image pixels. Defaults to the whole image. Required when `center` is provided; keep it within the image bounds.
+---@field center PainterRect? The center rectangle in image pixels for nine-sliced drawing. Keep it within `source`; the surrounding corners retain their original size and aspect ratio. If the destination cannot fit the corners, only this center is stretched over it.
+---@field opacity number? Opacity, normally in [0, 1]. Defaults to 1.
 ---@field sampling PainterSampling? Sampling used when scaling. Defaults to `"linear"`.
 ---@field tint PainterColor? A color multiplied with the image pixels before blending.
 
@@ -1675,7 +1676,7 @@ function Painter:rect(rect) end
 
 ---Adds a rounded rectangle to the current path.
 ---@param rect PainterRect
----@param radius number The corner radius. Values are clamped to fit the rectangle.
+---@param radius number The corner radius. It is passed through to the path geometry.
 function Painter:round_rect(rect, radius) end
 
 ---Adds a circle to the current path.

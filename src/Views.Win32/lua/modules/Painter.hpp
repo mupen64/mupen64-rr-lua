@@ -19,6 +19,7 @@
 #include <dwrite_1.h>
 #include <format>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <new>
 #include <string>
@@ -38,9 +39,7 @@ namespace Detail
 constexpr const char *IMAGE_MT = "mupen64.PainterImage";
 constexpr const char *PAINTER_MT = "mupen64.Painter";
 inline char current_painter_registry;
-constexpr float MAX_LAYOUT_SIZE = 10000000.0f;
-constexpr float MAX_TEXT_LAYOUT_SIZE = 1000000.0f;
-constexpr float MIN_TEXT_LAYOUT_SIZE = 0.001f;
+constexpr float UNCONSTRAINED_LAYOUT_SIZE = 10000000.0f;
 constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 2048;
 
 constexpr size_t TEXT_MEASUREMENT_CACHE_CAPACITY = 2048;
@@ -316,6 +315,32 @@ inline D2D1_COLOR_F parse_hex_color(lua_State *L, std::string_view hex)
     return D2D1::ColorF(values[0] * scale, values[1] * scale, values[2] * scale, values[3] * scale);
 }
 
+inline float check_painter_number(lua_State *L, int index, const char *name)
+{
+    (void)name;
+    const lua_Number value = luaL_checknumber(L, index);
+    if (value > std::numeric_limits<float>::max()) return std::numeric_limits<float>::infinity();
+    if (value < -std::numeric_limits<float>::max()) return -std::numeric_limits<float>::infinity();
+    return static_cast<float>(value);
+}
+
+inline float table_painter_number(lua_State *L, int table, const char *field, float fallback, bool required = false)
+{
+    table = lua_absindex(L, table);
+    lua_getfield(L, table, field);
+    float result = fallback;
+    if (lua_isnil(L, -1))
+    {
+        if (required) luaL_error(L, "field '%s' is required", field);
+    }
+    else
+    {
+        result = check_painter_number(L, -1, field);
+    }
+    lua_pop(L, 1);
+    return result;
+}
+
 inline D2D1_COLOR_F check_color(lua_State *L, int index)
 {
     if (lua_type(L, index) == LUA_TSTRING)
@@ -325,36 +350,25 @@ inline D2D1_COLOR_F check_color(lua_State *L, int index)
         return parse_hex_color(L, {hex, length});
     }
     luaL_checktype(L, index, LUA_TTABLE);
-    const float r = luaL_tablenumber(L, index, "r", 0, true);
-    const float g = luaL_tablenumber(L, index, "g", 0, true);
-    const float b = luaL_tablenumber(L, index, "b", 0, true);
-    const float a = luaL_tablenumber(L, index, "a", 1);
-    if (r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || a < 0 || a > 1)
-        luaL_error(L, "color components must be in the range [0, 1]");
+    const float r = table_painter_number(L, index, "r", 0, true);
+    const float g = table_painter_number(L, index, "g", 0, true);
+    const float b = table_painter_number(L, index, "b", 0, true);
+    const float a = table_painter_number(L, index, "a", 1);
     return D2D1::ColorF(r, g, b, a);
 }
 
 inline float check_coordinate(lua_State *L, int index, const char *name)
 {
-    const float value = luaL_checkfinitenumber(L, index, name);
-    if (std::fabs(value) > MAX_LAYOUT_SIZE) luaL_error(L, "%s is out of range", name);
-    return value;
-}
-
-inline void validate_transform(lua_State *L, const D2D1::Matrix3x2F &transform)
-{
-    const float values[] = {transform._11, transform._12, transform._21, transform._22, transform._31, transform._32};
-    for (const float value : values)
-        if (!std::isfinite(value) || std::fabs(value) > MAX_LAYOUT_SIZE) luaL_error(L, "transform is out of range");
+    return check_painter_number(L, index, name);
 }
 
 inline D2D1_RECT_F check_rect(lua_State *L, int index)
 {
     luaL_checktype(L, index, LUA_TTABLE);
-    float x = luaL_tablenumber(L, index, "x", 0, true);
-    float y = luaL_tablenumber(L, index, "y", 0, true);
-    float width = luaL_tablenumber(L, index, "w", 0, true);
-    float height = luaL_tablenumber(L, index, "h", 0, true);
+    float x = table_painter_number(L, index, "x", 0, true);
+    float y = table_painter_number(L, index, "y", 0, true);
+    float width = table_painter_number(L, index, "w", 0, true);
+    float height = table_painter_number(L, index, "h", 0, true);
     if (width < 0)
     {
         x += width;
@@ -365,12 +379,7 @@ inline D2D1_RECT_F check_rect(lua_State *L, int index)
         y += height;
         height = -height;
     }
-    const float right = x + width;
-    const float bottom = y + height;
-    if (!std::isfinite(right) || !std::isfinite(bottom) || std::fabs(x) > MAX_LAYOUT_SIZE ||
-        std::fabs(y) > MAX_LAYOUT_SIZE || std::fabs(right) > MAX_LAYOUT_SIZE || std::fabs(bottom) > MAX_LAYOUT_SIZE)
-        luaL_error(L, "rectangle coordinates are out of range");
-    return D2D1::RectF(x, y, right, bottom);
+    return D2D1::RectF(x, y, x + width, y + height);
 }
 
 inline LuaRenderingContext *check_context(lua_State *L)
@@ -498,15 +507,12 @@ inline Stroke check_stroke(lua_State *L, int index)
     if (lua_isnoneornil(L, index)) return result;
     luaL_checktype(L, index, LUA_TTABLE);
     result.specified = true;
-    result.width = luaL_tablenumber(L, index, "width", 1);
-    if (!(result.width > 0) || result.width > MAX_LAYOUT_SIZE) luaL_error(L, "stroke width is out of range");
+    result.width = table_painter_number(L, index, "width", 1);
 
     const auto cap = parse_cap(L, luaL_tablestring(L, index, "cap", "butt"));
     const auto join = parse_join(L, luaL_tablestring(L, index, "join", "miter"));
-    const float miter = luaL_tablenumber(L, index, "miter_limit", 4);
-    const float offset = luaL_tablenumber(L, index, "dash_offset", 0);
-    if (!(miter > 0) || miter > MAX_LAYOUT_SIZE || std::fabs(offset) > MAX_LAYOUT_SIZE)
-        luaL_error(L, "stroke limits are out of range");
+    const float miter = table_painter_number(L, index, "miter_limit", 4);
+    const float offset = table_painter_number(L, index, "dash_offset", 0);
 
     const int absolute = lua_absindex(L, index);
     lua_getfield(L, absolute, "dashes");
@@ -518,8 +524,7 @@ inline Stroke check_stroke(lua_State *L, int index)
         for (size_t i = 0; i < count; ++i)
         {
             lua_rawgeti(L, -1, static_cast<lua_Integer>(i + 1));
-            const float dash = luaL_checkfinitenumber(L, -1, "dash length");
-            if (!(dash > 0)) luaL_error(L, "dash lengths must be greater than zero");
+            const float dash = check_painter_number(L, -1, "dash length");
             result.dashes.push_back(dash / result.width);
             lua_pop(L, 1);
         }
@@ -569,10 +574,8 @@ inline TextStyle check_text_style(lua_State *L, int index)
     lua_pop(L, 1);
     if (style.family.empty()) style.family = L"Segoe UI";
 
-    style.size = luaL_tablenumber(L, absolute, "size", 12);
-    if (!(style.size > 0) || style.size > MAX_LAYOUT_SIZE)
-        luaL_error(L, "font size must be greater than zero and no larger than %.0f", MAX_LAYOUT_SIZE);
-    const float weight = luaL_tablenumber(L, absolute, "weight", 400);
+    style.size = table_painter_number(L, absolute, "size", 12);
+    const float weight = table_painter_number(L, absolute, "weight", 400);
     if (weight < 1 || weight > 1000 || std::floor(weight) != weight)
         luaL_error(L, "font weight must be an integer from 1 through 1000");
     style.weight = static_cast<DWRITE_FONT_WEIGHT>(static_cast<int>(weight));
@@ -587,15 +590,11 @@ inline TextStyle check_text_style(lua_State *L, int index)
         luaL_error(L, "invalid font slant '%s'", slant.c_str());
     style.underline = luaL_tablebool(L, absolute, "underline", false);
     style.strikethrough = luaL_tablebool(L, absolute, "strikethrough", false);
-    style.letter_spacing = luaL_tablenumber(L, absolute, "letter_spacing", 0);
-    if (std::fabs(style.letter_spacing) > MAX_LAYOUT_SIZE) luaL_error(L, "letter_spacing is out of range");
+    style.letter_spacing = table_painter_number(L, absolute, "letter_spacing", 0);
     lua_getfield(L, absolute, "line_height");
     if (!lua_isnil(L, -1))
     {
-        style.line_height = luaL_checkfinitenumber(L, -1, "line_height");
-        if (!(style.line_height > 0) || style.line_height > MAX_LAYOUT_SIZE ||
-            !std::isfinite(style.size * style.line_height) || style.size * style.line_height > MAX_LAYOUT_SIZE)
-            luaL_error(L, "line_height is out of range");
+        style.line_height = check_painter_number(L, -1, "line_height");
         style.has_line_height = true;
     }
     lua_pop(L, 1);
@@ -642,13 +641,11 @@ inline std::vector<D2D1_POINT_2F> check_points(lua_State *L, int index)
     for (size_t i = 0; i < count; i += 2)
     {
         lua_rawgeti(L, index, static_cast<lua_Integer>(i + 1));
-        const float x = luaL_checkfinitenumber(L, -1, "point x");
+        const float x = check_painter_number(L, -1, "point x");
         lua_pop(L, 1);
         lua_rawgeti(L, index, static_cast<lua_Integer>(i + 2));
-        const float y = luaL_checkfinitenumber(L, -1, "point y");
+        const float y = check_painter_number(L, -1, "point y");
         lua_pop(L, 1);
-        if (std::fabs(x) > MAX_LAYOUT_SIZE || std::fabs(y) > MAX_LAYOUT_SIZE)
-            luaL_error(L, "point coordinates are out of range");
         points.push_back(D2D1::Point2F(x, y));
     }
     return points;
@@ -665,8 +662,8 @@ inline DWRITE_WORD_WRAPPING parse_wrap(lua_State *L, const std::string &wrap)
 
 struct TextHitTestOptions
 {
-    float width = MAX_LAYOUT_SIZE;
-    float height = MAX_LAYOUT_SIZE;
+    float width = UNCONSTRAINED_LAYOUT_SIZE;
+    float height = UNCONSTRAINED_LAYOUT_SIZE;
     bool has_width = false;
     std::string wrap = "none";
     std::string overflow = "clip";
@@ -685,18 +682,14 @@ inline TextHitTestOptions check_text_hit_test_options(lua_State *L, int index)
     lua_getfield(L, absolute, "w");
     if (!lua_isnil(L, -1))
     {
-        options.width = luaL_checkfinitenumber(L, -1, "w");
-        if (options.width < 0) luaL_error(L, "text constraint width must be non-negative");
-        options.width = std::min(options.width, MAX_LAYOUT_SIZE);
+        options.width = check_painter_number(L, -1, "w");
         options.has_width = true;
     }
     lua_pop(L, 1);
     lua_getfield(L, absolute, "h");
     if (!lua_isnil(L, -1))
     {
-        options.height = luaL_checkfinitenumber(L, -1, "h");
-        if (options.height < 0) luaL_error(L, "text constraint height must be non-negative");
-        options.height = std::min(options.height, MAX_LAYOUT_SIZE);
+        options.height = check_painter_number(L, -1, "h");
     }
     lua_pop(L, 1);
     options.wrap = luaL_tablestring(L, absolute, "wrap", options.has_width ? "word" : "none");
@@ -925,9 +918,8 @@ inline void append_rect(std::vector<PathOp> &ops, const D2D1_RECT_F &rect)
 
 inline void append_round_rect(std::vector<PathOp> &ops, const D2D1_RECT_F &rect, float radius)
 {
-    const float max_radius = std::min(rect.right - rect.left, rect.bottom - rect.top) * 0.5f;
-    const float rad = std::clamp(radius, 0.0f, std::max(0.0f, max_radius));
-    if (!(rad > 0))
+    const float rad = radius;
+    if (rad == 0)
     {
         append_rect(ops, rect);
         return;
@@ -953,7 +945,7 @@ inline void append_circle(std::vector<PathOp> &ops, const D2D1_RECT_F &rect)
     const float center_x = (rect.left + rect.right) * 0.5f;
     const float center_y = (rect.top + rect.bottom) * 0.5f;
     const float radius = std::min(rect.right - rect.left, rect.bottom - rect.top) * 0.5f;
-    if (!(radius > 0)) return;
+    if (radius == 0) return;
     ops.push_back(make_move(center_x + radius, center_y));
     ops.push_back(make_arc(center_x, center_y, radius, 0, 2 * std::numbers::pi, false));
     ops.push_back(make_close());
@@ -1022,7 +1014,7 @@ inline ComPtr<ID2D1PathGeometry> build_geometry(ID2D1Factory *factory, const std
             break;
         }
         case PathOp::Kind::Arc: {
-            if (!(op.arc.radius > 0)) break;
+            if (op.arc.radius == 0) break;
             const float two_pi = 2 * std::numbers::pi;
             const float delta = op.arc.end_angle - op.arc.start_angle;
             if (std::fabs(delta) < 1e-6f) break;
@@ -1040,7 +1032,8 @@ inline ComPtr<ID2D1PathGeometry> build_geometry(ID2D1Factory *factory, const std
                 begin(start);
             else if (!points_equal(current, start))
                 sink->AddLine(start);
-            const int segments = std::max(1, static_cast<int>(std::ceil(std::fabs(sweep) / (std::numbers::pi * 0.5f))));
+            const float segment_count = std::ceil(std::fabs(sweep) / (std::numbers::pi * 0.5f));
+            const int segments = std::isfinite(segment_count) ? std::max(1, static_cast<int>(segment_count)) : 1;
             const auto direction = op.arc.ccw ? D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION_CLOCKWISE;
             for (int i = 1; i <= segments; ++i)
             {
@@ -1114,17 +1107,10 @@ inline TextFactoryCache *get_text_factory_cache(lua_State *L)
     return cache.get();
 }
 
-inline float normalize_text_layout_size(float value)
-{
-    if (!std::isfinite(value) || value <= 0) return MIN_TEXT_LAYOUT_SIZE;
-    return std::min(value, MAX_TEXT_LAYOUT_SIZE);
-}
-
 inline HRESULT create_text_layout(IDWriteFactory *factory, const wchar_t *text, UINT32 length,
     IDWriteTextFormat *format, float width, float height, ComPtr<IDWriteTextLayout> &layout)
 {
-    return factory->CreateTextLayout(
-        text, length, format, normalize_text_layout_size(width), normalize_text_layout_size(height), &layout);
+    return factory->CreateTextLayout(text, length, format, width, height, &layout);
 }
 
 inline void apply_text_style(IDWriteTextLayout *layout, const TextStyle &style, UINT32 length)
@@ -1147,8 +1133,8 @@ inline ComPtr<IDWriteTextLayout> create_text_hit_test_layout(
     lua_State *L, const std::wstring &text, const TextStyle &style, const TextHitTestOptions &options)
 {
     const DWRITE_WORD_WRAPPING wrapping = parse_wrap(L, options.wrap);
-    const float layout_width = options.fit ? MAX_LAYOUT_SIZE : options.width;
-    const float layout_height = options.fit ? MAX_LAYOUT_SIZE : options.height;
+    const float layout_width = options.fit ? UNCONSTRAINED_LAYOUT_SIZE : options.width;
+    const float layout_height = options.fit ? UNCONSTRAINED_LAYOUT_SIZE : options.height;
     const auto layout_alignment = options.fit ? DWRITE_TEXT_ALIGNMENT_LEADING : options.alignment;
     const auto layout_paragraph_alignment = options.fit ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR : options.paragraph_alignment;
     auto *factory_cache = get_text_factory_cache(L);
@@ -1433,10 +1419,9 @@ inline int painter_arc(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
     const float radius = check_coordinate(L, 4, "radius");
-    if (radius < 0) luaL_error(L, "arc radius must be non-negative");
     const bool ccw = lua_isnoneornil(L, 7) ? false : lua_toboolean(L, 7) != 0;
     painter->path_ops.push_back(make_arc(check_coordinate(L, 2, "x"), check_coordinate(L, 3, "y"), radius,
-        luaL_checkfinitenumber(L, 5, "start_angle"), luaL_checkfinitenumber(L, 6, "end_angle"), ccw));
+        check_painter_number(L, 5, "start_angle"), check_painter_number(L, 6, "end_angle"), ccw));
     return 0;
 }
 
@@ -1490,7 +1475,6 @@ inline int painter_translate(lua_State *L)
     const float x = check_coordinate(L, 2, "x");
     const float y = check_coordinate(L, 3, "y");
     painter->transform = D2D1::Matrix3x2F::Translation(x, y) * painter->transform;
-    validate_transform(L, painter->transform);
     return 0;
 }
 
@@ -1499,7 +1483,6 @@ inline int painter_rotate(lua_State *L)
     auto *painter = check_painter(L, 1);
     const float radians = check_coordinate(L, 2, "angle");
     painter->transform = D2D1::Matrix3x2F::Rotation(radians * (180.0f / std::numbers::pi)) * painter->transform;
-    validate_transform(L, painter->transform);
     return 0;
 }
 
@@ -1509,7 +1492,6 @@ inline int painter_scale(lua_State *L)
     const float x = check_coordinate(L, 2, "x");
     const float y = check_coordinate(L, 3, "y");
     painter->transform = D2D1::Matrix3x2F::Scale(x, y) * painter->transform;
-    validate_transform(L, painter->transform);
     return 0;
 }
 
@@ -1596,7 +1578,7 @@ inline int painter_round_rect(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
     const auto rect = check_rect(L, 2);
-    append_round_rect(painter->path_ops, rect, luaL_checkfinitenumber(L, 3, "radius"));
+    append_round_rect(painter->path_ops, rect, check_painter_number(L, 3, "radius"));
     return 0;
 }
 
@@ -1653,8 +1635,7 @@ inline int painter_image(lua_State *L)
     {
         luaL_checktype(L, 4, LUA_TTABLE);
         const int absolute = lua_absindex(L, 4);
-        opacity = luaL_tablenumber(L, absolute, "opacity", 1);
-        if (opacity < 0 || opacity > 1) luaL_error(L, "image opacity must be in the range [0, 1]");
+        opacity = table_painter_number(L, absolute, "opacity", 1);
         const auto sampling = luaL_tablestring(L, absolute, "sampling", "linear");
         if (sampling == "nearest")
             interpolation = D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
@@ -1682,13 +1663,7 @@ inline int painter_image(lua_State *L)
         }
         lua_pop(L, 1);
     }
-    if (source.left < 0 || source.top < 0 || source.right > static_cast<float>(image->width) ||
-        source.bottom > static_cast<float>(image->height))
-        luaL_error(L, "image source rectangle is outside the image");
     if (nine_sliced && !has_source) luaL_error(L, "nine-sliced images require a source rectangle");
-    if (nine_sliced && (center.left < source.left || center.top < source.top || center.right > source.right ||
-                           center.bottom > source.bottom))
-        luaL_error(L, "image center rectangle is outside the source rectangle");
     if (tinted)
     {
         ComPtr<ID2D1DeviceContext> device_context;
@@ -1824,8 +1799,8 @@ inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, I
         const float height = run.rect.bottom - run.rect.top;
         if (!(width > 0) || !(height > 0)) continue;
         const auto &format_resource = painter->text_formats[run.format];
-        const float layout_width = run.fit ? MAX_LAYOUT_SIZE : width;
-        const float layout_height = run.fit ? MAX_LAYOUT_SIZE : height;
+        const float layout_width = run.fit ? UNCONSTRAINED_LAYOUT_SIZE : width;
+        const float layout_height = run.fit ? UNCONSTRAINED_LAYOUT_SIZE : height;
         const bool layout_ellipsis = run.ellipsis && !run.fit;
         const auto layout_alignment = run.fit ? DWRITE_TEXT_ALIGNMENT_LEADING : format_resource.alignment;
         const auto layout_paragraph_alignment =
@@ -2193,8 +2168,8 @@ inline int measure_text(lua_State *L)
 {
     const auto text = luaL_checkstlwstring(L, 1);
     const auto style = Detail::check_text_style(L, 2);
-    float width = Detail::MAX_LAYOUT_SIZE;
-    float height = Detail::MAX_LAYOUT_SIZE;
+    float width = Detail::UNCONSTRAINED_LAYOUT_SIZE;
+    float height = Detail::UNCONSTRAINED_LAYOUT_SIZE;
     bool has_width = false;
     bool has_height = false;
     lua_Integer max_lines = 0;
@@ -2206,18 +2181,14 @@ inline int measure_text(lua_State *L)
         lua_getfield(L, absolute, "w");
         if (!lua_isnil(L, -1))
         {
-            width = luaL_checkfinitenumber(L, -1, "w");
-            if (width < 0) luaL_error(L, "text constraint width must be non-negative");
-            width = std::min(width, Detail::MAX_LAYOUT_SIZE);
+            width = Detail::check_painter_number(L, -1, "w");
             has_width = true;
         }
         lua_pop(L, 1);
         lua_getfield(L, absolute, "h");
         if (!lua_isnil(L, -1))
         {
-            height = luaL_checkfinitenumber(L, -1, "h");
-            if (height < 0) luaL_error(L, "text constraint height must be non-negative");
-            height = std::min(height, Detail::MAX_LAYOUT_SIZE);
+            height = Detail::check_painter_number(L, -1, "h");
             has_height = true;
         }
         lua_pop(L, 1);
@@ -2226,8 +2197,6 @@ inline int measure_text(lua_State *L)
         if (!lua_isnil(L, -1))
         {
             max_lines = luaL_checkinteger(L, -1);
-            if (max_lines <= 0 || static_cast<lua_Unsigned>(max_lines) > UINT32_MAX)
-                luaL_error(L, "max_lines is out of range");
         }
         lua_pop(L, 1);
     }
@@ -2267,7 +2236,7 @@ inline int measure_text(lua_State *L)
     need(format->SetWordWrapping(wrapping), "IDWriteTextFormat::SetWordWrapping");
     ComPtr<IDWriteTextLayout> layout;
     const UINT32 length = static_cast<UINT32>(std::min<size_t>(text.size(), UINT32_MAX));
-    need(Detail::create_text_layout(factory, text.data(), length, format.Get(), width, Detail::MAX_LAYOUT_SIZE, layout),
+    need(Detail::create_text_layout(factory, text.data(), length, format.Get(), width, Detail::UNCONSTRAINED_LAYOUT_SIZE, layout),
         "IDWriteFactory::CreateTextLayout");
     need(layout, "IDWriteFactory::CreateTextLayout returned null");
     Detail::apply_text_style(layout.Get(), style, length);
@@ -2283,7 +2252,7 @@ inline int measure_text(lua_State *L)
 
     UINT32 reported_lines = line_count;
     bool truncated = false;
-    if (max_lines > 0 && reported_lines > static_cast<UINT32>(max_lines))
+    if (max_lines > 0 && static_cast<lua_Unsigned>(max_lines) < reported_lines)
     {
         reported_lines = static_cast<UINT32>(max_lines);
         truncated = true;
