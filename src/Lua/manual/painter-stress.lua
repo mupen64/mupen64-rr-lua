@@ -38,6 +38,7 @@ end
 local BACKGROUND_COLOR <const> = color(0.025, 0.035, 0.055)
 local WHITE <const> = color(0.92, 0.95, 1.0)
 local NINESLICED <const> = assert(painter.load_image(ROOT .. '\\..\\ninesliced.png'))
+local IMAGE <const> = assert(painter.load_image(ROOT .. '\\..\\image.png'))
 local NINESLICE_OPTIONS <const> = {
     source = rect(0, 0, 32, 32),
     center = rect(15, 15, 2, 2),
@@ -120,6 +121,7 @@ local SECTION_TIMING_RECTS <const> = {
     rect(20, 52, 300, 16),
     rect(20, 68, 300, 16),
     rect(20, 84, 300, 16),
+    rect(20, 100, 300, 16),
 }
 local MEASURE_TITLE_RECT <const> = rect(40, 80 + CONTENT_Y_OFFSET, 720, 35)
 local MEASURE_IDENTICAL_TITLE_RECT <const> = rect(55, 190 + CONTENT_Y_OFFSET, 300, 28)
@@ -161,6 +163,7 @@ local SECTION_NAMES <const> = {
     "draw_primitives",
     "draw_text_cells",
     "draw_ninesliced",
+    "draw_images",
     "draw_measure_text",
 }
 
@@ -248,11 +251,16 @@ local function measure_text(p)
 end
 
 local function draw_ninesliced(p)
-    for i = 1, 250 do
+    for i = 1, 500 do
         p:image(NINESLICED, IMAGE_CELLS[i], NINESLICE_OPTIONS)
     end
 end
 
+local function draw_images(p)
+    for i = 1, 500 do
+        p:image(IMAGE, IMAGE_CELLS[i])
+    end
+end
 
 emu.atpaint(function()
     local p = painter.current()
@@ -261,6 +269,7 @@ emu.atpaint(function()
     p:clear(BACKGROUND_COLOR)
     time_section(p, "draw_primitives", draw_primitives)
     time_section(p, "draw_ninesliced", draw_ninesliced)
+    time_section(p, "draw_images", draw_images)
     time_section(p, "draw_static_text", draw_static_text)
     time_section(p, "measure_text", measure_text)
     draw_section_times(p)
