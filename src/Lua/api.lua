@@ -777,14 +777,13 @@ function emu.atvi(f, unregister) end
 function emu.atupdatescreen(f, unregister) end
 
 ---Calls `f` after every VI frame. Use [painter.current](lua://painter.current) to get the painter for the callback's scope.
----The painter is only valid for the duration of the callback. Resources such as brushes, images, and text styles may be retained and reused across frames.
+---The painter is only valid for the duration of the callback.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called after every VI frame.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
 function emu.atpaint(f, unregister) end
 
----Calls `f` with a platform-agnostic painter after every VI frame.
 ---Calls the function `f` every input frame.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(controller: integer): nil The function to be called every input frame. `controller` is the controller index (0-based!).
@@ -1536,7 +1535,6 @@ function PainterImage:close() end
 function painter.new_image(width, height) end
 
 ---Loads and decodes an image from a file.
----The supported encoded formats are implementation-defined and can be queried with [painter.image_formats](lua://painter.image_formats).
 ---@nodiscard
 ---@param path string
 ---@return PainterImage? image
