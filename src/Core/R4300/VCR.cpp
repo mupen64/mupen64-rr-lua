@@ -18,7 +18,7 @@ constexpr auto movie_magic = 0x1a34364d;
 constexpr auto latest_movie_version = 3;
 constexpr auto rawdata_warning_message =
     "Warning: One of the active controllers of your input plugin is set to accept \"Raw Data\".\nThis can cause "
-    "issues when recording and playing movies. Proceed?";
+    "issues when recording and playing movies.";
 constexpr auto rom_name_warning_message = "The movie was recorded on the rom '{}', but is being played back on "
                                           "'{}'.\r\nPlayback might desynchronize. How do you want to continue?";
 constexpr auto rom_country_warning_message = "The movie was recorded on a {} ROM, but is being played back on "
@@ -30,7 +30,7 @@ constexpr auto old_movie_extended_section_nonzero_message =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
 constexpr auto cheat_error_ask_message = "This movie has a cheat file associated with it, but it could not be "
-                                         "loaded.\r\nPlayback might desynchronize. Are you sure you want to continue?";
+                                         "loaded.\r\nPlayback might desynchronize.";
 constexpr auto controller_on_off_mismatch =
     "Controller {} is enabled by the input plugin, but it is disabled in the movie.\nPlayback might desynchronize.\n";
 constexpr auto controller_off_on_mismatch =
@@ -1010,11 +1010,7 @@ CoreResult vcr_start_record(std::filesystem::path path, uint16_t flags, std::str
     {
         if (Present && RawData)
         {
-            bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, rawdata_warning_message, "VCR", true);
-            if (!proceed)
-            {
-                return CoreResult::Res_Cancelled;
-            }
+            g_core->show_notification(rawdata_warning_message, "VCR", CoreMessageTone::Warn);
             break;
         }
     }
@@ -1429,12 +1425,7 @@ CoreResult vcr_start_playback(std::filesystem::path path)
     {
         if (!Present || !RawData) continue;
 
-        bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RAWDATA_WARNING, rawdata_warning_message, "VCR", true);
-        if (!proceed)
-        {
-            return CoreResult::Res_Cancelled;
-        }
-
+        g_core->show_notification(rawdata_warning_message, "VCR", CoreMessageTone::Warn);
         break;
     }
 
@@ -1452,7 +1443,7 @@ CoreResult vcr_start_playback(std::filesystem::path path)
 
     // Suspicious! Someone shoved data where it didn't belong...
     if (header.extended_version == 0 && header.extended_flags.data != 0)
-        g_core->show_dialog(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
+        g_core->show_notification(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
 
     if (!warnings.empty())
     {
@@ -1461,9 +1452,8 @@ CoreResult vcr_start_playback(std::filesystem::path path)
         {
             warning += w + "\n";
         }
-        warning += "Playback might desynchronize. Do you want to continue?";
-        const auto result = g_core->show_ask_dialog(CORE_DLG_VCR_GENERAL_SYNC_WARNING, warning.c_str(), "VCR", true);
-        if (!result) return CoreResult::Res_Cancelled;
+        warning += "Playback might desynchronize.";
+        g_core->show_notification(warning.c_str(), "VCR", CoreMessageTone::Warn);
     }
 
     if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
@@ -1502,13 +1492,7 @@ CoreResult vcr_start_playback(std::filesystem::path path)
         }
         else
         {
-            const auto proceed =
-                g_core->show_ask_dialog(CORE_DLG_VCR_CHEAT_LOAD_ERROR, cheat_error_ask_message, "VCR", true);
-
-            if (!proceed)
-            {
-                return CoreResult::Res_Cancelled;
-            }
+            g_core->show_notification(cheat_error_ask_message, "VCR", CoreMessageTone::Warn);
         }
     }
     else
