@@ -341,7 +341,7 @@ void MGECompositor::create(HWND hwnd)
 void MGECompositor::init()
 {
     WNDCLASS wndclass = {0};
-    wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+    wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
     wndclass.lpfnWndProc = (WNDPROC)wndproc;
     wndclass.hInstance = g_main_ctx.hinst;
     wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);

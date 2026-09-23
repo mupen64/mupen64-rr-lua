@@ -709,6 +709,7 @@ Mupen = {
 ---@field button MouseButton? The mouse button that was pressed or released. If `nil`, the event is not related to a mouse button.
 ---@field pressed boolean? Whether the mouse button was pressed or released. Only present if `button ~= nil`.
 ---@field double_click boolean? Whether the event is a double-click event. Only present if `button ~= nil`.
+---@field triple_click boolean? Whether the event is a triple-click event. Only present if `button ~= nil`.
 
 ---@class CPUState
 ---@field opcode integer

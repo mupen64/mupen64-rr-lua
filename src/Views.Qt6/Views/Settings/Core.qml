@@ -4,21 +4,19 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-pragma Singleton
-
 import QtCore
 
 Settings {
     category: "core"
 
-    enum CoreType {
-        CachedInterpreter = 0,
-        DynamicRecompiler = 1,
-        PureInterpreter = 2
-    }
+    // enum CoreType {
+    //     CachedInterpreter = 0,
+    //     DynamicRecompiler = 1,
+    //     PureInterpreter = 2
+    // }
 
     // Win32 "core" -> CoreCfg
-    property int coreType: SettingsCore.CoreType.DynamicRecompiler
+    property int coreType: 1
     property bool stUndoLoad: true
     property int maxLag: 480
     property bool wiiVCEmulation: false

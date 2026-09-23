@@ -25,7 +25,7 @@ Dialog {
             window.minimumWidth = dialog.width;
             window.minimumHeight = dialog.height;
 
-            if (!windowResizable) {
+            if (!window.windowResizable) {
                 window.maximumWidth = Qt.binding(() => window.minimumWidth);
                 window.maximumHeight = Qt.binding(() => window.minimumHeight);
             }

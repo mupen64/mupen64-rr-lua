@@ -17,9 +17,10 @@ GroupBox {
     Layout.fillWidth: true
     padding: 10
 
-    property alias target: priv.dummy
-    required target
+    property string path
     default required property Dialogs.FolderDialog dialog
+
+    signal pathModified()
 
     QtObject {
         id: priv
@@ -29,11 +30,10 @@ GroupBox {
     RowLayout {
         anchors.fill: parent
 
-        // onWidthChanged: console.log(`width: ${width}`)
         TextField {
             Layout.fillWidth: true
             readOnly: true
-            text: root.target
+            text: root.path
         }
         Button {
             icon.name: "folder-open-symbolic"
@@ -50,6 +50,7 @@ GroupBox {
         target: root.dialog
         function onAccepted() {
             root.target = Paths.toLocalFile(root.dialog.selectedFolder);
+            root.pathModified();
         }
     }
 }

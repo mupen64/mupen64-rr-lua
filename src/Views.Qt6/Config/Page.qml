@@ -8,21 +8,25 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Config as Config
-
 // Scrollable column.
 ScrollView {
     id: root
 
     Layout.fillWidth: true
     Layout.fillHeight: true
-    Layout.minimumWidth: 350
+
+    contentWidth: availableWidth
+    implicitWidth: contentRoot.implicitWidth + ScrollBar.vertical.implicitWidth
 
     default property list<Item> rows
 
     ColumnLayout {
-        id: pageRoot
-        width: root.width
-        children: root.rows
+        id: contentRoot
+        anchors.fill: parent
+        ColumnLayout {
+            Layout.minimumWidth: 300
+            Layout.margins: 10
+            children: root.rows
+        }
     }
 }

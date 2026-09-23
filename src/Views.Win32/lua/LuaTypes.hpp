@@ -145,4 +145,5 @@ struct LuaMouseEventArgs
     std::optional<LuaMouseButton> button;
     std::optional<bool> pressed;
     std::optional<bool> double_click;
+    std::optional<bool> triple_click;
 };
