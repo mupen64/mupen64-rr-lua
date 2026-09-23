@@ -1,8 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="en_US" sourcelanguage="en_US">
+<TS version="2.1" language="en_US">
 <context>
     <name></name>
+    <message id="dialogs.config.emulation">
+        <location filename="../Views/ConfigWindow.qml" line="30"/>
+        <source>Emulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="dialogs.config.folders">
+        <location filename="../Views/ConfigWindow.qml" line="34"/>
+        <source>Folders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="dialogs.config.hotkeys">
+        <location filename="../Views/ConfigWindow.qml" line="38"/>
+        <source>Hotkeys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="appName">
+        <location filename="../Views/MainWindow.qml" line="21"/>
+        <source>mupen64-rr</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message id="menu.file">
         <location filename="../Views/Settings/Actions.qml" line="47"/>
         <source>File</source>
@@ -164,74 +184,24 @@
         <source>Save State...</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>ConfigWindow</name>
-    <message>
-        <location filename="../Views/ConfigWindow.qml" line="29"/>
-        <source>Emulation</source>
+    <message id="dialogs.pickRomDir.title">
+        <location filename="../Views/Config/FoldersPage.qml" line="22"/>
+        <source>Set ROM Directory...</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <location filename="../Views/ConfigWindow.qml" line="32"/>
-        <source>Folders</source>
+    <message id="dialogs.pickSaveDir.title">
+        <location filename="../Views/Config/FoldersPage.qml" line="32"/>
+        <source>Set Save Directory...</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <location filename="../Views/ConfigWindow.qml" line="35"/>
-        <source>Hotkeys</source>
+    <message id="dialogs.pickScreenshotDir.title">
+        <location filename="../Views/Config/FoldersPage.qml" line="42"/>
+        <source>Set Screenshot Directory...</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>FoldersPage</name>
-    <message>
-        <location filename="../Views/Config/FoldersPage.qml" line="21"/>
-        <location filename="../Views/Config/FoldersPage.qml" line="30"/>
-        <location filename="../Views/Config/FoldersPage.qml" line="39"/>
-        <location filename="../Views/Config/FoldersPage.qml" line="48"/>
-        <source>Select ROM Directory</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>MainMenuBar</name>
-    <message>
-        <location filename="../Views/MainMenuBar.qml" line="47"/>
-        <source>File</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../Views/MainMenuBar.qml" line="54"/>
-        <source>Emulation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../Views/MainMenuBar.qml" line="69"/>
-        <source>Save State</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../Views/MainMenuBar.qml" line="87"/>
-        <source>Load State</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../Views/MainMenuBar.qml" line="106"/>
-        <source>Current State Slot</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../Views/MainMenuBar.qml" line="119"/>
-        <source>Options</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>MainWindow</name>
-    <message>
-        <location filename="../Views/MainWindow.qml" line="20"/>
-        <source>Mupen64RR</source>
+    <message id="dialogs.pickBackupDir.title">
+        <location filename="../Views/Config/FoldersPage.qml" line="52"/>
+        <source>Set Backup Directory...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

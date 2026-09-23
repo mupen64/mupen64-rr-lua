@@ -12,8 +12,12 @@ MenuBar {
     id: root
     required property ActionManager actions
 
+    readonly property bool opened: priv.opened
+
     QtObject {
         id: priv
+
+        property bool opened
 
         readonly property Component blankMenu: Menu {}
         readonly property Component blankItem: MenuItem {}
@@ -62,6 +66,9 @@ MenuBar {
                 if (parentKey == "menu") {
                     // menu is a root menu, add to self
                     root.addMenu(viewMenu);
+                    viewMenu.visibleChanged.connect(() => {
+                        priv.opened = root.menus.some(menu => menu.visible);
+                    });
                 } else {
                     // menu is a submenu
                     if (!(parentKey in menuCache))

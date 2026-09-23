@@ -18,7 +18,8 @@ Config.Page {
         onPathModified: root.settingsPaths.romDir = path
 
         Dialogs.FolderDialog {
-            title: qsTr("Select ROM Directory")
+            //% "Set ROM Directory..."
+            title: qsTrId("dialogs.pickRomDir.title")
         }
     }
     Config.FolderPath {
@@ -27,7 +28,8 @@ Config.Page {
         onPathModified: root.settingsPaths.screenshotDir = path
 
         Dialogs.FolderDialog {
-            title: qsTr("Select ROM Directory")
+            //% "Set Save Directory..."
+            title: qsTrId("dialogs.pickSaveDir.title")
         }
     }
     Config.FolderPath {
@@ -36,7 +38,8 @@ Config.Page {
         onPathModified: root.settingsPaths.screenshotDir = path
 
         Dialogs.FolderDialog {
-            title: qsTr("Select ROM Directory")
+            //% "Set Screenshot Directory..."
+            title: qsTrId("dialogs.pickScreenshotDir.title")
         }
     }
     Config.FolderPath {
@@ -45,7 +48,8 @@ Config.Page {
         onPathModified: root.settingsPaths.screenshotDir = path
 
         Dialogs.FolderDialog {
-            title: qsTr("Select ROM Directory")
+            //% "Set Backup Directory..."
+            title: qsTrId("dialogs.pickBackupDir.title")
         }
     }
 }

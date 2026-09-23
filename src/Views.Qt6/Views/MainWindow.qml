@@ -17,7 +17,8 @@ import Views
 ApplicationWindow {
     id: mainWindow
     visible: true
-    title: qsTr("Mupen64RR")
+    //% "mupen64-rr"
+    title: qsTrId("appName")
 
     // WINDOW SIZE
     // =====================================
@@ -159,6 +160,7 @@ ApplicationWindow {
         core: core
         dialogService: dialogService
         winConfig: winConfig
+        menuOpen: menuBar.opened
     }
 
     // Auxiliary dialogs
@@ -171,13 +173,5 @@ ApplicationWindow {
         settingsActions: settingsActions
         settingsCore: settingsCore
         settingsPaths: settingsPaths
-    }
-
-    // LATE BINDINGS
-    // =====================================
-
-    Binding {
-        when: mainWindow.header instanceof MainMenuBar
-        settingsActions.menuOpen: (mainWindow.header as MainMenuBar).opened
     }
 }

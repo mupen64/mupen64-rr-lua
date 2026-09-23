@@ -46,15 +46,16 @@ static int qt_main(int argc, char *argv[])
     QApplication::setApplicationVersion(CURRENT_VERSION);
     QApplication::setApplicationDisplayName(DISPLAY_NAME);
 
+    auto* fallbackTranslator = new QTranslator(&app);
+    if (!fallbackTranslator->load("mupen64-rr_en_US.qm", ":/i18n"))
+        throw std::runtime_error("failed to load fallback translations");
+    QApplication::installTranslator(fallbackTranslator);
 
-    QTranslator translator;
-    bool loaded =
-        translator.load(QLocale(), "mupen64-rr", "_", ":/i18n") &&
-        translator.load("mupen64-rr_en_US.qm", ":/i18n");
-    if (!loaded)
-        throw std::runtime_error("Translation failed to load!");
+    auto* translator = new QTranslator(&app);
+    if (translator->load(QLocale(), "mupen64-rr", "_", ":/i18n"))
+        QApplication::installTranslator(translator);
 
-    QApplication::installTranslator(&translator);
+
 
     QQmlApplicationEngine engine;
 

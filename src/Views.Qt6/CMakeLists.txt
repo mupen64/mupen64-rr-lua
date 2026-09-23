@@ -65,7 +65,6 @@ endif()
 set(qml_sources
     "Views/ConfigWindow.qml"
     "Views/DialogService.qml"
-    "Views/MainMenuBar.qml"
     "Views/MainWindow.qml"
 )
 set(qml_settings_sources
