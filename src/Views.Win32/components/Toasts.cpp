@@ -121,6 +121,7 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         ShowWindow(toast->title_hwnd, toast->title.empty() ? SW_HIDE : SW_SHOW);
         SendMessage(toast->title_hwnd, WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), TRUE);
         SendMessage(toast->content_hwnd, WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), TRUE);
+        WinDarkMode::attach(hwnd, {.is_dialog = true});
         return TRUE;
 
     case WM_SIZE: {
