@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_subdirectory(Utils)
+add_subdirectory(Actions)
 add_subdirectory(Components)
 add_subdirectory(Config)
 add_subdirectory(Core)
@@ -24,37 +25,50 @@ target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE
     Mupen64RR_Common_Views
     Mupen64RR_Core
 
-    Mupen64RR_Views_Qt6_Utils
-    Mupen64RR_Views_Qt6_Utilsplugin
+    Mupen64RR_Views_Qt6_Actionsplugin
     Mupen64RR_Views_Qt6_Componentsplugin
     Mupen64RR_Views_Qt6_Configplugin
     Mupen64RR_Views_Qt6_Core
     Mupen64RR_Views_Qt6_Coreplugin
+    Mupen64RR_Views_Qt6_Utils
+    Mupen64RR_Views_Qt6_Utilsplugin
 
+    Qt::Widgets
     Qt::Quick
     Qt::QuickControls2
 )
 set(qml_sources
-    "Views/ConfigDialog.qml"
+    "Views/ConfigWindow.qml"
     "Views/DialogService.qml"
     "Views/MainMenuBar.qml"
     "Views/MainWindow.qml"
-    "Views/MessageBox.qml"
 )
-set(qml_singleton_sources
-    "Views/SettingsCore.qml"
-    "Views/SettingsPaths.qml"
+set(qml_settings_sources
+    "Views/Settings/Actions.qml"
+    "Views/Settings/Core.qml"
+    "Views/Settings/Paths.qml"
 )
 set(qml_config_pages
     "Views/Config/EmulationPage.qml"
     "Views/Config/FoldersPage.qml"
+    "Views/Config/HotkeysPage.qml"
 )
-# mark singletons
-set_source_files_properties(${qml_singleton_sources} PROPERTIES
-    QT_QML_SINGLETON_TYPE TRUE
-)
+# rename settings pages and mark singletons
+foreach(item IN LISTS qml_settings_sources)
+    string(REGEX REPLACE
+        "Views/Settings/(.+)\\.qml" "Settings\\1" page_typename
+        "${item}"
+    )
+    set_source_files_properties("${item}" PROPERTIES
+        QT_QML_SOURCE_TYPENAME "${page_typename}"
+    )
+endforeach()
+# rename config type names
 foreach(item IN LISTS qml_config_pages)
-    string(REGEX REPLACE "Views/Config/(.+)\\.qml" "Config\\1" page_typename "${item}")
+    string(REGEX REPLACE
+        "Views/Config/(.+)\\.qml" "Config\\1" page_typename
+        "${item}"
+    )
     # message(STATUS "${item} -> ${page_typename}")
     set_source_files_properties("${item}" PROPERTIES
         QT_QML_SOURCE_TYPENAME "${page_typename}"
@@ -65,7 +79,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6
     URI "Views"
     QML_FILES
         ${qml_sources}
-        ${qml_singleton_sources}
+        ${qml_settings_sources}
         ${qml_config_pages}
 )
 
@@ -81,3 +95,8 @@ windeployqt6(
     DEPLOY_TO_BUILD_DIR
     ARGS --qmldir .
 )
+# clang-cl generates a faulty UAC manifest section. Since Qt is generating
+# it already, we just ignore it.
+if (MSVC)
+    target_link_options(Mupen64RR_Views_Qt6 PRIVATE "/MANIFESTUAC:NO")
+endif()

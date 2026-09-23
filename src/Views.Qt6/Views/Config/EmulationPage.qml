@@ -5,100 +5,126 @@
  */
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
+
+import Components
 import Config as Config
 
 Config.Page {
+    id: root
+    required property SettingsCore settingsCore
+
     Config.Row {
         name: "Core type"
         // tooltip: "Emulation mode to use."
-        Config.Choices {
+        ComboBox {
             Layout.preferredWidth: 160
-            target: SettingsCore.coreType
-            choices: {
-                "Cached Interpreter": 0,
-                "Dynamic Recompiler": 1,
-                "Pure Interpreter": 2
-            }
+            model: [
+                { text: "Cached Interpreter", value: 0 },
+                { text: "Dynamic Recompiler", value: 1 },
+                { text: "Pure Interpreter", value: 2 },
+            ]
+            textRole: "text"
+            valueRole: "value"
+
+            currentValue: root.settingsCore.coreType
+            onActivated: root.settingsCore.coreType = currentValue
         }
     }
     Config.Row {
         name: "Savestate Undo Load"
-        Config.Bool {
-            target: SettingsCore.stUndoLoad
+        Switch {
+            checked: root.settingsCore.stUndoLoad
+            onClicked: root.settingsCore.stUndoLoad = checked
         }
     }
     Config.Row {
         name: "Max Lag"
-        Config.Int {
-            target: SettingsCore.maxLag
+        SpinBox {
             from: 0
             to: 1000
             stepSize: 10
+
+            value: root.settingsCore.maxLag
+            onValueModified: root.settingsCore.maxLag = value
         }
     }
     Config.Row {
         name: "Wii VC emulation"
-        Config.Bool {
-            target: SettingsCore.wiiVCEmulation
+        Switch {
+            checked: root.settingsCore.wiiVCEmulation
+            onClicked: root.settingsCore.wiiVCEmulation = checked
         }
     }
     Config.Row {
         name: "RCP Lag Emulation"
-        Config.Bool {
-            target: SettingsCore.rcpLagEmulation
+        Switch {
+            checked: root.settingsCore.rcpLagEmulation
+            onClicked: root.settingsCore.rcpLagEmulation = checked
         }
     }
     Config.Row {
         name: "CPU Counter Factor"
-        Config.Double {
-            target: SettingsCore.cpuCF
-            from: 1.0
-            to: 4.0
-            stepSize: 0.1
+        FixedPointSpinBox {
+            dFrom: 1.0
+            dTo: 4.0
+            dStepSize: 0.1
+            decimals: 2
+            
+            dValue: root.settingsCore.cpuCF
+            onValueModified: root.settingsCore.cpuCF = dValue
         }
     }
     Config.Row {
         name: "RCP Lag Factor"
-        Config.Double {
-            target: SettingsCore.rcpLagFactor
-            from: 1.0
-            to: 4.0
-            stepSize: 0.1
-            decimals: 1
+        FixedPointSpinBox {
+            dFrom: 1.0
+            dTo: 4.0
+            dStepSize: 0.1
+            decimals: 2
+            
+            dValue: root.settingsCore.rcpLagFactor
+            onValueModified: root.settingsCore.rcpLagFactor = dValue
         }
     }
     Config.Row {
         name: "Float Exception Emulation"
-        Config.Bool {
-            target: SettingsCore.floatExceptionEmulation
+        Switch {
+            checked: root.settingsCore.floatExceptionEmulation
+            onClicked: root.settingsCore.floatExceptionEmulation = checked
         }
     }
     Config.Row {
         name: "Use Summercart"
-        Config.Bool {
-            target: SettingsCore.useSummercart
+        Switch {
+            checked: root.settingsCore.useSummercart
+            onClicked: root.settingsCore.useSummercart = checked
         }
     }
     Config.Row {
         name: "Save Screenshot"
-        Config.Bool {
-            target: SettingsCore.stScreenshot
+        Switch {
+            checked: root.settingsCore.stScreenshot
+            onClicked: root.settingsCore.stScreenshot = checked
         }
     }
     Config.Row {
         name: "Save using LZ4"
-        Config.Bool {
-            target: SettingsCore.stLZ4
+        Switch {
+            checked: root.settingsCore.stLZ4
+            onClicked: root.settingsCore.stLZ4 = checked
         }
     }
     Config.Row {
         name: "ROM Cache Size"
-        Config.Int {
-            target: SettingsCore.romCacheSize
+        SpinBox {
             from: 0
             to: 10
             stepSize: 1
+
+            value: root.settingsCore.romCacheSize
+            onValueModified: root.settingsCore.romCacheSize = value
         }
     }
 }

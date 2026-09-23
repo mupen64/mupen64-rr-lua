@@ -126,7 +126,7 @@ if(MUPEN64RR_BUILD_QT6)
     qt_policy(SET QTP0004 NEW)
     qt_policy(SET QTP0005 NEW)
     qt_standard_project_setup()
-    
+
     include(cmake/Windeployqt.cmake)
 endif()
 

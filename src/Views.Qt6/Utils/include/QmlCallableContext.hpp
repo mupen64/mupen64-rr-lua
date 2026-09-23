@@ -10,6 +10,10 @@
 #include <QJSValue>
 #include <qqmlintegration.h>
 
+/**
+ * @brief Crude wrapper for a C++ std::function in JS.
+ * Used primarily by QJSInterop to pass C++ functions to JS.
+ */
 class QmlCallableContext : public QObject
 {
     Q_OBJECT

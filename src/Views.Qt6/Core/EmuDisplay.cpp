@@ -33,6 +33,9 @@ void EmuDisplay::readPixels()
 QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
     auto *window = this->window();
+
+    if (m_frame.isNull()) return nullptr;
+
     auto *imageNode = (oldNode) ? static_cast<QSGImageNode *>(oldNode) : window->createImageNode();
 
     // set texture from current frame

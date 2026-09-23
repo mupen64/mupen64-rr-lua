@@ -7,13 +7,14 @@
 #include <Common/VersionNameHelpers.hpp>
 #include <Common.Views/App.hpp>
 
-#include <print>
-
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QSettings>
 #include <QtQml/QQmlExtensionPlugin>
 
+#include <QQuickStyle>
+
+Q_IMPORT_QML_PLUGIN(ActionsPlugin)
 Q_IMPORT_QML_PLUGIN(CorePlugin)
 Q_IMPORT_QML_PLUGIN(ComponentsPlugin)
 Q_IMPORT_QML_PLUGIN(ConfigPlugin)
@@ -26,26 +27,23 @@ constexpr QLatin1StringView ORG_DOMAIN = "mupen64.com"_L1;
 constexpr QLatin1StringView ORG_NAME = "Mupen64"_L1;
 constexpr QLatin1StringView DESKTOP_FILE_NAME = "mupen64-rr-lua"_L1;
 constexpr QLatin1StringView DISPLAY_NAME = "Mupen64"_L1;
+
 } // namespace
 
 static int qt_main(int argc, char *argv[])
 {
     using namespace Qt::Literals;
 
-#ifdef __linux__
-    // use xdg-desktop-portal for platform dialogs where possible
-    if (qgetenv("QT_QPA_PLATFORMTHEME").isEmpty())
-    {
-        qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
-    }
-#endif
-    // TODO: provide and package .desktop file for Linux
-    QGuiApplication app(argc, argv);
-    QGuiApplication::setOrganizationDomain(ORG_DOMAIN);
-    QGuiApplication::setOrganizationName(ORG_NAME);
-    QGuiApplication::setApplicationName(DESKTOP_FILE_NAME);
-    QGuiApplication::setApplicationVersion(CURRENT_VERSION);
-    QGuiApplication::setApplicationDisplayName(DISPLAY_NAME);
+    // NOTE: QApplication is used here specifically to ensure KDE's desktop styles are loaded.
+    // When a QGuiApplication is used, KDE switches to its fallback Breeze theme, which
+    // is slightly bugged.
+    // TODO: provide and package .desktop file for Linux.
+    QApplication app(argc, argv);
+    QApplication::setOrganizationDomain(ORG_DOMAIN);
+    QApplication::setOrganizationName(ORG_NAME);
+    QApplication::setApplicationName(DESKTOP_FILE_NAME);
+    QApplication::setApplicationVersion(CURRENT_VERSION);
+    QApplication::setApplicationDisplayName(DISPLAY_NAME);
 
     QQmlApplicationEngine engine;
 
@@ -57,6 +55,11 @@ static int qt_main(int argc, char *argv[])
             QCoreApplication::exit(-1);
         },
         Qt::QueuedConnection);
+
+#if defined(_WIN32)
+    // Windows: default to Fusion, as the system theme isn't exactly nice.
+    QQuickStyle::setStyle("Fusion");
+#endif
 
     // provider for system icons
     engine.addImageProvider(u"icons"_s, new QtIconImageProvider);

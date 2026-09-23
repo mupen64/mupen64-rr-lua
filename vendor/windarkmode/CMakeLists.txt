@@ -9,3 +9,6 @@ target_sources(windarkmode INTERFACE
     "WinDarkMode.h"
 )
 target_include_directories(windarkmode INTERFACE ".")
+target_link_libraries(windarkmode INTERFACE
+    dwmapi
+)

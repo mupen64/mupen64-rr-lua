@@ -12,7 +12,7 @@
 
 #include <Core/Types.hpp>
 
-class QtCoreResult : public QObject
+class QmlCoreResult : public QObject
 {
     Q_OBJECT
     QML_SINGLETON
@@ -132,25 +132,20 @@ class QtCoreResult : public QObject
     Q_INVOKABLE QJSValue message(Value value);
 };
 
-namespace CoreDialogType
+class QtCoreMessageTone : public QObject
 {
-Q_NAMESPACE
-QML_ELEMENT
+    Q_OBJECT
+    QML_SINGLETON
+    QML_NAMED_ELEMENT(CoreMessageTone)
+  public:
+    enum Value
+    {
+        Error = static_cast<int>(::CoreMessageTone::Error),
+        Warn = static_cast<int>(::CoreMessageTone::Warn),
+        Info = static_cast<int>(::CoreMessageTone::Info),
+    };
+    Q_ENUM(Value)
 
-enum Value
-{
-    Error = static_cast<int>(::CoreMessageTone::Error),
-    Warning = static_cast<int>(::CoreMessageTone::Warn),
-    Information = static_cast<int>(::CoreMessageTone::Info),
+    static Value from_core(::CoreMessageTone result) { return (Value)(int)result; }
+    static ::CoreMessageTone to_core(Value value) { return (::CoreMessageTone)(int)value; }
 };
-Q_ENUM_NS(Value)
-
-inline Value from_core(::CoreMessageTone result)
-{
-    return (Value)(int)result;
-}
-inline ::CoreMessageTone to_core(Value value)
-{
-    return (::CoreMessageTone)(int)value;
-}
-} // namespace CoreDialogType

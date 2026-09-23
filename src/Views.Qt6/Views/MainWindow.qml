@@ -5,6 +5,7 @@
  */
 pragma ComponentBehavior: Bound
 
+import QtQml
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -35,16 +36,23 @@ ApplicationWindow {
     // INITIALIZATION
     // =====================================
     Component.onCompleted: {
-        SettingsCore.sync();
-        SettingsPaths.sync();
+        width = 640;
+        height = 480;
+
+        // sync settings
+        settingsCore.sync();
+        settingsPaths.sync();
+
+        // menu bar initialization must be deferred to ensure
+        // actions are registered inside the ActionManager
+        header = menuBarTemplate.createObject();
     }
 
     // MENU BAR
     // =====================================
 
-    header: MainMenuBar {
-        core: core
-        dialogService: dialogService
+    property Component menuBarTemplate: MainMenuBar {
+        actions: settingsActions
     }
 
     // CONTENT VIEW
@@ -64,7 +72,12 @@ ApplicationWindow {
                 anchors.centerIn: parent
                 text: "MessageBox test"
                 onClicked: {
-                    dialogService.queueInfoDialog(null, "Hello there.", "General Kenobi! You are a bold one.", CoreDialogType.Error)
+                    dialogService.queueInfoDialog(
+                        null,
+                        "Hello there.",
+                        "General Kenobi! You are a bold one.",
+                        CoreMessageTone.Error
+                    );
                 }
             }
         }
@@ -99,31 +112,31 @@ ApplicationWindow {
         onOpenAskDialog: dialogService.queueAskDialog
         onOpenMultiDialog: dialogService.queueMultiDialog
 
-        // config options
-        options.coreType: SettingsCore.coreType
-        options.stUndoLoad: SettingsCore.stUndoLoad
-        options.maxLag: SettingsCore.maxLag
-        options.wiiVCEmulation: SettingsCore.wiiVCEmulation
-        options.rcpLagEmulation: SettingsCore.rcpLagEmulation
-        options.cpuCF: SettingsCore.cpuCF
-        options.rcpLagFactor: SettingsCore.rcpLagFactor
-        options.floatExceptionEmulation: SettingsCore.floatExceptionEmulation
-        options.useSummercart: SettingsCore.useSummercart
-        options.stScreenshot: SettingsCore.stScreenshot
-        options.stLZ4: SettingsCore.stLZ4
-        options.romCacheSize: SettingsCore.romCacheSize
-        options.audioDelayEnabled: SettingsCore.audioDelayEnabled
-        options.compiledJumpEnabled: SettingsCore.compiledJumpEnabled
-        options.ceqsNaNAccurate: SettingsCore.ceqsNaNAccurate
-        options.accurateRDPCompletion: SettingsCore.accurateRDPCompletion
-        options.vcrBackups: SettingsCore.vcrBackups
-        options.vcrWriteExtendedFormat: SettingsCore.vcrWriteExtendedFormat
+        // Config options
+        options.coreType: settingsCore.coreType
+        options.stUndoLoad: settingsCore.stUndoLoad
+        options.maxLag: settingsCore.maxLag
+        options.wiiVCEmulation: settingsCore.wiiVCEmulation
+        options.rcpLagEmulation: settingsCore.rcpLagEmulation
+        options.cpuCF: settingsCore.cpuCF
+        options.rcpLagFactor: settingsCore.rcpLagFactor
+        options.floatExceptionEmulation: settingsCore.floatExceptionEmulation
+        options.useSummercart: settingsCore.useSummercart
+        options.stScreenshot: settingsCore.stScreenshot
+        options.stLZ4: settingsCore.stLZ4
+        options.romCacheSize: settingsCore.romCacheSize
+        options.audioDelayEnabled: settingsCore.audioDelayEnabled
+        options.compiledJumpEnabled: settingsCore.compiledJumpEnabled
+        options.ceqsNaNAccurate: settingsCore.ceqsNaNAccurate
+        options.accurateRDPCompletion: settingsCore.accurateRDPCompletion
+        options.vcrBackups: settingsCore.vcrBackups
+        options.vcrWriteExtendedFormat: settingsCore.vcrWriteExtendedFormat
 
-        // config paths
-        paths.romDir: SettingsPaths.romDir
-        paths.saveDir: SettingsPaths.saveDir
-        paths.screenshotDir: SettingsPaths.screenshotDir
-        paths.backupDir: SettingsPaths.backupDir
+        // Config paths
+        paths.romDir: settingsPaths.romDir
+        paths.saveDir: settingsPaths.saveDir
+        paths.screenshotDir: settingsPaths.screenshotDir
+        paths.backupDir: settingsPaths.backupDir
     }
 
     // invalidateVisuals() must be called on each UI frame to
@@ -133,13 +146,37 @@ ApplicationWindow {
         onTriggered: core.invalidateVisuals()
     }
 
+    // Settings objects
+    // =====================================
+
+    SettingsCore { id: settingsCore }
+    SettingsPaths { id: settingsPaths }
+    SettingsActions {
+        id: settingsActions
+
+        // core objects
+        core: core
+        dialogService: dialogService
+        winConfig: winConfig
+    }
+
     // Auxiliary dialogs
     // =====================================
 
-    DialogService {
-        id: dialogService
+    DialogService { id: dialogService }
+
+    ConfigWindow {
+        id: winConfig
+        settingsActions: settingsActions
+        settingsCore: settingsCore
+        settingsPaths: settingsPaths
     }
-    ConfigDialog {
-        id: diaConfig
+
+    // LATE BINDINGS
+    // =====================================
+
+    Binding {
+        when: mainWindow.header instanceof MainMenuBar
+        settingsActions.menuOpen: (mainWindow.header as MainMenuBar).opened
     }
 }

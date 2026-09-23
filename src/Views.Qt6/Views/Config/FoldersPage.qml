@@ -9,9 +9,13 @@ import QtQuick.Dialogs as Dialogs
 import Config as Config
 
 Config.Page {
+    id: root
+    required property SettingsPaths settingsPaths
+
     Config.FolderPath {
         title: "ROM Directory"
-        target: SettingsPaths.romDir
+        path: root.settingsPaths.romDir
+        onPathModified: root.settingsPaths.romDir = path
 
         Dialogs.FolderDialog {
             title: qsTr("Select ROM Directory")
@@ -19,7 +23,8 @@ Config.Page {
     }
     Config.FolderPath {
         title: "Save Directory"
-        target: SettingsPaths.saveDir
+        path: root.settingsPaths.saveDir
+        onPathModified: root.settingsPaths.screenshotDir = path
 
         Dialogs.FolderDialog {
             title: qsTr("Select ROM Directory")
@@ -27,7 +32,8 @@ Config.Page {
     }
     Config.FolderPath {
         title: "Screenshot Directory"
-        target: SettingsPaths.screenshotDir
+        path: root.settingsPaths.screenshotDir
+        onPathModified: root.settingsPaths.screenshotDir = path
 
         Dialogs.FolderDialog {
             title: qsTr("Select ROM Directory")
@@ -35,7 +41,8 @@ Config.Page {
     }
     Config.FolderPath {
         title: "Backup Directory"
-        target: SettingsPaths.backupDir
+        path: root.settingsPaths.backupDir
+        onPathModified: root.settingsPaths.screenshotDir = path
 
         Dialogs.FolderDialog {
             title: qsTr("Select ROM Directory")
