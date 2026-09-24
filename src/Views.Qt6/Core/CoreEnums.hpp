@@ -10,18 +10,18 @@
 #include <QJSValue>
 #include <qqmlintegration.h>
 
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 
-class CoreResult : public QObject
+class QmlCoreResult : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
     QML_SINGLETON
+    QML_NAMED_ELEMENT(CoreResult)
   public:
     /**
      * @brief Result returned by the core.
      *
-     * Copied directly from `m64rr/Types.hpp`; allowing it to be used directly from Qt.
+     * Copied directly from `Core/Types.hpp`; allowing it to be used directly from Qt.
      */
     enum Value
     {
@@ -57,8 +57,6 @@ class CoreResult : public QObject
         VCR_NotFromThisMovie,
         // The movie's version is invalid
         VCR_InvalidVersion,
-        // The movie's extended version is invalid
-        VCR_InvalidExtendedVersion,
         // The operation requires a playback or recording task
         VCR_NeedsPlaybackOrRecording,
         // The operation requires a playback task
@@ -126,31 +124,44 @@ class CoreResult : public QObject
     };
     Q_ENUM(Value)
 
-    static Value from_core(::core_result result) { return (Value)(int)result; }
-    static ::core_result to_core(Value value) { return (::core_result)(int)value; }
+    static Value from_core(::CoreResult result) { return (Value)(int)result; }
+    static ::CoreResult to_core(Value value) { return (::CoreResult)(int)value; }
 
     Q_INVOKABLE QJSValue message(Value value);
 };
 
-namespace CoreDialogType
+class QmlCoreMessageTone : public QObject
 {
-Q_NAMESPACE
-QML_ELEMENT
+    Q_OBJECT
+    QML_SINGLETON
+    QML_NAMED_ELEMENT(CoreMessageTone)
+  public:
+    enum Value
+    {
+        Error = static_cast<int>(::CoreMessageTone::Error),
+        Warn = static_cast<int>(::CoreMessageTone::Warn),
+        Info = static_cast<int>(::CoreMessageTone::Info),
+    };
+    Q_ENUM(Value)
 
-enum Value
-{
-    Error = fsvc_error,
-    Warning = fsvc_warning,
-    Information = fsvc_information,
+    static Value from_core(::CoreMessageTone result) { return (Value)(int)result; }
+    static ::CoreMessageTone to_core(Value value) { return (::CoreMessageTone)(int)value; }
 };
-Q_ENUM_NS(Value)
 
-inline Value from_core(::core_dialog_type result)
+class QmlCoreSpeedMode : public QObject
 {
-    return (Value)(int)result;
-}
-inline ::core_dialog_type to_core(Value value)
-{
-    return (::core_dialog_type)(int)value;
-}
-} // namespace CoreDialogType
+    Q_OBJECT
+    QML_SINGLETON
+    QML_NAMED_ELEMENT(CoreSpeedMode)
+  public:
+    enum Value
+    {
+        Normal = static_cast<int>(::CoreSpeedMode::Normal),
+        FastForward = static_cast<int>(::CoreSpeedMode::FastForward),
+        UltraFastForward = static_cast<int>(::CoreSpeedMode::UltraFastForward),
+    };
+    Q_ENUM(Value)
+
+    static Value from_core(::CoreSpeedMode result) { return (Value)(int)result; }
+    static ::CoreSpeedMode to_core(Value value) { return (::CoreSpeedMode)(int)value; }
+};

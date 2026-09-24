@@ -2,7 +2,7 @@ name: Build (nightly)
 
 on:
   schedule:
-    - cron: 0 23 * * *
+    - cron: '0 22 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout `main` branch
         uses: actions/checkout@v6
+        with:
+          ref: main
 
       - uses: ./.github/actions/setup-windows
         with:
@@ -38,6 +40,9 @@ jobs:
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --build build
+
+      - name: Delete PDB files
+        run: Get-ChildItem build/out -Recurse -Filter *.pdb | Remove-Item -Force
 
       - name: Upload build
         uses: actions/upload-artifact@v7
@@ -54,6 +59,8 @@ jobs:
     steps:
       - name: Checkout `main` branch
         uses: actions/checkout@v6
+        with:
+          ref: main
 
       - uses: ./.github/actions/setup-ubuntu
         with:
@@ -66,7 +73,12 @@ jobs:
 
       - name: CMake build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build
+        run: |
+            cmake --build build --target update_translations
+            cmake --build build
+
+      - name: Delete PDB files
+        run: rm -f $(find build/out -name '*.pdb')
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

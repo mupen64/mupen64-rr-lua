@@ -13,13 +13,13 @@
 #include <QIcon>
 #include <QUrl>
 
-#include <QtUtils.hpp>
-#include <QJSFunctions.hpp>
+// #include <QtUtils.hpp>
+#include <QJSInterop.hpp>
 
 static std::atomic<EmuContext *> g_core_instance = nullptr;
 
-static core_cfg g_core_cfg{};
-static core_params g_core_params{};
+static CoreCfg g_core_cfg{};
+static CoreParams g_core_params{};
 
 static void set_core_instance(EmuContext *ptr)
 {
@@ -30,25 +30,19 @@ static void set_core_instance(EmuContext *ptr)
 
 EmuContext::EmuContext(QObject *parent)
     : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
-      m_plugins(std::nullopt), m_fn_read_video(nullptr)
+      m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this)), m_paths(new EmuPaths(this))
 {
     set_core_instance(this);
 
     m_core_params->cfg = m_core_cfg;
 
-#pragma region Directories
+    // use the QThreadPool available
     m_core_params->submit_task = [&](const std::function<void()> &cb) { m_task_pool.start(cb); };
-    m_core_params->get_saves_directory = [] {
-        static auto s_save_path = IOUtils::exe_path().parent_path() / "saves";
-        if (!std::filesystem::is_directory(s_save_path)) std::filesystem::create_directories(s_save_path);
-        return s_save_path;
-    };
-    m_core_params->get_backups_directory = [] {
-        static auto s_backups_path = IOUtils::exe_path().parent_path() / "backups";
-        if (!std::filesystem::is_directory(s_backups_path)) std::filesystem::create_directories(s_backups_path);
-        return s_backups_path;
-    };
-    m_core_params->get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
+
+#pragma region Directories
+    m_core_params->get_saves_directory = [this] { return m_paths->saveDirStdPath(); };
+    m_core_params->get_backups_directory = [this] { return m_paths->backupDirStdPath(); };
+    m_core_params->get_summercart_path = [this]() { return m_paths->saveDirStdPath() / "cart.vhd"; };
 #pragma endregion
 
 #pragma region Logging
@@ -95,18 +89,18 @@ EmuContext::EmuContext(QObject *parent)
 #pragma region Dialog service
     m_core_params->show_multiple_choice_dialog = [&](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title,
-                                                     core_dialog_type type) -> size_t {
+                                                     CoreMessageTone type) -> size_t {
         std::promise<size_t> promise;
         auto future = promise.get_future();
 
         QMetaObject::invokeMethod(
             this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
                 // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::to_js_function(qmlEngine(this),
+                auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
                     [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
                 auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
 
-                openMultiDialog(done_callback, title, str, qt_choices, CoreDialogType::from_core(type));
+                openMultiDialog(done_callback, title, str, qt_choices, QmlCoreMessageTone::from_core(type));
             });
 
         return future.get();
@@ -116,28 +110,28 @@ EmuContext::EmuContext(QObject *parent)
         std::promise<bool> promise;
         auto future = promise.get_future();
 
-        QMetaObject::invokeMethod(this, [=, this, promise = std::move(promise), str = QString(str),
-                                            title = QString(title)] mutable {
-            // JS objects should be instantiated on the event thread
-            auto done_callback = QJSFunctions::to_js_function(qmlEngine(this),
-                [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
+        QMetaObject::invokeMethod(
+            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
+                // JS objects should be instantiated on the event thread
+                auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
+                    [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
 
-            openAskDialog(done_callback, title, str, warning ? CoreDialogType::Warning : CoreDialogType::Information);
-        });
+                openAskDialog(done_callback, title, str, warning ? QmlCoreMessageTone::Warn : QmlCoreMessageTone::Info);
+            });
 
         return future.get();
     };
-    m_core_params->show_dialog = [&](const char *str, const char *title, core_dialog_type type) {
+    m_core_params->show_dialog = [&](const char *str, const char *title, CoreMessageTone type) {
         std::promise<void> promise;
         auto future = promise.get_future();
 
         QMetaObject::invokeMethod(
             this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
                 // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::to_js_function(
+                auto done_callback = QJSFunctions::toJSFunction(
                     qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
 
-                openAskDialog(done_callback, title, str, CoreDialogType::from_core(type));
+                openAskDialog(done_callback, title, str, QmlCoreMessageTone::from_core(type));
             });
 
         future.get();
@@ -178,20 +172,20 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-CoreResult::Value EmuContext::startROM(const QUrl &url)
+QmlCoreResult::Value EmuContext::startROM(const QUrl &url)
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
-    return CoreResult::from_core(m_core_ctx->vr_start_rom(path));
+    return QmlCoreResult::from_core(m_core_ctx->vr_start_rom(path));
 }
 
-CoreResult::Value EmuContext::closeROM(bool resetVCR)
+QmlCoreResult::Value EmuContext::closeROM(bool resetVCR)
 {
-    return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
+    return QmlCoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
 }
 
-CoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
+QmlCoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
 {
-    return CoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
+    return QmlCoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
 }
 
 void EmuContext::invalidateVisuals()
@@ -242,13 +236,26 @@ void EmuContext::setGSButton(bool pressed)
     }
 }
 
+// -> vr_get_speed_mode
+QmlCoreSpeedMode::Value EmuContext::speedMode() const {
+    return QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode());
+}
+// -> vr_set_speed_mode
+void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode) {
+    if (speedMode != QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode()))
+    {
+        m_core_ctx->vr_set_speed_mode(QmlCoreSpeedMode::to_core(speedMode));
+        speedModeChanged(speedMode);
+    }
+}
+
 // st_* functions
 // ==========================
 
 // -> st_do_memory (to save slot)
 void EmuContext::saveSlot(uint32_t index)
 {
-    if (index >= NUM_SAVE_SLOTS) return;
+    if (index >= num_save_slots) return;
     // TODO implement based on config directories
 }
 
@@ -264,14 +271,14 @@ void EmuContext::saveFile(const QUrl &url)
     m_core_ctx->vr_wait_increment();
     m_task_pool.start([=, this] {
         m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
+        m_core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
     });
 }
 
 // -> st_do_memory (to save slot)
 void EmuContext::loadSlot(uint32_t index)
 {
-    if (index >= NUM_SAVE_SLOTS) return;
+    if (index >= num_save_slots) return;
     // TODO implement based on config directories
 }
 
@@ -283,11 +290,11 @@ void EmuContext::loadFile(const QUrl &url)
     m_core_ctx->vr_wait_increment();
     m_task_pool.start([=, this] {
         m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
+        m_core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
     });
 }
 
-// core_cfg properties
+// CoreCfg properties
 // ==========================
 int32_t EmuContext::speedModifier()
 {
@@ -305,6 +312,15 @@ void EmuContext::setSpeedModifier(int32_t valueIn)
 
 // Misc. functions
 // ==========================
+EmuOptions *EmuContext::options()
+{
+    return m_options;
+}
+
+EmuPaths *EmuContext::paths()
+{
+    return m_paths;
+}
 
 void EmuContext::readVideoOutput(QImage &image)
 {
@@ -327,7 +343,7 @@ void EmuContext::readVideoOutput(QImage &image)
 // Internal utilities
 // ==========================
 
-void CoreUtil::clear_plugin_funcs(core_params &params)
+void CoreUtil::clear_plugin_funcs(CoreParams &params)
 {
     params.video_process_dlist = [](auto...) {};
     params.video_process_rdp_list = [](auto...) {};

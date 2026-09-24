@@ -7,7 +7,7 @@
 #pragma once
 
 #include <Common/VersionNameHelpers.hpp>
-#include <m64rr/Plugin.hpp>
+#include <Core/Plugin.hpp>
 
 #define DUMMY_PLUGIN_STUB_IMPL(plugin_type)                                                                            \
     EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)                                             \

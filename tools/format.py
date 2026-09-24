@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 EXTENSIONS = {".cpp", ".hpp"}
+IGNORED_PATHS = ["vendor"]
 
 
 def project_root() -> Path:
@@ -93,6 +94,8 @@ def collect_sources(root: Path, ignore_patterns: set[str]) -> list[Path]:
 
     sources: list[Path] = []
     for rel in rel_paths:
+        if rel.parts and rel.parts[0] in IGNORED_PATHS:
+            continue
         if rel.suffix.lower() not in EXTENSIONS:
             continue
         if any(fnmatch.fnmatch(rel.as_posix(), pat) for pat in ignore_patterns):

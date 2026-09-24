@@ -7,7 +7,7 @@
 
 #include <QQmlEngine>
 
-QJSValue CoreResult::message(Value value)
+QJSValue QmlCoreResult::message(Value value)
 {
     using namespace std::literals;
     using namespace Qt::Literals;
@@ -52,10 +52,6 @@ QJSValue CoreResult::message(Value value)
     case VCR_InvalidVersion:
         module = "VCR"_L1;
         error = "The movie's version is invalid."_L1;
-        break;
-    case VCR_InvalidExtendedVersion:
-        module = "VCR"_L1;
-        error = "The movie's extended version is invalid. It might be too new for this version of the emulator."_L1;
         break;
     case VCR_NeedsPlaybackOrRecording:
         module = "VCR"_L1;

@@ -5,7 +5,7 @@
  */
 #pragma once
 
-#include <m64rr/Plugin.hpp>
+#include <Core/Plugin.hpp>
 
 namespace BuiltinTAS
 {

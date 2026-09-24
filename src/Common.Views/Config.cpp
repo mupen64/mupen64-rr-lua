@@ -10,12 +10,12 @@
 #include <Common.Views/Config.hpp>
 #include <Common.Views/ConfigLegacy.hpp>
 #include <Common.Views/Messages.hpp>
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include <Common.Views/ActionManager.hpp>
 
 using nlohmann::json;
 
-t_config g_config;
+Config g_config;
 
 #define CONFIG_FILE_NAME "config.json"
 
@@ -26,12 +26,9 @@ static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_cho
         {CORE_DLG_ST_HASH_MISMATCH, 0},
         {CORE_DLG_ST_UNFREEZE_WARNING, 0},
         {CORE_DLG_ST_NOT_FROM_MOVIE, 0},
-        {CORE_DLG_VCR_RAWDATA_WARNING, 0},
-        {CORE_DLG_VCR_GENERAL_SYNC_WARNING, 0},
         {CORE_DLG_VCR_ROM_NAME_WARNING, 0},
         {CORE_DLG_VCR_ROM_CCODE_WARNING, 0},
         {CORE_DLG_VCR_ROM_CRC_WARNING, 0},
-        {CORE_DLG_VCR_CHEAT_LOAD_ERROR, 0},
     };
 
     std::unordered_map<std::string, size_t> choices;
@@ -107,7 +104,7 @@ static bool convert_from_json(const json &j, std::map<std::string, Hotkey> &valu
 
 static void json_read_file(json &j)
 {
-    g_config = Config::default_config();
+    g_config = AppConfig::default_config();
 
 #define CORE_VALUE(name) convert_from_json(j["core"][#name], g_config.core.name);
 #define FRONTEND_VALUE(name) convert_from_json(j["frontend"][#name], g_config.name);
@@ -315,20 +312,20 @@ static std::filesystem::path get_config_path()
 /**
  * \brief Modifies the config to apply value limits and other constraints.
  */
-static void config_patch(t_config &cfg)
+static void config_patch(Config &cfg)
 {
 #ifdef _WIN32
     if (!MonitorFromPoint({cfg.window_x, cfg.window_y}, MONITOR_DEFAULTTONULL))
     {
-        cfg.window_x = Config::default_config().window_x;
-        cfg.window_y = Config::default_config().window_y;
+        cfg.window_x = AppConfig::default_config().window_x;
+        cfg.window_y = AppConfig::default_config().window_y;
     }
 #endif
 
     if (cfg.rombrowser_column_widths.size() < 4)
     {
         // something's malformed, fuck off and use default values
-        cfg.rombrowser_column_widths = Config::default_config().rombrowser_column_widths;
+        cfg.rombrowser_column_widths = AppConfig::default_config().rombrowser_column_widths;
     }
 
     // Causes too many issues
@@ -354,11 +351,11 @@ static void config_patch(t_config &cfg)
     cfg.core.rcp_lag_factor = std::isfinite(cfg.core.rcp_lag_factor) ? std::max(cfg.core.rcp_lag_factor, 0.0) : 0.0;
 }
 
-void Config::init()
+void AppConfig::init()
 {
 }
 
-void Config::save()
+void AppConfig::save()
 {
     Messenger::broadcast<Messenger::Message::ConfigSaving>();
 
@@ -372,7 +369,7 @@ void Config::save()
     ofs_file << std::setw(2) << j;
 }
 
-void Config::apply_and_save()
+void AppConfig::apply_and_save()
 {
     ActionManager::begin_batch_work();
     for (const auto &[action, hotkey] : g_config.hotkeys)
@@ -384,7 +381,7 @@ void Config::apply_and_save()
     save();
 }
 
-void Config::load()
+void AppConfig::load()
 {
     const auto new_config_path = get_config_path();
     const auto legacy_config_path = IOUtils::exe_path().parent_path() / "config.ini";
@@ -402,8 +399,8 @@ void Config::load()
         mINI::INIStructure ini;
         file.read(ini);
 
-        Config::Legacy::handle_config_ini(ini);
-        Config::Legacy::migrate_config_ini(g_config, ini);
+        AppConfig::Legacy::handle_config_ini(ini);
+        AppConfig::Legacy::migrate_config_ini(g_config, ini);
 
         save();
 
@@ -425,14 +422,14 @@ void Config::load()
         catch (const std::exception &e)
         {
             g_view_logger->info("[CONFIG] Failed to load config, using defaults...");
-            g_config = Config::default_config();
+            g_config = AppConfig::default_config();
             save();
         }
     }
     else
     {
         g_view_logger->info("[CONFIG] Default config file does not exist. Generating...");
-        g_config = Config::default_config();
+        g_config = AppConfig::default_config();
         save();
     }
 
@@ -441,10 +438,10 @@ void Config::load()
     Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 }
 
-const t_config &Config::default_config()
+const Config &AppConfig::default_config()
 {
-    static const t_config s_default_config = [] {
-        t_config cfg;
+    static const Config default_config = [] {
+        Config cfg;
         for (const auto &pair : get_merged_silent_mode_dialog_choices())
         {
             cfg.silent_mode_dialog_choices[pair.first] = std::to_string(pair.second);
@@ -452,35 +449,35 @@ const t_config &Config::default_config()
         return cfg;
     }();
 
-    return s_default_config;
+    return default_config;
 }
 
-std::filesystem::path Config::rom_directory()
+std::filesystem::path AppConfig::rom_directory()
 {
     return IOUtils::exe_path().parent_path() / g_config.rom_directory;
 }
 
-std::filesystem::path Config::plugin_directory()
+std::filesystem::path AppConfig::plugin_directory()
 {
     return IOUtils::exe_path().parent_path() / g_config.plugins_directory;
 }
 
-std::filesystem::path Config::save_directory()
+std::filesystem::path AppConfig::save_directory()
 {
     return IOUtils::exe_path().parent_path() / g_config.saves_directory;
 }
 
-std::filesystem::path Config::screenshot_directory()
+std::filesystem::path AppConfig::screenshot_directory()
 {
     return IOUtils::exe_path().parent_path() / g_config.screenshots_directory;
 }
 
-std::filesystem::path Config::backup_directory()
+std::filesystem::path AppConfig::backup_directory()
 {
     return IOUtils::exe_path().parent_path() / g_config.backups_directory;
 }
 
-std::filesystem::path Config::logs_directory()
+std::filesystem::path AppConfig::logs_directory()
 {
     return IOUtils::exe_path().parent_path() / "logs";
 }

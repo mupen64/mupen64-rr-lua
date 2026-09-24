@@ -19,8 +19,8 @@
  */
 namespace JoystickControl
 {
-static constexpr UINT WM_JOYSTICK_POSITION_CHANGED = WM_APP + 200;
-static constexpr UINT WM_JOYSTICK_DRAG_BEGIN = WM_APP + 201;
+static constexpr UINT wm_joystick_position_changed = WM_APP + 200;
+static constexpr UINT wm_joystick_drag_begin = WM_APP + 201;
 
 namespace Internal
 {
@@ -46,13 +46,29 @@ struct Context
     HBITMAP back_bmp{};
     Gdiplus::Graphics *g{};
     Gdiplus::Color clear_color{};
-    Gdiplus::Brush *bg_brush{};
-    Gdiplus::Brush *tip_brush{};
+    Gdiplus::SolidBrush *bg_brush{};
+    Gdiplus::SolidBrush *tip_brush{};
     Gdiplus::Pen *outline_pen{};
+    Gdiplus::Pen *border_pen{};
     Gdiplus::Pen *line_pen{};
 };
 
 using Mode = Context::Mode;
+
+inline Gdiplus::Color contrastize(const Gdiplus::Color &color, int amount, bool dark_background)
+{
+    const auto contrastize_component = [](BYTE component, int amount, bool dark_background) {
+        if (dark_background)
+        {
+            return static_cast<BYTE>(component + (255 - component) * amount / 100);
+        }
+        return static_cast<BYTE>(component - component * amount / 100);
+    };
+
+    return Gdiplus::Color(color.GetAlpha(), contrastize_component(color.GetRed(), amount, dark_background),
+        contrastize_component(color.GetGreen(), amount, dark_background),
+        contrastize_component(color.GetBlue(), amount, dark_background));
+}
 
 inline void get_cursor_to_joystick_position(const HWND hwnd, int &x, int &y)
 {
@@ -82,25 +98,32 @@ inline void update_joystick_position(HWND hwnd, Context *ctx)
         return;
     }
 
-    get_cursor_to_joystick_position(hwnd, ctx->x, ctx->y);
+    int32_t x;
+    int32_t y;
+    get_cursor_to_joystick_position(hwnd, x, y);
 
     if (ctx->mode == Mode::Relative)
     {
-        ctx->x -= ctx->cursor_diff_x;
-        ctx->y -= ctx->cursor_diff_y;
+        x -= ctx->cursor_diff_x;
+        y -= ctx->cursor_diff_y;
     }
 
     RECT rc{};
     GetClientRect(hwnd, &rc);
 
-    if (std::abs(ctx->x) < 8) ctx->x = 0;
-    if (std::abs(ctx->y) < 8) ctx->y = 0;
+    if (std::abs(x) < 8) x = 0;
+    if (std::abs(y) < 8) y = 0;
 
-    ctx->x = std::clamp(ctx->x, -128, 127);
-    ctx->y = std::clamp(ctx->y, -128, 127);
+    x = std::clamp(x, -128, 127);
+    y = std::clamp(y, -128, 127);
+
+    if (x == ctx->x && y == ctx->y) return;
+
+    ctx->x = x;
+    ctx->y = y;
 
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
-    SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_POSITION_CHANGED, 0, 0);
+    SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_position_changed, 0, 0);
 }
 
 inline void destroy_dcs(const HWND hwnd, Context *ctx)
@@ -121,7 +144,43 @@ inline void destroy_dcs(const HWND hwnd, Context *ctx)
     delete ctx->bg_brush;
     delete ctx->tip_brush;
     delete ctx->outline_pen;
+    delete ctx->border_pen;
     delete ctx->line_pen;
+}
+
+inline void update_clear_color(const HWND hwnd, Context *ctx)
+{
+    const auto parent_hwnd = GetParent(hwnd);
+    const auto parent_dc = GetDC(parent_hwnd);
+    const auto clear_brush =
+        reinterpret_cast<HBRUSH>(SendMessage(parent_hwnd, WM_CTLCOLORDLG, reinterpret_cast<WPARAM>(parent_dc), 0));
+
+    if (clear_brush)
+    {
+        LOGBRUSH log_brush{};
+        if (GetObject(clear_brush, sizeof(log_brush), &log_brush) == sizeof(log_brush))
+        {
+            ctx->clear_color.SetFromCOLORREF(log_brush.lbColor);
+        }
+    }
+    else
+    {
+        ctx->clear_color.SetFromCOLORREF(GetSysColor(COLOR_WINDOW));
+    }
+
+    ReleaseDC(parent_hwnd, parent_dc);
+
+    const auto luminance =
+        0.299 * ctx->clear_color.GetRed() + 0.587 * ctx->clear_color.GetGreen() + 0.114 * ctx->clear_color.GetBlue();
+    const bool dark_background = luminance < 128.0;
+    const auto border_color = contrastize(ctx->clear_color, 25, dark_background);
+    const auto ellipse_color = dark_background ? Gdiplus::Color(255, 30, 30, 30) : Gdiplus::Color::White;
+    const auto line_color = dark_background ? Gdiplus::Color(255, 64, 64, 255) : Gdiplus::Color(255, 0, 0, 255);
+
+    ctx->border_pen->SetColor(border_color);
+    ctx->outline_pen->SetColor(border_color);
+    ctx->bg_brush->SetColor(ellipse_color);
+    ctx->line_pen->SetColor(line_color);
 }
 
 inline void create_dcs(const HWND hwnd, Context *ctx)
@@ -147,20 +206,11 @@ inline void create_dcs(const HWND hwnd, Context *ctx)
     ctx->bg_brush = new Gdiplus::SolidBrush(Gdiplus::Color::White);
     ctx->tip_brush = new Gdiplus::SolidBrush(Gdiplus::Color(255, 255, 0, 0));
     ctx->outline_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 0), 1.0f * scale);
+    ctx->border_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 0), 1.0f * scale);
     ctx->line_pen = new Gdiplus::Pen(Gdiplus::Color(255, 0, 0, 255), 3.0f * scale);
+    ctx->line_pen->SetLineCap(Gdiplus::LineCapRound, Gdiplus::LineCapRound, Gdiplus::DashCapRound);
 
-    // We get the clear color by asking the parent window for its background brush, so this works even with weird themes
-    const auto parent_hwnd = GetParent(hwnd);
-    const auto parent_dc = GetDC(parent_hwnd);
-    const auto clear_brush = (HBRUSH)SendMessage(parent_hwnd, WM_CTLCOLORDLG, (WPARAM)parent_dc, 0);
-
-    LOGBRUSH log_brush{};
-    GetObject(clear_brush, sizeof(log_brush), &log_brush);
-
-    ctx->clear_color.SetFromCOLORREF(log_brush.lbColor);
-
-    ReleaseDC(parent_hwnd, parent_dc);
-    DeleteObject(clear_brush);
+    update_clear_color(hwnd, ctx);
 }
 
 inline auto get_ctx(const HWND hwnd)
@@ -226,7 +276,7 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->y = MiscHelpers::wrapping_clamp(ctx->y, -127, 128);
 
         RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
-        SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_POSITION_CHANGED, 0, 0);
+        SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_position_changed, 0, 0);
     }
     break;
     case WM_MBUTTONDOWN: {
@@ -237,7 +287,7 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->cursor_diff_y = y - ctx->y;
 
         ctx->mode = Mode::Relative;
-        SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_DRAG_BEGIN, 0, 0);
+        SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_drag_begin, 0, 0);
         SetCapture(hwnd);
         break;
     }
@@ -249,13 +299,13 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             break;
         }
         ctx->mode = Mode::Sticky;
-        SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_DRAG_BEGIN, 0, 0);
+        SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_drag_begin, 0, 0);
         SetCapture(hwnd);
         update_joystick_position(hwnd, ctx);
         break;
     case WM_LBUTTONDOWN:
         ctx->mode = Mode::Absolute;
-        SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_DRAG_BEGIN, 0, 0);
+        SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_drag_begin, 0, 0);
         SetCapture(hwnd);
         update_joystick_position(hwnd, ctx);
         break;
@@ -272,6 +322,12 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_MOUSEMOVE:
         update_joystick_position(hwnd, ctx);
         break;
+    case WM_THEMECHANGED:
+    case WM_SYSCOLORCHANGE:
+    case WM_SETTINGCHANGE:
+        update_clear_color(hwnd, ctx);
+        RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        break;
     case WM_PAINT: {
         RECT rc{};
         GetClientRect(hwnd, &rc);
@@ -284,12 +340,27 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         const float stick_y = mid_y - ctx->y / 128.0f * (rc.bottom / 2.0f);
         ctx->g->Clear(ctx->clear_color);
 
+        const auto border_width = ctx->border_pen->GetWidth();
+        const auto radius = std::max(0.0f, 5.0f * border_width);
+        const auto border_left = border_width / 2.0f;
+        const auto border_top = border_width / 2.0f;
+        const auto border_right = rc.right - border_width / 2.0f;
+        const auto border_bottom = rc.bottom - border_width / 2.0f;
+        Gdiplus::GraphicsPath border_path;
+        border_path.AddArc(border_left, border_top, radius * 2.0f, radius * 2.0f, 180.0f, 90.0f);
+        border_path.AddArc(border_right - radius * 2.0f, border_top, radius * 2.0f, radius * 2.0f, 270.0f, 90.0f);
+        border_path.AddArc(
+            border_right - radius * 2.0f, border_bottom - radius * 2.0f, radius * 2.0f, radius * 2.0f, 0.0f, 90.0f);
+        border_path.AddArc(border_left, border_bottom - radius * 2.0f, radius * 2.0f, radius * 2.0f, 90.0f, 90.0f);
+        border_path.CloseFigure();
+
         const auto tip_size = ctx->outline_pen->GetWidth() * 8.0f;
 
         ctx->g->FillEllipse(ctx->bg_brush, 0, 0, rc.right, rc.bottom);
         ctx->g->DrawEllipse(ctx->outline_pen, 0, 0, rc.right, rc.bottom);
         ctx->g->DrawLine(ctx->outline_pen, mid_x, 0.0f, mid_x, (float)rc.bottom);
         ctx->g->DrawLine(ctx->outline_pen, 0.0f, mid_y, (float)rc.right, mid_y);
+        ctx->g->DrawPath(ctx->border_pen, &border_path);
         ctx->g->DrawLine(ctx->line_pen, mid_x, mid_y, stick_x, stick_y);
         ctx->g->FillEllipse(ctx->tip_brush, stick_x - tip_size / 2, stick_y - tip_size / 2, tip_size, tip_size);
 
@@ -364,7 +435,7 @@ inline bool set_position(HWND hwnd, int x, int y)
     ctx->x = x;
     ctx->y = y;
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
-    SendMessage(GetParent(hwnd), WM_JOYSTICK_POSITION_CHANGED, 1, 0);
+    SendMessage(GetParent(hwnd), wm_joystick_position_changed, 1, 0);
     return true;
 }
 

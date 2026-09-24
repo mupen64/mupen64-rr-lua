@@ -16,6 +16,7 @@ struct seeker_state
 {
     HWND hwnd{};
     UINT_PTR refresh_timer{};
+    std::uint64_t seek_start_tick{};
 };
 
 static seeker_state seeker{};
@@ -34,12 +35,33 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
         if (g_config.core.seek_savestate_interval == 0)
             SetDlgItemText(hwnd, IDC_SEEKER_SUBTEXT, "Seek savestates disabled. Seeking backwards will be slower.");
+        else
+        {
+            ShowWindow(GetDlgItem(hwnd, IDC_SEEKER_SUBTEXT), SW_HIDE);
+
+            RECT shrink = {0, 0, 0, 13};
+            MapDialogRect(hwnd, &shrink);
+
+            for (const int id : {IDC_SEEKER_STOP, IDC_SEEKER_START, IDCANCEL})
+            {
+                const HWND item = GetDlgItem(hwnd, id);
+                RECT rc;
+                GetWindowRect(item, &rc);
+                MapWindowPoints(nullptr, hwnd, reinterpret_cast<POINT *>(&rc), 2);
+                SetWindowPos(item, nullptr, rc.left, rc.top - shrink.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+            }
+
+            RECT window;
+            GetWindowRect(hwnd, &window);
+            SetWindowPos(hwnd, nullptr, 0, 0, window.right - window.left, window.bottom - window.top - shrink.bottom,
+                SWP_NOMOVE | SWP_NOZORDER);
+        }
 
         SetFocus(GetDlgItem(hwnd, IDC_SEEKER_FRAME));
         WinDarkMode::attach(hwnd);
         break;
     case WM_DESTROY:
-        g_main_ctx.core_ctx->vcr_stop_seek();
+        g_main_ctx.CoreCtx->vcr_stop_seek();
         KillTimer(hwnd, seeker.refresh_timer);
         EnableWindow(g_main_ctx.hwnd, TRUE);
         SetForegroundWindow(g_main_ctx.hwnd);
@@ -50,20 +72,29 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         break;
     case WM_SEEK_COMPLETED:
         SetDlgItemText(hwnd, IDC_SEEKER_STATUS, "Seek completed");
+        SetDlgItemText(hwnd, IDC_SEEKER_ETA, "");
         EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), FALSE);
         KillTimer(hwnd, seeker.refresh_timer);
         break;
     case WM_TIMER: {
-        if (!g_main_ctx.core_ctx->vcr_is_seeking())
+        if (!g_main_ctx.CoreCtx->vcr_is_seeking())
         {
+            SetDlgItemText(hwnd, IDC_SEEKER_ETA, "");
             break;
         }
-        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+        const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
 
         const float effective_progress = MiscHelpers::remap(static_cast<float>(info.current_sample),
             static_cast<float>(info.seek_start_sample), static_cast<float>(info.seek_target_sample), 0.0f, 1.0f);
         const auto str = std::format("Seeked {:.2f}%", effective_progress * 100.0);
         SetDlgItemText(hwnd, IDC_SEEKER_STATUS, str.c_str());
+
+        if (effective_progress > 0.0f)
+        {
+            const double elapsed = static_cast<double>(GetTickCount64() - seeker.seek_start_tick) / 1000.0;
+            const double eta = elapsed * (1.0 - effective_progress) / effective_progress;
+            SetDlgItemText(hwnd, IDC_SEEKER_ETA, format_eta(eta).c_str());
+        }
         break;
     }
     case WM_COMMAND:
@@ -76,8 +107,8 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         break;
         case IDC_SEEKER_START: {
-            const auto result = g_main_ctx.core_ctx->vcr_begin_seek(g_config.seeker_value, true);
-            if (result != Res_Ok)
+            const auto result = g_main_ctx.CoreCtx->vcr_begin_seek(g_config.seeker_value, true);
+            if (result != CoreResult::Res_Ok)
             {
                 const auto [_, error] = CoreUtils::get_error_message_for_result(result);
                 EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), FALSE);
@@ -85,18 +116,20 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 break;
             }
 
-            const bool is_seeking = g_main_ctx.core_ctx->vcr_is_seeking();
+            const bool is_seeking = g_main_ctx.CoreCtx->vcr_is_seeking();
             EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), is_seeking);
             if (is_seeking)
             {
                 SetFocus(GetDlgItem(hwnd, IDC_SEEKER_STOP));
+                seeker.seek_start_tick = GetTickCount64();
+                SetDlgItemText(hwnd, IDC_SEEKER_ETA, "");
                 seeker.refresh_timer = SetTimer(hwnd, 0, 1000 / 10, nullptr);
             }
 
             break;
         }
         case IDC_SEEKER_STOP:
-            g_main_ctx.core_ctx->vcr_stop_seek();
+            g_main_ctx.CoreCtx->vcr_stop_seek();
             break;
         case IDCANCEL:
             DestroyWindow(hwnd);

@@ -39,9 +39,9 @@ bool confirm_user_exit()
     }
 
     const std::tuple<bool, std::string_view> messages[] = {
-        {g_main_ctx.core_ctx->vcr_get_task() == task_recording, "Recording"},
-        {g_main_ctx.core_ctx->vcr_get_task() == task_playback, "Playback"}, {CaptureManager::is_capturing(), "Capture"},
-        {g_main_ctx.core_ctx->tl_active(), "Trace logging"}};
+        {g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Recording, "Recording"},
+        {g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Playback, "Playback"},
+        {CaptureManager::is_capturing(), "Capture"}, {g_main_ctx.CoreCtx->tl_active(), "Trace logging"}};
 
     std::vector<std::string_view> active_messages;
     for (const auto &[is_active, msg] : messages)
@@ -84,13 +84,13 @@ void AppActions::update_core_fast_forward()
     const auto cli_desired_speed_mode = CLI::desired_speed_mode();
     if (cli_desired_speed_mode != CoreSpeedMode::Normal) effective_speed_mode = cli_desired_speed_mode;
 
-    g_main_ctx.core_ctx->vr_set_speed_mode(effective_speed_mode);
+    g_main_ctx.CoreCtx->vr_set_speed_mode(effective_speed_mode);
 }
 
 void AppActions::load_rom_from_path(const std::filesystem::path &path)
 {
     ThreadPool::submit_task([=] {
-        const auto result = g_main_ctx.core_ctx->vr_start_rom(path);
+        const auto result = g_main_ctx.CoreCtx->vr_start_rom(path);
         CoreUtils::show_error_dialog_for_result(result);
     });
 }
@@ -99,7 +99,7 @@ void AppActions::load_rom_from_path(const std::filesystem::path &path)
 
 static void stub()
 {
-    DialogService::show_dialog("ActionManager::stub", "Stub", fsvc_error);
+    DialogService::show_dialog("ActionManager::stub", "Stub", CoreMessageTone::Error);
 }
 
 #pragma region File
@@ -144,7 +144,7 @@ static void close_rom()
 
     ThreadPool::submit_task(
         [] {
-            const auto result = g_main_ctx.core_ctx->vr_close_rom(true);
+            const auto result = g_main_ctx.CoreCtx->vr_close_rom(true);
             CoreUtils::show_error_dialog_for_result(result);
         },
         ASYNC_KEY_CLOSE_ROM);
@@ -153,13 +153,13 @@ static void close_rom()
 static void reset_rom()
 {
     const bool reset_will_continue_recording =
-        g_config.core.is_reset_recording_enabled && g_main_ctx.core_ctx->vcr_get_task() == task_recording;
+        g_config.core.is_reset_recording_enabled && g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Recording;
 
     if (!reset_will_continue_recording && !confirm_user_exit()) return;
 
     ThreadPool::submit_task(
         [] {
-            const auto result = g_main_ctx.core_ctx->vr_reset_rom(false, true);
+            const auto result = g_main_ctx.CoreCtx->vr_reset_rom(false, true);
             CoreUtils::show_error_dialog_for_result(result);
         },
         ASYNC_KEY_RESET_ROM);
@@ -167,7 +167,7 @@ static void reset_rom()
 
 static void refresh_rombrowser()
 {
-    if (!g_main_ctx.core_ctx->vr_get_launched())
+    if (!g_main_ctx.CoreCtx->vr_get_launched())
     {
         RomBrowser::build();
     }
@@ -189,28 +189,28 @@ static void pause_emu()
     {
         if (g_main_ctx.paused_before_menu)
         {
-            g_main_ctx.core_ctx->vr_resume_emu();
+            g_main_ctx.CoreCtx->vr_resume_emu();
             g_main_ctx.paused_before_menu = false;
             return;
         }
         g_main_ctx.paused_before_menu = true;
-        g_main_ctx.core_ctx->vr_pause_emu();
+        g_main_ctx.CoreCtx->vr_pause_emu();
     }
     else
     {
-        if (g_main_ctx.core_ctx->vr_get_paused())
+        if (g_main_ctx.CoreCtx->vr_get_paused())
         {
-            g_main_ctx.core_ctx->vr_resume_emu();
+            g_main_ctx.CoreCtx->vr_resume_emu();
             return;
         }
-        g_main_ctx.core_ctx->vr_pause_emu();
+        g_main_ctx.CoreCtx->vr_pause_emu();
     }
 }
 
 static void increment_speed(const int value)
 {
     g_config.core.fps_modifier = std::clamp(g_config.core.fps_modifier + value, 5, 1000);
-    g_main_ctx.core_ctx->vr_on_speed_modifier_changed();
+    g_main_ctx.CoreCtx->vr_on_speed_modifier_changed();
     Messenger::broadcast<Messenger::Message::SpeedModifierChanged>(g_config.core.fps_modifier);
 }
 
@@ -227,7 +227,7 @@ static void speed_up()
 static void speed_reset()
 {
     g_config.core.fps_modifier = 100;
-    g_main_ctx.core_ctx->vr_on_speed_modifier_changed();
+    g_main_ctx.CoreCtx->vr_on_speed_modifier_changed();
     Messenger::broadcast<Messenger::Message::SpeedModifierChanged>(g_config.core.fps_modifier);
 }
 
@@ -236,8 +236,8 @@ static void frame_advance()
     g_main_ctx.fast_forward = false;
     AppActions::update_core_fast_forward();
 
-    g_main_ctx.core_ctx->vr_frame_advance(1);
-    g_main_ctx.core_ctx->vr_resume_emu();
+    g_main_ctx.CoreCtx->vr_frame_advance(1);
+    g_main_ctx.CoreCtx->vr_resume_emu();
 }
 
 static void multi_frame_advance_direct(const ActionManager::action_argument_map &params)
@@ -246,16 +246,16 @@ static void multi_frame_advance_direct(const ActionManager::action_argument_map 
 
     if (count > 0)
     {
-        g_main_ctx.core_ctx->vr_frame_advance(count);
+        g_main_ctx.CoreCtx->vr_frame_advance(count);
     }
     else
     {
         ThreadPool::submit_task([=] {
-            const auto result = g_main_ctx.core_ctx->vcr_begin_seek(std::to_string(count), true);
+            const auto result = g_main_ctx.CoreCtx->vcr_begin_seek(std::to_string(count), true);
             CoreUtils::show_error_dialog_for_result(result);
         });
     }
-    g_main_ctx.core_ctx->vr_resume_emu();
+    g_main_ctx.CoreCtx->vr_resume_emu();
 }
 
 static void multi_frame_advance()
@@ -283,45 +283,45 @@ static bool fastforward_active()
 
 static void gs_button_enable()
 {
-    g_main_ctx.core_ctx->vr_set_gs_button(true);
+    g_main_ctx.CoreCtx->vr_set_gs_button(true);
     ActionManager::notify_active_changed(AppActions::GS_BUTTON);
 }
 
 static void gs_button_disable()
 {
-    g_main_ctx.core_ctx->vr_set_gs_button(false);
+    g_main_ctx.CoreCtx->vr_set_gs_button(false);
     ActionManager::notify_active_changed(AppActions::GS_BUTTON);
 }
 
 static bool gs_button_active()
 {
-    if (!g_main_ctx.core_ctx->vr_get_core_executing())
+    if (!g_main_ctx.CoreCtx->vr_get_core_executing())
     {
         return false;
     }
-    return g_main_ctx.core_ctx->vr_get_gs_button();
+    return g_main_ctx.CoreCtx->vr_get_gs_button();
 }
 
 static void save_slot()
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     if (g_config.increment_slot)
     {
         g_config.st_slot >= 9 ? g_config.st_slot = 0 : g_config.st_slot++;
         Messenger::broadcast<Messenger::Message::SlotChanged>((size_t)g_config.st_slot);
     }
     ThreadPool::submit_task([=] {
-        g_main_ctx.core_ctx->vr_wait_decrement();
-        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_save, nullptr, false);
+        g_main_ctx.CoreCtx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->st_do_file(get_st_with_slot_path(g_config.st_slot), CoreSTJob::Save, nullptr, false);
     });
 }
 
 static void load_slot()
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
-        g_main_ctx.core_ctx->vr_wait_decrement();
-        g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_load, nullptr, false);
+        g_main_ctx.CoreCtx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->st_do_file(get_st_with_slot_path(g_config.st_slot), CoreSTJob::Load, nullptr, false);
     });
 }
 
@@ -335,10 +335,10 @@ static void save_state_as()
         return;
     }
 
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
-        g_main_ctx.core_ctx->vr_wait_decrement();
-        (void)g_main_ctx.core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
+        g_main_ctx.CoreCtx->vr_wait_decrement();
+        (void)g_main_ctx.CoreCtx->st_do_file(path, CoreSTJob::Save, nullptr, false);
     });
 }
 
@@ -353,21 +353,21 @@ static void load_state_as()
         return;
     }
 
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
-        g_main_ctx.core_ctx->vr_wait_decrement();
-        (void)g_main_ctx.core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
+        g_main_ctx.CoreCtx->vr_wait_decrement();
+        (void)g_main_ctx.CoreCtx->st_do_file(path, CoreSTJob::Load, nullptr, false);
     });
 }
 
 static void undo_load_state()
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
 
         std::vector<uint8_t> buf{};
-        g_main_ctx.core_ctx->st_get_undo_savestate(buf);
+        g_main_ctx.CoreCtx->st_get_undo_savestate(buf);
 
         if (buf.empty())
         {
@@ -375,16 +375,16 @@ static void undo_load_state()
             return;
         }
 
-        (void)g_main_ctx.core_ctx->st_do_memory(
-            buf, core_st_job_load,
-            [](const core_st_callback_info &info, auto) {
-                if (info.result == Res_Ok)
+        (void)g_main_ctx.CoreCtx->st_do_memory(
+            buf, CoreSTJob::Load,
+            [](const CoreSTCallbackInfo &info, auto) {
+                if (info.result == CoreResult::Res_Ok)
                 {
                     Statusbar::post("Undid load");
                     return;
                 }
 
-                if (info.result == Res_Cancelled)
+                if (info.result == CoreResult::Res_Cancelled)
                 {
                     return;
                 }
@@ -417,7 +417,7 @@ static void multi_frame_advance_decrement()
 
 static void multi_frame_advance_reset()
 {
-    g_config.multi_frame_advance_count = Config::default_config().multi_frame_advance_count;
+    g_config.multi_frame_advance_count = AppConfig::default_config().multi_frame_advance_count;
     Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
 }
 
@@ -489,7 +489,7 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
         return;
     }
 
-    const auto file_info = g_main_ctx.core_ctx->vcr_get_generated_file_info(path, start_flag);
+    const auto file_info = g_main_ctx.CoreCtx->vcr_get_generated_file_info(path, start_flag);
     const auto any_file_exists = std::filesystem::exists(file_info.movie_path) ||
                                  (!file_info.st_path.empty() && std::filesystem::exists(file_info.st_path)) ||
                                  (!file_info.cht_path.empty() && std::filesystem::exists(file_info.cht_path));
@@ -501,10 +501,10 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
         if (!overwrite) return;
     }
 
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     g_main_ctx.core.submit_task([=] {
-        auto vcr_result = g_main_ctx.core_ctx->vcr_start_record(path, start_flag, author, description);
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        auto vcr_result = g_main_ctx.CoreCtx->vcr_start_record(path, start_flag, author, description);
+        g_main_ctx.CoreCtx->vr_wait_decrement();
         if (!CoreUtils::show_error_dialog_for_result(vcr_result))
         {
             g_config.last_movie_author = author;
@@ -534,10 +534,10 @@ static void start_movie_recording()
 
 static void continue_movie_recording()
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     g_main_ctx.core.submit_task([] {
-        const auto result = g_main_ctx.core_ctx->vcr_continue_recording();
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        const auto result = g_main_ctx.CoreCtx->vcr_continue_recording();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
         CoreUtils::show_error_dialog_for_result(result);
     });
 }
@@ -548,11 +548,11 @@ static void start_movie_playback_direct(const ActionManager::action_argument_map
     const auto author = params.at("author");
     const auto description = params.at("description");
 
-    g_main_ctx.core_ctx->vcr_replace_author_info(path, author.empty() ? std::nullopt : std::optional(author),
+    g_main_ctx.CoreCtx->vcr_replace_author_info(path, author.empty() ? std::nullopt : std::optional(author),
         description.empty() ? std::nullopt : std::optional(description));
 
     ThreadPool::submit_task([=] {
-        const auto result = g_main_ctx.core_ctx->vcr_start_playback(path);
+        const auto result = g_main_ctx.CoreCtx->vcr_start_playback(path);
         CoreUtils::show_error_dialog_for_result(result);
     });
 }
@@ -578,16 +578,16 @@ static void start_movie_playback()
 
 static void stop_movie()
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     g_main_ctx.core.submit_task([] {
-        g_main_ctx.core_ctx->vcr_stop_all();
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->vcr_stop_all();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
     });
 }
 
 static void create_movie_backup()
 {
-    const auto result = g_main_ctx.core_ctx->vcr_write_backup();
+    const auto result = g_main_ctx.CoreCtx->vcr_write_backup();
     CoreUtils::show_error_dialog_for_result(result);
 }
 
@@ -637,7 +637,7 @@ static void show_ram_start()
 {
     BetterEmulationLock lock;
 
-    const auto ram_start_str = std::format("0x{:p}", static_cast<void *>(g_main_ctx.core_ctx->rdram));
+    const auto ram_start_str = std::format("{:p}", static_cast<void *>(g_main_ctx.CoreCtx->rdram));
 
     char proc_name[MAX_PATH] = {0};
     GetModuleFileName(NULL, proc_name, MAX_PATH);
@@ -645,7 +645,7 @@ static void show_ram_start()
     const auto str = std::format("The RAM start is {}.\r\nHow would you like to proceed?", ram_start_str);
 
     const auto result = DialogService::show_multiple_choice_dialog(
-        VIEW_DLG_RAMSTART, {"Copy STROOP config line", "Close"}, str, "Core Information", fsvc_information);
+        VIEW_DLG_RAMSTART, {"Copy STROOP config line", "Close"}, str, "Core Information", CoreMessageTone::Info);
 
     if (result == 0)
     {
@@ -670,9 +670,9 @@ static void show_statistics()
 
 static void stop_tracelog()
 {
-    if (g_main_ctx.core_ctx->tl_active())
+    if (g_main_ctx.CoreCtx->tl_active())
     {
-        g_main_ctx.core_ctx->tl_stop();
+        g_main_ctx.CoreCtx->tl_stop();
     }
 }
 
@@ -690,7 +690,7 @@ static void start_tracelog()
     auto result = MessageBox(g_main_ctx.hwnd, "Should the trace log be generated in a binary format?", "Trace Logger",
         MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
 
-    g_main_ctx.core_ctx->tl_start(path, result == IDYES, false);
+    g_main_ctx.CoreCtx->tl_start(path, result == IDYES, false);
 }
 
 static void show_command_palette()
@@ -710,7 +710,7 @@ static void seek_direct(const ActionManager::action_argument_map &params)
     const auto frame_str = params.at("frame");
 
     ThreadPool::submit_task([=] {
-        const auto result = g_main_ctx.core_ctx->vcr_begin_seek(frame_str, true);
+        const auto result = g_main_ctx.CoreCtx->vcr_begin_seek(frame_str, true);
         CoreUtils::show_error_dialog_for_result(result);
     });
 }
@@ -728,7 +728,7 @@ static void show_piano_roll()
 
 static void screenshot()
 {
-    PluginUtil::screenshot(Config::screenshot_directory());
+    PluginUtil::screenshot(AppConfig::screenshot_directory());
 }
 
 static void start_capture_direct(const ActionManager::action_argument_map &params)
@@ -736,13 +736,12 @@ static void start_capture_direct(const ActionManager::action_argument_map &param
     const auto path = params.at("path");
     const auto ask_preset = params.at("ask_preset") == "1";
 
-    CaptureManager::start_capture(
-        path, (t_config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
-            if (result)
-            {
-                Statusbar::post("Capture started...");
-            }
-        });
+    CaptureManager::start_capture(path, (Config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
+        if (result)
+        {
+            Statusbar::post("Capture started...");
+        }
+    });
 }
 
 static void start_capture_normal()
@@ -812,8 +811,8 @@ static void show_about_dialog()
                      "Copyright ©️ 2026"
                      "\r\n"
                      "Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
-    const auto result =
-        DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", fsvc_information);
+    const auto result = DialogService::show_multiple_choice_dialog(
+        VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", CoreMessageTone::Info);
 
     if (result == 0)
     {
@@ -867,39 +866,40 @@ static void close_all_lua_scripts()
 
 static bool enable_when_emu_launched()
 {
-    return g_main_ctx.core_ctx->vr_get_launched();
+    return g_main_ctx.CoreCtx->vr_get_launched();
 }
 
 static bool disable_when_emu_launched()
 {
-    return !g_main_ctx.core_ctx->vr_get_launched();
+    return !g_main_ctx.CoreCtx->vr_get_launched();
 }
 
 static bool enable_when_emu_launched_and_vcr_active()
 {
-    return g_main_ctx.core_ctx->vr_get_launched() && g_main_ctx.core_ctx->vcr_get_task() != task_idle;
+    return g_main_ctx.CoreCtx->vr_get_launched() && g_main_ctx.CoreCtx->vcr_get_task() != CoreVCRTask::Idle;
 }
 
 static bool enable_during_playback()
 {
-    const auto task = g_main_ctx.core_ctx->vcr_get_task();
-    return g_main_ctx.core_ctx->vr_get_launched() && (task == task_playback || task == task_start_playback_from_reset ||
-                                                         task == task_start_playback_from_snapshot);
+    const auto task = g_main_ctx.CoreCtx->vcr_get_task();
+    return g_main_ctx.CoreCtx->vr_get_launched() &&
+           (task == CoreVCRTask::Playback || task == CoreVCRTask::StartPlaybackFromReset ||
+               task == CoreVCRTask::StartPlaybackFromSnapshot);
 }
 
 static bool enable_when_emu_launched_and_capturing()
 {
-    return g_main_ctx.core_ctx->vr_get_launched() && CaptureManager::is_capturing();
+    return g_main_ctx.CoreCtx->vr_get_launched() && CaptureManager::is_capturing();
 }
 
 static bool enable_when_emu_launched_and_core_is_pure_interpreter()
 {
-    return g_main_ctx.core_ctx->vr_get_launched() && g_config.core.core_type == 2;
+    return g_main_ctx.CoreCtx->vr_get_launched() && g_config.core.core_type == 2;
 }
 
 static bool enable_when_tracelog_active()
 {
-    return g_main_ctx.core_ctx->tl_active();
+    return g_main_ctx.CoreCtx->tl_active();
 }
 
 static bool always_enabled()
@@ -922,10 +922,10 @@ static void add_action_with_up(const std::string &path, const Hotkey &default_ho
         .get_enabled = get_enabled,
         .get_active = get_active,
     });
-    NEED(success, std::format("Failed to add action for path '{}'.", path));
+    need(success, std::format("Failed to add action for path '{}'.", path));
 
     success = ActionManager::associate_hotkey(path, default_hotkey, false);
-    NEED(success, std::format("Failed to associate hotkey for path '{}'.", path));
+    need(success, std::format("Failed to associate hotkey for path '{}'.", path));
 }
 
 static void add_action(const std::string &path, const Hotkey &default_hotkey, const std::function<void()> &callback,
@@ -937,7 +937,7 @@ static void add_action(const std::string &path, const Hotkey &default_hotkey, co
 
 static void add_action(const std::string &path,
     const std::function<void(const ActionManager::action_argument_map &)> &callback,
-    const std::vector<ActionManager::t_action_param> &params, const std::function<bool()> &get_enabled = {},
+    const std::vector<ActionManager::ActionParam> &params, const std::function<bool()> &get_enabled = {},
     const std::function<bool()> &get_active = {}, const std::function<std::string()> &get_display_name = {})
 {
     bool success = ActionManager::add({
@@ -948,10 +948,10 @@ static void add_action(const std::string &path,
         .get_enabled = get_enabled,
         .get_active = get_active,
     });
-    NEED(success, std::format("Failed to add action for path '{}'.", path));
+    need(success, std::format("Failed to add action for path '{}'.", path));
 
     success = ActionManager::associate_hotkey(path, Hotkey::make_empty(), false);
-    NEED(success, std::format("Failed to associate hotkey for path '{}'.", path));
+    need(success, std::format("Failed to associate hotkey for path '{}'.", path));
 }
 
 static void generate_path_recent_menu(const std::string &base_path, const Hotkey &load_first_hotkey,
@@ -1024,7 +1024,7 @@ void AppActions::add()
     ActionManager::begin_batch_work();
 
     add_action(LOAD_ROM_DIRECT, load_rom_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::rom_path},
         });
     add_action(LOAD_ROM, Hotkey(*HotkeyUtils::vk_to_trigger('O'), true), load_rom);
@@ -1064,21 +1064,21 @@ void AppActions::add()
         const int32_t save_key = i < 9 ? '1' + i : '0';
         const int32_t load_key = VK_F1 + i;
 
-        const auto do_work = [=](const core_st_job job) {
-            g_main_ctx.core_ctx->vr_wait_increment();
+        const auto do_work = [=](const CoreSTJob job) {
+            g_main_ctx.CoreCtx->vr_wait_increment();
 
             g_config.st_slot = i;
             Messenger::broadcast<Messenger::Message::SlotChanged>((size_t)g_config.st_slot);
 
             ThreadPool::submit_task([=] {
-                g_main_ctx.core_ctx->vr_wait_decrement();
-                g_main_ctx.core_ctx->st_do_file(get_st_with_slot_path(i), job, nullptr, false);
+                g_main_ctx.CoreCtx->vr_wait_decrement();
+                g_main_ctx.CoreCtx->st_do_file(get_st_with_slot_path(i), job, nullptr, false);
             });
         };
 
-        const auto save = [=] { do_work(core_st_job_save); };
+        const auto save = [=] { do_work(CoreSTJob::Save); };
 
-        const auto load = [=] { do_work(core_st_job_load); };
+        const auto load = [=] { do_work(CoreSTJob::Load); };
 
         size_t visual_slot = i + 1;
         add_action(std::vformat(SAVE_SLOT_X, std::make_format_args(visual_slot)),
@@ -1109,7 +1109,7 @@ void AppActions::add()
     add_action(SETTINGS, Hotkey(*HotkeyUtils::vk_to_trigger('S'), true), show_settings_dialog);
 
     add_action(START_MOVIE_RECORDING_DIRECT, start_movie_recording_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::nonempty},
             {.key = "start_flag", .name = "Start Flag", .validator = Validators::int32_t},
             {.key = "author", .name = "Author (optional)", .validator = Validators::none},
@@ -1119,7 +1119,7 @@ void AppActions::add()
     add_action(START_MOVIE_RECORDING, Hotkey(*HotkeyUtils::vk_to_trigger('R'), true, true), start_movie_recording,
         enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::existing_path},
             {.key = "author", .name = "Author (optional)", .validator = Validators::none},
             {.key = "description", .name = "Description (optional)", .validator = Validators::none},
@@ -1143,7 +1143,7 @@ void AppActions::add()
     add_action(PIANO_ROLL, Hotkey::make_empty(), show_piano_roll, enable_when_emu_launched);
     add_action(CHEATS, Hotkey::make_empty(), show_cheat_dialog, enable_when_emu_launched);
     add_action(SEEK_TO_DIRECT, seek_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "frame", .name = "Frame", .validator = Validators::seek_str},
         },
         enable_when_emu_launched_and_vcr_active);
@@ -1155,7 +1155,7 @@ void AppActions::add()
         enable_when_emu_launched_and_core_is_pure_interpreter);
     add_action(STOP_TRACE_LOGGER, Hotkey::make_empty(), stop_tracelog, enable_when_tracelog_active);
     add_action(VIDEO_CAPTURE_START_DIRECT, start_capture_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::nonempty},
             {.key = "ask_preset", .name = "Ask for preset?", .validator = Validators::boolean},
         },
@@ -1169,7 +1169,7 @@ void AppActions::add()
     add_action(ABOUT, Hotkey::make_empty(), show_about_dialog);
 
     add_action(LOAD_SCRIPT_DIRECT, load_script_direct,
-        std::vector<ActionManager::t_action_param>{
+        std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::existing_path},
         });
     add_action(SHOW_INSTANCES, Hotkey(*HotkeyUtils::vk_to_trigger('N'), true), show_lua_dialog);

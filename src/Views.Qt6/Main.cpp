@@ -4,48 +4,61 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "QtIconImageProvider.hpp"
+#include <Common/VersionNameHelpers.hpp>
 #include <Common.Views/App.hpp>
 
-#include <print>
-
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
+#include <QSettings>
+#include <QTranslator>
 #include <QtQml/QQmlExtensionPlugin>
 
-Q_IMPORT_QML_PLUGIN(UtilsPlugin)
+#include <QQuickStyle>
+
+Q_IMPORT_QML_PLUGIN(ActionsPlugin)
 Q_IMPORT_QML_PLUGIN(CorePlugin)
+Q_IMPORT_QML_PLUGIN(ComponentsPlugin)
+Q_IMPORT_QML_PLUGIN(ConfigPlugin)
+Q_IMPORT_QML_PLUGIN(UtilsPlugin)
 
-static int cli_main(int argc, char *argv[])
+namespace
 {
-    using namespace std::literals;
-    if (argc != 2)
-    {
-        std::println("usage: {} [path to ROM]", argv[0]);
-        return 1;
-    }
+using namespace Qt::Literals;
+constexpr QLatin1StringView ORG_DOMAIN = "mupen64.com"_L1;
+constexpr QLatin1StringView ORG_NAME = "Mupen64"_L1;
+constexpr QLatin1StringView DESKTOP_FILE_NAME = "mupen64-rr-lua"_L1;
+constexpr QLatin1StringView DISPLAY_NAME = "Mupen64"_L1;
 
-    // auto context =
-
-    // auto res1 = Core::context()->vr_start_rom(argv[1]);
-    // std::println("result: {}", (int)res1);
-    // std::this_thread::sleep_for(10s);
-    // Core::context()->vr_close_rom(true);
-    return 0;
-}
+} // namespace
 
 static int qt_main(int argc, char *argv[])
 {
     using namespace Qt::Literals;
 
-#ifdef __linux__
-    // use xdg-desktop-portal for platform dialogs where possible
-    if (qgetenv("QT_QPA_PLATFORMTHEME").isEmpty())
-    {
-        qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
-    }
-#endif
+    // NOTE: QApplication is used here specifically to ensure KDE's desktop styles are loaded.
+    // When a QGuiApplication is used, KDE switches to its fallback Breeze theme, which
+    // is slightly bugged.
+    // TODO: provide and package .desktop file for Linux.
+    QApplication app(argc, argv);
+    QApplication::setOrganizationDomain(ORG_DOMAIN);
+    QApplication::setOrganizationName(ORG_NAME);
+    QApplication::setApplicationName(DESKTOP_FILE_NAME);
+    QApplication::setApplicationVersion(CURRENT_VERSION);
+    QApplication::setApplicationDisplayName(DISPLAY_NAME);
 
-    QGuiApplication app(argc, argv);
+    // Load fallback translations first
+    auto *fallbackTranslator = new QTranslator(&app);
+    if (!fallbackTranslator->load("mupen64-rr_en.qm", ":/i18n"))
+        throw std::runtime_error("failed to load fallback translations");
+    QApplication::installTranslator(fallbackTranslator);
+
+    // Load potential localized translations after
+    auto *translator = new QTranslator(&app);
+    if (translator->load(QLocale(), "mupen64-rr", "_", ":/i18n"))
+        QApplication::installTranslator(translator);
+    else
+        delete translator;
+
     QQmlApplicationEngine engine;
 
     // Close if object creation fails
@@ -56,6 +69,11 @@ static int qt_main(int argc, char *argv[])
             QCoreApplication::exit(-1);
         },
         Qt::QueuedConnection);
+
+#if defined(_WIN32)
+    // Windows: default to Fusion, as the system theme isn't exactly nice.
+    QQuickStyle::setStyle("Fusion");
+#endif
 
     // provider for system icons
     engine.addImageProvider(u"icons"_s, new QtIconImageProvider);

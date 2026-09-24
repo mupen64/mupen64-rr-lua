@@ -15,26 +15,26 @@ namespace details
 {
 template <class T> struct SignalFnTraits
 {
-    static constexpr bool IS_VALID = false;
+    static constexpr bool is_valid = false;
 };
 
 template <class C> struct SignalFnTraits<void (C::*)()>
 {
-    static constexpr bool IS_VALID = true;
+    static constexpr bool is_valid = true;
     using Class = C;
     using Return = void;
 };
 
 template <class C, class Arg0> struct SignalFnTraits<void (C::*)(Arg0)>
 {
-    static constexpr bool IS_VALID = true;
+    static constexpr bool is_valid = true;
     using Class = C;
     using Return = Arg0;
 };
 
 template <class C, class Arg0> struct SignalFnTraits<void (C::*)(const Arg0 &)>
 {
-    static constexpr bool IS_VALID = true;
+    static constexpr bool is_valid = true;
     using Class = C;
     using Return = Arg0;
 };

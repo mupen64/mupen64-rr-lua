@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 9,
   "include": [
     "cmake/presets/vcpkg-win64.json",
     "cmake/presets/sys-linux.json",

@@ -11,7 +11,7 @@
  */
 namespace MovieDialog
 {
-struct t_result
+struct Result
 {
     HWND hwnd;
     std::filesystem::path path;
@@ -26,6 +26,6 @@ struct t_result
  * \param on_confirm A callback invoked when the user confirms their choices. Returns whether the dialog should close.
  * \return The user's interaction result.
  */
-t_result show(bool readonly, const std::function<bool(const t_result &)> &on_confirm = [](auto &...) { return true; });
+Result show(bool readonly, const std::function<bool(const Result &)> &on_confirm = [](auto &...) { return true; });
 
 } // namespace MovieDialog

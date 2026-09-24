@@ -11,7 +11,7 @@ on:
 jobs:
   build-stable:
     name: Build stable release artifacts
-    uses: $/.github/workflows/build-stable.yml
+    uses: ./.github/workflows/build-stable.yml
   
   draft-release:
     name: Setup draft release

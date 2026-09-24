@@ -63,7 +63,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         Config_LoadConfig();
         break;
     case M64RRSpec::Event::Type::Shutdown:
-        init_count++;
+        init_count--;
         if (init_count > 0) break;
 
         if (!RSP.thread) break;

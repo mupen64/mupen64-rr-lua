@@ -13,14 +13,15 @@
 
 namespace
 {
-const std::vector<std::string> ALWAYS_LOUD_IDS = {VIEW_DLG_RAMSTART, VIEW_DLG_CONFIRM_SETTINGS_DISCARD};
+const std::vector<std::string> ALWAYS_LOUD_IDS = {VIEW_DLG_RAMSTART, VIEW_DLG_CONFIRM_SETTINGS_DISCARD, VIEW_DLG_ABOUT};
+const std::vector<std::string> NO_DONT_ASK_AGAIN_IDS = {VIEW_DLG_RAMSTART, VIEW_DLG_ABOUT};
 StrUtils::unordered_string_map<size_t> dialog_choice_map;
 } // namespace
 
 namespace DialogService
 {
 size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices, std::string_view str,
-    std::optional<std::string_view> title, core_dialog_type type, void *hwnd, std::optional<std::string_view> details)
+    std::optional<std::string_view> title, CoreMessageTone type, void *hwnd, std::optional<std::string_view> details)
 {
     const auto wstr = IOUtils::to_wide_string(str);
     const auto wtitle = title ? std::make_optional(IOUtils::to_wide_string(*title)) : std::nullopt;
@@ -32,7 +33,7 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
 
     if (silenced)
     {
-        NEED(g_config.silent_mode_dialog_choices.contains(std::string(id)),
+        need(g_config.silent_mode_dialog_choices.contains(std::string(id)),
             std::format("Expected silent mode dialog choice for '{}'", id));
         const auto default_index = g_config.silent_mode_dialog_choices[std::string(id)];
         g_view_logger->trace(
@@ -60,13 +61,13 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
     auto icon = TD_ERROR_ICON;
     switch (type)
     {
-    case fsvc_error:
+    case CoreMessageTone::Error:
         icon = TD_ERROR_ICON;
         break;
-    case fsvc_warning:
+    case CoreMessageTone::Warn:
         icon = TD_WARNING_ICON;
         break;
-    case fsvc_information:
+    case CoreMessageTone::Info:
         icon = TD_INFORMATION_ICON;
         break;
     }
@@ -79,8 +80,12 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
         .pszContent = wstr.c_str(),
         .cButtons = (UINT)buttons.size(),
         .pButtons = buttons.data(),
-        .pszVerificationText = L"Don't show again",
     };
+
+    if (std::ranges::find(NO_DONT_ASK_AGAIN_IDS, id) == NO_DONT_ASK_AGAIN_IDS.end())
+    {
+        task_dialog_config.pszVerificationText = L"Don't show again";
+    }
 
     if (wdetails)
     {
@@ -94,7 +99,7 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
     BOOL dont_show_again = false;
     TaskDialogIndirect(&task_dialog_config, &pressed_button, nullptr, &dont_show_again);
 
-    if (dont_show_again)
+    if (dont_show_again && std::ranges::find(NO_DONT_ASK_AGAIN_IDS, id) == NO_DONT_ASK_AGAIN_IDS.end())
     {
         // directly construct key
         dialog_choice_map.emplace(
@@ -111,24 +116,24 @@ bool show_ask_dialog(
     std::string_view id, std::string_view str, std::optional<std::string_view> title, bool warning, void *hwnd)
 {
     return show_multiple_choice_dialog(
-               id, {"Yes", "No"}, str, title, warning ? fsvc_warning : fsvc_information, hwnd) == 0;
+               id, {"Yes", "No"}, str, title, warning ? CoreMessageTone::Warn : CoreMessageTone::Info, hwnd) == 0;
 }
 
-void show_dialog(std::string_view str, std::optional<std::string_view> title, core_dialog_type type, void *hwnd)
+void show_dialog(std::string_view str, std::optional<std::string_view> title, CoreMessageTone type, void *hwnd)
 {
     int icon = 0;
 
     switch (type)
     {
-    case fsvc_error:
+    case CoreMessageTone::Error:
         g_view_logger->error("[FrontendService] {}", str);
         icon = MB_ICONERROR;
         break;
-    case fsvc_warning:
+    case CoreMessageTone::Warn:
         g_view_logger->warn("[FrontendService] {}", str);
         icon = MB_ICONWARNING;
         break;
-    case fsvc_information:
+    case CoreMessageTone::Info:
         g_view_logger->info("[FrontendService] {}", str);
         icon = MB_ICONINFORMATION;
         break;
@@ -148,7 +153,7 @@ void show_statusbar(std::string_view str)
     Statusbar::post(std::string(str));
 }
 
-void show_notification(std::string str, std::optional<std::string> title, core_dialog_type type)
+void show_notification(std::string str, std::optional<std::string> title, CoreMessageTone type)
 {
     Toasts::show({str, title, type});
 }

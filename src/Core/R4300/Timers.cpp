@@ -6,7 +6,7 @@
 
 #include <Core.hpp>
 #include <R4300/Timers.hpp>
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include <Memory/Pif.hpp>
 #include <R4300/R4300.hpp>
 
@@ -21,10 +21,10 @@ struct timer_state
     time_point last_vi_time{};
     time_point last_frame_time{};
 
-    core_timer_delta frame_deltas[core_timer_max_deltas]{};
+    CoreTimerDelta frame_deltas[core_timer_max_deltas]{};
     std::mutex frame_deltas_mtx{};
 
-    core_timer_delta vi_deltas[core_timer_max_deltas]{};
+    CoreTimerDelta vi_deltas[core_timer_max_deltas]{};
     std::mutex vi_deltas_mtx{};
 };
 
@@ -35,7 +35,7 @@ static timer_state timer{};
  * \param times A circular buffer of deltas
  * \return The average rate per second from the delta in the queue
  */
-static float get_rate_per_second_from_deltas(const std::span<core_timer_delta> &times)
+static float get_rate_per_second_from_deltas(const std::span<CoreTimerDelta> &times)
 {
     size_t count = 0;
     float sum = 0.0f;

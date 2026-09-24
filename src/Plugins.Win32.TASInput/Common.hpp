@@ -7,9 +7,9 @@
 #pragma warning(push, 0)
 
 #include <Common/VersionNameHelpers.hpp>
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 #include <Common.Win32/Common.hpp>
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 #include <Resource.h>
 #pragma warning(pop)
 

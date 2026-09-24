@@ -23,7 +23,7 @@ void EmuDisplay::reserveSize(uint32_t width, uint32_t height)
 
 void EmuDisplay::readPixels()
 {
-    static int s_counter = 10;
+    static int counter = 10;
 
     if (m_context == nullptr) return;
     m_context->readVideoOutput(m_frame);
@@ -33,6 +33,9 @@ void EmuDisplay::readPixels()
 QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
     auto *window = this->window();
+
+    if (m_frame.isNull()) return nullptr;
+
     auto *imageNode = (oldNode) ? static_cast<QSGImageNode *>(oldNode) : window->createImageNode();
 
     // set texture from current frame

@@ -38,13 +38,13 @@ inline bool operator==(const SDL_GUID &a, const SDL_GUID &b)
     return std::memcmp(a.data, b.data, sizeof(a.data)) == 0;
 }
 
-struct t_axis_mapping
+struct AxisMapping
 {
     int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
     int32_t key_negative = 0;
     int32_t key_positive = 0;
 
-    friend void to_json(nlohmann::json &j, const t_axis_mapping &self)
+    friend void to_json(nlohmann::json &j, const AxisMapping &self)
     {
 #define TASINPUT_FIELD(field) {#field, self.field}
         j = nlohmann::json::object({
@@ -55,7 +55,7 @@ struct t_axis_mapping
 #undef TASINPUT_FIELD
     }
 
-    friend void from_json(const nlohmann::json &j, t_axis_mapping &self)
+    friend void from_json(const nlohmann::json &j, AxisMapping &self)
     {
 #define TASINPUT_FIELD(field) .field = j[#field]
         self = {
@@ -67,63 +67,78 @@ struct t_axis_mapping
     }
 };
 
-struct t_button_mapping
+struct ButtonMapping
 {
     int32_t button = SDL_GAMEPAD_BUTTON_INVALID;
     int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
+    int32_t axis_direction = 0;
+    int32_t hat = -1;
+    int32_t hat_mask = SDL_HAT_CENTERED;
     int32_t key = 0;
 
-    friend void to_json(nlohmann::json &j, const t_button_mapping &self)
+    friend void to_json(nlohmann::json &j, const ButtonMapping &self)
     {
 #define TASINPUT_FIELD(field) {#field, self.field}
         j = nlohmann::json::object({
             TASINPUT_FIELD(button),
             TASINPUT_FIELD(axis),
+            TASINPUT_FIELD(axis_direction),
+            TASINPUT_FIELD(hat),
+            TASINPUT_FIELD(hat_mask),
             TASINPUT_FIELD(key),
         });
 #undef TASINPUT_FIELD
     }
 
-    friend void from_json(const nlohmann::json &j, t_button_mapping &self)
+    friend void from_json(const nlohmann::json &j, ButtonMapping &self)
     {
 #define TASINPUT_FIELD(field) .field = j[#field]
         self = {
-            TASINPUT_FIELD(button),
-            TASINPUT_FIELD(axis),
-            TASINPUT_FIELD(key),
+            .button = j.at("button"),
+            .axis = j.at("axis"),
+            .axis_direction = j.value("axis_direction", 0),
+            .hat = j.value("hat", -1),
+            .hat_mask = j.value("hat_mask", static_cast<int32_t>(SDL_HAT_CENTERED)),
+            .key = j.at("key"),
         };
 #undef TASINPUT_FIELD
     }
 };
 
-struct t_controller_config
+struct ControllerConfig
 {
-    t_button_mapping dpad_right{};
-    t_button_mapping dpad_left{};
-    t_button_mapping dpad_down{};
-    t_button_mapping dpad_up{};
+    ButtonMapping dpad_right{};
+    ButtonMapping dpad_left{};
+    ButtonMapping dpad_down{};
+    ButtonMapping dpad_up{};
 
-    t_button_mapping c_right{};
-    t_button_mapping c_left{};
-    t_button_mapping c_down{};
-    t_button_mapping c_up{};
+    ButtonMapping c_right{};
+    ButtonMapping c_left{};
+    ButtonMapping c_down{};
+    ButtonMapping c_up{};
 
-    t_button_mapping a{};
-    t_button_mapping b{};
-    t_button_mapping z{};
-    t_button_mapping start{};
-    t_button_mapping l{};
-    t_button_mapping r{};
+    ButtonMapping a{};
+    ButtonMapping b{};
+    ButtonMapping z{};
+    ButtonMapping start{};
+    ButtonMapping l{};
+    ButtonMapping r{};
 
-    t_axis_mapping x{};
-    t_axis_mapping y{};
+    AxisMapping x{};
+    AxisMapping y{};
 
     float x_scale = 1.0f;
     float y_scale = 1.0f;
 
-    static t_controller_config gamepad_config()
+    ButtonMapping mag1{};
+    ButtonMapping mag2{};
+
+    uint32_t mag1_val = 54;
+    uint32_t mag2_val = 16;
+
+    static ControllerConfig gamepad_config()
     {
-        t_controller_config config{};
+        ControllerConfig config{};
         config.a = {.button = SDL_GAMEPAD_BUTTON_SOUTH};
         config.b = {.button = SDL_GAMEPAD_BUTTON_EAST};
         config.start = {.button = SDL_GAMEPAD_BUTTON_START};
@@ -140,12 +155,14 @@ struct t_controller_config
         config.c_right = {};
         config.x = {.axis = SDL_GAMEPAD_AXIS_LEFTX};
         config.y = {.axis = SDL_GAMEPAD_AXIS_LEFTY};
+        config.mag1 = {};
+        config.mag2 = {};
         return config;
     }
 
-    static t_controller_config keyboard_config()
+    static ControllerConfig keyboard_config()
     {
-        t_controller_config config{};
+        ControllerConfig config{};
         config.a = {.key = VK_SPACE};
         config.b = {.key = 'B'};
         config.start = {.key = VK_RETURN};
@@ -162,10 +179,12 @@ struct t_controller_config
         config.c_right = {.key = VK_RIGHT};
         config.x = {.key_negative = 'A', .key_positive = 'D'};
         config.y = {.key_negative = 'W', .key_positive = 'S'};
+        config.mag1 = {.key = 'M'};
+        config.mag2 = {.key = 'C'};
         return config;
     }
 
-    friend void to_json(nlohmann::json &j, const t_controller_config &self)
+    friend void to_json(nlohmann::json &j, const ControllerConfig &self)
     {
 #define TASINPUT_FIELD(field) {#field, self.field}
         j = nlohmann::json::object({
@@ -187,11 +206,15 @@ struct t_controller_config
             TASINPUT_FIELD(y),
             TASINPUT_FIELD(x_scale),
             TASINPUT_FIELD(y_scale),
+            TASINPUT_FIELD(mag1),
+            TASINPUT_FIELD(mag2),
+            TASINPUT_FIELD(mag1_val),
+            TASINPUT_FIELD(mag2_val),
         });
 #undef TASINPUT_FIELD
     }
 
-    friend void from_json(const nlohmann::json &j, t_controller_config &self)
+    friend void from_json(const nlohmann::json &j, ControllerConfig &self)
     {
 #define TASINPUT_FIELD(field) .field = j[#field]
         self = {
@@ -213,12 +236,16 @@ struct t_controller_config
             TASINPUT_FIELD(y),
             TASINPUT_FIELD(x_scale),
             TASINPUT_FIELD(y_scale),
+            TASINPUT_FIELD(mag1),
+            TASINPUT_FIELD(mag2),
+            TASINPUT_FIELD(mag1_val),
+            TASINPUT_FIELD(mag2_val),
         };
 #undef TASINPUT_FIELD
     }
 };
 
-struct t_input_config
+struct InputConfig
 {
     int32_t version = 7;
     int32_t always_on_top = false;
@@ -234,10 +261,11 @@ struct t_input_config
     int32_t relative_mode = false;
     int32_t approach_mode = false;
     int32_t wrap_joystick = false;
-    t_controller_config controller_config[4] = {t_controller_config::keyboard_config(), {}, {}, {}};
+    ControllerConfig controller_config[4] = {ControllerConfig::keyboard_config(), {}, {}, {}};
     std::optional<SDL_GUID> preferred_device_guid;
+    std::optional<std::string> preferred_device_path;
 
-    friend void to_json(nlohmann::json &j, const t_input_config &self)
+    friend void to_json(nlohmann::json &j, const InputConfig &self)
     {
 #define TASINPUT_FIELD(field) {#field, self.field}
 #define TASINPUT_ARRAY_FIELD(field) nlohmann::to_json(j[#field], self.field)
@@ -252,6 +280,7 @@ struct t_input_config
             TASINPUT_FIELD(approach_mode),
             TASINPUT_FIELD(wrap_joystick),
             TASINPUT_FIELD(preferred_device_guid),
+            TASINPUT_FIELD(preferred_device_path),
         });
         TASINPUT_ARRAY_FIELD(dialog_expanded);
         TASINPUT_ARRAY_FIELD(controller_active);
@@ -262,9 +291,9 @@ struct t_input_config
 #undef TASINPUT_ARRAY_FIELD
     }
 
-    friend void from_json(const nlohmann::json &j, t_input_config &self)
+    friend void from_json(const nlohmann::json &j, InputConfig &self)
     {
-        if (!j.is_object()) throw std::domain_error("t_input_config expected JSON object");
+        if (!j.is_object()) throw std::domain_error("InputConfig expected JSON object");
 #define TASINPUT_FIELD(field) nlohmann::from_json(j.at(#field), self.field)
         self = {};
         TASINPUT_FIELD(version);
@@ -284,12 +313,13 @@ struct t_input_config
             TASINPUT_FIELD(controller_rumblepak);
             TASINPUT_FIELD(controller_config);
             TASINPUT_FIELD(preferred_device_guid);
+            self.preferred_device_path = j.value("preferred_device_path", std::optional<std::string>{});
         }
 #undef TASINPUT_FIELD
     }
 };
 
-extern t_input_config new_config;
+extern InputConfig new_config;
 
 /**
  * \brief Saves the current config to a file

@@ -13,7 +13,7 @@
 #include <R4300/Recomp.hpp>
 #include <Memory/TLB.hpp>
 #include <R4300/Rom.hpp>
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 
 struct r4300
 {
@@ -83,7 +83,7 @@ void update_count();
 int32_t check_cop1_unusable();
 void critical_stop(std::string_view message = "Unknown error");
 
-core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check = false);
+CoreResult vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check = false);
 
 std::filesystem::path vr_get_rom_path();
 void vr_update_effective_speed_mode();
@@ -96,9 +96,9 @@ bool vr_get_paused();
 bool vr_get_frame_advance();
 void vr_wait_increment();
 void vr_wait_decrement();
-core_result vr_start_rom(std::filesystem::path path);
-core_result vr_close_rom(bool stop_vcr);
-core_result vr_reset_rom(bool reset_save_data, bool stop_vcr);
+CoreResult vr_start_rom(std::filesystem::path path);
+CoreResult vr_close_rom(bool stop_vcr);
+CoreResult vr_reset_rom(bool reset_save_data, bool stop_vcr);
 CoreSpeedMode vr_get_speed_mode();
 CoreSpeedMode vr_get_effective_speed_mode();
 void vr_set_speed_mode(CoreSpeedMode mode);

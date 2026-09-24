@@ -80,6 +80,9 @@ include("cmake/workarounds.cmake")
 # make sure pkg-config is available
 find_package(PkgConfig REQUIRED)
 
+# find the Python interpreter
+find_package(Python COMPONENTS Interpreter REQUIRED)
+
 # Common dependencies
 find_package(Catch2 CONFIG REQUIRED)
 find_package(libdeflate CONFIG REQUIRED)
@@ -121,12 +124,17 @@ if(MUPEN64RR_BUILD_QT6)
     find_package(Qt6 CONFIG REQUIRED COMPONENTS
         Core Gui Widgets
         Qml Quick QuickControls2
+        LinguistTools
     )
     qt_policy(SET QTP0001 NEW)
     qt_policy(SET QTP0004 NEW)
     qt_policy(SET QTP0005 NEW)
-    qt_standard_project_setup()
-    
+    qt_standard_project_setup(
+        # I18N_SOURCE_LANGUAGE "en_US"
+        # I18N_TRANSLATED_LANGUAGES
+        # "en_US"
+    )
+
     include(cmake/Windeployqt.cmake)
 endif()
 

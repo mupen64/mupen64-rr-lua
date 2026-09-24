@@ -10,16 +10,16 @@
 #include <Common.Views/IDialogService.hpp>
 #include <components/FilePicker.hpp>
 
-struct t_movie_dialog_context
+struct MovieDialogContext
 {
-    MovieDialog::t_result user_result{};
-    std::function<bool(const MovieDialog::t_result &)> on_confirm{};
+    MovieDialog::Result user_result{};
+    std::function<bool(const MovieDialog::Result &)> on_confirm{};
     bool is_readonly{};
     HWND grid_hwnd{};
     bool is_closing{};
 };
 
-static t_movie_dialog_context g_ctx{};
+static MovieDialogContext g_ctx{};
 
 static size_t count_button_presses(const std::vector<CoreButtons> &buttons, const int mask)
 {
@@ -120,9 +120,8 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         {
             EnableWindow(GetDlgItem(hwnd, id), false);
         }
-        SendMessage(
-            GetDlgItem(hwnd, IDC_INI_DESCRIPTION), EM_SETLIMITTEXT, sizeof(core_vcr_movie_header::description), 0);
-        SendMessage(GetDlgItem(hwnd, IDC_INI_AUTHOR), EM_SETLIMITTEXT, sizeof(core_vcr_movie_header::author), 0);
+        SendMessage(GetDlgItem(hwnd, IDC_INI_DESCRIPTION), EM_SETLIMITTEXT, sizeof(CoreVCRMovieHeader::description), 0);
+        SendMessage(GetDlgItem(hwnd, IDC_INI_AUTHOR), EM_SETLIMITTEXT, sizeof(CoreVCRMovieHeader::author), 0);
 
         SetDlgItemText(hwnd, IDC_INI_AUTHOR, g_config.last_movie_author.c_str());
         SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, "");
@@ -150,14 +149,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDOK: {
             g_config.last_movie_type = g_ctx.user_result.start_flag;
 
-            char author[sizeof(core_vcr_movie_header::author)] = {0};
+            char author[sizeof(CoreVCRMovieHeader::author)] = {0};
             GetDlgItemText(hwnd, IDC_INI_AUTHOR, author, std::size(author));
 
             g_ctx.user_result.author = author;
             if (g_ctx.user_result.author.empty()) g_ctx.user_result.author = "(unspecified)";
             g_config.last_movie_author = g_ctx.user_result.author;
 
-            char description[sizeof(core_vcr_movie_header::description)] = {0};
+            char description[sizeof(CoreVCRMovieHeader::description)] = {0};
             GetDlgItemText(hwnd, IDC_INI_DESCRIPTION, description, std::size(description));
 
             g_ctx.user_result.description = description;
@@ -240,16 +239,16 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return FALSE;
 
 refresh:
-    core_vcr_movie_header header = {};
+    CoreVCRMovieHeader header = {};
 
-    if (g_main_ctx.core_ctx->vcr_parse_header(g_ctx.user_result.path, &header) != Res_Ok)
+    if (g_main_ctx.CoreCtx->vcr_parse_header(g_ctx.user_result.path, &header) != CoreResult::Res_Ok)
     {
         return FALSE;
     }
 
     std::vector<CoreButtons> inputs = {};
 
-    if (g_main_ctx.core_ctx->vcr_read_movie_inputs(g_ctx.user_result.path, inputs) != Res_Ok)
+    if (g_main_ctx.CoreCtx->vcr_read_movie_inputs(g_ctx.user_result.path, inputs) != CoreResult::Res_Ok)
     {
         return FALSE;
     }
@@ -260,7 +259,7 @@ refresh:
 
     metadata.emplace_back(
         std::make_pair("ROM", std::format("{} ({}, {})", (char *)header.rom_name,
-                                  g_main_ctx.core_ctx->vr_country_code_to_country_name(header.rom_country),
+                                  g_main_ctx.CoreCtx->vr_country_code_to_country_name(header.rom_country),
                                   std::format("{:#08x}", header.rom_crc1))));
 
     metadata.emplace_back(
@@ -325,9 +324,9 @@ refresh:
     SetDlgItemText(hwnd, IDC_INI_AUTHOR, header.author);
     SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, header.description);
 
-    CheckDlgButton(hwnd, IDC_RADIO_FROM_ST, header.startFlags == MOVIE_START_FROM_SNAPSHOT);
-    CheckDlgButton(hwnd, IDC_RADIO_FROM_START, header.startFlags == MOVIE_START_FROM_NOTHING);
-    CheckDlgButton(hwnd, IDC_RADIO_FROM_EEPROM, header.startFlags == MOVIE_START_FROM_EEPROM);
+    CheckDlgButton(hwnd, IDC_RADIO_FROM_ST, header.start_flags == MOVIE_START_FROM_SNAPSHOT);
+    CheckDlgButton(hwnd, IDC_RADIO_FROM_START, header.start_flags == MOVIE_START_FROM_NOTHING);
+    CheckDlgButton(hwnd, IDC_RADIO_FROM_EEPROM, header.start_flags == MOVIE_START_FROM_EEPROM);
 
     LVITEM lv_item = {0};
     lv_item.mask = LVIF_TEXT | LVIF_DI_SETITEM;
@@ -352,20 +351,20 @@ refresh:
 
 static std::filesystem::path get_default_movie_path(bool readonly)
 {
-    const auto rom_hdr = g_main_ctx.core_ctx->vr_get_rom_header();
+    const auto rom_hdr = g_main_ctx.CoreCtx->vr_get_rom_header();
 
     if (g_config.recent_movie_paths.empty() || !readonly)
     {
         char rom_name[sizeof(rom_hdr->nom) + 1]{};
         std::memcpy(rom_name, rom_hdr->nom, sizeof(rom_hdr->nom));
-        const auto rom_country = g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code);
+        const auto rom_country = g_main_ctx.CoreCtx->vr_country_code_to_country_name(rom_hdr->Country_code);
         return std::format("{} ({}).m64", rom_name, rom_country);
     }
 
     return g_config.recent_movie_paths[0];
 }
 
-MovieDialog::t_result MovieDialog::show(bool readonly, const std::function<bool(const t_result &)> &on_confirm)
+MovieDialog::Result MovieDialog::show(bool readonly, const std::function<bool(const Result &)> &on_confirm)
 {
     g_ctx.is_readonly = readonly;
     g_ctx.on_confirm = on_confirm;

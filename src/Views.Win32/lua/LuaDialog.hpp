@@ -52,7 +52,7 @@ void load_running_scripts();
  * \param ctx The Lua environment to print to.
  * \param text The text to print.
  */
-void print(const t_lua_environment &ctx, const std::string &text);
+void print(const LuaEnvironment &ctx, const std::string &text);
 
 /**
  * \brief Gets the handle of the Lua manager dialog window, or nullptr if the dialog is not open.
