@@ -4,6 +4,6 @@
 // see the documentation: https://zed.dev/docs/configuring-zed#settings-files
 {
   "file_types": {
-    "XML": ["src/Views.Qt6/Translations/*.ts"]
+    "XML": ["**/Views.Qt6/**/*.ts"]
   }
 }
