@@ -45,8 +45,6 @@ enum class CoreResult
     VCR_NotFromThisMovie,
     // The movie's version is invalid
     VCR_InvalidVersion,
-    // The movie's extended version is invalid
-    VCR_InvalidExtendedVersion,
     // The operation requires a playback or recording task
     VCR_NeedsPlaybackOrRecording,
     // The operation requires a playback task

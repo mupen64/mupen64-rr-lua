@@ -9,6 +9,9 @@
 #include <Core/R4300/R4300.hpp>
 
 static CoreCfg g_cfg{};
+static std::string g_last_notification_message{};
+static std::string g_last_notification_title{};
+static CoreMessageTone g_last_notification_tone{};
 static CoreParams g_core_params{};
 static CoreCtx *g_core_ctx = nullptr;
 
@@ -27,6 +30,7 @@ struct VcrFixture
         g_core_params.input_set_keys = [](int32_t, CoreButtons) {};
         g_core_params.callbacks = {};
         core_create(&g_core_params, &g_core_ctx);
+        g_core_ctx->cht_set_list({});
     }
 };
 
@@ -290,6 +294,42 @@ TEST_CASE_METHOD(VcrFixture, "stores_zero_rcp_lag_factor_when_emulation_is_disab
     REQUIRE(result == CoreResult::Res_Ok);
     REQUIRE(vcr.hdr.extended_data.rcp_lag_factor == 0.0);
     REQUIRE(vcr.hdr.extended_data.rcp_lag_factor != 1.0);
+}
+
+TEST_CASE_METHOD(VcrFixture, "plays_movies_with_future_extended_format_version", "vcr_start_playback")
+{
+    CoreVCRMovieHeader header{};
+    header.magic = 0x1a34364d;
+    header.version = 3;
+    header.extended_version = CoreVCRMovieHeader{}.extended_version + 1;
+    std::memcpy(header.rom_name, ROM_HEADER.nom, sizeof(ROM_HEADER.nom));
+    header.rom_crc1 = ROM_HEADER.CRC1;
+    header.rom_country = ROM_HEADER.Country_code;
+
+    std::ofstream movie("test.m64", std::ios::binary);
+    REQUIRE(movie.good());
+    movie.write(reinterpret_cast<const char *>(&header), sizeof(header));
+    movie.close();
+    REQUIRE(movie.good());
+
+    g_last_notification_message.clear();
+    g_last_notification_title.clear();
+    g_core_params.show_notification = [](const char *message, const char *title, CoreMessageTone tone) {
+        g_last_notification_message = message;
+        g_last_notification_title = title;
+        g_last_notification_tone = tone;
+    };
+
+    const auto previous_core_executing = core_executing;
+    core_executing = true;
+    const auto result = vcr_start_playback("test.m64");
+    core_executing = previous_core_executing;
+    g_core_params.show_notification = [](const auto &...) {};
+
+    REQUIRE(result == CoreResult::Res_Ok);
+    REQUIRE(g_last_notification_message == VCR::extended_format_from_future);
+    REQUIRE(g_last_notification_title == "VCR");
+    REQUIRE(g_last_notification_tone == CoreMessageTone::Warn);
 }
 
 #pragma endregion
@@ -986,6 +1026,7 @@ TEST_CASE_METHOD(VcrFixture, "invokes_task_callback_correctly", "vcr_continue_re
 TEST_CASE_METHOD(VcrFixture, "doesnt_deadlock", "vcr_begin_warp_modify")
 {
     g_cfg.vcr_backups = false;
+    g_cfg.seek_savestate_interval = 100;
 
     vcr.task = CoreVCRTask::Recording;
     vcr.hdr.length_samples = 5;
