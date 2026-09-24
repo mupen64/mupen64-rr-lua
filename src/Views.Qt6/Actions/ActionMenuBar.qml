@@ -21,6 +21,7 @@ MenuBar {
 
         readonly property Component blankMenu: Menu {}
         readonly property Component blankItem: MenuItem {}
+        readonly property Component separator: MenuSeparator {}
 
         function newMenu(menu: EmuMenu): Menu {
             return blankMenu.createObject(null, {
@@ -31,6 +32,9 @@ MenuBar {
             return blankItem.createObject(null, {
                 action: action
             }) as MenuItem;
+        }
+        function newSeparator(action: EmuAction): MenuSeparator {
+            return separator.createObject(null, {}) as MenuSeparator;
         }
 
         function parentKey(key: string): string {
@@ -74,6 +78,9 @@ MenuBar {
                     if (!(parentKey in menuCache))
                         throw Error(`parent menu ${parentKey} does not exist`);
                     menuCache[parentKey].addMenu(viewMenu);
+
+                    if (item.addSeparator)
+                        menuCache[parentKey].addItem(priv.newSeparator());
                 }
             }
             else if (item instanceof EmuAction) {
@@ -90,6 +97,8 @@ MenuBar {
                     throw Error(`parent menu ${parentKey} does not exist`);
 
                 menuCache[parentKey].addItem(viewItem);
+                if (item.addSeparator)
+                    menuCache[parentKey].addItem(priv.newSeparator());
             }
         }
     }

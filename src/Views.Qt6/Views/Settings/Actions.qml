@@ -113,6 +113,7 @@ ActionManager {
         id: actGSButton
         //% "GS Button"
         key: QT_TRID_NOOP("menu.emu.gsButton")
+        addSeparator: true
         defaultShortcut: "G"
         enabled: root.core.launched
         checkable: true
@@ -166,6 +167,7 @@ ActionManager {
     EmuAction {
         //% "Multi-Frame Advance Reset"
         key: QT_TRID_NOOP("menu.emu.multiAdvanceReset")
+        addSeparator: true
         defaultShortcut: "Ctrl+Shift+E"
         enabled: root.core.launched
         onTriggered: {
@@ -187,6 +189,7 @@ ActionManager {
     EmuAction {
         //% "Save as File..."
         key: QT_TRID_NOOP("menu.emu.saveState.file")
+        addSeparator: true
         enabled: root.core.launched
         onTriggered: diaSaveState.open()
     }
@@ -227,6 +230,7 @@ ActionManager {
     EmuAction {
         //% "Load from File..."
         key: QT_TRID_NOOP("menu.emu.loadState.file")
+        addSeparator: true
         enabled: root.core.launched
         onTriggered: diaLoadState.open()
     }

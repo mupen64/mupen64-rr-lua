@@ -15,5 +15,10 @@ Action {
     property var defaultShortcut: null
     property bool addSeparator: false
 
+    onKeyChanged: {
+        if (!key.startsWith("menu."))
+            throw new Error("Action/menu keys must begin with `menu.`");
+    }
+
     text: qsTrId(key)
 }

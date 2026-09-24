@@ -13,4 +13,9 @@ QtObject {
     required property string key
     property string text: qsTrId(key)
     property bool addSeparator: false
+
+    onKeyChanged: {
+        if (!key.startsWith("menu."))
+            throw new Error("Action/menu keys must begin with `menu.`");
+    }
 }
