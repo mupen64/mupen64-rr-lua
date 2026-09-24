@@ -17,9 +17,10 @@ inline constexpr auto rom_name_warning_message = "The movie was recorded on the 
                                                  "'{}'.\r\nPlayback might desynchronize. How do you want to continue?";
 inline constexpr auto rom_country_warning_message = "The movie was recorded on a {} ROM, but is being played back on "
                                                     "{}.\r\nPlayback might desynchronize. How do you want to continue?";
-inline constexpr auto rom_crc_warning_message = "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
-                                                "using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
-                                                "might desynchronize. How do you want to continue?";
+inline constexpr auto rom_crc_warning_message =
+    "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
+    "using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
+    "might desynchronize. How do you want to continue?";
 inline constexpr auto old_movie_extended_section_nonzero_message =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
@@ -37,7 +38,7 @@ inline constexpr auto controller_mempak_rumblepak_mismatch =
     "Controller {} does not have a Memory or Rumble Pak in the movie.\nPlayback might desynchronize.\n";
 inline constexpr auto extended_format_from_future =
     "The movie is from a newer version of Mupen64.\nPlayback might desynchronize.\n";
-}
+} // namespace VCR
 
 struct VCRState
 {
