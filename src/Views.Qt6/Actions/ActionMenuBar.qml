@@ -19,19 +19,53 @@ MenuBar {
 
         property bool opened
 
-        readonly property Component blankMenu: Menu {}
-        readonly property Component blankItem: MenuItem {}
+        readonly property Component blankMenu: Menu {
+            width: {
+                let widest = 160.0;
+                for (let i = 0; i < count; i++) {
+                    let nextItem = itemAt(i);
+                    let nextWidth = nextItem.contentItem.implicitWidth + nextItem.leftPadding + nextItem.rightPadding;
+                    if (nextItem.indicator?.visible ?? false)
+                        nextWidth += nextItem.indicator.implicitWidth + nextItem.leftPadding;
+                    widest = Math.max(widest, nextWidth);
+                }
+                return widest + leftPadding + rightPadding;
+            }
+            delegate: MenuItem {
+                id: menuItem
+                contentItem: Item {
+                    id: cntRoot
+                    implicitWidth: nameLabel.implicitWidth + shortcutLabel.implicitWidth + 20
+                    // implicitHeight: Math.max(nameLabel.height, shortcutLabel.height)
+
+                    anchors.left: (menuItem.indicator.visible) ? menuItem.indicator.right : menuItem.left
+                    anchors.leftMargin: menuItem.leftPadding
+                    anchors.right: menuItem.right
+                    anchors.rightMargin: menuItem.rightPadding
+
+                    Label {
+                        id: nameLabel
+                        text: menuItem.action?.text ?? menuItem.subMenu.title
+
+                        anchors.left: cntRoot.left
+                        anchors.verticalCenter: cntRoot.verticalCenter
+                    }
+                    Label {
+                        id: shortcutLabel
+                        text: menuItem.action?.heldShortcut ?? menuItem.action?.shortcut ?? ""
+
+                        anchors.right: cntRoot.right
+                        anchors.verticalCenter: cntRoot.verticalCenter
+                    }
+                }
+            }
+        }
         readonly property Component separator: MenuSeparator {}
 
         function newMenu(menu: EmuMenu): Menu {
             return blankMenu.createObject(null, {
                 title: Qt.binding(() => menu.text)
             }) as Menu;
-        }
-        function newItem(action: EmuAction): MenuItem {
-            return blankItem.createObject(null, {
-                action: action
-            }) as MenuItem;
         }
         function newSeparator(action: EmuAction): MenuSeparator {
             return separator.createObject(null, {}) as MenuSeparator;
@@ -55,12 +89,12 @@ MenuBar {
         }
         // construct the new menu
         let menuCache = {};
-        let itemCache = {};
+        let actionCache = {};
         for (const item of actions.children) {
             if (item instanceof EmuMenu) {
                 if (item.key in menuCache)
                     throw Error(`menu with name ${item.key} already declared`);
-                if (item.key in itemCache)
+                if (item.key in actionCache)
                     throw Error(`action with name ${item.key} already declared`);
 
                 let viewMenu = priv.newMenu(item);
@@ -82,21 +116,19 @@ MenuBar {
                     if (item.addSeparator)
                         menuCache[parentKey].addItem(priv.newSeparator());
                 }
-            }
-            else if (item instanceof EmuAction) {
+            } else if (item instanceof EmuAction) {
                 if (item.key in menuCache)
                     throw Error(`menu with name ${item.key} already declared`);
-                if (item.key in itemCache)
+                if (item.key in actionCache)
                     throw Error(`action with name ${item.key} already declared`);
 
-                let viewItem = priv.newItem(item);
-                itemCache[item.key] = viewItem;
+                actionCache[item.key] = item;
 
                 let parentKey = priv.parentKey(item.key);
                 if (!(parentKey in menuCache))
                     throw Error(`parent menu ${parentKey} does not exist`);
 
-                menuCache[parentKey].addItem(viewItem);
+                menuCache[parentKey].addAction(item);
                 if (item.addSeparator)
                     menuCache[parentKey].addItem(priv.newSeparator());
             }
