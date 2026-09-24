@@ -21,6 +21,7 @@ using action_filter = ActionManager::action_filter;
 using action_argument_map = ActionManager::action_argument_map;
 
 static constexpr char action_path_separator_placeholder = '\x1f';
+static constexpr std::string_view literal_period_placeholder = "\xee\x80\x80";
 
 struct Action
 {
@@ -49,6 +50,10 @@ struct ActionManagerContext
 };
 
 static ActionManagerContext g_mgr{};
+
+static action_filter normalize_action_segment(std::string_view segment);
+static action_filter restore_display_periods(action_filter text);
+static action_filter normalize_filter_with_flags(const action_filter &filter, bool &has_separator, bool &menu_hidden);
 
 /**
  * \brief Finds all actions using the given filter.
@@ -196,15 +201,7 @@ static std::vector<std::string> update_display_names(const std::vector<Action *>
     for (auto &action : actions)
     {
         const auto &name = action->segments.back();
-        std::string display_name = name;
-
-        const bool has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
-        const bool has_menu_hidden_prefix = name.starts_with(ActionManager::MENU_HIDDEN_PREFIX);
-
-        if (has_separator)
-            display_name = StrUtils::ctrim_string(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
-        if (has_menu_hidden_prefix)
-            display_name = StrUtils::ctrim_string(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
+        std::string display_name = restore_display_periods(name);
 
         const bool has_parameters = !action->add_params.params.empty();
         if (has_parameters) display_name = "> " + display_name;
@@ -259,7 +256,15 @@ static void notify_action_registry_changed()
 
 bool ActionManager::add(const ActionAddParams &params)
 {
-    const auto normalized_path = normalize_filter(params.path);
+    if (params.path.contains(literal_period_placeholder))
+    {
+        g_view_logger->error("ActionManager::add: Action paths cannot contain the reserved period placeholder.");
+        return false;
+    }
+
+    bool has_separator = params.has_separator;
+    bool menu_hidden = params.menu_hidden;
+    const auto normalized_path = normalize_filter_with_flags(params.path, has_separator, menu_hidden);
 
     if (!validate_action_path(normalized_path))
     {
@@ -305,6 +310,8 @@ bool ActionManager::add(const ActionAddParams &params)
     Action action{};
     action.add_params = params;
     action.add_params.path = normalized_path;
+    action.add_params.has_separator = has_separator;
+    action.add_params.menu_hidden = menu_hidden;
     action.segments = segments;
 
     g_mgr.actions.emplace_back(action);
@@ -423,14 +430,9 @@ std::string ActionManager::get_display_name(const action_filter &filter, bool ig
 
     if (actions.empty() || actions.size() > 1)
     {
-        // It's a filter, not a fully-qualified action path. We don't look up anything, but just do some formatting
-        // instead.
-        auto name = get_segments(filter).back();
-        if (name.ends_with(SEPARATOR_SUFFIX))
-        {
-            name = StrUtils::ctrim_string(name.substr(0, name.size() - SEPARATOR_SUFFIX.size()));
-        }
-        return name;
+        const auto normalized_filter = normalize_filter(filter);
+        const auto segments = get_segments(normalized_filter);
+        return segments.empty() ? std::string{} : restore_display_periods(segments.back());
     }
 
     const auto action = actions.front();
@@ -483,6 +485,32 @@ bool ActionManager::get_active(const action_path &path)
     }
 
     return action->active.value();
+}
+
+bool ActionManager::get_has_separator(const action_path &path)
+{
+    Action *action = get_single_action_ptr_matching_path(path);
+
+    if (!action)
+    {
+        g_view_logger->error("ActionManager::get_has_separator: '{}' didn't resolve to an action", path);
+        return false;
+    }
+
+    return action->add_params.has_separator;
+}
+
+bool ActionManager::get_menu_hidden(const action_path &path)
+{
+    Action *action = get_single_action_ptr_matching_path(path);
+
+    if (!action)
+    {
+        g_view_logger->error("ActionManager::get_menu_hidden: '{}' didn't resolve to an action", path);
+        return false;
+    }
+
+    return action->add_params.menu_hidden;
 }
 
 bool ActionManager::get_activatability(const action_path &path)
@@ -557,6 +585,17 @@ std::vector<action_path> ActionManager::get_actions_matching_filter(const action
     return result;
 }
 
+static action_filter restore_display_periods(action_filter text)
+{
+    size_t position = 0;
+    while ((position = text.find(literal_period_placeholder, position)) != std::string::npos)
+    {
+        text.replace(position, literal_period_placeholder.size(), ".");
+        ++position;
+    }
+    return text;
+}
+
 static action_filter normalize_action_segment(const std::string_view segment)
 {
     action_filter normalized;
@@ -565,6 +604,13 @@ static action_filter normalize_action_segment(const std::string_view segment)
     bool pending_separator = false;
     for (size_t i = 0; i < segment.size(); ++i)
     {
+        if (segment.substr(i).starts_with(literal_period_placeholder))
+        {
+            normalized.append(literal_period_placeholder);
+            i += literal_period_placeholder.size() - 1;
+            continue;
+        }
+
         const auto character = static_cast<unsigned char>(segment[i]);
         if (std::isspace(character) || character == '_')
         {
@@ -616,7 +662,11 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
             {
                 split_input += action_path_separator_placeholder;
             }
-            else if (character != '.')
+            else if (character == '.')
+            {
+                split_input.append(literal_period_placeholder);
+            }
+            else
             {
                 split_input += character;
             }
@@ -627,8 +677,8 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
         split_input = filter;
     }
 
-    const std::string separator = uses_legacy_separator ? std::string(1, action_path_separator_placeholder) :
-                                                         SEGMENT_SEPARATOR;
+    const std::string separator =
+        uses_legacy_separator ? std::string(1, action_path_separator_placeholder) : SEGMENT_SEPARATOR;
     auto parts = StrUtils::split_string(split_input, separator) |
                  std::views::transform([](std::string_view part) { return StrUtils::ctrim_string(part); }) |
                  std::views::filter([](std::string_view part) { return !part.empty(); }) |
@@ -640,14 +690,36 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
     return parts;
 }
 
+static action_filter normalize_filter_with_flags(const action_filter &filter, bool &has_separator, bool &menu_hidden)
+{
+    auto parts = ActionManager::get_segments(filter);
+    for (size_t i = 0; i < parts.size(); ++i)
+    {
+        auto &part = parts[i];
+        part = normalize_action_segment(part);
+
+        if (part.starts_with(ActionManager::MENU_HIDDEN_PREFIX))
+        {
+            menu_hidden = true;
+            part.erase(0, ActionManager::MENU_HIDDEN_PREFIX.size());
+        }
+
+        if (i == parts.size() - 1 && part.ends_with(ActionManager::SEPARATOR_SUFFIX))
+        {
+            has_separator = true;
+            part.resize(part.size() - ActionManager::SEPARATOR_SUFFIX.size());
+        }
+    }
+
+    std::erase_if(parts, [](const action_filter &part) { return part.empty(); });
+    return StrUtils::join_string(parts, ActionManager::SEGMENT_SEPARATOR);
+}
+
 ActionManager::action_filter ActionManager::normalize_filter(const action_filter &filter)
 {
-    auto parts = get_segments(filter);
-    for (auto &part : parts)
-    {
-        part = normalize_action_segment(part);
-    }
-    return StrUtils::join_string(parts, SEGMENT_SEPARATOR);
+    bool has_separator = false;
+    bool menu_hidden = false;
+    return normalize_filter_with_flags(filter, has_separator, menu_hidden);
 }
 
 /**

@@ -23,12 +23,12 @@ namespace ActionManager
 const std::string SEGMENT_SEPARATOR = ".";
 
 /**
- * \brief The suffix for action path and filters segments that are used to indicate a separator.
+ * \brief The action-path suffix accepted as the separator flag.
  */
 const std::string SEPARATOR_SUFFIX = "---";
 
 /**
- * \brief The prefix for action paths that are hidden from the menu.
+ * \brief The action-path prefix accepted as the menu-hidden flag.
  */
 const std::string MENU_HIDDEN_PREFIX = "#";
 
@@ -138,14 +138,24 @@ struct ActionAddParams
      * toggled UI state. If null, the action will be considered inactive.
      */
     std::function<bool()> get_active;
+
+    /**
+     * \brief Whether a separator should be displayed after this action.
+     */
+    bool has_separator{};
+
+    /**
+     * \brief Whether this action should be hidden from menus.
+     */
+    bool menu_hidden{};
 };
 
 /**
  * \brief Adds an action to the action registry.
  * If an action with the same path already exists, the operation will fail.
- * If adding the action causes another action to gain a child (e.g. there's an action `a.b`, and we're adding `a.b.c.d`),
- * the operation will fail. To add the action, delete the original action (`a.b`) first. \param params The action
- * parameters. \return Whether the operation succeeded.
+ * If adding the action causes another action to gain a child (e.g. there's an action `a.b`, and we're adding
+ * `a.b.c.d`), the operation will fail. To add the action, delete the original action (`a.b`) first. \param params The
+ * action parameters. \return Whether the operation succeeded.
  */
 bool add(const ActionAddParams &params);
 
@@ -214,6 +224,20 @@ bool get_enabled(const action_path &path);
  * \return The action's active state.
  */
 bool get_active(const action_path &path);
+
+/**
+ * \brief Gets whether a separator should be displayed after an action.
+ * \param path A path.
+ * \return Whether the action has a separator.
+ */
+bool get_has_separator(const action_path &path);
+
+/**
+ * \brief Gets whether an action should be hidden from menus.
+ * \param path A path.
+ * \return Whether the action is hidden from menus.
+ */
+bool get_menu_hidden(const action_path &path);
 
 /**
  * \brief Gets whether an action has been registered with an active state callback.
