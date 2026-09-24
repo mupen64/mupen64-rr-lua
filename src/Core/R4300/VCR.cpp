@@ -1436,23 +1436,26 @@ CoreResult vcr_start_playback(std::filesystem::path path)
     g_core->log_info(std::format("[VCR] Movie has extended version {}", header.extended_version));
 
     const auto sync_data = vcr_get_sync_data_from_header(header);
-    if (!sync_data) g_core->show_notification(extended_format_from_future, "VCR", CoreMessageTone::Warn);
-
-    const auto warnings = vcr_get_sync_warnings(*sync_data);
-
-    // Suspicious! Someone shoved data where it didn't belong...
-    if (header.extended_version == 0 && header.extended_flags.data != 0)
-        g_core->show_notification(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
-
-    if (!warnings.empty())
+    if (!sync_data)
+        g_core->show_notification(extended_format_from_future, "VCR", CoreMessageTone::Warn);
+    else
     {
-        std::string warning = "The movie has different synchronization characteristics than expected:\n";
-        for (const auto &w : warnings)
+        const auto warnings = vcr_get_sync_warnings(*sync_data);
+
+        // Suspicious! Someone shoved data where it didn't belong...
+        if (header.extended_version == 0 && header.extended_flags.data != 0)
+            g_core->show_notification(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
+
+        if (!warnings.empty())
         {
-            warning += w + "\n";
+            std::string warning = "The movie has different synchronization characteristics than expected:\n";
+            for (const auto &w : warnings)
+            {
+                warning += w + "\n";
+            }
+            warning += "Playback might desynchronize.";
+            g_core->show_notification(warning.c_str(), "VCR", CoreMessageTone::Warn);
         }
-        warning += "Playback might desynchronize.";
-        g_core->show_notification(warning.c_str(), "VCR", CoreMessageTone::Warn);
     }
 
     if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
