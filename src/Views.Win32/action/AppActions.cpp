@@ -637,7 +637,7 @@ static void show_ram_start()
 {
     BetterEmulationLock lock;
 
-    const auto ram_start_str = std::format("0x{:p}", static_cast<void *>(g_main_ctx.CoreCtx->rdram));
+    const auto ram_start_str = std::format("{:p}", static_cast<void *>(g_main_ctx.CoreCtx->rdram));
 
     char proc_name[MAX_PATH] = {0};
     GetModuleFileName(NULL, proc_name, MAX_PATH);

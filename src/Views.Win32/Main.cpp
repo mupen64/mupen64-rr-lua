@@ -1291,15 +1291,11 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     MSG msg{};
 
-    while (true)
+    while (GetMessage(&msg, nullptr, 0, 0) > 0)
     {
-        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-        {
-            if (msg.message == WM_QUIT) goto quit;
-            if (is_dialog_message(&msg)) continue;
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
+        if (is_dialog_message(&msg)) continue;
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 
 quit:
