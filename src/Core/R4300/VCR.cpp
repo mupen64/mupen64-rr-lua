@@ -13,34 +13,10 @@
 #include <R4300/VCR.hpp>
 
 using namespace std::string_view_literals;
+using namespace VCR;
 
 constexpr auto movie_magic = 0x1a34364d;
 constexpr auto latest_movie_version = 3;
-constexpr auto rawdata_warning_message =
-    "Warning: One of the active controllers of your input plugin is set to accept \"Raw Data\".\nThis can cause "
-    "issues when recording and playing movies.";
-constexpr auto rom_name_warning_message = "The movie was recorded on the rom '{}', but is being played back on "
-                                          "'{}'.\r\nPlayback might desynchronize. How do you want to continue?";
-constexpr auto rom_country_warning_message = "The movie was recorded on a {} ROM, but is being played back on "
-                                             "{}.\r\nPlayback might desynchronize. How do you want to continue?";
-constexpr auto rom_crc_warning_message = "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
-                                         "using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
-                                         "might desynchronize. How do you want to continue?";
-constexpr auto old_movie_extended_section_nonzero_message =
-    "The movie was recorded prior to the extended format being available, but contains data in an extended format "
-    "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
-constexpr auto cheat_error_ask_message = "This movie has a cheat file associated with it, but it could not be "
-                                         "loaded.\r\nPlayback might desynchronize.";
-constexpr auto controller_on_off_mismatch =
-    "Controller {} is enabled by the input plugin, but it is disabled in the movie.\nPlayback might desynchronize.\n";
-constexpr auto controller_off_on_mismatch =
-    "Controller {} is disabled by the input plugin, but it is enabled in the movie.\nPlayback can't commence.\n";
-constexpr auto controller_mempak_mismatch =
-    "Controller {} has a Memory Pak in the movie.\nPlayback might desynchronize.\n";
-constexpr auto controller_rumblepak_mismatch =
-    "Controller {} has a Rumble Pak in the movie.\nPlayback might desynchronize.\n";
-constexpr auto controller_mempak_rumblepak_mismatch =
-    "Controller {} does not have a Memory or Rumble Pak in the movie.\nPlayback might desynchronize.\n";
 
 VCRState vcr{};
 std::mutex vcr_mtx{};
@@ -221,9 +197,6 @@ CoreResult vcr_read_movie_header(std::vector<uint8_t> buf, CoreVCRMovieHeader *h
     if (new_header.magic != movie_magic) return CoreResult::VCR_InvalidFormat;
 
     if (new_header.version <= 0 || new_header.version > latest_movie_version) return CoreResult::VCR_InvalidVersion;
-
-    // The extended version number can't exceed the latest one, obviously...
-    if (new_header.extended_version > default_hdr.extended_version) return CoreResult::VCR_InvalidExtendedVersion;
 
     if (new_header.version == 1 || new_header.version == 2)
     {
@@ -1437,23 +1410,26 @@ CoreResult vcr_start_playback(std::filesystem::path path)
     g_core->log_info(std::format("[VCR] Movie has extended version {}", header.extended_version));
 
     const auto sync_data = vcr_get_sync_data_from_header(header);
-    if (!sync_data) return CoreResult::VCR_InvalidExtendedVersion;
-
-    const auto warnings = vcr_get_sync_warnings(*sync_data);
-
-    // Suspicious! Someone shoved data where it didn't belong...
-    if (header.extended_version == 0 && header.extended_flags.data != 0)
-        g_core->show_notification(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
-
-    if (!warnings.empty())
+    if (!sync_data)
+        g_core->show_notification(extended_format_from_future, "VCR", CoreMessageTone::Warn);
+    else
     {
-        std::string warning = "The movie has different synchronization characteristics than expected:\n";
-        for (const auto &w : warnings)
+        const auto warnings = vcr_get_sync_warnings(*sync_data);
+
+        // Suspicious! Someone shoved data where it didn't belong...
+        if (header.extended_version == 0 && header.extended_flags.data != 0)
+            g_core->show_notification(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
+
+        if (!warnings.empty())
         {
-            warning += w + "\n";
+            std::string warning = "The movie has different synchronization characteristics than expected:\n";
+            for (const auto &w : warnings)
+            {
+                warning += w + "\n";
+            }
+            warning += "Playback might desynchronize.";
+            g_core->show_notification(warning.c_str(), "VCR", CoreMessageTone::Warn);
         }
-        warning += "Playback might desynchronize.";
-        g_core->show_notification(warning.c_str(), "VCR", CoreMessageTone::Warn);
     }
 
     if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)

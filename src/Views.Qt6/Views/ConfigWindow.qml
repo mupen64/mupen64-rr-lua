@@ -26,13 +26,16 @@ ApplicationWindow {
     header: TabBar {
         id: tabs
         TabButton {
-            text: qsTr("Emulation")
+            //% "Emulation"
+            text: qsTrId("dialogs.config.emulation")
         }
         TabButton {
-            text: qsTr("Folders")
+            //% "Folders"
+            text: qsTrId("dialogs.config.folders")
         }
         TabButton {
-            text: qsTr("Hotkeys")
+            //% "Hotkeys"
+            text: qsTrId("dialogs.config.hotkeys")
         }
     }
 

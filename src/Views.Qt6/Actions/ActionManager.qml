@@ -60,7 +60,9 @@ QtObject {
                     let action = modelData as EmuAction;
                     let shortcut = (action instanceof EmuHeldAction) ? (action as EmuHeldAction).heldShortcut : action.shortcut;
 
-                    settings.setValue(action.key, JSON.stringify(shortcut));
+                    let key = action.key.substring(5);
+
+                    settings.setValue(key, JSON.stringify(shortcut));
                 }
             }
 
@@ -74,7 +76,8 @@ QtObject {
                 let isAction = false;
                 // qmllint enable missing-property
 
-                let setShortcut = settings.value(action.key, null);
+                let key = action.key.substring(5);
+                let setShortcut = settings.value(key, null);
                 let shortcut = (setShortcut == null) ? action.defaultShortcut : JSON.parse(setShortcut);
 
                 if (action instanceof EmuHeldAction)

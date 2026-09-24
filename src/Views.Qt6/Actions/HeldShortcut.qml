@@ -21,7 +21,10 @@ Shortcut {
         }
         property bool active
 
-        onAllKeysChanged: {
+        onAllKeysChanged: updateShortcuts()
+
+        function updateShortcuts() {
+            // console.trace("updateShortcuts called, shortcut = " + root.sequence);
             HeldShortcutMap.clearShortcuts(root);
             for (const key of allKeys) {
                 HeldShortcutMap.addShortcut(key, root);

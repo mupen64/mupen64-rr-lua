@@ -10,6 +10,7 @@
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QSettings>
+#include <QTranslator>
 #include <QtQml/QQmlExtensionPlugin>
 
 #include <QQuickStyle>
@@ -44,6 +45,19 @@ static int qt_main(int argc, char *argv[])
     QApplication::setApplicationName(DESKTOP_FILE_NAME);
     QApplication::setApplicationVersion(CURRENT_VERSION);
     QApplication::setApplicationDisplayName(DISPLAY_NAME);
+
+    // Load fallback translations first
+    auto *fallbackTranslator = new QTranslator(&app);
+    if (!fallbackTranslator->load("mupen64-rr_en.qm", ":/i18n"))
+        throw std::runtime_error("failed to load fallback translations");
+    QApplication::installTranslator(fallbackTranslator);
+
+    // Load potential localized translations after
+    auto *translator = new QTranslator(&app);
+    if (translator->load(QLocale(), "mupen64-rr", "_", ":/i18n"))
+        QApplication::installTranslator(translator);
+    else
+        delete translator;
 
     QQmlApplicationEngine engine;
 

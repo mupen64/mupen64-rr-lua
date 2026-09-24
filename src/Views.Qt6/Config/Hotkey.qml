@@ -35,6 +35,7 @@ Button {
         enabled: false
         function onAccepted() {
             root.combo = root.dialog.currentCombo;
+            root.comboModified();
         }
         function onVisibleChanged() {
             if (!root.dialog.visible)

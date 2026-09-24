@@ -8,6 +8,38 @@
 
 #include <Core/API.hpp>
 
+namespace VCR
+{
+inline constexpr auto rawdata_warning_message =
+    "Warning: One of the active controllers of your input plugin is set to accept \"Raw Data\".\nThis can cause "
+    "issues when recording and playing movies.";
+inline constexpr auto rom_name_warning_message = "The movie was recorded on the rom '{}', but is being played back on "
+                                                 "'{}'.\r\nPlayback might desynchronize. How do you want to continue?";
+inline constexpr auto rom_country_warning_message = "The movie was recorded on a {} ROM, but is being played back on "
+                                                    "{}.\r\nPlayback might desynchronize. How do you want to continue?";
+inline constexpr auto rom_crc_warning_message =
+    "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
+    "using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
+    "might desynchronize. How do you want to continue?";
+inline constexpr auto old_movie_extended_section_nonzero_message =
+    "The movie was recorded prior to the extended format being available, but contains data in an extended format "
+    "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
+inline constexpr auto cheat_error_ask_message = "This movie has a cheat file associated with it, but it could not be "
+                                                "loaded.\r\nPlayback might desynchronize.";
+inline constexpr auto controller_on_off_mismatch =
+    "Controller {} is enabled by the input plugin, but it is disabled in the movie.\nPlayback might desynchronize.\n";
+inline constexpr auto controller_off_on_mismatch =
+    "Controller {} is disabled by the input plugin, but it is enabled in the movie.\nPlayback can't commence.\n";
+inline constexpr auto controller_mempak_mismatch =
+    "Controller {} has a Memory Pak in the movie.\nPlayback might desynchronize.\n";
+inline constexpr auto controller_rumblepak_mismatch =
+    "Controller {} has a Rumble Pak in the movie.\nPlayback might desynchronize.\n";
+inline constexpr auto controller_mempak_rumblepak_mismatch =
+    "Controller {} does not have a Memory or Rumble Pak in the movie.\nPlayback might desynchronize.\n";
+inline constexpr auto extended_format_from_future =
+    "The movie is from a newer version of Mupen64.\nPlayback might desynchronize.\n";
+} // namespace VCR
+
 struct VCRState
 {
     std::filesystem::path movie_path{};

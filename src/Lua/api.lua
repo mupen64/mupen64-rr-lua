@@ -349,89 +349,86 @@ Mupen = {
         -- The movie's version is invalid
         vcr_invalid_version = 11,
 
-        -- The movie's extended version is invalid
-        vcr_invalid_extended_version = 12,
-
         -- The operation requires a playback or recording task
-        vcr_needs_playback_or_recording = 13,
+        vcr_needs_playback_or_recording = 12,
 
         -- The operation requires a playback task
-        vcr_needs_playback = 14,
+        vcr_needs_playback = 13,
 
         -- The provided start type is invalid
-        vcr_invalid_start_type = 15,
+        vcr_invalid_start_type = 14,
 
         -- Another warp modify operation is already running
-        vcr_warp_modify_already_running = 16,
+        vcr_warp_modify_already_running = 15,
 
         -- Warp modifications can only be performed during recording
-        vcr_warp_modify_needs_recording_task = 17,
+        vcr_warp_modify_needs_recording_task = 16,
 
         -- The provided input buffer is empty
-        vcr_warp_modify_empty_input_buffer = 18,
+        vcr_warp_modify_empty_input_buffer = 17,
 
         -- The seek operation could not be initiated due to a savestate not being loaded successfully
-        vcr_seek_savestate_load_failed = 19,
+        vcr_seek_savestate_load_failed = 18,
 
         -- The seek operation can't be initiated because the seek savestate interval is 0
-        vcr_seek_savestate_interval_zero = 20,
+        vcr_seek_savestate_interval_zero = 19,
 
         -- The seek string is malformed
-        vcr_seek_string_malformed = 21,
+        vcr_seek_string_malformed = 20,
 
         -- VR
         -- ==========================================
 
         -- Couldn't find a rom matching the provided movie
-        vr_no_matching_rom = 22,
+        vr_no_matching_rom = 21,
 
         -- An error occured during plugin loading
-        vr_plugin_error = 23,
+        vr_plugin_error = 22,
 
         -- The ROM or alternative rom source is invalid
-        vr_rom_invalid = 24,
+        vr_rom_invalid = 23,
 
         -- The emulator isn't running yet
-        vr_not_running = 25,
+        vr_not_running = 24,
 
         -- Failed to open core streams
-        vr_file_open_failed = 26,
+        vr_file_open_failed = 25,
 
         -- Savestates
         -- ==========================================
 
         -- The core isn't launched
-        st_core_not_launched = 27,
+        st_core_not_launched = 26,
 
         -- The savestate file wasn't found
-        st_not_found = 28,
+        st_not_found = 27,
 
         -- The savestate couldn't be written to disk
-        st_file_write_error = 29,
+        st_file_write_error = 28,
 
         -- Couldn't decompress the savestate
-        st_decompression_error = 30,
+        st_decompression_error = 29,
 
         -- The event queue was too long
-        st_event_queue_too_long = 31,
+        st_event_queue_too_long = 30,
 
         -- The CPU registers contained invalid values
-        st_invalid_registers = 32,
+        st_invalid_registers = 31,
 
         -- Plugins
         -- ==========================================
 
         -- The plugin library couldn't be loaded
-        pl_load_library_failed = 33,
+        pl_load_library_failed = 32,
 
         -- The plugin doesn't export a GetDllInfo function
-        pl_no_get_dll_info = 34,
+        pl_no_get_dll_info = 33,
 
         -- Init
         -- ==========================================
 
         -- The core params are missing a critical component.
-        in_missing_component = 35,
+        in_missing_component = 34,
     },
 
 
