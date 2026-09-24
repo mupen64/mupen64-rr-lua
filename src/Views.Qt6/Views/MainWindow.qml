@@ -10,13 +10,15 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import Actions
 import Core
 import Views
 
 ApplicationWindow {
     id: mainWindow
     visible: true
-    title: qsTr("Mupen64RR")
+    //% "mupen64-rr"
+    title: qsTrId("appName")
 
     // WINDOW SIZE
     // =====================================
@@ -43,15 +45,15 @@ ApplicationWindow {
         settingsCore.sync();
         settingsPaths.sync();
 
-        // menu bar initialization must be deferred to ensure
-        // actions are registered inside the ActionManager
-        header = menuBarTemplate.createObject();
+        // rebuild menu bar
+        menuBar.rebuildMenu();
     }
 
     // MENU BAR
     // =====================================
 
-    property Component menuBarTemplate: MainMenuBar {
+    header: ActionMenuBar {
+        id: menuBar
         actions: settingsActions
     }
 
@@ -158,6 +160,7 @@ ApplicationWindow {
         core: core
         dialogService: dialogService
         winConfig: winConfig
+        menuOpen: menuBar.opened
     }
 
     // Auxiliary dialogs
@@ -170,13 +173,5 @@ ApplicationWindow {
         settingsActions: settingsActions
         settingsCore: settingsCore
         settingsPaths: settingsPaths
-    }
-
-    // LATE BINDINGS
-    // =====================================
-
-    Binding {
-        when: mainWindow.header instanceof MainMenuBar
-        settingsActions.menuOpen: (mainWindow.header as MainMenuBar).opened
     }
 }

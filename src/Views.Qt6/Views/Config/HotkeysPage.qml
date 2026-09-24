@@ -17,6 +17,8 @@ ListView {
     required property SettingsActions settingsActions
     model: root.settingsActions.actions
 
+    // maximumFlickVelocity:
+
     spacing: 10
     leftMargin: 10
     rightMargin: 10 + scrollBar.width
@@ -47,8 +49,9 @@ ListView {
                     return row.modelData.shortcut;
             }
             onComboModified: {
-                if (row.modelData instanceof EmuHeldAction)
+                if (row.modelData instanceof EmuHeldAction) {
                     (row.modelData as EmuHeldAction).heldShortcut = combo;
+                }
                 else
                     row.modelData.shortcut = combo;
             }
