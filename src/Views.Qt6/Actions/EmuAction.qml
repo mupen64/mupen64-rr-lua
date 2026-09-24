@@ -15,6 +15,9 @@ Action {
     property var defaultShortcut: null
     property bool addSeparator: false
 
+    // Unused default property. Use for auxiliary bindings/connections/etc
+    default property list<var> auxObjects
+
     onKeyChanged: {
         if (!key.startsWith("menu."))
             throw new Error("Action/menu keys must begin with `menu.`");

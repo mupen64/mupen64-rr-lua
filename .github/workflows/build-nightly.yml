@@ -73,7 +73,9 @@ jobs:
 
       - name: CMake build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build
+        run: |
+            cmake --build build --target update_translations
+            cmake --build build
 
       - name: Delete PDB files
         run: rm -f $(find build/out -name '*.pdb')

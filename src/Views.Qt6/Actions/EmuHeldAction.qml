@@ -10,14 +10,16 @@ import QtQuick
 EmuAction {
     id: root
 
-    property QtObject _HeldAction_priv: QtObject {
-        id: priv
-
-        property var heldShortcutObj: HeldShortcut {
-            sequence: root.heldShortcut
-        }
-    }
-
     // Similar to shortcut, but for when the action is held.
     property var heldShortcut: null
+
+    readonly property HeldShortcut shortcutImpl: HeldShortcut {
+        id: shortcutImpl
+        sequence: root.heldShortcut
+        enabled: root.enabled
+
+        onActiveChanged: root.checked = active
+    }
+
+    checkable: true
 }

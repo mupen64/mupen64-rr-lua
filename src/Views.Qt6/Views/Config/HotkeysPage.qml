@@ -49,8 +49,9 @@ ListView {
                     return row.modelData.shortcut;
             }
             onComboModified: {
-                if (row.modelData instanceof EmuHeldAction)
+                if (row.modelData instanceof EmuHeldAction) {
                     (row.modelData as EmuHeldAction).heldShortcut = combo;
+                }
                 else
                     row.modelData.shortcut = combo;
             }

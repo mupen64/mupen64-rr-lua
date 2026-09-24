@@ -8,6 +8,7 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <stdexcept>
+#include <print>
 
 using namespace Qt::Literals;
 
@@ -56,6 +57,11 @@ bool HeldShortcutMap::eventFilter(QObject *, QEvent *event)
     if (event->type() == QEvent::KeyRelease)
     {
         auto *keyEvent = static_cast<QKeyEvent *>(event);
+        // filter out auto-repeat events
+        // FIXME: this still fires twice per key release (Linux)
+        if (keyEvent->isAutoRepeat())
+            return false;
+
         auto matchedNode = m_shortcuts.find((Qt::Key)keyEvent->key());
         if (matchedNode != m_shortcuts.end())
         {

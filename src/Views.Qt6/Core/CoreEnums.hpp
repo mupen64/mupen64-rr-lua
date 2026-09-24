@@ -130,7 +130,7 @@ class QmlCoreResult : public QObject
     Q_INVOKABLE QJSValue message(Value value);
 };
 
-class QtCoreMessageTone : public QObject
+class QmlCoreMessageTone : public QObject
 {
     Q_OBJECT
     QML_SINGLETON
@@ -146,4 +146,22 @@ class QtCoreMessageTone : public QObject
 
     static Value from_core(::CoreMessageTone result) { return (Value)(int)result; }
     static ::CoreMessageTone to_core(Value value) { return (::CoreMessageTone)(int)value; }
+};
+
+class QmlCoreSpeedMode : public QObject
+{
+    Q_OBJECT
+    QML_SINGLETON
+    QML_NAMED_ELEMENT(CoreSpeedMode)
+  public:
+    enum Value
+    {
+        Normal = static_cast<int>(::CoreSpeedMode::Normal),
+        FastForward = static_cast<int>(::CoreSpeedMode::FastForward),
+        UltraFastForward = static_cast<int>(::CoreSpeedMode::UltraFastForward),
+    };
+    Q_ENUM(Value)
+
+    static Value from_core(::CoreSpeedMode result) { return (Value)(int)result; }
+    static ::CoreSpeedMode to_core(Value value) { return (::CoreSpeedMode)(int)value; }
 };

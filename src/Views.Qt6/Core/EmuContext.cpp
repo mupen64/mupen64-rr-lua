@@ -100,7 +100,7 @@ EmuContext::EmuContext(QObject *parent)
                     [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
                 auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
 
-                openMultiDialog(done_callback, title, str, qt_choices, QtCoreMessageTone::from_core(type));
+                openMultiDialog(done_callback, title, str, qt_choices, QmlCoreMessageTone::from_core(type));
             });
 
         return future.get();
@@ -116,7 +116,7 @@ EmuContext::EmuContext(QObject *parent)
                 auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
                     [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
 
-                openAskDialog(done_callback, title, str, warning ? QtCoreMessageTone::Warn : QtCoreMessageTone::Info);
+                openAskDialog(done_callback, title, str, warning ? QmlCoreMessageTone::Warn : QmlCoreMessageTone::Info);
             });
 
         return future.get();
@@ -131,7 +131,7 @@ EmuContext::EmuContext(QObject *parent)
                 auto done_callback = QJSFunctions::toJSFunction(
                     qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
 
-                openAskDialog(done_callback, title, str, QtCoreMessageTone::from_core(type));
+                openAskDialog(done_callback, title, str, QmlCoreMessageTone::from_core(type));
             });
 
         future.get();
@@ -233,6 +233,19 @@ void EmuContext::setGSButton(bool pressed)
     {
         m_core_ctx->vr_set_gs_button(pressed);
         gsButtonChanged(pressed);
+    }
+}
+
+// -> vr_get_speed_mode
+QmlCoreSpeedMode::Value EmuContext::speedMode() const {
+    return QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode());
+}
+// -> vr_set_speed_mode
+void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode) {
+    if (speedMode != QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode()))
+    {
+        m_core_ctx->vr_set_speed_mode(QmlCoreSpeedMode::to_core(speedMode));
+        speedModeChanged(speedMode);
     }
 }
 

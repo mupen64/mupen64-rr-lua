@@ -110,6 +110,13 @@ ActionManager {
         onTriggered: root.core.speedModifier = 100
     }
     EmuHeldAction {
+        id: actFastForward
+        //% "Fast Forward"
+        key: QT_TRID_NOOP("menu.emu.fastForward")
+        defaultShortcut: "`"
+        enabled: root.core.launched
+    }
+    EmuHeldAction {
         id: actGSButton
         //% "GS Button"
         key: QT_TRID_NOOP("menu.emu.gsButton")
@@ -346,8 +353,12 @@ ActionManager {
             diaLoadState.visible,
             diaSaveState.visible
         ].some(value => value)
+
         // Tie GS button state to the GSButton item
         root.core.gsButton: actGSButton.checked
+
+        // Tie fast-forward state to the checked item
+        root.core.speedMode: (actFastForward.checked)? CoreSpeedMode.FastForward : CoreSpeedMode.Normal
     }
     Connections {
         target: root.core
@@ -356,6 +367,7 @@ ActionManager {
         function onLaunchedChanged() {
             actPause.checked = false;
             actGSButton.checked = false;
+            actFastForward.checked = false;
         }
     }
 }
