@@ -22,7 +22,6 @@ extern "C"
 #include <lualib.h>
 }
 #include <spdlog/logger.h>
-#include <microlru.h>
 #include <Common.Win32/Common.hpp>
 #include <resource.h>
 #include <cwctype>

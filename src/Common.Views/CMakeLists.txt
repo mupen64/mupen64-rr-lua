@@ -43,7 +43,6 @@ target_link_libraries(Mupen64RR_Common_Views PUBLIC
     Mupen64RR_Core_Headers
     vendor::xxhash64
     vendor::mini
-    vendor::microlru
     libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
     SDL3::SDL3
     nlohmann_json::nlohmann_json
