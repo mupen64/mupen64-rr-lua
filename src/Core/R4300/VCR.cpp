@@ -41,6 +41,8 @@ constexpr auto controller_rumblepak_mismatch =
     "Controller {} has a Rumble Pak in the movie.\nPlayback might desynchronize.\n";
 constexpr auto controller_mempak_rumblepak_mismatch =
     "Controller {} does not have a Memory or Rumble Pak in the movie.\nPlayback might desynchronize.\n";
+constexpr auto extended_format_from_future =
+    "The movie is from a newer version of Mupen64.\nPlayback might desynchronize.\n";
 
 VCRState vcr{};
 std::mutex vcr_mtx{};
@@ -221,9 +223,6 @@ CoreResult vcr_read_movie_header(std::vector<uint8_t> buf, CoreVCRMovieHeader *h
     if (new_header.magic != movie_magic) return CoreResult::VCR_InvalidFormat;
 
     if (new_header.version <= 0 || new_header.version > latest_movie_version) return CoreResult::VCR_InvalidVersion;
-
-    // The extended version number can't exceed the latest one, obviously...
-    if (new_header.extended_version > default_hdr.extended_version) return CoreResult::VCR_InvalidExtendedVersion;
 
     if (new_header.version == 1 || new_header.version == 2)
     {
@@ -1437,7 +1436,7 @@ CoreResult vcr_start_playback(std::filesystem::path path)
     g_core->log_info(std::format("[VCR] Movie has extended version {}", header.extended_version));
 
     const auto sync_data = vcr_get_sync_data_from_header(header);
-    if (!sync_data) return CoreResult::VCR_InvalidExtendedVersion;
+    if (!sync_data) g_core->show_notification(extended_format_from_future, "VCR", CoreMessageTone::Warn);
 
     const auto warnings = vcr_get_sync_warnings(*sync_data);
 
