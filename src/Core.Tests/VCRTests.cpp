@@ -27,6 +27,7 @@ struct VcrFixture
         g_core_params.input_set_keys = [](int32_t, CoreButtons) {};
         g_core_params.callbacks = {};
         core_create(&g_core_params, &g_core_ctx);
+        g_core_ctx->cht_set_list({});
     }
 };
 
@@ -986,6 +987,7 @@ TEST_CASE_METHOD(VcrFixture, "invokes_task_callback_correctly", "vcr_continue_re
 TEST_CASE_METHOD(VcrFixture, "doesnt_deadlock", "vcr_begin_warp_modify")
 {
     g_cfg.vcr_backups = false;
+    g_cfg.seek_savestate_interval = 100;
 
     vcr.task = CoreVCRTask::Recording;
     vcr.hdr.length_samples = 5;
