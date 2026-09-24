@@ -20,7 +20,7 @@ namespace ActionManager
 /**
  * \brief The character used to separate segments in action paths and filters.
  */
-const std::string SEGMENT_SEPARATOR = ">";
+const std::string SEGMENT_SEPARATOR = ".";
 
 /**
  * \brief The suffix for action path and filters segments that are used to indicate a separator.
@@ -34,20 +34,20 @@ const std::string MENU_HIDDEN_PREFIX = "#";
 
 /**
  * \brief An action filter that can be used to match actions in the action registry.
- * Can be in the format `[Category[] | *] > [Name | *]`.
+ * Filters use dot-separated, lowercase kebab-case segments, e.g. `category.name`.
  * The `*` wildcard can be used to match any child from that segment onwards.
- * The wildcard must always be the last segment in the filter: wildcard-based wide lookups like `A > * > C` aren't
+ * The wildcard must always be the last segment in the filter: wildcard-based wide lookups like `a.*.c` aren't
  * supported.
  *
  * Example queries:
  * `*` - matches all actions.
- * `Mupen64 > File > *` - matches "Mupen64 > File > Load ROM...", "Mupen64 > File > Recent ROMs > Load Recent Item #5",
- * etc... `Mupen64 > File` - matches nothing, because `File` has no action associated with it.
+ * `mupen64.file.*` - matches `mupen64.file.load-rom`, `mupen64.file.recent-roms.load-recent-item-5`,
+ * etc... `mupen64.file` - matches nothing, because `file` has no action associated with it.
  */
 using action_filter = std::string;
 
 /**
- * \brief A fully-qualified action path in the format `"Category[] > Name"`.
+ * \brief A fully-qualified action path in the format `"category.name"`, using lowercase kebab-case segments.
  * An action path is a subset of the action filter that contains no wildcards and is used to uniquely identify an
  * action.
  */
@@ -143,9 +143,9 @@ struct ActionAddParams
 /**
  * \brief Adds an action to the action registry.
  * If an action with the same path already exists, the operation will fail.
- * If adding the action causes another action to gain a child (e.g. there's an action `A > B`, and we're adding `A > B >
- * C > D`), the operation will fail. To add the action, delete the original action (`A > B`) first. \param params The
- * action parameters. \return Whether the operation succeeded.
+ * If adding the action causes another action to gain a child (e.g. there's an action `a.b`, and we're adding `a.b.c.d`),
+ * the operation will fail. To add the action, delete the original action (`a.b`) first. \param params The action
+ * parameters. \return Whether the operation succeeded.
  */
 bool add(const ActionAddParams &params);
 
@@ -244,7 +244,7 @@ std::vector<action_path> get_actions_matching_filter(const action_filter &filter
 std::vector<action_filter> get_segments(const action_filter &filter);
 
 /**
- * \brief Normalizes a filter by splitting it into segments and joining them back together using the segment separator.
+ * \brief Normalizes a filter to dot-separated, lowercase kebab-case segments.
  * \param filter A filter.
  * \return The normalized filter.
  */

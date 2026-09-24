@@ -12,11 +12,15 @@
 
 #include <Common.Views/Config.hpp>
 
+#include <cctype>
+
 using ActionParam = ActionManager::ActionParam;
 using ActionAddParams = ActionManager::ActionAddParams;
 using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
 using action_argument_map = ActionManager::action_argument_map;
+
+static constexpr char action_path_separator_placeholder = '\x1f';
 
 struct Action
 {
@@ -159,9 +163,9 @@ static bool validate_action_path(const std::string &path)
         return false;
     }
 
-    if (path.find(L'>') == std::string::npos)
+    if (path.find(ActionManager::SEGMENT_SEPARATOR) == std::string::npos)
     {
-        g_view_logger->error("Action path must contain at least one '>'.");
+        g_view_logger->error("Action path must contain at least one '{}'.", ActionManager::SEGMENT_SEPARATOR);
         return false;
     }
 
@@ -270,8 +274,8 @@ bool ActionManager::add(const ActionAddParams &params)
         return false;
     }
 
-    // > If adding the action causes another action to gain a child (e.g. there's an action `A > B`, and we're adding `A
-    // > B > C > D`), the operation will fail.
+    // > If adding the action causes another action to gain a child (e.g. there's an action `a.b`, and we're adding
+    // `a.b.c.d`), the operation will fail.
     const auto segments = get_segments(normalized_path);
 
     // 1. Look for an action at each segment
@@ -553,6 +557,42 @@ std::vector<action_path> ActionManager::get_actions_matching_filter(const action
     return result;
 }
 
+static action_filter normalize_action_segment(const std::string_view segment)
+{
+    action_filter normalized;
+    normalized.reserve(segment.size());
+
+    bool pending_separator = false;
+    for (size_t i = 0; i < segment.size(); ++i)
+    {
+        const auto character = static_cast<unsigned char>(segment[i]);
+        if (std::isspace(character) || character == '_')
+        {
+            pending_separator = !normalized.empty();
+            continue;
+        }
+
+        if (pending_separator && std::isalnum(character) && normalized.back() != '-')
+        {
+            normalized += '-';
+        }
+        pending_separator = false;
+
+        if (std::isupper(character) && i > 0)
+        {
+            const auto previous_character = static_cast<unsigned char>(segment[i - 1]);
+            if (std::islower(previous_character) && normalized.back() != '-')
+            {
+                normalized += '-';
+            }
+        }
+
+        normalized += static_cast<char>(std::tolower(character));
+    }
+
+    return normalized;
+}
+
 std::vector<action_filter> ActionManager::get_segments(const action_filter &filter)
 {
     if (g_mgr.segment_cache.contains(filter))
@@ -560,7 +600,36 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
         return g_mgr.segment_cache.get(filter).value();
     }
 
-    auto parts = StrUtils::split_string(filter, SEGMENT_SEPARATOR) |
+    if (filter.find(action_path_separator_placeholder) != std::string::npos)
+    {
+        return {};
+    }
+
+    const bool uses_legacy_separator = filter.find('>') != std::string::npos;
+    std::string split_input;
+    split_input.reserve(filter.size());
+    if (uses_legacy_separator)
+    {
+        for (const char character : filter)
+        {
+            if (character == '>')
+            {
+                split_input += action_path_separator_placeholder;
+            }
+            else if (character != '.')
+            {
+                split_input += character;
+            }
+        }
+    }
+    else
+    {
+        split_input = filter;
+    }
+
+    const std::string separator = uses_legacy_separator ? std::string(1, action_path_separator_placeholder) :
+                                                         SEGMENT_SEPARATOR;
+    auto parts = StrUtils::split_string(split_input, separator) |
                  std::views::transform([](std::string_view part) { return StrUtils::ctrim_string(part); }) |
                  std::views::filter([](std::string_view part) { return !part.empty(); }) |
                  std::views::transform([](std::string_view part) { return std::string(part); }) |
@@ -573,7 +642,11 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
 
 ActionManager::action_filter ActionManager::normalize_filter(const action_filter &filter)
 {
-    const auto parts = get_segments(filter);
+    auto parts = get_segments(filter);
+    for (auto &part : parts)
+    {
+        part = normalize_action_segment(part);
+    }
     return StrUtils::join_string(parts, SEGMENT_SEPARATOR);
 }
 
