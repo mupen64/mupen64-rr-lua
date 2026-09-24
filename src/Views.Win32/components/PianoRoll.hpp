@@ -16,14 +16,14 @@ namespace PianoRoll
 using namespace AppActions;
 #undef DELETE
 
-const std::wstring BASE = APP + L"Piano Roll > ";
-const std::wstring COPY = BASE + L"Edit > Copy";
-const std::wstring PASTE = BASE + L"Edit > Paste ---";
-const std::wstring UNDO = BASE + L"Edit > Undo";
-const std::wstring REDO = BASE + L"Edit > Redo ---";
-const std::wstring INSERT_FRAME = BASE + L"Edit > Insert Frame";
-const std::wstring CLEAR = BASE + L"Edit > Clear";
-const std::wstring DELETE = BASE + L"Edit > Delete";
+const std::string BASE = APP + "Piano Roll > ";
+const std::string COPY = BASE + "Edit > Copy";
+const std::string PASTE = BASE + "Edit > Paste ---";
+const std::string UNDO = BASE + "Edit > Undo";
+const std::string REDO = BASE + "Edit > Redo ---";
+const std::string INSERT_FRAME = BASE + "Edit > Insert Frame";
+const std::string CLEAR = BASE + "Edit > Clear";
+const std::string DELETE = BASE + "Edit > Delete";
 
 /**
  * \brief Initializes the subsystem.
