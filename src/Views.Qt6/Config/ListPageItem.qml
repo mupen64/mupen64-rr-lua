@@ -7,7 +7,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs as Dialogs
 
+import Utils
 import Components
 import Config as Config
 
@@ -17,7 +19,8 @@ DelegateChooser {
         Bool = 0,
         Choices,
         Int,
-        Double
+        Double,
+        FolderPath
     }
 
     property QtObject _DelegateChooser_priv: QtObject {
@@ -120,6 +123,35 @@ DelegateChooser {
 
                 dValue: root.dataSource[doubleRow.keyName]
                 onValueModified: root.dataSource[doubleRow.keyName] = dValue
+            }
+        }
+    }
+    DelegateChoice {
+        roleValue: ListPageItem.FolderPath
+        Config.PathBox {
+            id: folderBox
+            required property string key
+            required property string dialogTitle
+            property string acceptLabel
+            property string rejectLabel
+            readonly property string keyName: priv.keyName(key)
+
+            width: root.itemWidth
+            title: qsTrId(key)
+            path: root.dataSource[keyName]
+            onOpenDialog: {
+                folderDialog.open()
+            }
+
+            Dialogs.FolderDialog {
+                id: folderDialog
+                title: folderBox.dialogTitle
+                acceptLabel: folderBox.acceptLabel
+                rejectLabel: folderBox.rejectLabel
+                onAccepted: {
+                    let path = Paths.toLocalFile(folderDialog.selectedFolder)
+                    folderBox.setPath(path);
+                }
             }
         }
     }

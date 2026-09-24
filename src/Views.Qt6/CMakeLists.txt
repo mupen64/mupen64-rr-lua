@@ -112,13 +112,14 @@ qt_add_qml_module(Mupen64RR_Views_Qt6
 # ===================================
 
 set(fallback_ts_name "${PROJECT_NAME}_${QT_I18N_SOURCE_LANGUAGE}.ts")
-set(fallback_ts "${CMAKE_CURRENT_BINARY_DIR}/${fallback_ts_name}")
+set(ts_dir "${CMAKE_CURRENT_SOURCE_DIR}/Translations")
+set(fallback_ts "${ts_dir}/${fallback_ts_name}")
 
 # note: there is a zero-width space as the 2nd option to `lrelease`.
 # This is a workaround to CMake not letting me pass the empty string.
 qt_add_translations(Mupen64RR_Views_Qt6
     SOURCE_TARGETS Mupen64RR_Views_Qt6
-    TS_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Translations"
+    TS_OUTPUT_DIRECTORY "${ts_dir}"
     TS_FILES "${fallback_ts}"
 )
 

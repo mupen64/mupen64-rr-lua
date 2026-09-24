@@ -21,8 +21,7 @@ Config.ListPage {
         id: row
         required property EmuAction modelData
 
-        width: root.width - root.leftMargin - root.rightMargin
-
+        width: root.itemWidth
         name: modelData.text
 
         Config.Hotkey {
