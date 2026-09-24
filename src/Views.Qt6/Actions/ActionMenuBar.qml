@@ -21,23 +21,34 @@ MenuBar {
 
         readonly property Component blankMenu: Menu {
             width: {
+                // this is the minimum width
                 let widest = 160.0;
+                // see if any item needs more than that
                 for (let i = 0; i < count; i++) {
-                    let nextItem = itemAt(i);
+                    let nextItem = itemAt(i) as MenuItem;
+                    if (nextItem == null)
+                        continue;
+
+                    // size of just the contentItem + padding
                     let nextWidth = nextItem.contentItem.implicitWidth + nextItem.leftPadding + nextItem.rightPadding;
+                    // add the indicator (if it is visible), using the same logic as the delegate
                     if (nextItem.indicator?.visible ?? false)
                         nextWidth += nextItem.indicator.implicitWidth + nextItem.leftPadding;
+                    // update minimum width
                     widest = Math.max(widest, nextWidth);
                 }
+                // account for padding on this menu
                 return widest + leftPadding + rightPadding;
             }
             delegate: MenuItem {
                 id: menuItem
                 contentItem: Item {
                     id: cntRoot
+                    // need some spacing between the two labels
                     implicitWidth: nameLabel.implicitWidth + shortcutLabel.implicitWidth + 20
-                    // implicitHeight: Math.max(nameLabel.height, shortcutLabel.height)
+                    implicitHeight: Math.max(nameLabel.height, shortcutLabel.height)
 
+                    // make space for the indicator if one is there
                     anchors.left: (menuItem.indicator.visible) ? menuItem.indicator.right : menuItem.left
                     anchors.leftMargin: menuItem.leftPadding
                     anchors.right: menuItem.right
@@ -45,6 +56,7 @@ MenuBar {
 
                     Label {
                         id: nameLabel
+                        // display either action or menu title
                         text: menuItem.action?.text ?? menuItem.subMenu.title
 
                         anchors.left: cntRoot.left
@@ -52,7 +64,14 @@ MenuBar {
                     }
                     Label {
                         id: shortcutLabel
-                        text: menuItem.action?.heldShortcut ?? menuItem.action?.shortcut ?? ""
+                        text: {
+                            if (menuItem.action == null)
+                                return "";
+                            // special support for EmuHeldAction
+                            if (menuItem.action instanceof EmuHeldAction)
+                                return (menuItem.action as EmuHeldAction).heldShortcut;
+                            return menuItem.action.shortcut;
+                        }
 
                         anchors.right: cntRoot.right
                         anchors.verticalCenter: cntRoot.verticalCenter
@@ -113,6 +132,7 @@ MenuBar {
                         throw Error(`parent menu ${parentKey} does not exist`);
                     menuCache[parentKey].addMenu(viewMenu);
 
+                    // add a separator if needed
                     if (item.addSeparator)
                         menuCache[parentKey].addItem(priv.newSeparator());
                 }
@@ -129,6 +149,7 @@ MenuBar {
                     throw Error(`parent menu ${parentKey} does not exist`);
 
                 menuCache[parentKey].addAction(item);
+                // add a separator if needed
                 if (item.addSeparator)
                     menuCache[parentKey].addItem(priv.newSeparator());
             }
