@@ -351,7 +351,9 @@ ActionManager {
             // menu interactions
             root.menuOpen,
             diaLoadState.visible,
-            diaSaveState.visible
+            diaSaveState.visible,
+            // config dialog
+            root.winConfig.visible
         ].some(value => value)
 
         // Tie GS button state to the GSButton item
