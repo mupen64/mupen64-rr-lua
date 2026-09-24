@@ -12,24 +12,10 @@ import QtQuick.Controls
 import Actions
 import Config as Config
 
-ListView {
+Config.ListPage {
     id: root
     required property SettingsActions settingsActions
     model: root.settingsActions.actions
-
-    // maximumFlickVelocity:
-
-    spacing: 10
-    leftMargin: 10
-    rightMargin: 10 + scrollBar.width
-
-    flickableDirection: Flickable.VerticalFlick
-    ScrollBar.vertical: ScrollBar {
-        id: scrollBar
-        active: true
-    }
-
-    clip: true
 
     delegate: Config.Row {
         id: row

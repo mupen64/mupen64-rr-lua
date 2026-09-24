@@ -27,15 +27,15 @@ ApplicationWindow {
         id: tabs
         TabButton {
             //% "Emulation"
-            text: qsTrId("dialogs.config.emulation")
+            text: qsTrId("config.core")
         }
         TabButton {
             //% "Folders"
-            text: qsTrId("dialogs.config.folders")
+            text: qsTrId("config.folders")
         }
         TabButton {
             //% "Hotkeys"
-            text: qsTrId("dialogs.config.hotkeys")
+            text: qsTrId("config.hotkeys")
         }
     }
 

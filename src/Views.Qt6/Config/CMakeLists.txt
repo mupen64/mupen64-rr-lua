@@ -16,6 +16,8 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Config
         "FolderPath.qml"
         "Hotkey.qml"
         "HotkeyDialog.qml"
+        "ListPage.qml"
+        "ListPageItem.qml"
         "Page.qml"
         "Row.qml"
 )
