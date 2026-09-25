@@ -251,44 +251,60 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <translation>ROM Cache Size</translation>
     </message>
     <message id="config.paths.romDir">
-        <location filename="../Views/Config/FoldersPage.qml" line="22"/>
+        <location filename="../Views/Config/FoldersPage.qml" line="21"/>
         <source>ROM Directory</source>
         <translation>ROM Directory</translation>
     </message>
     <message id="dialogs.pickRomDir.title">
-        <location filename="../Views/Config/FoldersPage.qml" line="25"/>
+        <location filename="../Views/Config/FoldersPage.qml" line="24"/>
         <source>Set ROM Directory...</source>
         <translation>Set ROM Directory...</translation>
     </message>
     <message id="config.paths.saveDir">
-        <location filename="../Views/Config/FoldersPage.qml" line="29"/>
+        <location filename="../Views/Config/FoldersPage.qml" line="28"/>
         <source>Save Directory</source>
         <translation>Save Directory</translation>
     </message>
     <message id="dialogs.pickSaveDir.title">
-        <location filename="../Views/Config/FoldersPage.qml" line="32"/>
+        <location filename="../Views/Config/FoldersPage.qml" line="31"/>
         <source>Set Save Directory...</source>
         <translation>Set Save Directory...</translation>
     </message>
     <message id="config.paths.screenshotDir">
-        <location filename="../Views/Config/FoldersPage.qml" line="36"/>
+        <location filename="../Views/Config/FoldersPage.qml" line="35"/>
         <source>Screenshot Directory</source>
         <translation>Screenshot Directory</translation>
     </message>
     <message id="dialogs.pickScreenshotDir.title">
-        <location filename="../Views/Config/FoldersPage.qml" line="39"/>
+        <location filename="../Views/Config/FoldersPage.qml" line="38"/>
         <source>Set Screenshot Directory...</source>
         <translation>Set Screenshot Directory...</translation>
     </message>
     <message id="config.paths.backupDir">
-        <location filename="../Views/Config/FoldersPage.qml" line="43"/>
+        <location filename="../Views/Config/FoldersPage.qml" line="42"/>
         <source>ROM Directory</source>
         <translation>ROM Directory</translation>
     </message>
     <message id="dialogs.pickBackupDir.title">
-        <location filename="../Views/Config/FoldersPage.qml" line="46"/>
+        <location filename="../Views/Config/FoldersPage.qml" line="45"/>
         <source>Set ROM Directory...</source>
         <translation>Set ROM Directory...</translation>
+    </message>
+    <message id="misc.noHotkey">
+        <location filename="../Config/Hotkey.qml" line="25"/>
+        <location filename="../Config/HotkeyDialog.qml" line="45"/>
+        <source>(none)</source>
+        <translation>(none)</translation>
+    </message>
+    <message id="misc.recordHotkey">
+        <location filename="../Config/HotkeyDialog.qml" line="22"/>
+        <source>Recording...</source>
+        <translation>Recording...</translation>
+    </message>
+    <message id="misc.recordHotkeyNoModifiers">
+        <location filename="../Config/HotkeyDialog.qml" line="24"/>
+        <source>Recording (no modifiers)...</source>
+        <translation>Recording (no modifiers)...</translation>
     </message>
 </context>
 </TS>

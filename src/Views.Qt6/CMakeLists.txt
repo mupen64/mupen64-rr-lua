@@ -118,9 +118,9 @@ set(fallback_ts "${ts_dir}/${fallback_ts_name}")
 # note: there is a zero-width space as the 2nd option to `lrelease`.
 # This is a workaround to CMake not letting me pass the empty string.
 qt_add_translations(Mupen64RR_Views_Qt6
-    SOURCE_TARGETS Mupen64RR_Views_Qt6
     TS_OUTPUT_DIRECTORY "${ts_dir}"
     TS_FILES "${fallback_ts}"
+    IMMEDIATE_CALL
 )
 
 add_custom_command(TARGET mupen64-rr_lupdate POST_BUILD
