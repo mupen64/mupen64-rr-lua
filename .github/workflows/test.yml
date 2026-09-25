@@ -73,3 +73,31 @@ jobs:
     - name: CMake test
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: ctest --test-dir build
+
+  test-macos:
+    name: macOS
+    strategy:
+      matrix:
+        build_type: [debug, release]
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: ./.github/actions/setup-macos
+
+    - name: CMake configure
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        cmake_debug="Debug"
+        cmake_release="RelWithDebInfo"
+        cmake --preset sys-macos-release "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+
+    - name: CMake build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: cmake --build build
+
+    - name: CMake test
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: ctest --test-dir build
