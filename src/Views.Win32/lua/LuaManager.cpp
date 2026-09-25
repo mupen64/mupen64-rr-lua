@@ -19,18 +19,17 @@ size_t g_input_count{};
 
 std::string g_mupen_api_lua_code{};
 std::string g_inspect_lua_code{};
-std::string g_shims_lua_code{};
 std::string g_sandbox_lua_code{};
 
-std::vector<t_lua_environment *> g_lua_environments{};
-std::unordered_map<lua_State *, t_lua_environment *> g_lua_env_map{};
+std::vector<LuaEnvironment *> g_lua_environments{};
+std::unordered_map<lua_State *, LuaEnvironment *> g_lua_env_map{};
 
 static int at_panic(lua_State *L)
 {
     const char *raw_msg = lua_tostring(L, -1);
     const std::string_view message = raw_msg ? raw_msg : "";
 
-    DialogService::show_dialog(message, "Lua", fsvc_error);
+    DialogService::show_dialog(message, "Lua", CoreMessageTone::Error);
 
     return 0;
 }
@@ -48,11 +47,10 @@ void LuaManager::init()
 {
     g_mupen_api_lua_code = load_resource_as_string(IDR_API_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
     g_inspect_lua_code = load_resource_as_string(IDR_INSPECT_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
-    g_shims_lua_code = load_resource_as_string(IDR_SHIMS_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
     g_sandbox_lua_code = load_resource_as_string(IDR_SANDBOX_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
 }
 
-t_lua_environment *LuaManager::get_environment_for_state(lua_State *lua_state)
+LuaEnvironment *LuaManager::get_environment_for_state(lua_State *lua_state)
 {
     if (!g_lua_env_map.contains(lua_state))
     {
@@ -61,12 +59,12 @@ t_lua_environment *LuaManager::get_environment_for_state(lua_State *lua_state)
     return g_lua_env_map[lua_state];
 }
 
-std::expected<t_lua_environment *, std::string> LuaManager::create_environment(const std::filesystem::path &path,
-    const t_lua_environment::destroying_func &destroying_callback, const t_lua_environment::print_func &print_callback)
+std::expected<LuaEnvironment *, std::string> LuaManager::create_environment(const std::filesystem::path &path,
+    const LuaEnvironment::destroying_func &destroying_callback, const LuaEnvironment::print_func &print_callback)
 {
-    NEED(is_on_gui_thread(), "not on GUI thread");
+    need(is_on_gui_thread(), "not on GUI thread");
 
-    auto lua = new t_lua_environment();
+    auto lua = new LuaEnvironment();
 
     lua->path = path;
     lua->destroying = destroying_callback;
@@ -81,7 +79,7 @@ std::expected<t_lua_environment *, std::string> LuaManager::create_environment(c
     return lua;
 }
 
-std::expected<void, std::string> LuaManager::start_environment(t_lua_environment *env, const bool trusted)
+std::expected<void, std::string> LuaManager::start_environment(LuaEnvironment *env, const bool trusted)
 {
     if (env->started)
     {
@@ -108,11 +106,14 @@ std::expected<void, std::string> LuaManager::start_environment(t_lua_environment
         goto fail;
     }
 
-    if (luaL_dostring(env->L, g_shims_lua_code.c_str()))
+    lua_getglobal(env->L, "__mupen_apply_shims");
+    if (!lua_isfunction(env->L, -1) || lua_pcall(env->L, 0, 0, 0))
     {
         has_error = true;
         goto fail;
     }
+    lua_pushnil(env->L);
+    lua_setglobal(env->L, "__mupen_apply_shims");
 
     if (!trusted)
     {
@@ -148,9 +149,9 @@ fail:
     return {};
 }
 
-void LuaManager::destroy_environment(t_lua_environment *lua)
+void LuaManager::destroy_environment(LuaEnvironment *lua)
 {
-    NEED(lua && lua->L, "LuaManager::destroy_environment: Lua environment is already destroyed");
+    need(lua && lua->L, "LuaManager::destroy_environment: Lua environment is already destroyed");
 
     LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATSTOP);
 
@@ -168,7 +169,7 @@ void LuaManager::destroy_environment(t_lua_environment *lua)
     // Remove any breakpoints registered by the script.
     for (const auto &pair : lua->active_breakpoints)
     {
-        g_main_ctx.core_ctx->dbg_remove_breakpoint(pair.first);
+        g_main_ctx.CoreCtx->dbg_remove_breakpoint(pair.first);
         lua_freecallback(lua->L, pair.second);
     }
 
@@ -181,7 +182,7 @@ void LuaManager::destroy_environment(t_lua_environment *lua)
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
     // After this point, it's game over and no callbacks will be called anymore.
-    std::erase_if(g_lua_environments, [=](const t_lua_environment *v) { return v == lua; });
+    std::erase_if(g_lua_environments, [=](const LuaEnvironment *v) { return v == lua; });
     rebuild_lua_env_map();
 
     lua_close(lua->L);

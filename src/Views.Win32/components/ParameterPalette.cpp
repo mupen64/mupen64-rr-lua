@@ -12,7 +12,7 @@
 #include <Common.Views/Messages.hpp>
 #include "ParameterPalette.hpp"
 
-struct t_parameter_palette_context
+struct ParameterPaletteContext
 {
     HWND hwnd{};
     HWND header_hwnd{};
@@ -21,10 +21,12 @@ struct t_parameter_palette_context
     HWND combo_hwnd{};
     HWND edit_hwnd{};
     HWND status_hwnd{};
+    HWND back_hwnd{};
+    HWND next_hwnd{};
 
     ActionManager::action_path action_path{};
     size_t param_index{};
-    std::vector<ActionManager::t_action_param> ref_params{};
+    std::vector<ActionManager::ActionParam> ref_params{};
     ActionManager::action_argument_map filled_params{};
 
     std::vector<std::function<void()>> unsubscribe_funcs{};
@@ -39,10 +41,12 @@ enum class NextParamResult
     Finished = 2
 };
 
-static t_parameter_palette_context g_ctx{};
+static ParameterPaletteContext g_ctx{};
+
+static bool try_apply_parameter();
 
 /**
- * \brief Updates the UI and resets the editbox when the current parameter page changes.
+ * \brief Updates the UI and restores the editbox value when the current parameter page changes.
  */
 static void on_page_changed()
 {
@@ -54,10 +58,22 @@ static void on_page_changed()
     const auto total_params = g_ctx.ref_params.size();
     SetWindowText(g_ctx.secondary_hwnd, std::format("Step {}/{}", param_number, total_params).c_str());
 
-    const std::string initial_value = current_param.get_initial_value ? current_param.get_initial_value() : "";
-    SetWindowText(g_ctx.edit_hwnd, initial_value.c_str());
+    // Restore the previously entered value when navigating back, otherwise fall back to the initial value.
+    const auto filled_value = g_ctx.filled_params.find(current_param.key);
+    std::string value;
+    if (filled_value != g_ctx.filled_params.end())
+        value = filled_value->second;
+    else if (current_param.get_initial_value)
+        value = current_param.get_initial_value();
+    SetWindowText(g_ctx.edit_hwnd, value.c_str());
 
     SetWindowText(g_ctx.status_hwnd, "");
+
+    EnableWindow(g_ctx.back_hwnd, g_ctx.param_index > 0);
+    const bool is_last = g_ctx.param_index + 1 >= g_ctx.ref_params.size();
+    SetWindowText(g_ctx.next_hwnd, is_last ? "Finish" : "Next");
+
+    try_apply_parameter();
 }
 
 /**
@@ -87,12 +103,14 @@ static bool try_apply_parameter()
     {
         const auto validation_message = validation_result.value();
         SetWindowText(g_ctx.status_hwnd, std::format("⚠️ {}", validation_message).c_str());
+        EnableWindow(g_ctx.next_hwnd, FALSE);
         return false;
     }
 
     g_ctx.filled_params[current_param.key] = input;
 
     SetWindowText(g_ctx.status_hwnd, "✔️ Press Enter to confirm.");
+    EnableWindow(g_ctx.next_hwnd, TRUE);
 
     return true;
 }
@@ -119,6 +137,22 @@ static NextParamResult next_parameter()
     on_page_changed();
 
     return NextParamResult::Continue;
+}
+
+/**
+ * \brief Goes back to the previous parameter, keeping the current input so it can be restored later.
+ */
+static void previous_parameter()
+{
+    if (g_ctx.param_index == 0)
+    {
+        return;
+    }
+
+    g_ctx.filled_params[g_ctx.ref_params[g_ctx.param_index].key] = get_window_text(g_ctx.edit_hwnd).value();
+
+    g_ctx.param_index--;
+    on_page_changed();
 }
 
 /**
@@ -156,6 +190,18 @@ static LRESULT CALLBACK keyboard_interaction_subclass_proc(
         break;
     case WM_GETDLGCODE:
         return DLGC_WANTALLKEYS;
+    case WM_XBUTTONDOWN:
+        if (HIWORD(wparam) == XBUTTON1)
+        {
+            previous_parameter();
+            return TRUE;
+        }
+        if (HIWORD(wparam) == XBUTTON2)
+        {
+            next_parameter();
+            return TRUE;
+        }
+        break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
         if (wparam == VK_ESCAPE)
@@ -190,6 +236,8 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         g_ctx.secondary_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_SECONDARY);
         g_ctx.combo_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_COMBO);
         g_ctx.status_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_STATUS);
+        g_ctx.back_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_BACK);
+        g_ctx.next_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_NEXT);
 
         COMBOBOXINFO combo_info{};
         combo_info.cbSize = sizeof(COMBOBOXINFO);
@@ -203,11 +251,13 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
 
         // 2. Add resize anchors
         ResizeAnchor::add_anchors(hwnd, {
-                                            {g_ctx.header_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.subheader_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.secondary_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.combo_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.status_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
+                                            {g_ctx.header_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.subheader_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.secondary_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.combo_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.status_hwnd, ResizeAnchor::horizontal_anchor},
+                                            {g_ctx.back_hwnd, ResizeAnchor::AnchorFlags::Left},
+                                            {g_ctx.next_hwnd, ResizeAnchor::AnchorFlags::Right},
                                         });
 
         // 3. Set the focus to the edit control
@@ -222,7 +272,6 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
 
         on_page_changed();
         update_dialog_position_and_size();
-        try_apply_parameter();
 
         g_ctx.unsubscribe_funcs.push_back(
             Messenger::subscribe<Messenger::Message::MainWindowMoved>([] { update_dialog_position_and_size(); }));
@@ -253,8 +302,26 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
                 break;
             }
             break;
+        case IDC_PARAMETER_PALETTE_BACK:
+            if (HIWORD(wparam) == BN_CLICKED) previous_parameter();
+            break;
+        case IDC_PARAMETER_PALETTE_NEXT:
+            if (HIWORD(wparam) == BN_CLICKED) next_parameter();
+            break;
         default:
             break;
+        }
+        break;
+    case WM_XBUTTONDOWN:
+        if (HIWORD(wparam) == XBUTTON1)
+        {
+            previous_parameter();
+            return TRUE;
+        }
+        if (HIWORD(wparam) == XBUTTON2)
+        {
+            next_parameter();
+            return TRUE;
         }
         break;
     case WM_CLOSE:
@@ -277,7 +344,7 @@ void ParameterPalette::show(const ActionManager::action_path &action_path)
     if (!g_ctx.dlg_template)
     {
         const auto result = load_resource_as_dialog_template(IDD_PARAMETER_PALETTE, &g_ctx.dlg_template);
-        NEED(result, "Failed to load parameter palette dialog template");
+        need(result, "Failed to load parameter palette dialog template");
     }
 
     const HWND hwnd = CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PARAMETER_PALETTE), g_main_ctx.hwnd, dlgproc);

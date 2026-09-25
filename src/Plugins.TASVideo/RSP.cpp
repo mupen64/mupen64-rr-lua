@@ -21,6 +21,15 @@
 
 RSPInfo RSP;
 
+RSPInfo::~RSPInfo()
+{
+    if (thread)
+    {
+        RSP_SendMessage(RSPMSG_CLOSE);
+        thread->join();
+    }
+}
+
 void RSP_LoadMatrix(f32 mtx[4][4], u32 address)
 {
     constexpr float recip = 1.0 / 65536.0;

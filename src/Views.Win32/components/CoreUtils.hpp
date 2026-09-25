@@ -18,7 +18,7 @@ namespace CoreUtils
  * \return A pair of strings, where the first string is the error's module (e.g. "VCR") and the second string is the
  * error message. If no error message is applicable, both strings will be empty.
  */
-std::pair<std::string, std::string> get_error_message_for_result(core_result result);
+std::pair<std::string, std::string> get_error_message_for_result(CoreResult result);
 
 /**
  * Shows an error dialog for a core result. If the result indicates no error, no work is done.
@@ -26,6 +26,6 @@ std::pair<std::string, std::string> get_error_message_for_result(core_result res
  * \param hwnd The parent window handle for the spawned dialog. If null, the main window is used.
  * \returns Whether the function was able to show an error dialog.
  */
-bool show_error_dialog_for_result(core_result result, HWND hwnd = nullptr);
+bool show_error_dialog_for_result(CoreResult result, HWND hwnd = nullptr);
 
 } // namespace CoreUtils

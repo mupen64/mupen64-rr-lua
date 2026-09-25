@@ -30,6 +30,7 @@ runs:
         sudo apt-get install -y \
         qt6-base-dev \
         qt6-declarative-dev \
+        qt6-tools-dev \
         nlohmann-json3-dev \
         libavcodec-dev \
         libavformat-dev \
@@ -47,10 +48,10 @@ runs:
         libglew-dev
 
     - name: Setup nightly build environment variables
-      if: ${{ inputs.is_nightly }}
+      if: ${{ inputs.is_nightly == 'true' }}
       shell: bash
       run: |
         suffix="${{ inputs.commit_hash }}"
         if [[ -n "$suffix" ]]; then suffix="-nightly-${suffix:0:7}"; fi
-        echo "NIGHTLY=1" >> $env:GITHUB_ENV
-        echo "VERSION_SUFFIX=$suffix" >> $env:GITHUB_ENV
+        echo "NIGHTLY=1" >> "$GITHUB_ENV"
+        echo "VERSION_SUFFIX=$suffix" >> "$GITHUB_ENV"

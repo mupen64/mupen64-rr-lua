@@ -20,7 +20,7 @@ retest.attach_coverage(
         { "emu",       emu },
         { "memory",    memory },
         { "wgui",      wgui },
-        { "d2d",       d2d },
+        { "painter",   painter },
         { "input",     input },
         { "joypad",    joypad },
         { "movie",     movie },
@@ -643,51 +643,61 @@ retest.describe('mupen64', function()
         end)
     end)
 
-    retest.describe('d2d', function()
-        retest.describe('get_target_fps', function()
-            retest.it('returns_number_or_nil', function()
-                local fps = d2d.get_target_fps()
-                retest.expect(type(fps) == 'number' or fps == nil).to.equal(true)
-            end)
+    retest.describe('painter', function()
+        local VALID_IMAGE = cpath .. "image.png"
+        local NONEXISTENT_IMAGE = cpath .. "nonexistent.png"
+
+        retest.it('rejects_invalid_nine_slice_options', function()
+            local source = painter.new_image(32, 32)
+            local target = painter.new_image(32, 32)
+
+            retest.expect(function()
+                target:paint(function(p)
+                    p:image(source, { x = 0, y = 0, w = 32, h = 32 }, {
+                        center = { x = 15, y = 15, w = 2, h = 2 },
+                    })
+                end)
+            end).to.fail()
+            retest.expect(function()
+                target:paint(function(p)
+                    p:image(source, { x = 0, y = 0, w = 32, h = 32 }, {
+                        source = { x = 0, y = 0, w = 32, h = 32 },
+                        center = { x = 31, y = 31, w = 2, h = 2 },
+                    })
+                end)
+            end).to.fail()
+
+            target:close()
+            source:close()
         end)
 
-        retest.describe('set_target_fps', function()
-            retest.it('sets_and_returns_target_fps', function()
-                local previous_fps = d2d.get_target_fps()
-
-                d2d.set_target_fps(30)
-                retest.expect(d2d.get_target_fps()).to.equal(30)
-
-                d2d.set_target_fps(previous_fps)
-            end)
-
-            retest.it('accepts_nil', function()
-                local previous_fps = d2d.get_target_fps()
-
-                local func = function()
-                    d2d.set_target_fps(nil)
-                end
-                retest.expect(func).to_not.fail()
-
-                d2d.set_target_fps(previous_fps)
-            end)
+        retest.it('rejects_invalid_image_sizes', function()
+            retest.expect(function() painter.new_image(0, 1) end).to.fail()
+            retest.expect(function() painter.new_image(1, -1) end).to.fail()
         end)
 
-        retest.describe('draw_to_image', function()
-            retest.it('clamps_negative_sizes', function()
-                local img = d2d.draw_to_image(-10, -10, function() end)
-                local info = d2d.get_image_info(img)
-                retest.expect(info.width).to.equal(1)
-                retest.expect(info.height).to.equal(1)
-            end)
+        retest.it('invalidates_callback_scoped_painters', function()
+            local image = painter.new_image(1, 1)
+            local retained
+            image:paint(function(p) retained = p end)
+            retest.expect(function() retained:clear({ r = 0, g = 0, b = 0 }) end).to.fail()
+            image:close()
         end)
-        retest.describe('draw_text', function()
-            retest.it('doesnt_crash_with_negative_sizes', function()
-                local brush = d2d.create_brush(1, 0, 0, 1)
-                d2d.draw_text(0, 0, -10, -10, "Test", "Arial", 12, 800, 0, 0, 0, 0, brush)
-                d2d.free_brush(brush)
-                retest.expect(true).to.be.truthy()
-            end)
+
+        retest.it('loads_images_from_disk', function()
+            local image, message = painter.load_image(VALID_IMAGE)
+            retest.expect(message).to.equal(nil)
+            image = assert(image)
+            retest.expect(image.w > 0).to.equal(true)
+            retest.expect(image.h > 0).to.equal(true)
+            image:close()
+        end)
+
+        retest.it('returns_a_message_when_loading_fails', function()
+            local image, message = painter.load_image(NONEXISTENT_IMAGE)
+            retest.expect(image).to.equal(nil)
+            retest.expect(type(message)).to.equal("string")
+            retest.expect(#message > 0).to.equal(true)
         end)
     end)
 
@@ -828,7 +838,7 @@ retest.describe('mupen64', function()
                 retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_RETURN)).to.equal("Enter")
                 retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_SPACE)).to.equal("Space")
                 retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_DOWN)).to.equal("Down")
-                retest.expect(input.get_key_name_text(string.byte('W'))).to.equal("W")
+                retest.expect(input.get_key_name_text(Mupen.VKeycodes.VK_W)).to.equal("W")
             end)
         end)
     end)
@@ -1003,21 +1013,86 @@ retest.describe('mupen64', function()
                 retest.expect(func).to.fail()
             end)
             retest.it('returns_false_when_action_doesnt_exist', function()
-                local result = action.associate_hotkey("Test > Something", {})
+                local result = action.associate_hotkey("Test > Something", {
+                    trigger = { type = "none" },
+                })
                 retest.expect(result).to.equal(false)
             end)
             retest.it('returns_false_when_path_isnt_fully_qualified', function()
                 action.add({
                     path = "Test > Something",
                 })
-                local result = action.associate_hotkey("Test > *", {})
+                local result = action.associate_hotkey("Test > *", {
+                    trigger = { type = "none" },
+                })
                 retest.expect(result).to.equal(false)
             end)
-            retest.it('works_when_parameters_valid', function()
+            retest.it('errors_when_trigger_is_missing', function()
                 action.add({
                     path = "Test > Something",
                 })
-                local result = action.associate_hotkey("Test > Something", { key = Mupen.VKeycodes.VK_TAB }, true)
+                local func = function()
+                    action.associate_hotkey("Test > Something", {})
+                end
+                retest.expect(func).to.fail()
+            end)
+            retest.it('works_with_legacy_key', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    key = Mupen.VKeycodes.VK_F1,
+                    alt = true,
+                }, true)
+                retest.expect(result).to.be.truthy()
+            end)
+            retest.it('errors_when_key_and_trigger_are_both_present', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local func = function()
+                    action.associate_hotkey("Test > Something", {
+                        key = Mupen.VKeycodes.VK_F1,
+                        trigger = {
+                            type = "keycode",
+                            value = Mupen.keycode.SDLK_F1,
+                        },
+                    })
+                end
+                retest.expect(func).to.fail()
+            end)
+            retest.it('works_with_keycode_trigger', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    trigger = {
+                        type = "keycode",
+                        value = Mupen.keycode.SDLK_F1,
+                    },
+                    alt = true,
+                }, true)
+                retest.expect(result).to.be.truthy()
+            end)
+            retest.it('works_with_mousebutton_trigger', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    trigger = {
+                        type = "mousebutton",
+                        value = Mupen.mousebutton.SDL_BUTTON_X1MASK,
+                    },
+                }, true)
+                retest.expect(result).to.be.truthy()
+            end)
+            retest.it('works_with_no_trigger', function()
+                action.add({
+                    path = "Test > Something",
+                })
+                local result = action.associate_hotkey("Test > Something", {
+                    trigger = { type = "none" },
+                }, true)
                 retest.expect(result).to.be.truthy()
             end)
         end)

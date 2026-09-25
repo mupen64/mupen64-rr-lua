@@ -10,7 +10,7 @@
 #include <Common.Views/Config.hpp>
 #include <Common.Views/Messages.hpp>
 #include <components/CoreUtils.hpp>
-#include <plugin/Plugin.hpp>
+#include "../action/ActionMenu.hpp"
 
 struct piano_roll_history_state
 {
@@ -69,9 +69,6 @@ struct piano_roll_state
     // Whether the drag operation should unset the affected buttons regardless of the initial value
     bool lv_drag_unset{};
 
-    // HACK: Flag used to not show context menu when dragging in the button columns
-    bool lv_ignore_context_menu{};
-
     // The current piano roll state.
     piano_roll_history_state current_state{};
 
@@ -96,25 +93,21 @@ static piano_roll_state piano_roll{};
 
 static bool can_joystick_be_modified();
 
-static void on_can_modify_inputs_changed()
-{
-}
-
 static void update_can_modify_inputs()
 {
     ThreadPool::submit_task([] {
-        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+        const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
 
         const auto prev_can_modify_inputs = piano_roll.readwrite;
-        piano_roll.readwrite = !g_main_ctx.core_ctx->vcr_get_warp_modify_status() &&
+        piano_roll.readwrite = !g_main_ctx.CoreCtx->vcr_get_warp_modify_status() &&
                                info.seek_target_sample == SIZE_MAX &&
-                               g_main_ctx.core_ctx->vcr_get_task() == task_recording &&
-                               !g_main_ctx.core_ctx->vcr_is_seeking() && !g_config.core.vcr_readonly &&
-                               g_config.core.seek_savestate_interval > 0 && g_main_ctx.core_ctx->vr_get_paused();
+                               g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Recording &&
+                               !g_main_ctx.CoreCtx->vcr_is_seeking() && !g_config.core.vcr_readonly &&
+                               g_config.core.seek_savestate_interval > 0 && g_main_ctx.CoreCtx->vr_get_paused();
 
         if (prev_can_modify_inputs != piano_roll.readwrite)
         {
-            g_main_ctx.dispatcher->invoke([] { on_can_modify_inputs_changed(); });
+            g_main_ctx.dispatcher->invoke([] { ActionManager::notify_enabled_changed(PianoRoll::BASE); });
         }
     });
 }
@@ -152,19 +145,19 @@ static void update_inputs()
     }
 
     // If VCR is idle, we can't really show anything.
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
+    if (g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Idle)
     {
         ListView_DeleteAllItems(piano_roll.lv_hwnd);
     }
 
     // In playback mode, the input buffer can't change so we're safe to only pull it once.
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_playback)
+    if (g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Playback)
     {
         SetWindowRedraw(piano_roll.lv_hwnd, false);
 
         ListView_DeleteAllItems(piano_roll.lv_hwnd);
 
-        piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
+        piano_roll.current_state.inputs = g_main_ctx.CoreCtx->vcr_get_inputs();
         ListView_SetItemCount(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size());
         g_view_logger->info(
             "[PianoRoll] Pulled inputs from core for playback mode, count: {}", piano_roll.current_state.inputs.size());
@@ -334,12 +327,12 @@ static void print_clipboard_dump()
 static void ensure_relevant_item_visible()
 {
     const int32_t i = ListView_GetNextItem(piano_roll.lv_hwnd, -1, LVNI_SELECTED);
-    const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
 
     const auto current_sample =
         std::min(ListView_GetItemCount(piano_roll.lv_hwnd), static_cast<int32_t>(info.current_sample) + 10);
     const auto playhead_sample =
-        g_main_ctx.core_ctx->vcr_get_task() == task_recording ? current_sample - 1 : current_sample;
+        g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Recording ? current_sample - 1 : current_sample;
 
     if (g_config.piano_roll_keep_playhead_visible)
     {
@@ -448,11 +441,11 @@ static void apply_input_buffer(bool push_to_history = true)
     // Problem is that the VCR lock is already grabbed by the core thread because current sample changed message is
     // executed on core thread.
     ThreadPool::submit_task([=] {
-        auto result = g_main_ctx.core_ctx->vcr_begin_warp_modify(piano_roll.current_state.inputs);
-        const auto inputs = g_main_ctx.core_ctx->vcr_get_inputs();
+        auto result = g_main_ctx.CoreCtx->vcr_begin_warp_modify(piano_roll.current_state.inputs);
+        const auto inputs = g_main_ctx.CoreCtx->vcr_get_inputs();
 
         g_main_ctx.dispatcher->invoke([=] {
-            if (result == Res_Ok)
+            if (result == CoreResult::Res_Ok)
             {
                 if (push_to_history)
                 {
@@ -695,8 +688,8 @@ static bool insert_frames(size_t count)
 static void update_groupbox_status_text()
 {
     ThreadPool::submit_task([] {
-        const auto warp_modify_active = g_main_ctx.core_ctx->vcr_get_warp_modify_status();
-        const auto paused = g_main_ctx.core_ctx->vr_get_paused();
+        const auto warp_modify_active = g_main_ctx.CoreCtx->vcr_get_warp_modify_status();
+        const auto paused = g_main_ctx.CoreCtx->vr_get_paused();
 
         g_main_ctx.dispatcher->invoke([=] {
             if (warp_modify_active)
@@ -738,7 +731,7 @@ static bool can_joystick_be_modified()
     return !piano_roll.current_state.selected_indicies.empty() && piano_roll.readwrite;
 }
 
-static void on_task_changed(core_vcr_task value)
+static void on_task_changed(CoreVCRTask value)
 {
     update_can_modify_inputs();
 
@@ -768,22 +761,22 @@ static void on_task_changed(core_vcr_task value)
 static void on_current_sample_changed(int32_t)
 {
     piano_roll.previous_sample = piano_roll.current_sample;
-    piano_roll.current_sample = g_main_ctx.core_ctx->vcr_get_seek_info().current_sample;
+    piano_roll.current_sample = g_main_ctx.CoreCtx->vcr_get_seek_info().current_sample;
 
-    if (g_main_ctx.core_ctx->vcr_get_warp_modify_status() || g_main_ctx.core_ctx->vcr_is_seeking())
+    if (g_main_ctx.CoreCtx->vcr_get_warp_modify_status() || g_main_ctx.CoreCtx->vcr_is_seeking())
     {
         return;
     }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
+    if (g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Idle)
     {
         return;
     }
 
     g_main_ctx.dispatcher->invoke([=] {
-        if (g_main_ctx.core_ctx->vcr_get_task() == task_recording)
+        if (g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Recording)
         {
-            piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
+            piano_roll.current_state.inputs = g_main_ctx.CoreCtx->vcr_get_inputs();
             ListView_SetItemCountEx(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size(), LVSICF_NOSCROLL);
         }
 
@@ -797,7 +790,7 @@ static void on_current_sample_changed(int32_t)
 static void on_unfreeze_completed()
 {
     g_main_ctx.dispatcher->invoke([=] {
-        if (g_main_ctx.core_ctx->vcr_get_warp_modify_status() || g_main_ctx.core_ctx->vcr_is_seeking())
+        if (g_main_ctx.CoreCtx->vcr_get_warp_modify_status() || g_main_ctx.CoreCtx->vcr_is_seeking())
         {
             return;
         }
@@ -806,10 +799,10 @@ static void on_unfreeze_completed()
 
         ListView_DeleteAllItems(piano_roll.lv_hwnd);
 
-        piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
-        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+        piano_roll.current_state.inputs = g_main_ctx.CoreCtx->vcr_get_inputs();
+        const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
 
-        const auto item_count = g_main_ctx.core_ctx->vcr_get_task() == task_recording
+        const auto item_count = g_main_ctx.CoreCtx->vcr_get_task() == CoreVCRTask::Recording
                                     ? std::min(info.current_sample, piano_roll.current_state.inputs.size())
                                     : piano_roll.current_state.inputs.size();
 
@@ -844,7 +837,7 @@ static void on_seek_completed()
 static void on_seek_savestate_changed(size_t value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        g_main_ctx.core_ctx->vcr_get_seek_savestate_frames(piano_roll.seek_savestate_frames);
+        g_main_ctx.CoreCtx->vcr_get_seek_savestate_frames(piano_roll.seek_savestate_frames);
         ListView_Update(piano_roll.lv_hwnd, value);
     });
 }
@@ -852,7 +845,7 @@ static void on_seek_savestate_changed(size_t value)
 static void on_emu_paused_changed(bool)
 {
     // Redrawing during frame advance (paused on, then off next frame) causes ugly flicker, so we'll just not do that
-    if (g_main_ctx.core_ctx->vr_get_frame_advance() && !g_main_ctx.core_ctx->vr_get_paused())
+    if (g_main_ctx.CoreCtx->vr_get_frame_advance() && !g_main_ctx.CoreCtx->vr_get_paused())
     {
         return;
     }
@@ -882,57 +875,6 @@ static LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 {
     switch (msg)
     {
-    case WM_CONTEXTMENU: {
-        if (piano_roll.lv_ignore_context_menu)
-        {
-            piano_roll.lv_ignore_context_menu = false;
-            break;
-        }
-
-        HMENU h_menu = CreatePopupMenu();
-        const auto base_style = piano_roll.readwrite ? MF_ENABLED : MF_DISABLED;
-        AppendMenu(h_menu, MF_STRING, 1, "Copy\tCtrl+C");
-        AppendMenu(h_menu, base_style | MF_STRING, 2, "Paste\tCtrl+V");
-        AppendMenu(h_menu, MF_SEPARATOR, 0, nullptr);
-        AppendMenu(h_menu, base_style | MF_STRING, 3, "Undo\tCtrl+Z");
-        AppendMenu(h_menu, base_style | MF_STRING, 4, "Redo\tCtrl+Y");
-        AppendMenu(h_menu, MF_SEPARATOR, 0, nullptr);
-        AppendMenu(h_menu, base_style | MF_STRING, 5, "Clear\tBackspace");
-        AppendMenu(h_menu, base_style | MF_STRING, 6, "Delete\tDelete");
-        AppendMenu(h_menu, base_style | MF_STRING, 7, "Insert frame\tInsert");
-
-        const int offset =
-            TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), hwnd, 0);
-
-        switch (offset)
-        {
-        case 1:
-            copy_inputs();
-            break;
-        case 2:
-            paste_inputs(false);
-            break;
-        case 3:
-            undo();
-            break;
-        case 4:
-            redo();
-            break;
-        case 5:
-            clear_inputs_in_selection();
-            break;
-        case 6:
-            delete_inputs_in_selection();
-            break;
-        case 7:
-            insert_frames(1);
-            break;
-        default:
-            break;
-        }
-
-        break;
-    }
     case WM_LBUTTONDOWN:
     case WM_RBUTTONDOWN: {
         LVHITTESTINFO lplvhtti{};
@@ -962,7 +904,6 @@ static LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
             piano_roll.lv_drag_initial_value = !get_input_value_from_column_index(input, piano_roll.lv_drag_column);
             piano_roll.lv_drag_unset = GetKeyState(VK_RBUTTON) & 0x100;
-            piano_roll.lv_ignore_context_menu = GetKeyState(VK_RBUTTON) & 0x100;
         }
 
         goto handle_mouse_move;
@@ -1082,7 +1023,7 @@ handle_mouse_move:
             goto def;
         }
 
-        ThreadPool::submit_task([=] { g_main_ctx.core_ctx->vcr_begin_seek(std::to_string(lplvhtti.iItem), true); });
+        ThreadPool::submit_task([=] { g_main_ctx.CoreCtx->vcr_begin_seek(std::to_string(lplvhtti.iItem), true); });
         return 0;
     }
 
@@ -1205,9 +1146,9 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
         // Manually call all the setup-related callbacks
         update_inputs();
-        on_task_changed(g_main_ctx.core_ctx->vcr_get_task());
+        on_task_changed(g_main_ctx.CoreCtx->vcr_get_task());
 
-        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+        const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
 
         // ReSharper disable once CppRedundantCastExpression
         on_current_sample_changed(static_cast<int32_t>(info.current_sample));
@@ -1220,6 +1161,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
                 {piano_roll.hist_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
             });
 
+        ActionMenu::add_managed_menu(hwnd, PianoRoll::BASE + "*", std::nullopt, PianoRoll::BASE);
         WinDarkMode::attach(hwnd);
         break;
     }
@@ -1244,7 +1186,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
         break;
-    case JoystickControl::WM_JOYSTICK_POSITION_CHANGED: {
+    case JoystickControl::wm_joystick_position_changed: {
         if (!can_joystick_be_modified()) break;
 
         ZESpec::Buttons buttons{};
@@ -1368,8 +1310,32 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     return FALSE;
 }
 
+static bool enabled_when_editable()
+{
+    return piano_roll.readwrite;
+}
+
 void PianoRoll::init()
 {
+    ActionManager::add({.path = PianoRoll::COPY,
+        .on_press = [](const auto &...) { copy_inputs(); },
+        .get_enabled = enabled_when_editable});
+    ActionManager::add({.path = PianoRoll::PASTE,
+        .on_press = [](const auto &...) { paste_inputs(false); },
+        .get_enabled = enabled_when_editable});
+    ActionManager::add(
+        {.path = PianoRoll::UNDO, .on_press = [](const auto &...) { undo(); }, .get_enabled = enabled_when_editable});
+    ActionManager::add(
+        {.path = PianoRoll::REDO, .on_press = [](const auto &...) { redo(); }, .get_enabled = enabled_when_editable});
+    ActionManager::add({.path = PianoRoll::CLEAR,
+        .on_press = [](const auto &...) { clear_inputs_in_selection(); },
+        .get_enabled = enabled_when_editable});
+    ActionManager::add({.path = PianoRoll::DELETE,
+        .on_press = [](const auto &...) { delete_inputs_in_selection(); },
+        .get_enabled = enabled_when_editable});
+    ActionManager::add({.path = PianoRoll::INSERT_FRAME,
+        .on_press = [](const auto &...) { insert_frames(1); },
+        .get_enabled = enabled_when_editable});
 }
 
 void PianoRoll::show()

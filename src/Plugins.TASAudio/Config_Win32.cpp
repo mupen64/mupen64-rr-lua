@@ -9,8 +9,8 @@
 #include "Config_Win32.hpp"
 #include "Main_Win32.hpp"
 #include "Resource.h"
-
 #include <Common.Win32/Common.hpp>
+#include <WinDarkMode.h>
 
 // Macros Windows should really have, but don't.
 #define Trackbar_GetPos(hwndCtl) ((int)(DWORD)SendMessage((hwndCtl), TBM_GETPOS, 0L, 0L))
@@ -38,6 +38,7 @@ static CALLBACK INT_PTR config_dlgproc(HWND dialog, UINT msg, WPARAM wparam, LPA
         }
         SetDlgItemText(dialog, IDC_VOLUME_TXT, std::format("{}%", (DWORD)g_config_ptr->volume_pct).c_str());
 
+        WinDarkMode::attach(dialog, {.is_dialog = true});
         break;
     case WM_CLOSE: // "close" button clicked
         EndDialog(dialog, IDCANCEL);

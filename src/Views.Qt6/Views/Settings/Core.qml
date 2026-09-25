@@ -1,0 +1,44 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+import QtCore
+
+Settings {
+    category: "core"
+
+    // enum CoreType {
+    //     CachedInterpreter = 0,
+    //     DynamicRecompiler = 1,
+    //     PureInterpreter = 2
+    // }
+
+    // Win32 "core" -> CoreCfg
+    property int coreType: 1
+    property bool stUndoLoad: true
+    property int maxLag: 480
+    property bool wiiVCEmulation: false
+    property bool rcpLagEmulation: false
+    property double cpuCF: 1.0
+    property double rcpLagFactor: 1.0
+    property bool floatExceptionEmulation: false
+    property bool useSummercart: false
+    property bool stScreenshot: false
+    property bool stLZ4: true
+    property int romCacheSize: 0
+
+    // Win32 "debug" -> CoreCfg
+    property bool audioDelayEnabled: true
+    property bool compiledJumpEnabled: true
+    property bool ceqsNaNAccurate: true
+    property bool accurateRDPCompletion: true
+
+    // Win32 "vcr" -> CoreCfg
+    property bool vcrBackups: true
+    property bool vcrWriteExtendedFormat: true
+
+    // Win32 "vcr" (frontend only)
+    property bool vcrResetRecordingEnabled: false
+}

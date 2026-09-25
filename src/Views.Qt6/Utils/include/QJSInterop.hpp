@@ -180,7 +180,7 @@ template <class F> auto gen_cpp_trampoline(F &callable)
  * @param callable The callable type to use.
  * @return A `QJSValue` containing the JS function bound to this C++ function.
  */
-template <class F> QJSValue to_js_function(QJSEngine *engine, F &&callable)
+template <class F> QJSValue toJSFunction(QJSEngine *engine, F &&callable)
 {
     using params_sequence = typename details::callable_traits<F>::params;
     constexpr size_t params_size = params_sequence::size;

@@ -15,7 +15,7 @@
 #error "The M64RR specification is only for C++"
 #endif
 
-#include "m64rr/Types.hpp"
+#include <Core/Types.hpp>
 
 #if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
@@ -91,24 +91,24 @@ extern "C"
         Platform platform;
         WindowHandle main_window;
 
-        // TODO: just a core_ctx pointer instead...
+        // TODO: just a CoreCtx pointer instead...
 
         uint8_t *rom;
         uint8_t *rdram;
         uint8_t *dmem;
         uint8_t *imem;
 
-        core_rdram_reg *rdram_register;
-        core_mips_reg *mi_register;
-        core_pi_reg *pi_register;
-        core_sp_reg *sp_register;
-        core_rsp_reg *rsp_register;
-        core_si_reg *si_register;
-        core_vi_reg *vi_register;
-        core_ri_reg *ri_register;
-        core_ai_reg *ai_register;
-        core_dpc_reg *dpc_register;
-        core_dps_reg *dps_register;
+        CoreRDRAMReg *rdram_register;
+        CoreMIPSReg *mi_register;
+        CorePIReg *pi_register;
+        CoreSPReg *sp_register;
+        CoreRSPReg *rsp_register;
+        CoreSIReg *si_register;
+        CoreVIReg *vi_register;
+        CoreRIReg *ri_register;
+        CoreAIReg *ai_register;
+        CoreDPCReg *dpc_register;
+        CoreDPSReg *dps_register;
 
         void(CALL *process_dlist)(void);
 
@@ -141,7 +141,7 @@ extern "C"
         CoreSpeedMode (*get_effective_speed_mode)();
 
         /**
-         * \brief See `core_ctx::vr_get_frame_skipped`.
+         * \brief See `CoreCtx::vr_get_frame_skipped`.
          */
         bool (*frame_skipped)();
 

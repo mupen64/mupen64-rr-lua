@@ -8,6 +8,7 @@
 
 #include <components/TextEditDialog.hpp>
 #include <lua/LuaManager.hpp>
+#include <SDL3/SDL_keyboard.h>
 
 namespace LuaCore::Input
 {
@@ -310,7 +311,6 @@ static int LuaGetKeyNameText(lua_State *L)
 
     UINT scan_code = MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, GetKeyboardLayout(0));
 
-    // Add extended bit to scan code for certain keys which have a two-byte form
     switch (vk)
     {
     case VK_LEFT:

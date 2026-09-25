@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
-  "version": 10,
+  "version": 9,
   "include": [
     "common.json"
   ],
   "configurePresets": [
     {
       "name": "common-mingw-linux",
-      "$comment": "Common settings for Linux cross-compiling to MinGW Windows",
+      "description": "Common settings for Linux cross-compiling to MinGW Windows",
 
       "hidden": true,
       "generator": "Ninja",

@@ -20,11 +20,11 @@ class WinVFWEncoder final : public Encoder
     std::string get_desired_extension() const override;
 
   private:
-    static constexpr auto SOUND_BUF_SIZE = 44100 * 2 * 2;
-    static constexpr auto MAX_AVI_SIZE = 0x7B9ACA00;
-    static constexpr auto RESAMPLED_FREQ = 44100;
-    static constexpr size_t MAX_PENDING_WORK_ITEMS = 128;
-    static constexpr size_t MAX_PENDING_WORK_BYTES = 64 * 1024 * 1024;
+    static constexpr auto sound_buf_size = 44100 * 2 * 2;
+    static constexpr auto max_avi_size = 0x7B9ACA00;
+    static constexpr auto resampled_freq = 44100;
+    static constexpr size_t max_pending_work_items = 128;
+    static constexpr size_t max_pending_work_bytes = 64 * 1024 * 1024;
 
     bool write_sound(uint8_t *buf, int len, uint8_t bitrate);
     bool append_video_impl(uint8_t *image);
@@ -43,8 +43,8 @@ class WinVFWEncoder final : public Encoder
     size_t m_sample = 0;
     size_t m_video_frame = 0;
     double m_audio_frame = 0;
-    uint8_t m_sound_buf[SOUND_BUF_SIZE]{};
-    uint8_t m_sound_buf_empty[SOUND_BUF_SIZE]{};
+    uint8_t m_sound_buf[sound_buf_size]{};
+    uint8_t m_sound_buf_empty[sound_buf_size]{};
     short *m_resampled_sound{};
     int sound_buf_pos = 0;
     uint32_t m_last_sound = 0;

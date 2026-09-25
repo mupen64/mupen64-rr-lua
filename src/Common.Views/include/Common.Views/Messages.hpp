@@ -14,7 +14,7 @@
 #include <utility>
 #include <vector>
 #include <Common.Views/Config.hpp>
-#include <m64rr/Types.hpp>
+#include <Core/Types.hpp>
 #include <Common.Views/Messenger.hpp>
 
 namespace Messenger
@@ -234,7 +234,7 @@ template <> struct MessageData<Message::ReadonlyChanged>
 };
 template <> struct MessageData<Message::TaskChanged>
 {
-    using type = core_vcr_task;
+    using type = CoreVCRTask;
 };
 template <> struct MessageData<Message::CurrentSampleChanged>
 {
@@ -274,7 +274,7 @@ template <> struct MessageData<Message::ConfigLoaded>
 };
 template <> struct MessageData<Message::ConfigNeedsPatching>
 {
-    using type = t_config &;
+    using type = Config &;
 };
 template <> struct MessageData<Message::RerecordsChanged>
 {

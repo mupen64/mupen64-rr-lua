@@ -60,16 +60,16 @@ constexpr AnchorFlags operator&(AnchorFlags a, AnchorFlags b)
     return static_cast<AnchorFlags>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
 }
 
-constexpr AnchorFlags FULL_ANCHOR = AnchorFlags::Left | AnchorFlags::Right | AnchorFlags::Top | AnchorFlags::Bottom;
-constexpr AnchorFlags HORIZONTAL_ANCHOR = AnchorFlags::Left | AnchorFlags::Right;
-constexpr AnchorFlags VERTICAL_ANCHOR = AnchorFlags::Top | AnchorFlags::Bottom;
-constexpr AnchorFlags INVALIDATE_ERASE = AnchorFlags::Invalidate | AnchorFlags::Erase;
+constexpr AnchorFlags full_anchor = AnchorFlags::Left | AnchorFlags::Right | AnchorFlags::Top | AnchorFlags::Bottom;
+constexpr AnchorFlags horizontal_anchor = AnchorFlags::Left | AnchorFlags::Right;
+constexpr AnchorFlags vertical_anchor = AnchorFlags::Top | AnchorFlags::Bottom;
+constexpr AnchorFlags invalidate_erase = AnchorFlags::Invalidate | AnchorFlags::Erase;
 
 namespace detail
 {
 #define CTX_PROP "ResizeAnchor_ctx"
 
-struct t_anchor_context
+struct AnchorContext
 {
     HWND hwnd{};
     std::vector<std::pair<HWND, AnchorFlags>> anchors{};
@@ -84,7 +84,7 @@ inline bool update_anchors(const HWND hwnd)
         return false;
     }
 
-    auto ctx = static_cast<t_anchor_context *>(GetProp(hwnd, CTX_PROP));
+    auto ctx = static_cast<AnchorContext *>(GetProp(hwnd, CTX_PROP));
 
     if (!ctx)
     {
@@ -158,7 +158,7 @@ inline bool update_anchors(const HWND hwnd)
 inline LRESULT CALLBACK wnd_subclass_proc(
     HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
 {
-    auto ctx = static_cast<t_anchor_context *>(GetProp(hwnd, CTX_PROP));
+    auto ctx = static_cast<AnchorContext *>(GetProp(hwnd, CTX_PROP));
 
     switch (msg)
     {
@@ -179,7 +179,7 @@ inline LRESULT CALLBACK wnd_subclass_proc(
 }
 
 inline void add_anchors_base(
-    t_anchor_context &ctx, const std::vector<std::pair<HWND, AnchorFlags>> &anchors, bool replace_child_anchors)
+    AnchorContext &ctx, const std::vector<std::pair<HWND, AnchorFlags>> &anchors, bool replace_child_anchors)
 {
     std::erase_if(ctx.anchors, [&](const std::pair<HWND, AnchorFlags> &pair) {
         return std::ranges::find_if(anchors, [&](const std::pair<HWND, AnchorFlags> &new_pair) {
@@ -213,13 +213,13 @@ inline bool add_anchors_impl(
     // We don't want to do all of this "initial state" business if we're already set up
     if (GetProp(hwnd, CTX_PROP) != nullptr)
     {
-        auto ctx = static_cast<t_anchor_context *>(GetProp(hwnd, CTX_PROP));
+        auto ctx = static_cast<AnchorContext *>(GetProp(hwnd, CTX_PROP));
         add_anchors_base(*ctx, anchors, replace_child_anchors);
         update_anchors(hwnd);
         return true;
     }
 
-    auto ctx = new t_anchor_context();
+    auto ctx = new AnchorContext();
 
     ctx->hwnd = hwnd;
     ctx->anchors = anchors;
@@ -241,7 +241,7 @@ inline bool add_anchors_impl(
 
 inline bool remove_anchor_impl(HWND hwnd, HWND child_hwnd)
 {
-    auto ctx = static_cast<t_anchor_context *>(GetProp(hwnd, CTX_PROP));
+    auto ctx = static_cast<AnchorContext *>(GetProp(hwnd, CTX_PROP));
     if (!ctx)
     {
         return false;

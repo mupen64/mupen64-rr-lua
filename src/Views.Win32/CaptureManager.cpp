@@ -21,7 +21,7 @@
 
 namespace CaptureManager
 {
-constexpr auto READSCREEN_MISSING_MSG = "The current video plugin doesn't support the current capture method.\nTry "
+constexpr auto readscreen_missing_msg = "The current video plugin doesn't support the current capture method.\nTry "
                                         "using another video plugin or switching the capture mode.";
 
 std::filesystem::path m_current_path;
@@ -40,7 +40,7 @@ int32_t m_video_height;
 static Encoder::Params m_encoder_params;
 
 std::atomic m_capturing = false;
-t_config::EncoderType m_encoder_type;
+Config::EncoderType m_encoder_type;
 std::unique_ptr<Encoder> m_encoder;
 std::recursive_mutex m_mutex;
 
@@ -207,7 +207,7 @@ static bool check_readscreen_available()
 {
     if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && !PluginUtil::mge_available())
     {
-        DialogService::show_dialog(READSCREEN_MISSING_MSG, "Capture", fsvc_error);
+        DialogService::show_dialog(readscreen_missing_msg, "Capture", CoreMessageTone::Error);
         return false;
     }
 
@@ -243,7 +243,7 @@ bool stop_capture_impl()
 
     if (!m_encoder->stop())
     {
-        DialogService::show_dialog("Failed to stop capturing.", "Capture", fsvc_error);
+        DialogService::show_dialog("Failed to stop capturing.", "Capture", CoreMessageTone::Error);
         return false;
     }
 
@@ -264,7 +264,7 @@ bool stop_capture_impl()
 
     m_capturing = false;
     g_config.core.render_throttling = true;
-    g_main_ctx.core_ctx->vr_on_render_throttling_changed();
+    g_main_ctx.CoreCtx->vr_on_render_throttling_changed();
 
     Messenger::broadcast<Messenger::Message::CapturingChanged>(false);
 
@@ -273,7 +273,7 @@ bool stop_capture_impl()
 }
 
 bool start_capture_impl(
-    std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings)
+    std::filesystem::path path, Config::EncoderType encoder_type, const bool ask_for_capture_settings)
 {
     if (!check_readscreen_available())
     {
@@ -294,10 +294,10 @@ bool start_capture_impl(
 
     switch (encoder_type)
     {
-    case t_config::EncoderType::VFW:
+    case Config::EncoderType::VFW:
         m_encoder = std::make_unique<WinVFWEncoder>();
         break;
-    case t_config::EncoderType::FFmpeg:
+    case Config::EncoderType::FFmpeg:
         m_encoder = std::make_unique<WinFFmpegEncoder>();
         break;
     default:
@@ -320,7 +320,7 @@ bool start_capture_impl(
         .path = m_current_path,
         .width = (uint32_t)m_video_width,
         .height = (uint32_t)m_video_height,
-        .fps = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code),
+        .fps = g_main_ctx.CoreCtx->vr_get_vis_per_second(g_main_ctx.CoreCtx->vr_get_rom_header()->Country_code),
         .arate = (uint32_t)m_audio_freq,
         .ask_for_capture_settings = ask_for_capture_settings,
     };
@@ -333,44 +333,44 @@ bool start_capture_impl(
         const auto &str = result.value();
         if (!str.empty())
         {
-            DialogService::show_dialog(str, "Capture", fsvc_error);
+            DialogService::show_dialog(str, "Capture", CoreMessageTone::Error);
         }
         return false;
     }
 
     m_capturing = true;
     g_config.core.render_throttling = false;
-    g_main_ctx.core_ctx->vr_on_render_throttling_changed();
+    g_main_ctx.CoreCtx->vr_on_render_throttling_changed();
 
     Messenger::broadcast<Messenger::Message::CapturingChanged>(true);
 
     return true;
 }
 
-void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings,
+void start_capture(std::filesystem::path path, Config::EncoderType encoder_type, const bool ask_for_capture_settings,
     const std::function<void(bool)> &callback)
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         const auto result = start_capture_impl(path, encoder_type, ask_for_capture_settings);
         if (callback)
         {
             callback(result);
         }
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
     });
 }
 
 void stop_capture(const std::function<void(bool)> &callback)
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.CoreCtx->vr_wait_increment();
     ThreadPool::submit_task([=] {
         const auto result = stop_capture_impl();
         if (callback)
         {
             callback(result);
         }
-        g_main_ctx.core_ctx->vr_wait_decrement();
+        g_main_ctx.CoreCtx->vr_wait_decrement();
     });
 }
 
@@ -400,7 +400,7 @@ void input()
         if (!m_encoder->append_video(m_video_buf))
         {
             DialogService::show_dialog(
-                "Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture", fsvc_error);
+                "Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture", CoreMessageTone::Error);
             stop_capture();
             return;
         }
@@ -415,11 +415,11 @@ void ai_len_changed()
     std::lock_guard lock(m_mutex);
 
     const auto p = reinterpret_cast<short *>(
-        (char *)g_main_ctx.core_ctx->rdram + (g_main_ctx.core_ctx->ai_register->ai_dram_addr & 0xFFFFFF));
+        (char *)g_main_ctx.CoreCtx->rdram + (g_main_ctx.CoreCtx->ai_register->ai_dram_addr & 0xFFFFFF));
     const auto buf = (char *)p;
-    const int ai_len = (int)g_main_ctx.core_ctx->ai_register->ai_len;
+    const int ai_len = (int)g_main_ctx.CoreCtx->ai_register->ai_len;
 
-    m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
+    m_audio_bitrate = (int)g_main_ctx.CoreCtx->ai_register->ai_bitrate + 1;
 
     if (!m_capturing)
     {
@@ -430,22 +430,23 @@ void ai_len_changed()
 
     if (!m_encoder->append_audio(reinterpret_cast<uint8_t *>(buf), ai_len, m_audio_bitrate))
     {
-        DialogService::show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture", fsvc_error);
+        DialogService::show_dialog(
+            "Failed to append audio data.\nCapture will be stopped.", "Capture", CoreMessageTone::Error);
         stop_capture();
     }
 }
 
 void ai_dacrate_changed(CoreSystemType type)
 {
-    m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
+    m_audio_bitrate = (int)g_main_ctx.CoreCtx->ai_register->ai_bitrate + 1;
 
     switch (type)
     {
     case CoreSystemType::NTSC:
-        m_audio_freq = (int)(48681812 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
+        m_audio_freq = (int)(48681812 / (g_main_ctx.CoreCtx->ai_register->ai_dacrate + 1));
         break;
     case CoreSystemType::PAL:
-        m_audio_freq = (int)(49656530 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
+        m_audio_freq = (int)(49656530 / (g_main_ctx.CoreCtx->ai_register->ai_dacrate + 1));
         break;
     default:
         assert(false);
@@ -475,13 +476,13 @@ void core_executing_changed(bool value)
 
     if (!value || !m_capturing) return;
 
-    const auto vis = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+    const auto vis = g_main_ctx.CoreCtx->vr_get_vis_per_second(g_main_ctx.CoreCtx->vr_get_rom_header()->Country_code);
 
     if (vis != m_encoder_params.fps)
     {
         DialogService::show_dialog(
             "Changed to a ROM from a different region during capture.\r\nThe capture will be stopped.", "Capture",
-            fsvc_error);
+            CoreMessageTone::Error);
         stop_capture();
     }
 }

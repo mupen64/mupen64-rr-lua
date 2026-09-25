@@ -8,11 +8,11 @@
 
 #include <nlohmann/json.hpp>
 
-struct t_rsp_config
+struct RSPConfig
 {
     int32_t version = 2;
 
-    friend void to_json(nlohmann::json &j, const t_rsp_config &self)
+    friend void to_json(nlohmann::json &j, const RSPConfig &self)
     {
 #define TASRSP_FIELD(field) {#field, self.field}
         j = nlohmann::json::object({
@@ -21,16 +21,16 @@ struct t_rsp_config
 #undef TASRSP_FIELD
     }
 
-    friend void from_json(const nlohmann::json &j, t_rsp_config &self)
+    friend void from_json(const nlohmann::json &j, RSPConfig &self)
     {
-        if (!j.is_object()) throw std::domain_error("t_rsp_config expected JSON object");
+        if (!j.is_object()) throw std::domain_error("RSPConfig expected JSON object");
 #define TASRSP_FIELD(field) nlohmann::from_json(j.at(#field), self.field)
         TASRSP_FIELD(version);
 #undef TASRSP_FIELD
     }
 };
 
-extern t_rsp_config config;
+extern RSPConfig config;
 
 /**
  * \brief Saves the config

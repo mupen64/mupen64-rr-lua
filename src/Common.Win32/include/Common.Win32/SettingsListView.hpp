@@ -16,13 +16,13 @@
  */
 namespace SettingsListView
 {
-using t_group = std::pair<size_t, std::string>;
-using t_item = std::pair<size_t, std::string>;
+using Group = std::pair<size_t, std::string>;
+using Item = std::pair<size_t, std::string>;
 
 /**
  * \brief The context of a SettingsListView.
  */
-struct t_settings_listview_context
+struct SettingsListviewContext
 {
     /**
      * \brief The instance handle of the application.
@@ -47,12 +47,12 @@ struct t_settings_listview_context
     /**
      * \brief The ListView's groups as a pair of group ID and group name.
      */
-    std::vector<t_group> groups;
+    std::vector<Group> groups;
 
     /**
      * \brief The ListView's items as a pair of group ID and item name.
      */
-    std::vector<t_item> items;
+    std::vector<Item> items;
 
     /**
      * \brief A callback that retrieves an item's tooltip from the second column.
@@ -74,7 +74,7 @@ namespace detail
 {
 #define PROP_NAME "slv_ctx"
 
-inline bool begin_listview_edit(SettingsListView::t_settings_listview_context *ctx, HWND lvhwnd)
+inline bool begin_listview_edit(SettingsListView::SettingsListviewContext *ctx, HWND lvhwnd)
 {
     int32_t i = ListView_GetNextItem(lvhwnd, -1, LVNI_SELECTED);
 
@@ -94,7 +94,7 @@ inline bool begin_listview_edit(SettingsListView::t_settings_listview_context *c
 inline LRESULT CALLBACK list_view_proc(
     HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param, UINT_PTR, DWORD_PTR ref_data)
 {
-    auto ctx = (SettingsListView::t_settings_listview_context *)ref_data;
+    auto ctx = (SettingsListView::SettingsListviewContext *)ref_data;
 
     switch (msg)
     {
@@ -121,9 +121,9 @@ inline LRESULT CALLBACK list_view_proc(
     return DefSubclassProc(hwnd, msg, w_param, l_param);
 }
 
-inline HWND create_impl(const t_settings_listview_context &ctx)
+inline HWND create_impl(const SettingsListviewContext &ctx)
 {
-    auto ctx2 = new t_settings_listview_context();
+    auto ctx2 = new SettingsListviewContext();
     *ctx2 = ctx;
 
     HWND lvhwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
@@ -198,7 +198,7 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
     }
 
     const auto lpnmhdr = reinterpret_cast<LPNMHDR>(lparam);
-    auto ctx = (t_settings_listview_context *)GetProp(dlg_hwnd, PROP_NAME);
+    auto ctx = (SettingsListviewContext *)GetProp(dlg_hwnd, PROP_NAME);
 
     switch (lpnmhdr->code)
     {
@@ -256,7 +256,7 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
  * \param ctx The context of the SettingsListView.
  * \return The handle of the created ListView.
  */
-HWND create(const t_settings_listview_context &ctx)
+HWND create(const SettingsListviewContext &ctx)
 {
     return detail::create_impl(ctx);
 }

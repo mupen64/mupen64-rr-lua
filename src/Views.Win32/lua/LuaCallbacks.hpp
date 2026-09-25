@@ -20,7 +20,7 @@ enum callback_key : uint8_t
 {
     REG_LUACLASS = LUA_RIDX_LAST + 1,
     REG_ATUPDATESCREEN,
-    REG_ATDRAWD2D,
+    REG_ATPAINT,
     REG_ATVI,
     REG_ATINPUT,
     REG_ATSTOP,
@@ -101,7 +101,7 @@ void call_warp_modify_status_changed(int32_t status);
 /**
  * \brief Notifies all lua instances of a key event.
  */
-void call_atkey(const t_lua_key_event_args &args);
+void call_atkey(const LuaKeyEventArgs &args);
 
 /**
  * \brief Notifies all lua instances of a mouse event.
@@ -114,7 +114,7 @@ void call_atmouse(const LuaMouseEventArgs &args);
  * \param key The callback key.
  * \return Whether the invocation failed.
  */
-bool invoke_callbacks_with_key(const t_lua_environment *lua, callback_key key);
+bool invoke_callbacks_with_key(const LuaEnvironment *lua, callback_key key);
 
 /**
  * \brief Invokes the registered callbacks with the specified key on all Lua instances in the global map.

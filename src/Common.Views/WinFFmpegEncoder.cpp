@@ -247,12 +247,12 @@ bool WinFFmpegEncoder::write_av_packet(int stream_index, uint8_t *data, int size
 
 bool WinFFmpegEncoder::append_video(uint8_t *image)
 {
-    const auto sync = static_cast<t_config::Sync>(g_config.synchronization_mode);
+    const auto sync = static_cast<Config::Sync>(g_config.synchronization_mode);
     const auto frame_bytes = static_cast<int>(m_params.width * m_params.height * 4);
     const AVRational fps_tb = {1, static_cast<int>(m_params.fps)};
     const int64_t frame_dur = av_rescale_q(1, fps_tb, m_video_stream->time_base);
 
-    if (sync == t_config::Sync::Video || sync == t_config::Sync::None)
+    if (sync == Config::Sync::Video || sync == Config::Sync::None)
     {
         const int64_t pts = av_rescale_q(m_video_pts++, fps_tb, m_video_stream->time_base);
         if (!write_av_packet(m_video_stream->index, image, frame_bytes, pts, frame_dur)) return false;
@@ -261,10 +261,10 @@ bool WinFFmpegEncoder::append_video(uint8_t *image)
     else // Audio sync
     {
         const double drift = m_audio_frame - static_cast<double>(m_video_frame);
-        constexpr double DRIFT_THRESHOLD = 3.0;
+        constexpr double drift_threshold = 3.0;
 
         // Video is ahead of audio, drop frame
-        if (drift < -DRIFT_THRESHOLD)
+        if (drift < -drift_threshold)
         {
             return true;
         }
@@ -274,7 +274,7 @@ bool WinFFmpegEncoder::append_video(uint8_t *image)
         m_video_frame++;
 
         // Audio is ahead of video, duplicate frame
-        if (drift > DRIFT_THRESHOLD)
+        if (drift > drift_threshold)
         {
             const int64_t pts2 = av_rescale_q(m_video_pts++, fps_tb, m_video_stream->time_base);
             if (!write_av_packet(m_video_stream->index, image, frame_bytes, pts2, frame_dur)) return false;

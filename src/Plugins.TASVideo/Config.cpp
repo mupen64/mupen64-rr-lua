@@ -33,7 +33,7 @@ static void Config_SetDefaults()
     cache.maxBytes = 32 * 1048576;
     OGL.textureFilter = TextureFilter::None;
     OGL.usePolygonStipple = FALSE;
-    OGL.aspectMode = DEFAULT_ASPECT_MODE;
+    OGL.aspectMode = default_aspect_mode;
 }
 
 void Config_LoadConfig()
@@ -64,7 +64,7 @@ void Config_LoadConfig()
         OGL.usePolygonStipple = j["dithered_alpha_testing"];
         OGL.ignoreScissor = j["ignore_scissor"];
         OGL.clear_override = j["clear_override"];
-        OGL.aspectMode = to_aspect_mode(j.value("aspect_mode", (int)DEFAULT_ASPECT_MODE));
+        OGL.aspectMode = to_aspect_mode(j.value("aspect_mode", (int)default_aspect_mode));
     }
     catch (const std::exception &e)
     {

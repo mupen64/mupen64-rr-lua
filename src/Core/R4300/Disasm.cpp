@@ -5,7 +5,7 @@
  */
 
 #include "Disasm.hpp"
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 
 typedef enum INSTSETOP_t
 {

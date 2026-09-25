@@ -10,7 +10,7 @@
 #include <Common.Views/Hotkey.hpp>
 #include <nlohmann/json.hpp>
 
-constexpr auto FLAT_FIELD_KEY = "config";
+constexpr auto flat_field_key = "config";
 
 static std::string ini_cleanup_field(std::string field_name)
 {
@@ -27,11 +27,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[FLAT_FIELD_KEY].has(key))
+    if (!ini[flat_field_key].has(key))
     {
         return;
     }
-    *value = std::stoi(ini[FLAT_FIELD_KEY][key]);
+    *value = std::stoi(ini[flat_field_key][key]);
 }
 
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name, double *value)
@@ -40,11 +40,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[FLAT_FIELD_KEY].has(key))
+    if (!ini[flat_field_key].has(key))
     {
         return;
     }
-    *value = std::stod(ini[FLAT_FIELD_KEY][key]);
+    *value = std::stod(ini[flat_field_key][key]);
 }
 
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name, uint64_t *value)
@@ -53,11 +53,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[FLAT_FIELD_KEY].has(key))
+    if (!ini[flat_field_key].has(key))
     {
         return;
     }
-    *value = std::stoull(ini[FLAT_FIELD_KEY][key]);
+    *value = std::stoull(ini[flat_field_key][key]);
 }
 
 // !!!
@@ -69,11 +69,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[FLAT_FIELD_KEY].has(key))
+    if (!ini[flat_field_key].has(key))
     {
         return;
     }
-    value = ini[FLAT_FIELD_KEY][key];
+    value = ini[flat_field_key][key];
 }
 
 // !!!
@@ -211,14 +211,14 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
     }
 }
 
-void Config::Legacy::handle_config_ini(mINI::INIStructure &ini)
+void AppConfig::Legacy::handle_config_ini(mINI::INIStructure &ini)
 {
 #define HANDLE_P_VALUE(x) ini_handle_config_value(ini, #x, &g_config.x);
 #define HANDLE_VALUE(x) ini_handle_config_value(ini, #x, g_config.x);
 
     // We need to fill the config with latest default values first, because some "new" fields might not exist in the
     // ini
-    g_config = Config::default_config();
+    g_config = AppConfig::default_config();
 
     HANDLE_VALUE(ignored_version)
     HANDLE_P_VALUE(theme)
@@ -311,7 +311,7 @@ void Config::Legacy::handle_config_ini(mINI::INIStructure &ini)
 /**
  * \brief Migrates old values from the specified config to new ones if possible.
  */
-void Config::Legacy::migrate_config_ini(t_config &config, const mINI::INIStructure &ini)
+void AppConfig::Legacy::migrate_config_ini(Config &config, const mINI::INIStructure &ini)
 {
     // no migrations currently
 }

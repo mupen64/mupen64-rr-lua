@@ -17,7 +17,7 @@ static int StartCapture(lua_State *L)
     if (!CaptureManager::is_capturing())
     {
         // FIXME: Lua side has no callback to check the operation status
-        CaptureManager::start_capture(fname, (t_config::EncoderType)g_config.encoder_type, false);
+        CaptureManager::start_capture(fname, (Config::EncoderType)g_config.encoder_type, false);
     }
     else
         luaL_error(L, "Tried to start AVI capture when one was already in progress");

@@ -12,7 +12,7 @@
 namespace LuaCore::Debugger
 {
 
-static void push_cpu_state(lua_State *L, const core_dbg_cpu_state &state)
+static void push_cpu_state(lua_State *L, const CoreDbgCPUState &state)
 {
     lua_newtable(L);
     lua_pushinteger(L, state.address);
@@ -28,15 +28,15 @@ static int add_breakpoint(lua_State *L)
     const uintptr_t address = luaL_checkinteger(L, 1);
     const auto callback = lua_optcallback(L, 2);
 
-    const auto functor = [=](const core_dbg_cpu_state &state) {
+    const auto functor = [=](const CoreDbgCPUState &state) {
         if (!callback || !LuaManager::get_environment_for_state(L)) return;
         lua_pushcallback(L, callback, false);
         push_cpu_state(L, state);
         lua_pcall(L, 1, 0, 0);
     };
 
-    const auto id = g_main_ctx.core_ctx->dbg_add_breakpoint(
-        address, [=](const core_dbg_cpu_state &state) { g_main_ctx.dispatcher->invoke([=] { functor(state); }); });
+    const auto id = g_main_ctx.CoreCtx->dbg_add_breakpoint(
+        address, [=](const CoreDbgCPUState &state) { g_main_ctx.dispatcher->invoke([=] { functor(state); }); });
 
     env->active_breakpoints.emplace_back(std::make_pair(id, callback));
 
@@ -50,7 +50,7 @@ static int remove_breakpoint(lua_State *L)
 
     const CoreBreakpointId id = luaL_checkinteger(L, 1);
 
-    g_main_ctx.core_ctx->dbg_remove_breakpoint(id);
+    g_main_ctx.CoreCtx->dbg_remove_breakpoint(id);
 
     const auto it = std::find_if(env->active_breakpoints.begin(), env->active_breakpoints.end(),
         [&](const std::pair<CoreBreakpointId, uintptr_t *> &v) { return v.first == id; });
@@ -73,7 +73,7 @@ static int disassemble(lua_State *L)
     const uint32_t opcode = luaL_checkinteger(L, -1);
     lua_pop(L, 1);
 
-    const auto str = g_main_ctx.core_ctx->dbg_disassemble({address, opcode});
+    const auto str = g_main_ctx.CoreCtx->dbg_disassemble({address, opcode});
 
     lua_pushstring(L, str.c_str());
     return 1;

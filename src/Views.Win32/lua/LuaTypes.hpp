@@ -7,12 +7,21 @@
 #pragma once
 
 #include <Common.Views/ActionManager.hpp>
+#include <SDL3/SDL_keycode.h>
 #include <lua/presenters/Presenter.hpp>
+#include <memory>
+
+namespace LuaCore::Painter::Detail
+{
+class TextLayoutCache;
+class TextMeasurementCache;
+class TextFactoryCache;
+} // namespace LuaCore::Painter::Detail
 
 /**
  * \brief Represents a Lua rendering context.
  */
-struct t_lua_rendering_context
+struct LuaRenderingContext
 {
     // The current presenter, or null
     Presenter *presenter{};
@@ -35,14 +44,14 @@ struct t_lua_rendering_context
     // Dimensions of the drawing surfaces
     D2D1_SIZE_U dc_size{};
 
-    // The DirectWrite factory, whose lifetime is the renderer's
-    IDWriteFactory *dw_factory{};
+    // The LRU cache for painter text layouts
+    std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts{};
 
-    // The cache for DirectWrite text layouts
-    MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts{};
+    // The LRU cache for painter text measurements
+    std::shared_ptr<LuaCore::Painter::Detail::TextMeasurementCache> painter_text_measurements{};
 
-    // The cache for DirectWrite text size measurements
-    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
+    // The shared DirectWrite factory
+    std::shared_ptr<LuaCore::Painter::Detail::TextFactoryCache> painter_text_factory{};
 
     // The stack of render targets. The top is used for D2D calls.
     std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
@@ -70,7 +79,7 @@ struct t_lua_rendering_context
     int bkmode{};
 };
 
-struct t_action_param_meta
+struct ActionParamMeta
 {
     uintptr_t *validator{};
     uintptr_t *get_initial_value{};
@@ -80,20 +89,20 @@ struct t_action_param_meta
 /**
  * \brief Describes a Lua instance.
  */
-struct t_lua_environment
+struct LuaEnvironment
 {
-    using destroying_func = std::function<void(const t_lua_environment *env)>;
-    using print_func = std::function<void(const t_lua_environment *env, const std::string &text)>;
+    using destroying_func = std::function<void(const LuaEnvironment *env)>;
+    using print_func = std::function<void(const LuaEnvironment *env, const std::string &text)>;
 
     std::filesystem::path path;
     lua_State *L;
-    t_lua_rendering_context rctx;
+    LuaRenderingContext rctx;
     bool started{};
 
     // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<ActionManager::action_path> registered_actions{};
 
-    std::unordered_map<std::string, std::vector<t_action_param_meta>> param_meta_map;
+    std::unordered_map<std::string, std::vector<ActionParamMeta>> param_meta_map;
 
     // All the breakpoints registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<std::pair<CoreBreakpointId, uintptr_t *>> active_breakpoints;
@@ -108,9 +117,10 @@ struct t_lua_environment
 /**
  * \brief Represents the arguments for a key event callback. See `KeyEventArgs` in `api.lua`.
  */
-struct t_lua_key_event_args
+struct LuaKeyEventArgs
 {
     std::optional<uint64_t> keycode;
+    std::optional<SDL_Keycode> keycode2;
     bool ctrl{};
     bool alt{};
     bool shift{};
@@ -135,4 +145,5 @@ struct LuaMouseEventArgs
     std::optional<LuaMouseButton> button;
     std::optional<bool> pressed;
     std::optional<bool> double_click;
+    std::optional<bool> triple_click;
 };

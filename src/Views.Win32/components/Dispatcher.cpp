@@ -32,7 +32,7 @@ void Dispatcher::execute()
 {
     if (m_func == nullptr) return;
 
-    NEED(GetCurrentThreadId() == m_thread_id, "Dispatcher::execute() called from incorrect thread");
+    need(GetCurrentThreadId() == m_thread_id, "Dispatcher::execute() called from incorrect thread");
 
 #ifdef DISPATCHER_OVERHEAD_LOGGING
     const auto execute_start = std::chrono::high_resolution_clock::now();

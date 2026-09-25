@@ -46,7 +46,7 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "lua/LuaRenderer.hpp"
     "lua/LuaDialog.hpp"
     "lua/modules/AVI.hpp"
-    "lua/modules/D2D.hpp"
+    "lua/modules/Painter.hpp"
     "lua/modules/Emu.hpp"
     "lua/modules/Global.hpp"
     "lua/modules/Input.hpp"
@@ -137,13 +137,8 @@ add_custom_command(TARGET Mupen64RR_Views_Win32 POST_BUILD
 )
 # Dependencies of the resource file. These are specified manually,
 # but it wouldn't be impossible to write a scanner to gather this info automagically.
-set_source_files_properties(
-    SOURCES "Resource.rc" PROPERTIES OBJECT_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/app.manifest"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Lua/api.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Lua/shims.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Lua/sandbox.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/lua-modules/inspect.lua"
+set_source_files_properties(Resource.rc PROPERTIES OBJECT_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/app.manifest;${CMAKE_CURRENT_SOURCE_DIR}/../Lua/api.lua;${CMAKE_CURRENT_SOURCE_DIR}/../Lua/sandbox.lua;${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/lua-modules/inspect.lua"
 )
 target_include_directories(Mupen64RR_Views_Win32 PRIVATE ".")
 target_link_libraries(Mupen64RR_Views_Win32 PRIVATE
@@ -161,7 +156,6 @@ target_link_libraries(Mupen64RR_Views_Win32 PRIVATE
     vendor::argh
     vendor::bs-thread-pool
     vendor::windarkmode
-    vendor::microlru
     vendor::mini
     Mupen64RR_Plugins_DummyAudio
     Mupen64RR_Plugins_DummyInput

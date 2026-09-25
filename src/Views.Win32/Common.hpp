@@ -12,8 +12,7 @@
 
 #define SPDLOG_LEVEL_NAMES {"🔍", "🪲", "ℹ️", "⚠️", "❌", "💥", ""}
 
-
-#include <m64rr/API.hpp>
+#include <Core/API.hpp>
 
 #pragma warning(push, 0)
 extern "C"
@@ -23,7 +22,6 @@ extern "C"
 #include <lualib.h>
 }
 #include <spdlog/logger.h>
-#include <microlru.h>
 #include <Common.Win32/Common.hpp>
 #include <resource.h>
 #include <cwctype>

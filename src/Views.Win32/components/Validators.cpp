@@ -58,7 +58,7 @@ std::optional<std::string> nonempty(const std::string_view str)
 
 std::optional<std::string> seek_str(const std::string_view str)
 {
-    const auto result = g_main_ctx.core_ctx->vcr_try_resolve_seek_str(std::string(str));
+    const auto result = g_main_ctx.CoreCtx->vcr_try_resolve_seek_str(std::string(str));
     return result.has_value() ? std::nullopt : std::make_optional("Invalid seek string.");
 }
 

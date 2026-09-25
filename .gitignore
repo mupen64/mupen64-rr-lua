@@ -421,3 +421,6 @@ FodyWeavers.xsd
 # API Documentation
 docs/lua/export/doc.json
 docs/lua/export/doc.md
+
+# QML Language Server configuration
+**/.qmlls.ini
