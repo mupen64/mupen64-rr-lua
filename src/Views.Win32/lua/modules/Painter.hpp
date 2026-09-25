@@ -2236,7 +2236,8 @@ inline int measure_text(lua_State *L)
     need(format->SetWordWrapping(wrapping), "IDWriteTextFormat::SetWordWrapping");
     ComPtr<IDWriteTextLayout> layout;
     const UINT32 length = static_cast<UINT32>(std::min<size_t>(text.size(), UINT32_MAX));
-    need(Detail::create_text_layout(factory, text.data(), length, format.Get(), width, Detail::UNCONSTRAINED_LAYOUT_SIZE, layout),
+    need(Detail::create_text_layout(
+             factory, text.data(), length, format.Get(), width, Detail::UNCONSTRAINED_LAYOUT_SIZE, layout),
         "IDWriteFactory::CreateTextLayout");
     need(layout, "IDWriteFactory::CreateTextLayout returned null");
     Detail::apply_text_style(layout.Get(), style, length);

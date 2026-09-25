@@ -237,11 +237,13 @@ void EmuContext::setGSButton(bool pressed)
 }
 
 // -> vr_get_speed_mode
-QmlCoreSpeedMode::Value EmuContext::speedMode() const {
+QmlCoreSpeedMode::Value EmuContext::speedMode() const
+{
     return QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode());
 }
 // -> vr_set_speed_mode
-void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode) {
+void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode)
+{
     if (speedMode != QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode()))
     {
         m_core_ctx->vr_set_speed_mode(QmlCoreSpeedMode::to_core(speedMode));

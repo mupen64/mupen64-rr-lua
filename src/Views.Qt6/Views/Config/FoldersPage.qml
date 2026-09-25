@@ -5,51 +5,44 @@
  */
 
 import QtQuick
-import QtQuick.Dialogs as Dialogs
-import Config as Config
+import Config
 
-Config.Page {
+ListPage {
     id: root
     required property SettingsPaths settingsPaths
 
-    Config.FolderPath {
-        title: "ROM Directory"
-        path: root.settingsPaths.romDir
-        onPathModified: root.settingsPaths.romDir = path
-
-        Dialogs.FolderDialog {
+    delegate: ListPageItem {
+        dataSource: root.settingsPaths
+        itemWidth: root.itemWidth
+    }
+    model: [
+        {
+            //% "ROM Directory"
+            key: QT_TRID_NOOP("config.paths.romDir"),
+            type: ListPageItem.FolderPath,
             //% "Set ROM Directory..."
-            title: qsTrId("dialogs.pickRomDir.title")
-        }
-    }
-    Config.FolderPath {
-        title: "Save Directory"
-        path: root.settingsPaths.saveDir
-        onPathModified: root.settingsPaths.screenshotDir = path
-
-        Dialogs.FolderDialog {
+            dialogTitle: qsTrId("dialogs.pickRomDir.title")
+        },
+        {
+            //% "Save Directory"
+            key: QT_TRID_NOOP("config.paths.saveDir"),
+            type: ListPageItem.FolderPath,
             //% "Set Save Directory..."
-            title: qsTrId("dialogs.pickSaveDir.title")
-        }
-    }
-    Config.FolderPath {
-        title: "Screenshot Directory"
-        path: root.settingsPaths.screenshotDir
-        onPathModified: root.settingsPaths.screenshotDir = path
-
-        Dialogs.FolderDialog {
+            dialogTitle: qsTrId("dialogs.pickSaveDir.title")
+        },
+        {
+            //% "Screenshot Directory"
+            key: QT_TRID_NOOP("config.paths.screenshotDir"),
+            type: ListPageItem.FolderPath,
             //% "Set Screenshot Directory..."
-            title: qsTrId("dialogs.pickScreenshotDir.title")
+            dialogTitle: qsTrId("dialogs.pickScreenshotDir.title")
+        },
+        {
+            //% "ROM Directory"
+            key: QT_TRID_NOOP("config.paths.backupDir"),
+            type: ListPageItem.FolderPath,
+            //% "Set ROM Directory..."
+            dialogTitle: qsTrId("dialogs.pickBackupDir.title")
         }
-    }
-    Config.FolderPath {
-        title: "Backup Directory"
-        path: root.settingsPaths.backupDir
-        onPathModified: root.settingsPaths.screenshotDir = path
-
-        Dialogs.FolderDialog {
-            //% "Set Backup Directory..."
-            title: qsTrId("dialogs.pickBackupDir.title")
-        }
-    }
+    ]
 }

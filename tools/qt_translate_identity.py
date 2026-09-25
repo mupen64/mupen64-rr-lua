@@ -7,7 +7,46 @@
 # Updates a Qt .ts file using the "source" text directly as the translation.
 
 import sys
+from pathlib import Path
 from xml.dom import minidom
+
+FILENAME = Path(__file__).name
+
+COMMENT_TEXT = f"""
+Auto-filled by {FILENAME}. DO NOT MODIFY.
+"""
+
+
+def insert_tag_comment(document: minidom.Document, root: minidom.Element):
+    starting_ws = root.childNodes[0]
+    comment_el = root.childNodes[1]
+
+    # check if the tag is already there
+    tag_present = (
+        isinstance(starting_ws, minidom.Text)
+        and starting_ws.isWhitespaceInElementContent
+        and isinstance(comment_el, minidom.Comment)
+        and comment_el.data == COMMENT_TEXT
+    )
+    if tag_present:
+        return
+
+    # insert comment and trailing whitespace
+    insert_target = starting_ws.nextSibling
+    assert not isinstance(insert_target, (
+        minidom.ProcessingInstruction,
+        minidom.DocumentType,
+        minidom.Notation
+    ))
+
+    comment_el = minidom.Comment(data=COMMENT_TEXT)
+    extra_ws = document.createTextNode("\n")
+    if insert_target is not None:
+        root.insertBefore(comment_el, insert_target)
+        root.insertBefore(extra_ws, insert_target)
+    else:
+        root.appendChild(comment_el)
+        root.appendChild(extra_ws)
 
 
 def main():
@@ -16,12 +55,13 @@ def main():
         sys.exit(1)
 
     document = minidom.parse(sys.argv[1])
-
     # check for the root element
-    root = document.childNodes[1]
-    assert isinstance(root, minidom.Element) and root.tagName == "TS"
+    root = document.getElementsByTagName("TS")[0]
 
+    # add tag comment
+    insert_tag_comment(document, root)
 
+    # iterate over the whole document
     for context in root.getElementsByTagName("context"):
         for message in context.getElementsByTagName("message"):
             source_el = message.getElementsByTagName("source")[0]
