@@ -93,12 +93,10 @@ class EmuContext : public QObject
     // -> vr_set_gs_button
     void setGSButton(bool pressed);
 
-
     // -> vr_get_speed_mode
     QmlCoreSpeedMode::Value speedMode() const;
     // -> vr_set_speed_mode
     void setSpeedMode(QmlCoreSpeedMode::Value speedMode);
-
 
     // st_* functions
     // ==========================
@@ -121,7 +119,6 @@ class EmuContext : public QObject
     // -> .fps_modifier
     int32_t speedModifier();
     void setSpeedModifier(int32_t value);
-
 
     // Misc. functions
     // ==========================
