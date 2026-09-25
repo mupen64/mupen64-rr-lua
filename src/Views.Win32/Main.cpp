@@ -718,7 +718,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         JoystickControl::register_class(g_main_ctx.hinst, JOYSTICK_CLASS);
         ActionMenu::init();
 
-        ActionMenu::add_managed_menu(hwnd);
+        ActionMenu::add_managed_menu(hwnd, std::nullopt, PianoRoll::BASE + "*");
         AppActions::add();
         HotkeyTracker::attach(hwnd);
 

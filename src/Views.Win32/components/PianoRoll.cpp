@@ -10,6 +10,7 @@
 #include <Common.Views/Config.hpp>
 #include <Common.Views/Messages.hpp>
 #include <components/CoreUtils.hpp>
+#include "../action/ActionMenu.hpp"
 
 struct piano_roll_history_state
 {
@@ -1162,6 +1163,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
                 {piano_roll.hist_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
             });
 
+        ActionMenu::add_managed_menu(hwnd, PianoRoll::BASE + "*", std::nullopt, PianoRoll::BASE);
         WinDarkMode::attach(hwnd);
         break;
     }
@@ -1315,24 +1317,24 @@ static bool enabled_when_editable()
 void PianoRoll::init()
 {
     ActionManager::add({.path = PianoRoll::COPY,
-                        .on_press = [](const auto &...) { copy_inputs(); },
-                        .get_enabled = enabled_when_editable});
+        .on_press = [](const auto &...) { copy_inputs(); },
+        .get_enabled = enabled_when_editable});
     ActionManager::add({.path = PianoRoll::PASTE,
-                        .on_press = [](const auto &...) { paste_inputs(false); },
-                        .get_enabled = enabled_when_editable});
+        .on_press = [](const auto &...) { paste_inputs(false); },
+        .get_enabled = enabled_when_editable});
     ActionManager::add(
         {.path = PianoRoll::UNDO, .on_press = [](const auto &...) { undo(); }, .get_enabled = enabled_when_editable});
     ActionManager::add(
         {.path = PianoRoll::REDO, .on_press = [](const auto &...) { redo(); }, .get_enabled = enabled_when_editable});
     ActionManager::add({.path = PianoRoll::CLEAR,
-                        .on_press = [](const auto &...) { clear_inputs_in_selection(); },
-                        .get_enabled = enabled_when_editable});
+        .on_press = [](const auto &...) { clear_inputs_in_selection(); },
+        .get_enabled = enabled_when_editable});
     ActionManager::add({.path = PianoRoll::DELETE,
-                        .on_press = [](const auto &...) { delete_inputs_in_selection(); },
-                        .get_enabled = enabled_when_editable});
+        .on_press = [](const auto &...) { delete_inputs_in_selection(); },
+        .get_enabled = enabled_when_editable});
     ActionManager::add({.path = PianoRoll::INSERT_FRAME,
-                        .on_press = [](const auto &...) { insert_frames(1); },
-                        .get_enabled = enabled_when_editable});
+        .on_press = [](const auto &...) { insert_frames(1); },
+        .get_enabled = enabled_when_editable});
 }
 
 void PianoRoll::show()

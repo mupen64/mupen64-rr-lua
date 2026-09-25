@@ -47,6 +47,9 @@ struct ActionMenuContext
     HMENU menu_bar{};
     MenuItem menu{"Root"};
     size_t menu_id_counter{};
+    std::optional<ActionManager::action_path> include_filter{};
+    std::optional<ActionManager::action_path> exclude_filter{};
+    std::optional<ActionManager::action_filter> root{};
     std::set<std::string> enabled_state_invalidated_actions{};
     std::set<std::string> active_state_invalidated_actions{};
     std::set<std::string> display_name_invalidated_actions{};
@@ -86,7 +89,7 @@ static MenuItem *find_item_by_path(ActionMenuContext &ctx, const std::string &pa
     MenuItem *found_item = nullptr;
 
     ctx.menu.iterate_children_and_self([&](MenuItem &item) {
-        if (item.raw_path() == path)
+        if (item.action_path == path)
         {
             found_item = &item;
         }
@@ -100,7 +103,8 @@ static MenuItem *find_item_by_path(ActionMenuContext &ctx, const std::string &pa
  */
 static std::string get_display_name(const MenuItem &item)
 {
-    auto display_name = ActionManager::get_display_name(item.raw_path());
+    const auto &action_or_menu_path = item.action_path.empty() ? item.raw_path() : item.action_path;
+    auto display_name = ActionManager::get_display_name(action_or_menu_path);
 
     // Add the accelerator text if there is any :P
     if (!item.action_path.empty() && g_config.hotkeys.contains(item.action_path))
@@ -228,9 +232,44 @@ static void build_initial_menu_tree(ActionMenuContext &ctx)
 {
     ctx.menu = MenuItem("Root");
 
+    std::set<ActionManager::action_path> included_actions;
+    if (ctx.include_filter)
+    {
+        const auto actions = ActionManager::get_actions_matching_filter(*ctx.include_filter);
+        included_actions.insert(actions.begin(), actions.end());
+    }
+
+    std::set<ActionManager::action_path> excluded_actions;
+    if (ctx.exclude_filter)
+    {
+        const auto actions = ActionManager::get_actions_matching_filter(*ctx.exclude_filter);
+        excluded_actions.insert(actions.begin(), actions.end());
+    }
+
+    auto root_parts = ctx.root ? ActionManager::get_segments(*ctx.root) : std::vector<std::string>{};
+    if (!root_parts.empty() && root_parts.back() == "*")
+    {
+        root_parts.pop_back();
+    }
+
     for (const auto &path : g_am_ctx.actions)
     {
+        if ((ctx.include_filter && !included_actions.contains(path)) || excluded_actions.contains(path))
+        {
+            continue;
+        }
+
         std::vector<std::string> parts = ActionManager::get_segments(path);
+        if (!root_parts.empty())
+        {
+            if (parts.size() <= root_parts.size() ||
+                !std::ranges::equal(root_parts, parts | std::views::take(root_parts.size())))
+            {
+                continue;
+            }
+            parts.erase(parts.begin(), std::next(parts.begin(), static_cast<std::ptrdiff_t>(root_parts.size())));
+        }
+
         std::string path_up_to_here;
         path_up_to_here.reserve(parts.size() * 20);
 
@@ -285,8 +324,8 @@ static void add_menu_items(ActionMenuContext &ctx, MenuItem &item, const HMENU p
     const bool has_action = !item.action_path.empty();
 
     const auto display_name = get_display_name(item);
-    const auto enabled = has_action ? ActionManager::get_enabled(item.raw_path()) : true;
-    const auto active = has_action ? ActionManager::get_active(item.raw_path()) : true;
+    const auto enabled = has_action ? ActionManager::get_enabled(item.action_path) : true;
+    const auto active = has_action ? ActionManager::get_active(item.action_path) : true;
 
     auto initialize_menu_item_state = [&] {
         if (!enabled)
@@ -352,13 +391,23 @@ static void build_menu(ActionMenuContext &ctx)
     if (!ctx.menu.children.empty())
     {
         ctx.menu_id_counter = 0;
-        for (auto &item : ctx.menu.children.at(0).children)
+        if (ctx.root)
         {
-            add_menu_items(ctx, item, ctx.menu_bar);
+            for (auto &item : ctx.menu.children)
+            {
+                add_menu_items(ctx, item, ctx.menu_bar);
+            }
         }
-        for (size_t i = 1; i < ctx.menu.children.size(); ++i)
+        else
         {
-            add_menu_items(ctx, ctx.menu.children[i], ctx.menu_bar);
+            for (auto &item : ctx.menu.children.at(0).children)
+            {
+                add_menu_items(ctx, item, ctx.menu_bar);
+            }
+            for (size_t i = 1; i < ctx.menu.children.size(); ++i)
+            {
+                add_menu_items(ctx, ctx.menu.children[i], ctx.menu_bar);
+            }
         }
     }
 
@@ -448,15 +497,22 @@ void ActionMenu::init()
     });
 }
 
-bool ActionMenu::add_managed_menu(const HWND hwnd)
+bool ActionMenu::add_managed_menu(const HWND hwnd, std::optional<ActionManager::action_path> include_filter,
+    std::optional<ActionManager::action_path> exclude_filter, std::optional<ActionManager::action_filter> root)
 {
     auto context = new ActionMenuContext();
     context->hwnd = hwnd;
+    context->include_filter = std::move(include_filter);
+    context->exclude_filter = std::move(exclude_filter);
+    context->root = std::move(root);
     g_am_ctx.active_contexts.push_back(context);
 
     SetProp(hwnd, MANAGED_MENU_CTX, context);
 
     SetWindowSubclass(hwnd, action_menu_wnd_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(context));
+
+    g_am_ctx.actions = ActionManager::get_actions_matching_filter("*");
+    build_menu(*context);
 
     return true;
 }
