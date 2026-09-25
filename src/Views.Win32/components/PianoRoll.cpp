@@ -28,8 +28,6 @@ struct piano_roll_state
 {
     HWND hwnd{};
     HWND lv_hwnd{};
-    HWND hist_hwnd{};
-    HWND status_hwnd{};
 
     // The clipboard buffer for piano roll copy/paste operations. Must be sorted ascendingly.
     //
@@ -382,23 +380,6 @@ static void copy_inputs()
     print_clipboard_dump();
 }
 
-/**
- * Updates the history listbox with the current state of the undo/redo stack.
- */
-static void update_history_listbox()
-{
-    SetWindowRedraw(piano_roll.hist_hwnd, false);
-    ListBox_ResetContent(piano_roll.hist_hwnd);
-
-    for (size_t i = 0; i < piano_roll.piano_roll_history.size(); ++i)
-    {
-        ListBox_AddString(piano_roll.hist_hwnd, std::format(L"Snapshot {}", i + 1).c_str());
-    }
-
-    ListBox_SetCurSel(piano_roll.hist_hwnd, piano_roll.state_index);
-
-    SetWindowRedraw(piano_roll.hist_hwnd, true);
-}
 
 /**
  * Pushes the current piano roll state to the history. Should be called after operations which change the piano roll
@@ -418,7 +399,6 @@ static void push_state_to_history()
 
     g_view_logger->info("[PianoRoll] Undo stack size: {}. Current index: {}.", piano_roll.piano_roll_history.size(),
         piano_roll.state_index);
-    update_history_listbox();
 }
 
 /**
@@ -489,7 +469,6 @@ static void set_piano_roll_state(const piano_roll_history_state state)
     ListView_SetItemCountEx(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size(), LVSICF_NOSCROLL);
     set_listview_selection(piano_roll.lv_hwnd, piano_roll.current_state.selected_indicies);
     apply_input_buffer(false);
-    update_history_listbox();
 }
 
 /**
@@ -693,32 +672,38 @@ static void update_groupbox_status_text()
         const auto paused = g_main_ctx.CoreCtx->vr_get_paused();
 
         g_main_ctx.dispatcher->invoke([=] {
+            auto set_title = [](std::string title) {
+                if (g_config.core.seek_savestate_interval == 0)
+                {
+                    title += " (read-only: enable seek savestates)";
+                }
+
+                SetWindowText(piano_roll.hwnd, title.c_str());
+            };
+
             if (warp_modify_active)
             {
-                SetWindowText(piano_roll.hwnd, "Piano Roll - Warping...");
+                set_title("Piano Roll - Warping...");
                 return;
             }
 
             if (!paused)
             {
-                SetWindowText(piano_roll.hwnd, "Piano Roll - Resumed (readonly)");
+                set_title("Piano Roll - Resumed (readonly)");
                 return;
             }
 
             if (piano_roll.current_state.selected_indicies.empty())
             {
-                SetWindowText(piano_roll.hwnd, "Piano Roll");
+                set_title("Piano Roll");
             }
             else if (piano_roll.current_state.selected_indicies.size() == 1)
             {
-                SetWindowText(piano_roll.hwnd,
-                    std::format("Piano Roll - Frame {}", piano_roll.current_state.selected_indicies[0]).c_str());
+                set_title(std::format("Piano Roll - Frame {}", piano_roll.current_state.selected_indicies[0]));
             }
             else
             {
-                SetWindowText(piano_roll.hwnd,
-                    std::format("Piano Roll - {} frames selected", piano_roll.current_state.selected_indicies.size())
-                        .c_str());
+                set_title(std::format("Piano Roll - {} frames selected", piano_roll.current_state.selected_indicies.size()));
             }
         });
     });
@@ -746,16 +731,8 @@ static void on_task_changed(CoreVCRTask value)
             update_inputs();
         }
 
-        if (g_config.core.seek_savestate_interval == 0)
-        {
-            SetWindowText(piano_roll.status_hwnd, "Piano Roll read-only.\nSeek savestates must be enabled.");
-        }
-        else
-        {
-            SetWindowText(piano_roll.status_hwnd, "");
-        }
-
         previous_value = value;
+        update_groupbox_status_text();
     });
 }
 
@@ -1078,13 +1055,6 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         // We create all the child controls here because windows dialog scaling would mess our stuff up when mixing
         // dialog manager and manual creation
         piano_roll.hwnd = hwnd;
-        CreateWindowEx(0, WC_STATIC, "History", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT | SS_CENTERIMAGE, 17, 166,
-            131, 15, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
-        piano_roll.hist_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTBOX, "",
-            WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, 17, 186, 131, 181, piano_roll.hwnd,
-            nullptr, g_main_ctx.hinst, nullptr);
-        piano_roll.status_hwnd = CreateWindowEx(0, WC_STATIC, "", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT, 17, 370,
-            131, 60, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
         // Some controls don't get the font set by default, so we do it manually
         EnumChildWindows(
@@ -1154,13 +1124,8 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         // ReSharper disable once CppRedundantCastExpression
         on_current_sample_changed(static_cast<int32_t>(info.current_sample));
         update_groupbox_status_text();
-        update_history_listbox();
 
-        ResizeAnchor::add_anchors(piano_roll.hwnd,
-            {
-                {piano_roll.lv_hwnd, ResizeAnchor::full_anchor},
-                {piano_roll.hist_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
-            });
+        ResizeAnchor::add_anchors(piano_roll.hwnd, {{piano_roll.lv_hwnd, ResizeAnchor::full_anchor}});
 
         ActionMenu::add_managed_menu(hwnd, PianoRoll::BASE + "*", std::nullopt, PianoRoll::BASE);
         WinDarkMode::attach(hwnd);
@@ -1181,7 +1146,6 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
             },
             0);
         piano_roll.lv_hwnd = nullptr;
-        piano_roll.hist_hwnd = nullptr;
         piano_roll.hwnd = nullptr;
         break;
     case WM_CLOSE:
@@ -1218,18 +1182,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
             break;
         }
 
-        if ((HWND)lParam == piano_roll.hist_hwnd && HIWORD(wParam) == LBN_SELCHANGE)
-        {
-            auto index = ListBox_GetCurSel(piano_roll.hist_hwnd);
 
-            if (index < 0 || index >= piano_roll.piano_roll_history.size())
-            {
-                break;
-            }
-
-            piano_roll.state_index = index;
-            set_piano_roll_state(piano_roll.piano_roll_history[index]);
-        }
         break;
     case WM_NOTIFY: {
         if (wParam != IDC_PIANO_ROLL_LV)
