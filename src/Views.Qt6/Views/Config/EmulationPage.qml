@@ -9,122 +9,95 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import Components
-import Config as Config
+import Config
 
-Config.Page {
+ListPage {
     id: root
     required property SettingsCore settingsCore
 
-    Config.Row {
-        name: "Core type"
-        // tooltip: "Emulation mode to use."
-        ComboBox {
-            Layout.preferredWidth: 160
-            model: [
+    delegate: ListPageItem {
+        dataSource: root.settingsCore
+        itemWidth: root.itemWidth
+    }
+    model: [
+        {
+            //% "Core Type"
+            key: QT_TRID_NOOP("config.core.coreType"),
+            type: ListPageItem.Choices,
+            choices: [
                 { text: "Cached Interpreter", value: 0 },
                 { text: "Dynamic Recompiler", value: 1 },
                 { text: "Pure Interpreter", value: 2 },
             ]
-            textRole: "text"
-            valueRole: "value"
-
-            currentValue: root.settingsCore.coreType
-            onActivated: root.settingsCore.coreType = currentValue
+        },
+        {
+            //% "Savestate Undo Load"
+            key: QT_TRID_NOOP("config.core.stUndoLoad"),
+            type: ListPageItem.Bool,
+        },
+        {
+            //% "Max Lag"
+            key: QT_TRID_NOOP("config.core.maxLag"),
+            type: ListPageItem.Int,
+            from: 0,
+            to: 1000,
+            stepSize: 10,
+        },
+        {
+            //% "Wii VC Emulation"
+            key: QT_TRID_NOOP("config.core.wiiVCEmulation"),
+            type: ListPageItem.Bool,
+        },
+        {
+            //% "RCP Lag Emulation"
+            key: QT_TRID_NOOP("config.core.rcpLagEmulation"),
+            type: ListPageItem.Bool,
+        },
+        {
+            //% "CPU Counter Factor"
+            key: QT_TRID_NOOP("config.core.cpuCF"),
+            type: ListPageItem.Double,
+            from: 1.0,
+            to: 4.0,
+            stepSize: 0.1,
+            decimals: 2,
+        },
+        {
+            //% "RCP Lag Factor"
+            key: QT_TRID_NOOP("config.core.rcpLagFactor"),
+            type: ListPageItem.Double,
+            from: 1.0,
+            to: 4.0,
+            stepSize: 0.1,
+            decimals: 2,
+        },
+        {
+            //% "Float Exception Emulation"
+            key: QT_TRID_NOOP("config.core.floatExceptionEmulation"),
+            type: ListPageItem.Bool,
+        },
+        {
+            //% "Use Summercart"
+            key: QT_TRID_NOOP("config.core.useSummercart"),
+            type: ListPageItem.Bool,
+        },
+        {
+            //% "Save Screenshot"
+            key: QT_TRID_NOOP("config.core.stScreenshot"),
+            type: ListPageItem.Bool,
+        },
+        {
+            //% "Save using LZ4"
+            key: QT_TRID_NOOP("config.core.stLZ4"),
+            type: ListPageItem.Bool,
+        },
+        {
+            //% "ROM Cache Size"
+            key: QT_TRID_NOOP("config.core.romCacheSize"),
+            type: ListPageItem.Int,
+            from: 0,
+            to: 10,
+            stepSize: 1,
         }
-    }
-    Config.Row {
-        name: "Savestate Undo Load"
-        Switch {
-            checked: root.settingsCore.stUndoLoad
-            onClicked: root.settingsCore.stUndoLoad = checked
-        }
-    }
-    Config.Row {
-        name: "Max Lag"
-        SpinBox {
-            from: 0
-            to: 1000
-            stepSize: 10
-
-            value: root.settingsCore.maxLag
-            onValueModified: root.settingsCore.maxLag = value
-        }
-    }
-    Config.Row {
-        name: "Wii VC emulation"
-        Switch {
-            checked: root.settingsCore.wiiVCEmulation
-            onClicked: root.settingsCore.wiiVCEmulation = checked
-        }
-    }
-    Config.Row {
-        name: "RCP Lag Emulation"
-        Switch {
-            checked: root.settingsCore.rcpLagEmulation
-            onClicked: root.settingsCore.rcpLagEmulation = checked
-        }
-    }
-    Config.Row {
-        name: "CPU Counter Factor"
-        FixedPointSpinBox {
-            dFrom: 1.0
-            dTo: 4.0
-            dStepSize: 0.1
-            decimals: 2
-            
-            dValue: root.settingsCore.cpuCF
-            onValueModified: root.settingsCore.cpuCF = dValue
-        }
-    }
-    Config.Row {
-        name: "RCP Lag Factor"
-        FixedPointSpinBox {
-            dFrom: 1.0
-            dTo: 4.0
-            dStepSize: 0.1
-            decimals: 2
-            
-            dValue: root.settingsCore.rcpLagFactor
-            onValueModified: root.settingsCore.rcpLagFactor = dValue
-        }
-    }
-    Config.Row {
-        name: "Float Exception Emulation"
-        Switch {
-            checked: root.settingsCore.floatExceptionEmulation
-            onClicked: root.settingsCore.floatExceptionEmulation = checked
-        }
-    }
-    Config.Row {
-        name: "Use Summercart"
-        Switch {
-            checked: root.settingsCore.useSummercart
-            onClicked: root.settingsCore.useSummercart = checked
-        }
-    }
-    Config.Row {
-        name: "Save Screenshot"
-        Switch {
-            checked: root.settingsCore.stScreenshot
-            onClicked: root.settingsCore.stScreenshot = checked
-        }
-    }
-    Config.Row {
-        name: "Save using LZ4"
-        Switch {
-            checked: root.settingsCore.stLZ4
-            onClicked: root.settingsCore.stLZ4 = checked
-        }
-    }
-    Config.Row {
-        name: "ROM Cache Size"
-        SpinBox {
-            from: 0
-            to: 10
-            stepSize: 1
-
-            value: root.settingsCore.romCacheSize
-            onValueModified: root.settingsCore.romCacheSize = value
-        }
-    }
+    ]
 }

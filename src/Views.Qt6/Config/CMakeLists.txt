@@ -12,11 +12,12 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Config
         TARGET Mupen64RR_Views_Qt6_Actions
         TARGET Mupen64RR_Views_Qt6_Components
     QML_FILES
-        "FilePath.qml"
-        "FolderPath.qml"
         "Hotkey.qml"
         "HotkeyDialog.qml"
+        "ListPage.qml"
+        "ListPageItem.qml"
         "Page.qml"
+        "PathBox.qml"
         "Row.qml"
 )
 target_link_libraries(Mupen64RR_Views_Qt6_Config PUBLIC

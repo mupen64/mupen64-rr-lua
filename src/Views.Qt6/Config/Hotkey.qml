@@ -21,7 +21,8 @@ Button {
 
     signal comboModified()
 
-    text: (combo == null) ? "None..." : combo
+    //% "(none)"
+    text: (combo == null) ? qsTrId("misc.noHotkey") : combo
 
     onClicked: {
         accepter.enabled = true;

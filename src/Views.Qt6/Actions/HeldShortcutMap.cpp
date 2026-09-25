@@ -59,8 +59,7 @@ bool HeldShortcutMap::eventFilter(QObject *, QEvent *event)
         auto *keyEvent = static_cast<QKeyEvent *>(event);
         // filter out auto-repeat events
         // FIXME: this still fires twice per key release (Linux)
-        if (keyEvent->isAutoRepeat())
-            return false;
+        if (keyEvent->isAutoRepeat()) return false;
 
         auto matchedNode = m_shortcuts.find((Qt::Key)keyEvent->key());
         if (matchedNode != m_shortcuts.end())
