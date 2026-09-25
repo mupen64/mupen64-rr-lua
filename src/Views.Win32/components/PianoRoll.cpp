@@ -10,7 +10,8 @@
 #include <Common.Views/Config.hpp>
 #include <Common.Views/Messages.hpp>
 #include <components/CoreUtils.hpp>
-#include "../action/ActionMenu.hpp"
+#include <plugin/Plugin.hpp>
+#include <action/ActionMenu.hpp>
 
 struct piano_roll_history_state
 {
@@ -1157,7 +1158,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
         ResizeAnchor::add_anchors(piano_roll.hwnd,
             {
-                {piano_roll.lv_hwnd, ResizeAnchor::FULL_ANCHOR},
+                {piano_roll.lv_hwnd, ResizeAnchor::full_anchor},
                 {piano_roll.hist_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
             });
 
