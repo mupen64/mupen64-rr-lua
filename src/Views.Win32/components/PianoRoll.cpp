@@ -121,15 +121,13 @@ static bool can_seek()
 
 static void update_joystick()
 {
-    // EnableWindow(piano_roll.joy_hwnd, can_joystick_be_modified());
-
     if (!piano_roll.current_state.selected_indicies.empty() &&
         piano_roll.current_state.selected_indicies[0] < piano_roll.current_state.inputs.size())
     {
         const auto input = piano_roll.current_state.inputs[piano_roll.current_state.selected_indicies[0]];
 
-        // FIXME: Not necessarily controller 0!
-        g_plugin_funcs.input_set_keys(0, {input.value});
+        const auto controller_index = g_main_ctx.CoreCtx->vcr_controller_index_for_sample(piano_roll.current_state.selected_indicies[0]);
+        g_plugin_funcs.input_set_keys(controller_index, {input.value});
     }
 }
 
@@ -1151,27 +1149,27 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
         break;
-    case JoystickControl::wm_joystick_position_changed: {
-        if (!can_joystick_be_modified()) break;
-
-        ZESpec::Buttons buttons{};
-        g_plugin_funcs.input_get_keys(0, &buttons); // FIXME  Not necessarily controller 0
-
-        int32_t x = buttons.x;
-        int32_t y = buttons.y;
-
-        SetWindowRedraw(piano_roll.lv_hwnd, false);
-        for (auto selected_index : piano_roll.current_state.selected_indicies)
-        {
-            auto &input = piano_roll.current_state.inputs[selected_index];
-            input.x = x;
-            input.y = y;
-            ListView_Update(piano_roll.lv_hwnd, selected_index);
-        }
-        SetWindowRedraw(piano_roll.lv_hwnd, true);
-        piano_roll.inputs_different = true;
-        break;
-    }
+//     case JoystickControl::wm_joystick_position_changed: {
+//         if (!can_joystick_be_modified()) break;
+//
+//         ZESpec::Buttons buttons{};
+//         g_plugin_funcs.input_get_keys(0, &buttons); // FIXME  Not necessarily controller 0
+//
+//         int32_t x = buttons.x;
+//         int32_t y = buttons.y;
+//
+//         SetWindowRedraw(piano_roll.lv_hwnd, false);
+//         for (auto selected_index : piano_roll.current_state.selected_indicies)
+//         {
+//             auto &input = piano_roll.current_state.inputs[selected_index];
+//             input.x = x;
+//             input.y = y;
+//             ListView_Update(piano_roll.lv_hwnd, selected_index);
+//         }
+//         SetWindowRedraw(piano_roll.lv_hwnd, true);
+//         piano_roll.inputs_different = true;
+//         break;
+//     }
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
