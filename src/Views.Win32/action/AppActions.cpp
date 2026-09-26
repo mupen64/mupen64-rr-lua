@@ -6,6 +6,8 @@
 
 #include "Common.hpp"
 #include <Common.Views/ActionManager.hpp>
+#include <Common/I18n.hpp>
+#include <Locales.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Messages.hpp>
 #include <ThreadPool.hpp>
@@ -28,6 +30,8 @@
 #include <components/Validators.hpp>
 #include <lua/LuaDialog.hpp>
 #include <HotkeyUtils.hpp>
+
+static constexpr std::string_view app_locale = "en";
 
 bool confirm_user_exit()
 {
@@ -912,7 +916,7 @@ static bool always_enabled()
 static void add_action_with_up(const std::string &path, const Hotkey &default_hotkey,
     const std::function<void()> &on_press, const std::function<void()> &on_release,
     const std::function<bool()> &get_enabled = {}, const std::function<bool()> &get_active = {},
-    const std::function<std::string()> &get_display_name = {})
+    const std::function<std::string()> &get_display_name = {}, bool has_separator = false, bool menu_hidden = false)
 {
     bool success = ActionManager::add({
         .path = path,
@@ -921,6 +925,8 @@ static void add_action_with_up(const std::string &path, const Hotkey &default_ho
         .get_display_name = get_display_name,
         .get_enabled = get_enabled,
         .get_active = get_active,
+        .has_separator = has_separator,
+        .menu_hidden = menu_hidden,
     });
     need(success, std::format("Failed to add action for path '{}'.", path));
 
@@ -930,15 +936,17 @@ static void add_action_with_up(const std::string &path, const Hotkey &default_ho
 
 static void add_action(const std::string &path, const Hotkey &default_hotkey, const std::function<void()> &callback,
     const std::function<bool()> &get_enabled = {}, const std::function<bool()> &get_active = {},
-    const std::function<std::string()> &get_display_name = {})
+    const std::function<std::string()> &get_display_name = {}, bool has_separator = false, bool menu_hidden = false)
 {
-    add_action_with_up(path, default_hotkey, callback, nullptr, get_enabled, get_active, get_display_name);
+    add_action_with_up(
+        path, default_hotkey, callback, nullptr, get_enabled, get_active, get_display_name, has_separator, menu_hidden);
 }
 
 static void add_action(const std::string &path,
     const std::function<void(const ActionManager::action_argument_map &)> &callback,
     const std::vector<ActionManager::ActionParam> &params, const std::function<bool()> &get_enabled = {},
-    const std::function<bool()> &get_active = {}, const std::function<std::string()> &get_display_name = {})
+    const std::function<bool()> &get_active = {}, const std::function<std::string()> &get_display_name = {},
+    bool has_separator = false, bool menu_hidden = false)
 {
     bool success = ActionManager::add({
         .path = path,
@@ -947,6 +955,8 @@ static void add_action(const std::string &path,
         .get_display_name = get_display_name,
         .get_enabled = get_enabled,
         .get_active = get_active,
+        .has_separator = has_separator,
+        .menu_hidden = menu_hidden,
     });
     need(success, std::format("Failed to add action for path '{}'.", path));
 
@@ -957,11 +967,15 @@ static void add_action(const std::string &path,
 static void generate_path_recent_menu(const std::string &base_path, const Hotkey &load_first_hotkey,
     std::vector<std::string> *paths, int32_t *frozen, const std::function<void(size_t)> &callback)
 {
-    const auto freeze_action = std::format("{} > Freeze ---", base_path);
+    const auto reset_action = std::format("{}.reset", base_path);
+    const auto freeze_action = std::format("{}.freeze", base_path);
+
+    I18n::get().add(reset_action, "Reset", std::string(app_locale));
+    I18n::get().add(freeze_action, "Freeze", std::string(app_locale));
 
     const auto reset_list = [=] {
         paths->clear();
-        ActionManager::notify_display_name_changed(std::format("{} > *", base_path));
+        ActionManager::notify_display_name_changed(std::format("{}.*", base_path));
     };
 
     const auto toggle_frozen = [=] {
@@ -971,8 +985,8 @@ static void generate_path_recent_menu(const std::string &base_path, const Hotkey
 
     const auto get_frozen = [=] { return *frozen; };
 
-    add_action(std::format("{} > Reset", base_path), Hotkey::make_empty(), reset_list);
-    add_action(freeze_action, Hotkey::make_empty(), toggle_frozen, always_enabled, get_frozen);
+    add_action(reset_action, Hotkey::make_empty(), reset_list);
+    add_action(freeze_action, Hotkey::make_empty(), toggle_frozen, always_enabled, get_frozen, {}, true);
 
     for (size_t i = 0; i < RecentMenu::MAX_RECENT_ITEMS; ++i)
     {
@@ -984,7 +998,8 @@ static void generate_path_recent_menu(const std::string &base_path, const Hotkey
             return "(nothing)";
         };
 
-        const auto path = std::format("{} > Load Recent Item {}", base_path, i + 1);
+        const auto path = std::format("{}.load-recent-item-{}", base_path, i + 1);
+        I18n::get().add(path, std::format("Load Recent Item {}", i + 1), std::string(app_locale));
 
         Hotkey hotkey = i == 0 ? load_first_hotkey : Hotkey::make_empty();
 
@@ -995,13 +1010,13 @@ static void generate_path_recent_menu(const std::string &base_path, const Hotkey
 void AppActions::init()
 {
     Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(
-        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{} *", APP)); });
+        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{}.*", APP)); });
     Messenger::subscribe<Messenger::Message::EmuPausedChanged>(
         [](const auto &) { ActionManager::notify_active_changed(PAUSE); });
     Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>(
         [] { ActionManager::notify_active_changed(FAST_FORWARD); });
     Messenger::subscribe<Messenger::Message::CapturingChanged>(
-        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{} *", VIDEO_CAPTURE)); });
+        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{}.*", VIDEO_CAPTURE)); });
     Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(
         [](const auto &) { ActionManager::notify_active_changed(STATUSBAR); });
     Messenger::subscribe<Messenger::Message::MovieLoopChanged>(
@@ -1016,21 +1031,24 @@ void AppActions::init()
         ActionManager::notify_enabled_changed(SEEK_TO);
     });
     Messenger::subscribe<Messenger::Message::SlotChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(std::format("{} *", SELECT_SLOT)); });
+        [](const auto &) { ActionManager::notify_active_changed(std::format("{}.*", SELECT_SLOT)); });
 }
 
 void AppActions::add()
 {
+    Locales::register_app_actions();
     ActionManager::begin_batch_work();
 
     add_action(LOAD_ROM_DIRECT, load_rom_direct,
         std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::rom_path},
-        });
+        },
+        {}, {}, {}, false, true);
     add_action(LOAD_ROM, Hotkey(*HotkeyUtils::vk_to_trigger('O'), true), load_rom);
     add_action(CLOSE_ROM, Hotkey(*HotkeyUtils::vk_to_trigger('W'), true), close_rom, enable_when_emu_launched);
     add_action(RESET_ROM, Hotkey(*HotkeyUtils::vk_to_trigger('R'), true), reset_rom, enable_when_emu_launched);
-    add_action(REFRESH_ROM_LIST, Hotkey(*HotkeyUtils::vk_to_trigger(VK_F5), true), refresh_rombrowser);
+    add_action(
+        REFRESH_ROM_LIST, Hotkey(*HotkeyUtils::vk_to_trigger(VK_F5), true), refresh_rombrowser, {}, {}, {}, true);
     generate_path_recent_menu(RECENT_ROMS, Hotkey(*HotkeyUtils::vk_to_trigger('O'), true, true),
         &g_config.recent_rom_paths, &g_config.is_recent_rom_paths_frozen, load_recent_rom);
     add_action(EXIT, Hotkey(*HotkeyUtils::vk_to_trigger(VK_F4), false, false, true), exit_app);
@@ -1043,10 +1061,11 @@ void AppActions::add()
     add_action_with_up(FAST_FORWARD, Hotkey(*HotkeyUtils::vk_to_trigger(VK_TAB)), fastforward_enable,
         fastforward_disable, enable_when_emu_launched, fastforward_active);
     add_action_with_up(GS_BUTTON, Hotkey(*HotkeyUtils::vk_to_trigger('G')), gs_button_enable, gs_button_disable,
-        enable_when_emu_launched, gs_button_active);
+        enable_when_emu_launched, gs_button_active, {}, true);
     add_action(FRAME_ADVANCE, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_5)), frame_advance, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DIRECT, multi_frame_advance_direct,
-        {{.key = "count", .name = "Frame Count", .validator = Validators::int32_t}}, enable_when_emu_launched);
+        {{.key = "count", .name = "Frame Count", .validator = Validators::int32_t}}, enable_when_emu_launched, {}, {},
+        false, true);
     add_action(MULTI_FRAME_ADVANCE, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_5), true), multi_frame_advance,
         enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DECREMENT, Hotkey(*HotkeyUtils::vk_to_trigger('Q'), true),
@@ -1054,11 +1073,11 @@ void AppActions::add()
     add_action(MULTI_FRAME_ADVANCE_INCREMENT, Hotkey(*HotkeyUtils::vk_to_trigger('E'), true),
         multi_frame_advance_increment, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_RESET, Hotkey(*HotkeyUtils::vk_to_trigger('E'), true, true),
-        multi_frame_advance_reset, enable_when_emu_launched);
+        multi_frame_advance_reset, enable_when_emu_launched, {}, {}, true);
     add_action(SAVE_CURRENT_SLOT, Hotkey(*HotkeyUtils::vk_to_trigger('I')), save_slot, enable_when_emu_launched);
-    add_action(SAVE_STATE_FILE, Hotkey::make_empty(), save_state_as, enable_when_emu_launched);
+    add_action(SAVE_STATE_FILE, Hotkey::make_empty(), save_state_as, enable_when_emu_launched, {}, {}, true);
     add_action(LOAD_CURRENT_SLOT, Hotkey(*HotkeyUtils::vk_to_trigger('P')), load_slot, enable_when_emu_launched);
-    add_action(LOAD_STATE_FILE, Hotkey::make_empty(), load_state_as, enable_when_emu_launched);
+    add_action(LOAD_STATE_FILE, Hotkey::make_empty(), load_state_as, enable_when_emu_launched, {}, {}, true);
     for (size_t i = 0; i < 10; ++i)
     {
         const int32_t save_key = i < 9 ? '1' + i : '0';
@@ -1081,10 +1100,13 @@ void AppActions::add()
         const auto load = [=] { do_work(CoreSTJob::Load); };
 
         size_t visual_slot = i + 1;
-        add_action(std::vformat(SAVE_SLOT_X, std::make_format_args(visual_slot)),
-            Hotkey(*HotkeyUtils::vk_to_trigger(save_key), false, true), save, enable_when_emu_launched);
-        add_action(std::vformat(LOAD_SLOT_X, std::make_format_args(visual_slot)),
-            Hotkey(*HotkeyUtils::vk_to_trigger(load_key)), load, enable_when_emu_launched);
+        const auto save_path = std::vformat(SAVE_SLOT_X, std::make_format_args(visual_slot));
+        const auto load_path = std::vformat(LOAD_SLOT_X, std::make_format_args(visual_slot));
+        I18n::get().add(save_path, std::format("Save Slot {}", visual_slot), std::string(app_locale));
+        I18n::get().add(load_path, std::format("Load Slot {}", visual_slot), std::string(app_locale));
+        add_action(
+            save_path, Hotkey(*HotkeyUtils::vk_to_trigger(save_key), false, true), save, enable_when_emu_launched);
+        add_action(load_path, Hotkey(*HotkeyUtils::vk_to_trigger(load_key)), load, enable_when_emu_launched);
     }
     for (size_t i = 0; i < 10; ++i)
     {
@@ -1095,8 +1117,9 @@ void AppActions::add()
         const auto set_slot = [=] { set_save_slot(i); };
 
         size_t visual_slot = i + 1;
-        add_action(std::vformat(SELECT_SLOT_X, std::make_format_args(visual_slot)),
-            Hotkey(*HotkeyUtils::vk_to_trigger(key)), set_slot, enable_when_emu_launched, get_active);
+        const auto slot_path = std::vformat(SELECT_SLOT_X, std::make_format_args(visual_slot));
+        I18n::get().add(slot_path, std::format("Slot {}", visual_slot), std::string(app_locale));
+        add_action(slot_path, Hotkey(*HotkeyUtils::vk_to_trigger(key)), set_slot, enable_when_emu_launched, get_active);
     }
     add_action(
         UNDO_LOAD_STATE, Hotkey(*HotkeyUtils::vk_to_trigger('Z'), true), undo_load_state, enable_when_emu_launched);
@@ -1104,8 +1127,9 @@ void AppActions::add()
     add_action(AUDIO_SETTINGS, Hotkey::make_empty(), show_audio_plugin_settings);
     add_action(INPUT_SETTINGS, Hotkey::make_empty(), show_input_plugin_settings);
     add_action(RSP_SETTINGS, Hotkey::make_empty(), show_rsp_plugin_settings);
-    add_action(STATUSBAR, Hotkey(*HotkeyUtils::vk_to_trigger('S'), false, false, true), toggle_statusbar,
-        disable_when_emu_launched, [] { return g_config.is_statusbar_enabled; });
+    add_action(
+        STATUSBAR, Hotkey(*HotkeyUtils::vk_to_trigger('S'), false, false, true), toggle_statusbar,
+        disable_when_emu_launched, [] { return g_config.is_statusbar_enabled; }, {}, true);
     add_action(SETTINGS, Hotkey(*HotkeyUtils::vk_to_trigger('S'), true), show_settings_dialog);
 
     add_action(START_MOVIE_RECORDING_DIRECT, start_movie_recording_direct,
@@ -1115,7 +1139,7 @@ void AppActions::add()
             {.key = "author", .name = "Author (optional)", .validator = Validators::none},
             {.key = "description", .name = "Description (optional)", .validator = Validators::none},
         },
-        enable_when_emu_launched);
+        enable_when_emu_launched, {}, {}, false, true);
     add_action(START_MOVIE_RECORDING, Hotkey(*HotkeyUtils::vk_to_trigger('R'), true, true), start_movie_recording,
         enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
@@ -1123,13 +1147,15 @@ void AppActions::add()
             {.key = "path", .name = "Path", .validator = Validators::existing_path},
             {.key = "author", .name = "Author (optional)", .validator = Validators::none},
             {.key = "description", .name = "Description (optional)", .validator = Validators::none},
-        });
+        },
+        {}, {}, {}, false, true);
     add_action(START_MOVIE_PLAYBACK, Hotkey(*HotkeyUtils::vk_to_trigger('P'), true, true), start_movie_playback);
-    add_action(CONTINUE_MOVIE_RECORDING, Hotkey::make_empty(), continue_movie_recording, enable_during_playback);
+    add_action(
+        CONTINUE_MOVIE_RECORDING, Hotkey::make_empty(), continue_movie_recording, enable_during_playback, {}, {}, true);
     add_action(STOP_MOVIE, Hotkey(*HotkeyUtils::vk_to_trigger('C'), true, true), stop_movie,
         enable_when_emu_launched_and_vcr_active);
     add_action(CREATE_MOVIE_BACKUP, Hotkey(*HotkeyUtils::vk_to_trigger('B'), true, true), create_movie_backup,
-        enable_when_emu_launched_and_vcr_active);
+        enable_when_emu_launched_and_vcr_active, {}, {}, true);
     generate_path_recent_menu(RECENT_MOVIES, Hotkey(*HotkeyUtils::vk_to_trigger('T'), true, true),
         &g_config.recent_movie_paths, &g_config.is_recent_movie_paths_frozen, load_recent_movie);
     add_action(LOOP_MOVIE_PLAYBACK, Hotkey(*HotkeyUtils::vk_to_trigger('L'), false, true), toggle_movie_loop,
@@ -1139,30 +1165,32 @@ void AppActions::add()
     add_action(WAIT_AT_MOVIE_END, Hotkey::make_empty(), toggle_wait_at_movie_end, always_enabled,
         [] { return g_config.core.wait_at_movie_end; });
 
-    add_action(COMMAND_PALETTE, Hotkey(*HotkeyUtils::vk_to_trigger('P'), true), show_command_palette);
+    add_action(COMMAND_PALETTE, Hotkey(*HotkeyUtils::vk_to_trigger('P'), true), show_command_palette, {}, {}, {}, true);
     add_action(PIANO_ROLL, Hotkey::make_empty(), show_piano_roll, enable_when_emu_launched);
     add_action(CHEATS, Hotkey::make_empty(), show_cheat_dialog, enable_when_emu_launched);
     add_action(SEEK_TO_DIRECT, seek_direct,
         std::vector<ActionManager::ActionParam>{
             {.key = "frame", .name = "Frame", .validator = Validators::seek_str},
         },
-        enable_when_emu_launched_and_vcr_active);
+        enable_when_emu_launched_and_vcr_active, {}, {}, false, true);
     add_action(SEEK_TO, Hotkey(*HotkeyUtils::vk_to_trigger('G'), true), show_seek_dialog,
         enable_when_emu_launched_and_vcr_active);
-    add_action(USAGE_STATISTICS, Hotkey::make_empty(), show_statistics);
+    add_action(USAGE_STATISTICS, Hotkey::make_empty(), show_statistics, {}, {}, {}, true);
     add_action(CORE_INFORMATION, Hotkey::make_empty(), show_ram_start);
     add_action(START_TRACE_LOGGER, Hotkey::make_empty(), start_tracelog,
         enable_when_emu_launched_and_core_is_pure_interpreter);
-    add_action(STOP_TRACE_LOGGER, Hotkey::make_empty(), stop_tracelog, enable_when_tracelog_active);
+    add_action(STOP_TRACE_LOGGER, Hotkey::make_empty(), stop_tracelog, enable_when_tracelog_active, {}, {}, true);
     add_action(VIDEO_CAPTURE_START_DIRECT, start_capture_direct,
         std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::nonempty},
             {.key = "ask_preset", .name = "Ask for preset?", .validator = Validators::boolean},
         },
-        enable_when_emu_launched);
+        enable_when_emu_launched, {}, {}, false, true);
     add_action(VIDEO_CAPTURE_START, Hotkey::make_empty(), start_capture_normal, enable_when_emu_launched);
-    add_action(VIDEO_CAPTURE_START_PRESET, Hotkey::make_empty(), start_capture_from_preset, enable_when_emu_launched);
-    add_action(VIDEO_CAPTURE_STOP, Hotkey::make_empty(), stop_capture, enable_when_emu_launched_and_capturing);
+    add_action(VIDEO_CAPTURE_START_PRESET, Hotkey::make_empty(), start_capture_from_preset, enable_when_emu_launched,
+        {}, {}, true);
+    add_action(
+        VIDEO_CAPTURE_STOP, Hotkey::make_empty(), stop_capture, enable_when_emu_launched_and_capturing, {}, {}, true);
     add_action(SCREENSHOT, Hotkey(*HotkeyUtils::vk_to_trigger(VK_F12)), screenshot, enable_when_emu_launched);
 
     add_action(CHECK_FOR_UPDATES, Hotkey::make_empty(), check_for_updates_manual);
@@ -1171,8 +1199,9 @@ void AppActions::add()
     add_action(LOAD_SCRIPT_DIRECT, load_script_direct,
         std::vector<ActionManager::ActionParam>{
             {.key = "path", .name = "Path", .validator = Validators::existing_path},
-        });
-    add_action(SHOW_INSTANCES, Hotkey(*HotkeyUtils::vk_to_trigger('N'), true), show_lua_dialog);
+        },
+        {}, {}, {}, false, true);
+    add_action(SHOW_INSTANCES, Hotkey(*HotkeyUtils::vk_to_trigger('N'), true), show_lua_dialog, {}, {}, {}, true);
     generate_path_recent_menu(RECENT_SCRIPTS, Hotkey(*HotkeyUtils::vk_to_trigger('K'), true, true),
         &g_config.recent_lua_script_paths, &g_config.is_recent_scripts_frozen, load_recent_script);
     add_action(STOP_ALL, Hotkey::make_empty(), stop_all_lua_scripts);
