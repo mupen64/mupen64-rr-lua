@@ -1567,6 +1567,21 @@ function painter.set_target_fps(target_fps) end
 ---@class Painter
 local Painter = {}
 
+---@class PainterTransform
+---@field m11 number Transform matrix component.
+---@field m12 number Transform matrix component.
+---@field m21 number Transform matrix component.
+---@field m22 number Transform matrix component.
+---@field dx number X translation.
+---@field dy number Y translation.
+---@field scale_x number X-axis scale.
+---@field scale_y number Y-axis scale.
+
+---Returns the current transform.
+---@nodiscard
+---@return PainterTransform transform
+function Painter:get_transform() end
+
 ---Clears the entire drawing target to `color`, ignoring the current clip stack.
 ---When called from [PainterImage:paint](lua://PainterImage.paint), this clears the image rather than the screen.
 ---@param color PainterColor
