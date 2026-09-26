@@ -108,6 +108,7 @@ void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void
 
     // TODO: handle this!
     m_init_data->request_size = [](uint32_t, uint32_t) {};
+    m_init_data->apply_input = [](uint8_t, CoreButtons) {};
 
     m_init_data->controllers = params.controls;
 

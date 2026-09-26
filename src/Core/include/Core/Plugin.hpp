@@ -169,6 +169,13 @@ extern "C"
          */
         void (*request_size)(uint32_t width, uint32_t height);
 
+        /**
+         * \brief Notifies the host that input was applied for a controller.
+         * \param controller_index The index of the controller that received the input.
+         * \param buttons The input that was applied to the controller.
+         */
+        void (*apply_input)(uint8_t controller_index, CoreButtons buttons);
+
         PluginInit() = default;
         PluginInit(const PluginInit &) = delete;
         PluginInit &operator=(const PluginInit &) = delete;

@@ -8,6 +8,7 @@
 #include "BuiltinTAS.hpp"
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Messages.hpp>
 #include <components/Statusbar.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
@@ -282,6 +283,9 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     init->config_path = get_config_path;
     init->rcp_counter = g_main_ctx.CoreCtx->rcp_counter;
     init->request_size = Main::request_size;
+    init->apply_input = [](uint8_t controller_index, CoreButtons buttons) {
+        Messenger::broadcast<Messenger::Message::InputApplied>({controller_index, buttons});
+    };
 
     switch (m_type)
     {
