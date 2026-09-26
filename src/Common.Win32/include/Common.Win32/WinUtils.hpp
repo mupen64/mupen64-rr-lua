@@ -14,7 +14,6 @@
 #include <string>
 
 #include <Common.Win32/Common.hpp>
-#include <dwrite.h>
 #include <spdlog/spdlog.h>
 #include <Common.Views/IDialogService.hpp>
 
