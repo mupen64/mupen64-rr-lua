@@ -132,6 +132,7 @@ uint32_t vcr_get_length_samples();
 uint32_t vcr_get_length_vis();
 int32_t vcr_get_current_vi();
 std::vector<CoreButtons> vcr_get_inputs();
+int32_t vcr_controller_index_for_sample(size_t sample);
 CoreResult vcr_begin_warp_modify(const std::vector<CoreButtons> &inputs);
 bool vcr_get_warp_modify_status();
 size_t vcr_get_warp_modify_first_difference_frame();

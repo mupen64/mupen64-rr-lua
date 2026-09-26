@@ -195,6 +195,56 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_3", "vcr_on_control
     REQUIRE(input.value == inputs[8].value);
 }
 
+TEST_CASE_METHOD(VcrFixture, "controller_index_for_sample_returns_contiguous_controller", "vcr_controller_index_for_sample")
+{
+    vcr.inputs.resize(8);
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0) | CONTROLLER_X_PRESENT(1);
+    vcr.task = CoreVCRTask::Playback;
+
+    REQUIRE(vcr_controller_index_for_sample(0) == 0);
+    REQUIRE(vcr_controller_index_for_sample(1) == 1);
+    REQUIRE(vcr_controller_index_for_sample(2) == 0);
+    REQUIRE(vcr_controller_index_for_sample(7) == 1);
+}
+
+TEST_CASE_METHOD(VcrFixture, "controller_index_for_sample_returns_sparse_controller", "vcr_controller_index_for_sample")
+{
+    vcr.inputs.resize(8);
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0) | CONTROLLER_X_PRESENT(2) | CONTROLLER_X_PRESENT(3);
+    vcr.task = CoreVCRTask::Playback;
+
+    REQUIRE(vcr_controller_index_for_sample(0) == 0);
+    REQUIRE(vcr_controller_index_for_sample(1) == 2);
+    REQUIRE(vcr_controller_index_for_sample(2) == 3);
+    REQUIRE(vcr_controller_index_for_sample(3) == 0);
+    REQUIRE(vcr_controller_index_for_sample(7) == 2);
+}
+
+TEST_CASE_METHOD(VcrFixture, "controller_index_for_sample_works_while_recording", "vcr_controller_index_for_sample")
+{
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(1) | CONTROLLER_X_PRESENT(3);
+    vcr.task = CoreVCRTask::Recording;
+
+    REQUIRE(vcr_controller_index_for_sample(0) == 1);
+    REQUIRE(vcr_controller_index_for_sample(1) == 3);
+    REQUIRE(vcr_controller_index_for_sample(2) == 1);
+}
+
+TEST_CASE_METHOD(VcrFixture, "controller_index_for_sample_returns_no_controller_when_movie_has_none", "vcr_controller_index_for_sample")
+{
+    vcr.inputs.resize(1);
+    vcr.task = CoreVCRTask::Playback;
+
+    REQUIRE(vcr_controller_index_for_sample(0) == -1);
+}
+
+TEST_CASE_METHOD(VcrFixture, "controller_index_for_sample_returns_no_controller_when_idle", "vcr_controller_index_for_sample")
+{
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+
+    REQUIRE(vcr_controller_index_for_sample(0) == -1);
+}
+
 TEST_CASE_METHOD(VcrFixture, "record_appends_input", "vcr_on_controller_poll")
 {
     const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};

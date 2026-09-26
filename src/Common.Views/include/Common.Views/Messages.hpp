@@ -90,6 +90,11 @@ enum class Message
     CurrentSampleChanged,
 
     /**
+     * \brief Input was applied to a controller
+     */
+    InputApplied,
+
+    /**
      * \brief A VCR unfreeze operation has completed
      */
     UnfreezeCompleted,
@@ -239,6 +244,10 @@ template <> struct MessageData<Message::TaskChanged>
 template <> struct MessageData<Message::CurrentSampleChanged>
 {
     using type = int32_t;
+};
+template <> struct MessageData<Message::InputApplied>
+{
+    using type = std::pair<uint8_t, CoreButtons>;
 };
 template <> struct MessageData<Message::UnfreezeCompleted>
 {

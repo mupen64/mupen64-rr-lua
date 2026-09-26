@@ -2020,6 +2020,41 @@ std::vector<CoreButtons> vcr_get_inputs()
     return vcr.inputs;
 }
 
+int32_t vcr_controller_index_for_sample(size_t sample)
+{
+    std::unique_lock lock(vcr_mtx);
+
+    if(vcr.task == CoreVCRTask::Idle)
+        return -1;
+
+    size_t active_controller_count = 0;
+    for (int32_t controller = 0; controller < 4; controller++)
+    {
+        if (vcr.hdr.controller_flags & CONTROLLER_X_PRESENT(controller))
+        {
+            active_controller_count++;
+        }
+    }
+
+    if (active_controller_count == 0)
+        return -1;
+
+    size_t controller_in_sample = sample % active_controller_count;
+    for (int32_t controller = 0; controller < 4; controller++)
+    {
+        if (vcr.hdr.controller_flags & CONTROLLER_X_PRESENT(controller))
+        {
+            if (controller_in_sample == 0)
+            {
+                return controller;
+            }
+            controller_in_sample--;
+        }
+    }
+
+    return -1;
+}
+
 /// Finds the first input difference between two input vectors. Returns SIZE_MAX if they are identical.
 size_t vcr_find_first_input_difference(const std::vector<CoreButtons> &first, const std::vector<CoreButtons> &second)
 {
