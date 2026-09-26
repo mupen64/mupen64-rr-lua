@@ -45,3 +45,10 @@ std::string I18n::get(std::string_view key, std::string_view locale) const
     const auto translation = translations->second.find(std::string(key));
     return translation == translations->second.end() ? std::string(key) : translation->second;
 }
+
+bool I18n::has(std::string_view key) const
+{
+    std::shared_lock lock(m_mutex);
+    const auto locale = m_translations.find(m_locale);
+    return locale != m_translations.end() && locale->second.contains(std::string(key));
+}
