@@ -10,6 +10,7 @@
 #include <Common.Views/Messages.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common/LRUCache.hpp>
+#include <Common/I18n.hpp>
 
 #include <cctype>
 
@@ -50,6 +51,7 @@ static ActionManagerContext g_mgr{};
 
 static action_filter normalize_action_segment(std::string_view segment);
 static action_filter restore_display_periods(action_filter text);
+static std::string get_friendly_name_for_legacy_segment(std::string_view legacy_segment, bool has_parameters);
 static action_filter normalize_filter_with_flags(const action_filter &filter, bool &has_separator, bool &menu_hidden);
 
 /**
@@ -205,12 +207,23 @@ static std::vector<std::string> update_display_names(const std::vector<Action *>
 
         action->raw_name = display_name;
 
+        bool has_override = false;
         if (action->add_params.get_display_name)
         {
             const auto override_display_name = action->add_params.get_display_name();
             if (!override_display_name.empty())
             {
                 display_name = override_display_name;
+                has_override = true;
+            }
+        }
+
+        if (!has_override)
+        {
+            const auto translated_display_name = I18n::get().get(action->add_params.path);
+            if (translated_display_name != action->add_params.path)
+            {
+                display_name = translated_display_name;
             }
         }
 
@@ -301,6 +314,23 @@ bool ActionManager::add(const ActionAddParams &params)
                 "ActionManager::add: Adding '{}' would make '{}' gain a direct child, which is not allowed.",
                 normalized_path, segment_slice);
             return false;
+        }
+    }
+
+    const bool uses_legacy_format = params.path.contains('>');
+    if (uses_legacy_format)
+    {
+        const auto legacy_segments = get_segments(params.path);
+        std::string legacy_prefix;
+        for (size_t i = 0; i < legacy_segments.size(); ++i)
+        {
+            if (!legacy_prefix.empty()) legacy_prefix += " > ";
+            legacy_prefix += legacy_segments[i];
+
+            const auto normalized_prefix = normalize_filter(legacy_prefix);
+            const bool is_action_segment = i + 1 == legacy_segments.size();
+            I18n::get().add(normalized_prefix,
+                get_friendly_name_for_legacy_segment(legacy_segments[i], is_action_segment && !params.params.empty()), "en");
         }
     }
 
@@ -429,7 +459,10 @@ std::string ActionManager::get_display_name(const action_filter &filter, bool ig
     {
         const auto normalized_filter = normalize_filter(filter);
         const auto segments = get_segments(normalized_filter);
-        return segments.empty() ? std::string{} : restore_display_periods(segments.back());
+        if (segments.empty()) return {};
+
+        const auto friendly_name = I18n::get().get(normalized_filter);
+        return friendly_name == normalized_filter ? restore_display_periods(segments.back()) : friendly_name;
     }
 
     const auto action = actions.front();
@@ -591,6 +624,30 @@ static action_filter restore_display_periods(action_filter text)
         ++position;
     }
     return text;
+}
+
+/**
+ * \brief Converts a legacy action segment into a human-readable display name.
+ * \param legacy_segment The legacy action segment.
+ * \param has_parameters Whether the action accepts parameters.
+ * \return The human-readable display name.
+ */
+static std::string get_friendly_name_for_legacy_segment(
+    const std::string_view legacy_segment, const bool has_parameters)
+{
+    auto display_name = std::string(legacy_segment);
+    if (display_name.ends_with(ActionManager::SEPARATOR_SUFFIX))
+    {
+        display_name = StrUtils::ctrim_string(
+            display_name.substr(0, display_name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
+    }
+    if (display_name.starts_with(ActionManager::MENU_HIDDEN_PREFIX))
+    {
+        display_name = StrUtils::ctrim_string(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
+    }
+    display_name = restore_display_periods(std::move(display_name));
+    if (has_parameters) display_name = "> " + display_name;
+    return display_name;
 }
 
 static action_filter normalize_action_segment(const std::string_view segment)
