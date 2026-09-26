@@ -1433,6 +1433,29 @@ inline int painter_close_path(lua_State *L)
     return 0;
 }
 
+inline int painter_get_transform(lua_State *L)
+{
+    const auto *painter = check_painter(L, 1);
+    lua_createtable(L, 0, 8);
+    lua_pushnumber(L, painter->transform._11);
+    lua_setfield(L, -2, "m11");
+    lua_pushnumber(L, painter->transform._12);
+    lua_setfield(L, -2, "m12");
+    lua_pushnumber(L, painter->transform._21);
+    lua_setfield(L, -2, "m21");
+    lua_pushnumber(L, painter->transform._22);
+    lua_setfield(L, -2, "m22");
+    lua_pushnumber(L, painter->transform._31);
+    lua_setfield(L, -2, "dx");
+    lua_pushnumber(L, painter->transform._32);
+    lua_setfield(L, -2, "dy");
+    lua_pushnumber(L, std::hypot(painter->transform._11, painter->transform._12));
+    lua_setfield(L, -2, "scale_x");
+    lua_pushnumber(L, std::hypot(painter->transform._21, painter->transform._22));
+    lua_setfield(L, -2, "scale_y");
+    return 1;
+}
+
 inline int painter_save(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
@@ -2452,13 +2475,13 @@ inline void register_types(lua_State *L)
         {"begin_path", Detail::painter_begin_path}, {"move_to", Detail::painter_move_to},
         {"line_to", Detail::painter_line_to}, {"cubic_to", Detail::painter_cubic_to},
         {"quadratic_to", Detail::painter_quadratic_to}, {"arc", Detail::painter_arc},
-        {"close_path", Detail::painter_close_path}, {"save", Detail::painter_save},
-        {"restore", Detail::painter_restore}, {"clip", Detail::painter_clip}, {"translate", Detail::painter_translate},
-        {"rotate", Detail::painter_rotate}, {"scale", Detail::painter_scale}, {"stroke", Detail::painter_stroke},
-        {"fill", Detail::painter_fill}, {"text", Detail::painter_text}, {"rect", Detail::painter_rect},
-        {"round_rect", Detail::painter_round_rect}, {"circle", Detail::painter_circle}, {"line", Detail::painter_line},
-        {"polyline", Detail::painter_polyline}, {"polygon", Detail::painter_polygon}, {"image", Detail::painter_image},
-        {nullptr, nullptr}};
+        {"close_path", Detail::painter_close_path}, {"get_transform", Detail::painter_get_transform},
+        {"save", Detail::painter_save}, {"restore", Detail::painter_restore}, {"clip", Detail::painter_clip},
+        {"translate", Detail::painter_translate}, {"rotate", Detail::painter_rotate}, {"scale", Detail::painter_scale},
+        {"stroke", Detail::painter_stroke}, {"fill", Detail::painter_fill}, {"text", Detail::painter_text},
+        {"rect", Detail::painter_rect}, {"round_rect", Detail::painter_round_rect}, {"circle", Detail::painter_circle},
+        {"line", Detail::painter_line}, {"polyline", Detail::painter_polyline}, {"polygon", Detail::painter_polygon},
+        {"image", Detail::painter_image}, {nullptr, nullptr}};
     luaL_create_metatable(L, Detail::IMAGE_MT, image_methods, Detail::image_index, Detail::image_gc);
     luaL_create_metatable(L, Detail::PAINTER_MT, painter_methods, nullptr, Detail::painter_gc);
 }
