@@ -21,9 +21,20 @@
 
 #endif
 
+#if defined(__APPLE__)
+
+#include <Availability.h>
+#include <pthread.h>
+
+#if !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
+#error "macOS 11.0 or newer is required; raise CMAKE_OSX_DEPLOYMENT_TARGET"
+#endif
+
+#endif
+
 // https://github.com/mupen64plus/mupen64plus-core/blob/e170c409fb006aa38fd02031b5eefab6886ec125/src/device/r4300/recomp.c#L995
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
 static std::mutex page_size_map_lock;
 static std::unordered_map<void *, size_t> page_alloc_sizes;
 #endif
@@ -43,8 +54,14 @@ void *malloc_exec(size_t size)
 {
 #ifdef _WIN32
     return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-#elif defined(__linux__)
-    void *block = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#elif defined(__linux__) || defined(__APPLE__)
+    int flags = MAP_PRIVATE | MAP_ANONYMOUS;
+
+#ifdef __APPLE__
+    flags |= MAP_JIT;
+#endif
+
+    void *block = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, flags, -1, 0);
     if (block == MAP_FAILED) return NULL;
 
     // allocation succeeded
@@ -65,6 +82,8 @@ void *realloc_exec(void *ptr, size_t oldsize, size_t newsize)
     {
         size_t copysize;
         copysize = (oldsize < newsize) ? oldsize : newsize;
+
+        ExecWriteScope write_scope;
         memcpy(block, ptr, copysize);
     }
     // DO NOT free the old buffer here. Emitted code (thunks, wrappers, call
@@ -84,7 +103,7 @@ void free_exec(void *ptr)
 {
 #ifdef _WIN32
     VirtualFree(ptr, 0, MEM_RELEASE);
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
     size_t len = 0;
     {
         std::scoped_lock lock(page_size_map_lock);
@@ -99,6 +118,37 @@ void free_exec(void *ptr)
 #else
 #error "free_exec not implemented for this platform"
 #endif
+}
+
+static thread_local size_t exec_write_depth = 0;
+
+void exec_write_begin()
+{
+    if (exec_write_depth++ > 0) return;
+
+#if defined(__APPLE__)
+    pthread_jit_write_protect_np(0);
+#endif
+}
+
+void exec_write_end()
+{
+    assert(exec_write_depth > 0);
+    if (--exec_write_depth > 0) return;
+
+#if defined(__APPLE__)
+    pthread_jit_write_protect_np(1);
+#endif
+}
+
+ExecWriteScope::ExecWriteScope()
+{
+    exec_write_begin();
+}
+
+ExecWriteScope::~ExecWriteScope()
+{
+    exec_write_end();
 }
 
 void free_all_deferred_exec_buffers()

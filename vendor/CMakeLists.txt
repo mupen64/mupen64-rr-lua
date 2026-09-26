@@ -22,6 +22,9 @@ add_library(vendor::glad ALIAS glad)
 add_subdirectory(mini)
 add_library(vendor::mini ALIAS mini)
 
+add_subdirectory(sse2neon)
+add_library(vendor::sse2neon ALIAS sse2neon)
+
 add_subdirectory(xxhash64)
 add_library(vendor::xxhash64 ALIAS xxhash64)
 

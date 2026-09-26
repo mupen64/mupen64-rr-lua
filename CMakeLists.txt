@@ -14,8 +14,6 @@ project(mupen64-rr
 # Options
 # ===========================================
 
-# The dynarec only supports x86 and x86_64; building for any other
-# architecture (e.g. ARM64) errors out (see src/Core/CMakeLists.txt).
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
 
 # The Windows view can, of course, only be compiled on Windows.
@@ -99,6 +97,8 @@ pkg_check_modules(glew IMPORTED_TARGET GLOBAL "glew")
 # libsafec (required on most runtimes to support C11 Annex K)
 if(NOT WIN32)
     pkg_check_modules(libsafec IMPORTED_TARGET GLOBAL "libsafec")
+
+    find_package(Iconv REQUIRED)
 endif()
 
 # Lua, because Lua sucks
