@@ -7,6 +7,7 @@
 #pragma once
 
 #include <Common.hpp>
+#include <Common.Win32/WinUtils.hpp>
 #include <Common/Assert.hpp>
 #include <Common/LRUCache.hpp>
 #include <lua/LuaManager.hpp>
@@ -2297,13 +2298,23 @@ inline int hittest_text_position(lua_State *L)
         options.fit ? Detail::get_text_fit_transform(layout.Get(), options) : Detail::TextFitTransform{};
     const float layout_point_x = options.fit ? (point_x - fit_transform.offset_x) / fit_transform.scale : point_x;
     const float layout_point_y = options.fit ? (point_y - fit_transform.offset_y) / fit_transform.scale : point_y;
-    BOOL is_trailing_hit = FALSE;
-    BOOL is_inside = FALSE;
-    DWRITE_HIT_TEST_METRICS hit{};
-    need(layout->HitTestPoint(layout_point_x, layout_point_y, &is_trailing_hit, &is_inside, &hit),
-        "IDWriteTextLayout::HitTestPoint");
+    DWriteTextHitTestResult hit_result{};
+    if (g_main_ctx.wine)
+    {
+        const float layout_width = options.fit ? Detail::UNCONSTRAINED_LAYOUT_SIZE : options.width;
+        const float layout_height = options.fit ? Detail::UNCONSTRAINED_LAYOUT_SIZE : options.height;
+        need(hit_test_text_layout_point(
+                 layout.Get(), length, layout_point_x, layout_point_y, layout_width, layout_height, hit_result),
+            "hit_test_text_layout_point");
+    }
+    else
+    {
+        need(layout->HitTestPoint(layout_point_x, layout_point_y, &hit_result.is_trailing_hit, &hit_result.is_inside,
+                 &hit_result.metrics),
+            "IDWriteTextLayout::HitTestPoint");
+    }
     if (options.clip && (point_x < 0 || point_y < 0 || point_x > options.width || point_y > options.height))
-        is_inside = FALSE;
+        hit_result.is_inside = FALSE;
 
     UINT32 line = 1;
     UINT32 line_count{};
@@ -2315,9 +2326,10 @@ inline int hittest_text_position(lua_State *L)
         need(hr, "IDWriteTextLayout::GetLineMetrics");
     }
 
-    const UINT32 hit_position = std::min(hit.textPosition, length);
-    const UINT32 hit_end = hit.length > length - hit_position ? length : hit_position + hit.length;
-    const UINT32 caret_position = is_trailing_hit ? hit_end : hit_position;
+    const UINT32 hit_position = std::min(hit_result.metrics.textPosition, length);
+    const UINT32 hit_end =
+        hit_result.metrics.length > length - hit_position ? length : hit_position + hit_result.metrics.length;
+    const UINT32 caret_position = hit_result.is_trailing_hit ? hit_end : hit_position;
     if (line_count)
     {
         UINT32 line_start = 0;
@@ -2356,7 +2368,7 @@ inline int hittest_text_position(lua_State *L)
     lua_setfield(L, -2, "index");
     lua_pushinteger(L, static_cast<lua_Integer>(line));
     lua_setfield(L, -2, "line");
-    lua_pushboolean(L, is_inside != FALSE);
+    lua_pushboolean(L, hit_result.is_inside != FALSE);
     lua_setfield(L, -2, "inside");
     return 1;
 }

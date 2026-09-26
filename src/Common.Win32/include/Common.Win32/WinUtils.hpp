@@ -5,13 +5,16 @@
  */
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <format>
 #include <iterator>
+#include <limits>
 #include <string>
 
 #include <Common.Win32/Common.hpp>
+#include <dwrite.h>
 #include <spdlog/spdlog.h>
 #include <Common.Views/IDialogService.hpp>
 
@@ -20,6 +23,58 @@
     {                                                                                                                  \
         while (ComboBox_GetCount(hwnd) > 0) ComboBox_DeleteString(hwnd, 0);                                            \
     } while (0)
+
+struct DWriteTextHitTestResult
+{
+    BOOL is_trailing_hit{};
+    BOOL is_inside{};
+    DWRITE_HIT_TEST_METRICS metrics{};
+};
+
+// Replacement IDWriteTextLayout::HitTestPoint for wine because it doesn't implement it yet :(
+inline HRESULT hit_test_text_layout_point(IDWriteTextLayout *layout, UINT32 text_length, FLOAT x, FLOAT y,
+    FLOAT layout_width, FLOAT layout_height, DWriteTextHitTestResult &result)
+{
+    if (!layout) return E_POINTER;
+
+    result = {};
+    result.is_inside = x >= 0 && y >= 0 && x <= layout_width && y <= layout_height;
+    float best_distance = std::numeric_limits<float>::infinity();
+    UINT32 position = 0;
+    const auto distance_to_axis = [](float value, float start, float end) {
+        if (value < start) return start - value;
+        if (value > end) return value - end;
+        return 0.0f;
+    };
+    for (;;)
+    {
+        FLOAT caret_x = 0;
+        FLOAT caret_y = 0;
+        DWRITE_HIT_TEST_METRICS candidate{};
+        const HRESULT hr = layout->HitTestTextPosition(position, FALSE, &caret_x, &caret_y, &candidate);
+        if (FAILED(hr)) return hr;
+
+        const float left = candidate.width > 0 ? candidate.left : caret_x;
+        const float top = candidate.height > 0 ? candidate.top : caret_y;
+        const float right = left + std::max(0.0f, candidate.width);
+        const float bottom = top + std::max(0.0f, candidate.height);
+        const float dx = distance_to_axis(x, left, right);
+        const float dy = distance_to_axis(y, top, bottom);
+        const float distance = (dx * dx) + (dy * dy);
+        if (distance < best_distance)
+        {
+            best_distance = distance;
+            result.metrics = candidate;
+            const float midpoint = left + (std::max(0.0f, candidate.width) * 0.5f);
+            result.is_trailing_hit = (candidate.bidiLevel & 1) ? x < midpoint : x >= midpoint;
+        }
+
+        if (position == text_length) break;
+        const UINT32 advance = std::max(candidate.length, 1u);
+        position += std::min(advance, text_length - position);
+    }
+    return S_OK;
+}
 
 /**
  * \brief Loads a bitmap resource and adds it to an image list using a colour key for transparency, then frees the
