@@ -58,6 +58,14 @@ class I18n
      */
     std::string get(std::string_view key, std::string_view locale) const;
 
+    /**
+     * \brief Checks whether a translation exists for the current locale.
+     * \threadsafety This function is thread-safe.
+     * \param key The translation key.
+     * \return true when a translation is registered for the key; otherwise false.
+     */
+    bool has(std::string_view key) const;
+
   private:
     I18n() = default;
 
