@@ -9,24 +9,27 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs as Dialogs
 
+import Utils
+
 GroupBox {
     id: root
-
-    Layout.fillWidth: true
     padding: 10
 
     property string path
-    default required property Dialogs.FileDialog dialog
 
+    signal openDialog()
     signal pathModified()
 
-    QtObject {
-        id: priv
-        property var dummy: null
+    function setPath(newPath: string) {
+        if (newPath != path) {
+            path = newPath;
+            pathModified();
+        }
     }
 
     RowLayout {
         anchors.fill: parent
+
         TextField {
             Layout.fillWidth: true
             readOnly: true
@@ -34,20 +37,7 @@ GroupBox {
         }
         Button {
             icon.name: "folder-open-symbolic"
-            onClicked: root.dialog.open()
-        }
-    }
-
-    onDialogChanged: {
-        dialog.parentWindow = root.Window.window;
-    }
-
-    Connections {
-        enabled: root.dialog != null
-        target: root.dialog
-        function onAccepted() {
-            root.target = Paths.toLocalFile(root.dialog.selectedFile);
-            root.pathModified();
+            onClicked: root.openDialog()
         }
     }
 }

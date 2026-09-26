@@ -18,7 +18,6 @@ using namespace VCR;
 constexpr auto movie_magic = 0x1a34364d;
 constexpr auto latest_movie_version = 3;
 
-
 VCRState vcr{};
 std::mutex vcr_mtx{};
 

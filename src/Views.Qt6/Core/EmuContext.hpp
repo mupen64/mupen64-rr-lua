@@ -34,6 +34,7 @@ class EmuContext : public QObject
     Q_PROPERTY(bool paused READ isPaused WRITE setPaused NOTIFY pausedChanged)
     Q_PROPERTY(bool coreExecuting READ isCoreExecuting NOTIFY coreExecutingChanged)
     Q_PROPERTY(bool gsButton READ isGSButton WRITE setGSButton NOTIFY gsButtonChanged)
+    Q_PROPERTY(QmlCoreSpeedMode::Value speedMode READ speedMode WRITE setSpeedMode NOTIFY speedModeChanged)
 
     // CoreCfg properties
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
@@ -91,6 +92,11 @@ class EmuContext : public QObject
     bool isGSButton() const;
     // -> vr_set_gs_button
     void setGSButton(bool pressed);
+
+    // -> vr_get_speed_mode
+    QmlCoreSpeedMode::Value speedMode() const;
+    // -> vr_set_speed_mode
+    void setSpeedMode(QmlCoreSpeedMode::Value speedMode);
 
     // st_* functions
     // ==========================
@@ -154,6 +160,9 @@ class EmuContext : public QObject
     // -> set_gs_button() called
     void gsButtonChanged(bool value);
 
+    // -> set_speed_mode() called
+    void speedModeChanged(QmlCoreSpeedMode::Value value);
+
     // CoreCfg properties
     // ==========================
 
@@ -193,7 +202,7 @@ class EmuContext : public QObject
      * @param type The dialog's type. Used to display an icon next to the text.
      */
     void openMultiDialog(QJSValue done, QAnyStringView title, QAnyStringView content, const QList<QString> &choices,
-        QtCoreMessageTone::Value type);
+        QmlCoreMessageTone::Value type);
 
     /**
      * @brief Opens a yes/no dialog.
@@ -203,7 +212,7 @@ class EmuContext : public QObject
      * @param content The dialog's content text.
      * @param type The dialog's type. Used to display an icon next to the text.
      */
-    void openAskDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QtCoreMessageTone::Value type);
+    void openAskDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
 
     /**
      * @brief Opens an info dialog.
@@ -213,7 +222,7 @@ class EmuContext : public QObject
      * @param content The dialog's content text.
      * @param type The dialog's type. Used to display an icon next to the text.
      */
-    void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QtCoreMessageTone::Value type);
+    void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
 
   private:
     CoreCfg *m_core_cfg;

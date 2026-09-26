@@ -8,9 +8,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Components
-import Config as Config
-
 ApplicationWindow {
     id: dialog
     modality: Qt.WindowModal
@@ -20,19 +17,22 @@ ApplicationWindow {
     required property SettingsPaths settingsPaths
 
     // ensure window fits content
-    minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
-    // height: mainStack.implicitHeight
+    minimumWidth: 350
+    height: 500
 
     header: TabBar {
         id: tabs
         TabButton {
-            text: qsTr("Emulation")
+            //% "Emulation"
+            text: qsTrId("config.core")
         }
         TabButton {
-            text: qsTr("Folders")
+            //% "Folders"
+            text: qsTrId("config.folders")
         }
         TabButton {
-            text: qsTr("Hotkeys")
+            //% "Hotkeys"
+            text: qsTrId("config.hotkeys")
         }
     }
 

@@ -17,7 +17,11 @@ DialogBase {
     property var currentCombo: null
     property bool allowModifiers: true
 
-    title: `Recording${(allowModifiers)? "" : " (no modifiers)"}`
+    title: allowModifiers ?
+        //% "Recording..."
+        qsTrId("misc.recordHotkey") :
+        //% "Recording (no modifiers)..."
+        qsTrId("misc.recordHotkeyNoModifiers")
 
     onOpened: {
         lblDisplay.lineTwo = "...";
@@ -38,7 +42,7 @@ DialogBase {
 
             function updateDisplay(key: int, modifiers: int) {
                 if (key == Qt.Key_Escape) {
-
+                    lineTwo = qsTrId("misc.noHotkey")
                 }
 
                 let combined = modifiers;
@@ -72,12 +76,16 @@ DialogBase {
                 if ([Qt.Key_Control, Qt.Key_Alt, Qt.Key_Shift, Qt.Key_Meta].includes(event.key)) {
                     return;
                 }
+                if (event.key == Qt.Key_Tab) {
+                    // FIXME: Qt doesn't like it when you use Tab as a hotkey. It's disabled for now.
+                    return;
+                }
 
                 dialog.currentCombo = ActionHelpers.fromIntKeys([event.key | event.modifiers]);
                 dialog.accept();
             }
             Keys.onReleased: function(event: KeyEvent) {
-                lblDisplay.updateDisplay(event.key, event.modifiers);
+                lblDisplay.updateDisplay(0, event.modifiers);
             }
         }
     }

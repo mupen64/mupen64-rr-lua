@@ -10,6 +10,10 @@ add_subdirectory(Components)
 add_subdirectory(Config)
 add_subdirectory(Core)
 
+
+# C++ FILES
+# ===================================
+
 qt_add_executable(Mupen64RR_Views_Qt6 "Main.cpp")
 mupen64rr_reuse_common_pch(Mupen64RR_Views_Qt6)
 target_compile_features(Mupen64RR_Views_Qt6 PRIVATE cxx_std_26)
@@ -37,10 +41,30 @@ target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE
     Qt::Quick
     Qt::QuickControls2
 )
+
+# MinGW needs this for std::print(ln) some reason...
+if(MINGW)
+    target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE stdc++exp)
+endif()
+
+# Deploy Qt dependencies on Windows
+windeployqt6(
+    TARGET Mupen64RR_Views_Qt6
+    DEPLOY_TO_BUILD_DIR
+    ARGS --qmldir .
+)
+# clang-cl generates a faulty UAC manifest section. Since Qt is generating
+# it already, we just ignore it.
+if (MSVC)
+    target_link_options(Mupen64RR_Views_Qt6 PRIVATE "/MANIFESTUAC:NO")
+endif()
+
+# QML FILES
+# ===================================
+
 set(qml_sources
     "Views/ConfigWindow.qml"
     "Views/DialogService.qml"
-    "Views/MainMenuBar.qml"
     "Views/MainWindow.qml"
 )
 set(qml_settings_sources
@@ -84,19 +108,24 @@ qt_add_qml_module(Mupen64RR_Views_Qt6
 )
 
 
-# MinGW needs this for std::print(ln) some reason...
-if(MINGW)
-    target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE stdc++exp)
-endif()
+# LOCALIZATION
+# ===================================
 
-# Deploy Qt dependencies on Windows
-windeployqt6(
-    TARGET Mupen64RR_Views_Qt6
-    DEPLOY_TO_BUILD_DIR
-    ARGS --qmldir .
+set(fallback_ts_name "${PROJECT_NAME}_${QT_I18N_SOURCE_LANGUAGE}.ts")
+set(ts_dir "${CMAKE_CURRENT_SOURCE_DIR}/Translations")
+set(fallback_ts "${ts_dir}/${fallback_ts_name}")
+
+# note: there is a zero-width space as the 2nd option to `lrelease`.
+# This is a workaround to CMake not letting me pass the empty string.
+qt_add_translations(Mupen64RR_Views_Qt6
+    TS_OUTPUT_DIRECTORY "${ts_dir}"
+    TS_FILES "${fallback_ts}"
+    IMMEDIATE_CALL
 )
-# clang-cl generates a faulty UAC manifest section. Since Qt is generating
-# it already, we just ignore it.
-if (MSVC)
-    target_link_options(Mupen64RR_Views_Qt6 PRIVATE "/MANIFESTUAC:NO")
-endif()
+
+add_custom_command(TARGET mupen64-rr_lupdate POST_BUILD
+    COMMAND Python::Interpreter ARGS
+        "${PROJECT_SOURCE_DIR}/tools/qt_translate_identity.py"
+        "${fallback_ts}"
+    COMMENT "Filling translations for ${fallback_ts_name}"
+)

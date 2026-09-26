@@ -34,4 +34,4 @@ end
 
 emu.atinput(evil)
 emu.atvi(evil)
-emu.atdrawd2d(evil)
+emu.atpaint(evil)

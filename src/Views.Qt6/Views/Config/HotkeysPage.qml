@@ -6,35 +6,20 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls
-// import QtQuick.Layouts
 
 import Actions
 import Config as Config
 
-ListView {
+Config.ListPage {
     id: root
     required property SettingsActions settingsActions
     model: root.settingsActions.actions
-
-    spacing: 10
-    leftMargin: 10
-    rightMargin: 10 + scrollBar.width
-
-    flickableDirection: Flickable.VerticalFlick
-    ScrollBar.vertical: ScrollBar {
-        id: scrollBar
-        active: true
-    }
-
-    clip: true
 
     delegate: Config.Row {
         id: row
         required property EmuAction modelData
 
-        width: root.width - root.leftMargin - root.rightMargin
-
+        width: root.itemWidth
         name: modelData.text
 
         Config.Hotkey {
@@ -47,8 +32,9 @@ ListView {
                     return row.modelData.shortcut;
             }
             onComboModified: {
-                if (row.modelData instanceof EmuHeldAction)
+                if (row.modelData instanceof EmuHeldAction) {
                     (row.modelData as EmuHeldAction).heldShortcut = combo;
+                }
                 else
                     row.modelData.shortcut = combo;
             }
