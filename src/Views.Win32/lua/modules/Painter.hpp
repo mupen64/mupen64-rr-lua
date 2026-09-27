@@ -1450,9 +1450,9 @@ inline int painter_get_transform(lua_State *L)
     lua_pushnumber(L, painter->transform._32);
     lua_setfield(L, -2, "dy");
     lua_pushnumber(L, std::hypot(painter->transform._11, painter->transform._12));
-    lua_setfield(L, -2, "scale_x");
+    lua_setfield(L, -2, "sx");
     lua_pushnumber(L, std::hypot(painter->transform._21, painter->transform._22));
-    lua_setfield(L, -2, "scale_y");
+    lua_setfield(L, -2, "sy");
     return 1;
 }
 

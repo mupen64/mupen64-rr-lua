@@ -1574,8 +1574,8 @@ local Painter = {}
 ---@field m22 number Transform matrix component.
 ---@field dx number X translation.
 ---@field dy number Y translation.
----@field scale_x number X-axis scale.
----@field scale_y number Y-axis scale.
+---@field sx number X-axis scale.
+---@field sy number Y-axis scale.
 
 ---Returns the current transform.
 ---@nodiscard
