@@ -2275,21 +2275,21 @@ inline int set_target_fps(lua_State *L)
 
 inline int new_image(lua_State *L)
 {
-    const lua_Integer width_value = luaL_checkinteger(L, 1);
-    const lua_Integer height_value = luaL_checkinteger(L, 2);
-    if (width_value <= 0 || height_value <= 0 || width_value > UINT_MAX || height_value > UINT_MAX)
+    const double width_value = std::ceil(luaL_checknumber(L, 1));
+    const double height_value = std::ceil(luaL_checknumber(L, 2));
+    if (!std::isfinite(width_value) || !std::isfinite(height_value) || width_value <= 0 || height_value <= 0 ||
+        width_value > UINT_MAX || height_value > UINT_MAX)
         return luaL_error(L, "image dimensions must be positive 32-bit integers");
+    const UINT width = static_cast<UINT>(width_value);
+    const UINT height = static_cast<UINT>(height_value);
     auto *parent = Detail::check_current_target(L);
     const UINT max_bitmap_size = parent->GetMaximumBitmapSize();
-    if (!max_bitmap_size || static_cast<lua_Unsigned>(width_value) > max_bitmap_size ||
-        static_cast<lua_Unsigned>(height_value) > max_bitmap_size)
+    if (!max_bitmap_size || width > max_bitmap_size || height > max_bitmap_size)
         return luaL_error(L, "image dimensions exceed the Direct2D bitmap limit");
     ComPtr<ID2D1BitmapRenderTarget> target;
     ComPtr<ID2D1Bitmap> bitmap;
-    Detail::create_image_target(
-        parent, static_cast<UINT>(width_value), static_cast<UINT>(height_value), true, target, bitmap);
-    Detail::push_image(
-        L, std::move(target), std::move(bitmap), static_cast<UINT>(width_value), static_cast<UINT>(height_value));
+    Detail::create_image_target(parent, width, height, true, target, bitmap);
+    Detail::push_image(L, std::move(target), std::move(bitmap), width, height);
     return 1;
 }
 
