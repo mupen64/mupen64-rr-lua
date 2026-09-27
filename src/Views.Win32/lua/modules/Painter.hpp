@@ -1373,6 +1373,48 @@ inline D2D1_RECT_F transform_rect(const D2D1::Matrix3x2F &matrix, const D2D1_REC
     return D2D1::RectF(min_x, min_y, max_x, max_y);
 }
 
+inline float snap_image_coordinate(float coordinate, float scale, float translation, float dpi)
+{
+    if (!std::isfinite(coordinate) || !std::isfinite(scale) || scale == 0 || !std::isfinite(translation) ||
+        !(dpi > 0) || !std::isfinite(dpi))
+        return coordinate;
+    const float device_pixel = (coordinate * scale + translation) * dpi / 96.0f;
+    if (!std::isfinite(device_pixel)) return coordinate;
+    return (std::round(device_pixel) * 96.0f / dpi - translation) / scale;
+}
+
+inline std::array<float, 4> snap_nine_slice_axis(
+    float start, float inner_start, float inner_end, float end, float scale, float translation, float dpi)
+{
+    std::array<float, 4> result{start, inner_start, inner_end, end};
+    if (!std::isfinite(start) || !std::isfinite(inner_start) || !std::isfinite(inner_end) || !std::isfinite(end) ||
+        !std::isfinite(scale) || scale == 0 || !std::isfinite(translation) || !(dpi > 0) || !std::isfinite(dpi))
+        return result;
+
+    const float pixels_per_dip = dpi / 96.0f;
+    const float start_pixel = std::round((start * scale + translation) * pixels_per_dip);
+    const float end_pixel = std::round((end * scale + translation) * pixels_per_dip);
+    float left_width_pixels = std::round((inner_start - start) * scale * pixels_per_dip);
+    float right_width_pixels = std::round((end - inner_end) * scale * pixels_per_dip);
+    const float total_width_pixels = end_pixel - start_pixel;
+    const float total_corner_pixels = std::fabs(left_width_pixels) + std::fabs(right_width_pixels);
+    if (total_corner_pixels > std::fabs(total_width_pixels))
+    {
+        const float direction = std::signbit(total_width_pixels) ? -1.0f : 1.0f;
+        left_width_pixels =
+            std::round(std::fabs(total_width_pixels) * std::fabs(left_width_pixels) / total_corner_pixels) * direction;
+        right_width_pixels = total_width_pixels - left_width_pixels;
+    }
+
+    const auto to_coordinate = [scale, translation, pixels_per_dip](
+                                   float pixel) { return (pixel / pixels_per_dip - translation) / scale; };
+    result[0] = to_coordinate(start_pixel);
+    result[1] = to_coordinate(start_pixel + left_width_pixels);
+    result[2] = to_coordinate(end_pixel - right_width_pixels);
+    result[3] = to_coordinate(end_pixel);
+    return result;
+}
+
 inline int painter_clear(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
@@ -1787,6 +1829,11 @@ inline int painter_image(lua_State *L)
     image_payload.interpolation = interpolation;
     image_payload.tinted = tinted;
     const auto add_slice = [&](const ImageSlice &slice) { image_payload.slices[image_payload.slice_count++] = slice; };
+    const auto &transform = painter->transform;
+    const bool axis_aligned = std::fabs(transform._12) <= 1e-6f && std::fabs(transform._21) <= 1e-6f;
+    FLOAT dpi_x = 96.0f;
+    FLOAT dpi_y = 96.0f;
+    if (nine_sliced && axis_aligned) painter->target->GetDpi(&dpi_x, &dpi_y);
     if (nine_sliced)
     {
         const float left_width = center.left - source.left;
@@ -1797,16 +1844,30 @@ inline int painter_image(lua_State *L)
         const float destination_height = destination.bottom - destination.top;
         if (destination_width < left_width + right_width || destination_height < top_height + bottom_height)
         {
-            add_slice({center, destination});
+            const auto snapped_destination =
+                axis_aligned ? D2D1::RectF(snap_image_coordinate(destination.left, transform._11, transform._31, dpi_x),
+                                   snap_image_coordinate(destination.top, transform._22, transform._32, dpi_y),
+                                   snap_image_coordinate(destination.right, transform._11, transform._31, dpi_x),
+                                   snap_image_coordinate(destination.bottom, transform._22, transform._32, dpi_y))
+                             : destination;
+            add_slice({center, snapped_destination});
         }
         else
         {
             const float source_x[] = {source.left, center.left, center.right, source.right};
             const float source_y[] = {source.top, center.top, center.bottom, source.bottom};
-            const float destination_x[] = {
-                destination.left, destination.left + left_width, destination.right - right_width, destination.right};
-            const float destination_y[] = {
-                destination.top, destination.top + top_height, destination.bottom - bottom_height, destination.bottom};
+            const auto destination_x =
+                axis_aligned
+                    ? snap_nine_slice_axis(destination.left, destination.left + left_width,
+                          destination.right - right_width, destination.right, transform._11, transform._31, dpi_x)
+                    : std::array<float, 4>{destination.left, destination.left + left_width,
+                          destination.right - right_width, destination.right};
+            const auto destination_y =
+                axis_aligned
+                    ? snap_nine_slice_axis(destination.top, destination.top + top_height,
+                          destination.bottom - bottom_height, destination.bottom, transform._22, transform._32, dpi_y)
+                    : std::array<float, 4>{destination.top, destination.top + top_height,
+                          destination.bottom - bottom_height, destination.bottom};
             for (int y = 0; y < 3; ++y)
             {
                 for (int x = 0; x < 3; ++x)
