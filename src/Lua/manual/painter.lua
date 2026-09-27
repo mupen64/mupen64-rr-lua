@@ -457,10 +457,15 @@ custom_row("misc", "state, transforms and colors", {
             q:rotate(math.pi / 8 + 0.35 * math.sin(time * 0.9))
             q:scale(1.15 + 0.35 * (0.5 + 0.5 * math.sin(time * 1.3)),
                 0.65 + 0.30 * (0.5 + 0.5 * math.cos(time * 1.7)))
+            local transform = q:get_transform()
+            local transform_text = string.format("dx %.1f  dy %.1f\nsx %.2f  sy %.2f",
+                transform:dx(), transform:dy(), transform:sx(), transform:sy())
             q:begin_path()
             q:round_rect(rect(-50, -22, 100, 44), 10)
             q:fill(color(0.35 + 0.35 * (0.5 + 0.5 * math.sin(time * 1.2)), 0.63, 0.72))
             q:restore()
+            draw_text(q, transform_text, rect(x, y, 157, 28),
+                { size = 8, align_x = "left", align_y = "top" }, colors.muted)
         end,
     },
     {
@@ -487,6 +492,28 @@ custom_row("misc", "state, transforms and colors", {
             q:round_rect(rect(x + 30, y + 24, 125, 52), 12)
             q:fill(colors.orange)
             q:stroke(colors.text, { width = 2 })
+        end,
+    },
+})
+
+custom_row("matrix", "edit m11–m32, then set_transform(matrix)", {
+    {
+        caption = "direct matrix edit",
+        draw = function(q, x, y)
+            local time = os.clock()
+            q:save()
+            local matrix = q:get_transform()
+            matrix.m11 = 1.1 + 0.16 * math.sin(time * 1.3)
+            matrix.m12 = 0.22 + 0.12 * math.cos(time * 1.1)
+            matrix.m21 = -0.18 + 0.12 * math.sin(time * 1.5 + 1)
+            matrix.m22 = 0.86 + 0.14 * math.cos(time * 1.2)
+            matrix.m31 = matrix:dx() + x + TILE_W / 2 + 7 * math.sin(time * 1.1)
+            matrix.m32 = matrix:dy() + y + 53 + 5 * math.cos(time * 1.4)
+            q:set_transform(matrix)
+            q:begin_path()
+            q:round_rect(rect(-32, -20, 64, 40), 7)
+            q:fill(colors.purple)
+            q:restore()
         end,
     },
 })

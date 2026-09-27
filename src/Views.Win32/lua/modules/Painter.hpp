@@ -39,11 +39,17 @@ namespace Detail
 {
 constexpr const char *IMAGE_MT = "mupen64.PainterImage";
 constexpr const char *PAINTER_MT = "mupen64.Painter";
+constexpr const char *MATRIX_MT = "mupen64.PainterMatrix3x2";
 inline char current_painter_registry;
 constexpr float UNCONSTRAINED_LAYOUT_SIZE = 10000000.0f;
 constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 2048;
 
 constexpr size_t TEXT_MEASUREMENT_CACHE_CAPACITY = 2048;
+
+struct PainterMatrix3x2
+{
+    D2D1::Matrix3x2F transform;
+};
 
 struct Image
 {
@@ -1433,6 +1439,109 @@ inline int painter_close_path(lua_State *L)
     return 0;
 }
 
+inline int matrix_dx(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    lua_pushnumber(L, matrix->transform._31);
+    return 1;
+}
+
+inline int matrix_dy(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    lua_pushnumber(L, matrix->transform._32);
+    return 1;
+}
+
+inline int matrix_sx(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    lua_pushnumber(L, std::hypot(matrix->transform._11, matrix->transform._12));
+    return 1;
+}
+
+inline int matrix_sy(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    lua_pushnumber(L, std::hypot(matrix->transform._21, matrix->transform._22));
+    return 1;
+}
+
+inline int matrix_gc(lua_State *L)
+{
+    static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT))->~PainterMatrix3x2();
+    return 0;
+}
+
+inline int matrix_index(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    size_t key_length{};
+    const char *key_data = luaL_checklstring(L, 2, &key_length);
+    const std::string_view key(key_data, key_length);
+    if (key == "m11")
+        lua_pushnumber(L, matrix->transform._11);
+    else if (key == "m12")
+        lua_pushnumber(L, matrix->transform._12);
+    else if (key == "m21")
+        lua_pushnumber(L, matrix->transform._21);
+    else if (key == "m22")
+        lua_pushnumber(L, matrix->transform._22);
+    else if (key == "m31")
+        lua_pushnumber(L, matrix->transform._31);
+    else if (key == "m32")
+        lua_pushnumber(L, matrix->transform._32);
+    else
+    {
+        luaL_getmetatable(L, MATRIX_MT);
+        lua_pushvalue(L, 2);
+        lua_rawget(L, -2);
+        lua_remove(L, -2);
+    }
+    return 1;
+}
+
+inline int matrix_newindex(lua_State *L)
+{
+    auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    size_t key_length{};
+    const char *key_data = luaL_checklstring(L, 2, &key_length);
+    const std::string_view key(key_data, key_length);
+    const float value = check_painter_number(L, 3, "matrix component");
+    if (key == "m11")
+        matrix->transform._11 = value;
+    else if (key == "m12")
+        matrix->transform._12 = value;
+    else if (key == "m21")
+        matrix->transform._21 = value;
+    else if (key == "m22")
+        matrix->transform._22 = value;
+    else if (key == "m31")
+        matrix->transform._31 = value;
+    else if (key == "m32")
+        matrix->transform._32 = value;
+    else
+        return luaL_error(L, "unknown PainterMatrix3x2 component '%.*s'", static_cast<int>(key_length), key_data);
+    return 0;
+}
+
+inline int painter_get_transform(lua_State *L)
+{
+    const auto *painter = check_painter(L, 1);
+    new (lua_newuserdata(L, sizeof(PainterMatrix3x2))) PainterMatrix3x2{painter->transform};
+    luaL_getmetatable(L, MATRIX_MT);
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+inline int painter_set_transform(lua_State *L)
+{
+    auto *painter = check_painter(L, 1);
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 2, MATRIX_MT));
+    painter->transform = matrix->transform;
+    return 0;
+}
+
 inline int painter_save(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
@@ -2452,15 +2561,23 @@ inline void register_types(lua_State *L)
         {"begin_path", Detail::painter_begin_path}, {"move_to", Detail::painter_move_to},
         {"line_to", Detail::painter_line_to}, {"cubic_to", Detail::painter_cubic_to},
         {"quadratic_to", Detail::painter_quadratic_to}, {"arc", Detail::painter_arc},
-        {"close_path", Detail::painter_close_path}, {"save", Detail::painter_save},
+        {"close_path", Detail::painter_close_path}, {"get_transform", Detail::painter_get_transform},
+        {"set_transform", Detail::painter_set_transform}, {"save", Detail::painter_save},
         {"restore", Detail::painter_restore}, {"clip", Detail::painter_clip}, {"translate", Detail::painter_translate},
         {"rotate", Detail::painter_rotate}, {"scale", Detail::painter_scale}, {"stroke", Detail::painter_stroke},
         {"fill", Detail::painter_fill}, {"text", Detail::painter_text}, {"rect", Detail::painter_rect},
         {"round_rect", Detail::painter_round_rect}, {"circle", Detail::painter_circle}, {"line", Detail::painter_line},
         {"polyline", Detail::painter_polyline}, {"polygon", Detail::painter_polygon}, {"image", Detail::painter_image},
         {nullptr, nullptr}};
+    static const luaL_Reg matrix_methods[] = {{"dx", Detail::matrix_dx}, {"dy", Detail::matrix_dy},
+        {"sx", Detail::matrix_sx}, {"sy", Detail::matrix_sy}, {nullptr, nullptr}};
     luaL_create_metatable(L, Detail::IMAGE_MT, image_methods, Detail::image_index, Detail::image_gc);
     luaL_create_metatable(L, Detail::PAINTER_MT, painter_methods, nullptr, Detail::painter_gc);
+    luaL_create_metatable(L, Detail::MATRIX_MT, matrix_methods, Detail::matrix_index, Detail::matrix_gc);
+    luaL_getmetatable(L, Detail::MATRIX_MT);
+    lua_pushcfunction(L, Detail::matrix_newindex);
+    lua_setfield(L, -2, "__newindex");
+    lua_pop(L, 1);
 }
 
 inline int invoke_paint_callback(lua_State *L)
