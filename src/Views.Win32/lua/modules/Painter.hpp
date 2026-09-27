@@ -1441,41 +1441,41 @@ inline int painter_close_path(lua_State *L)
 
 inline int matrix_dx(lua_State *L)
 {
-    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    const auto *matrix = static_cast<const PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
     lua_pushnumber(L, matrix->transform._31);
     return 1;
 }
 
 inline int matrix_dy(lua_State *L)
 {
-    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    const auto *matrix = static_cast<const PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
     lua_pushnumber(L, matrix->transform._32);
     return 1;
 }
 
 inline int matrix_sx(lua_State *L)
 {
-    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    const auto *matrix = static_cast<const PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
     lua_pushnumber(L, std::hypot(matrix->transform._11, matrix->transform._12));
     return 1;
 }
 
 inline int matrix_sy(lua_State *L)
 {
-    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    const auto *matrix = static_cast<const PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
     lua_pushnumber(L, std::hypot(matrix->transform._21, matrix->transform._22));
     return 1;
 }
 
 inline int matrix_gc(lua_State *L)
 {
-    static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT))->~PainterMatrix3x2();
+    (void)L;
     return 0;
 }
 
 inline int matrix_index(lua_State *L)
 {
-    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    const auto *matrix = static_cast<const PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
     size_t key_length{};
     const char *key_data = luaL_checklstring(L, 2, &key_length);
     const std::string_view key(key_data, key_length);
@@ -1496,6 +1496,7 @@ inline int matrix_index(lua_State *L)
         luaL_getmetatable(L, MATRIX_MT);
         lua_pushvalue(L, 2);
         lua_rawget(L, -2);
+        if (lua_isnil(L, -1)) return luaL_error(L, "unknown PainterMatrix3x2 member");
         lua_remove(L, -2);
     }
     return 1;
@@ -1507,21 +1508,22 @@ inline int matrix_newindex(lua_State *L)
     size_t key_length{};
     const char *key_data = luaL_checklstring(L, 2, &key_length);
     const std::string_view key(key_data, key_length);
-    const float value = check_painter_number(L, 3, "matrix component");
+    float *component = nullptr;
     if (key == "m11")
-        matrix->transform._11 = value;
+        component = &matrix->transform._11;
     else if (key == "m12")
-        matrix->transform._12 = value;
+        component = &matrix->transform._12;
     else if (key == "m21")
-        matrix->transform._21 = value;
+        component = &matrix->transform._21;
     else if (key == "m22")
-        matrix->transform._22 = value;
+        component = &matrix->transform._22;
     else if (key == "m31")
-        matrix->transform._31 = value;
+        component = &matrix->transform._31;
     else if (key == "m32")
-        matrix->transform._32 = value;
+        component = &matrix->transform._32;
     else
-        return luaL_error(L, "unknown PainterMatrix3x2 component '%.*s'", static_cast<int>(key_length), key_data);
+        return luaL_error(L, "unknown PainterMatrix3x2 member");
+    *component = check_painter_number(L, 3, "matrix component");
     return 0;
 }
 
@@ -1537,8 +1539,18 @@ inline int painter_get_transform(lua_State *L)
 inline int painter_set_transform(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 2, MATRIX_MT));
-    painter->transform = matrix->transform;
+    if (const auto *matrix = static_cast<const PainterMatrix3x2 *>(luaL_testudata(L, 2, MATRIX_MT)))
+    {
+        painter->transform = matrix->transform;
+        return 0;
+    }
+
+    luaL_checktype(L, 2, LUA_TTABLE);
+    const int table = lua_absindex(L, 2);
+    painter->transform = D2D1::Matrix3x2F(Detail::table_painter_number(L, table, "m11", 0, true),
+        Detail::table_painter_number(L, table, "m12", 0, true), Detail::table_painter_number(L, table, "m21", 0, true),
+        Detail::table_painter_number(L, table, "m22", 0, true), Detail::table_painter_number(L, table, "m31", 0, true),
+        Detail::table_painter_number(L, table, "m32", 0, true));
     return 0;
 }
 
