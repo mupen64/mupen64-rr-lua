@@ -1725,7 +1725,8 @@ function Painter:polyline(points) end
 function Painter:polygon(points) end
 
 ---Draws an image into `destination`.
----When `options.center` is provided, the image is drawn in nine slices. Corners remain unscaled, edges scale along one axis, and the center scales along both axes.
+---When `options.center` is provided, the image is drawn in nine slices.
+---When drawing in nine slices, corners retain their original size even under scale transforms and slice boundaries are snapped to pixels.
 ---@param image PainterImage
 ---@param destination PainterRect
 ---@param options PainterImageOptions?
