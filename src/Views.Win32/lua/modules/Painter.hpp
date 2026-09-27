@@ -1842,7 +1842,16 @@ inline int painter_image(lua_State *L)
         const float bottom_height = source.bottom - center.bottom;
         const float destination_width = destination.right - destination.left;
         const float destination_height = destination.bottom - destination.top;
-        if (destination_width < left_width + right_width || destination_height < top_height + bottom_height)
+        const float transform_scale_x = std::hypot(transform._11, transform._12);
+        const float transform_scale_y = std::hypot(transform._21, transform._22);
+        const float corner_scale_x = transform_scale_x > 0 && std::isfinite(transform_scale_x) ? transform_scale_x : 1;
+        const float corner_scale_y = transform_scale_y > 0 && std::isfinite(transform_scale_y) ? transform_scale_y : 1;
+        const float destination_left_width = left_width / corner_scale_x;
+        const float destination_right_width = right_width / corner_scale_x;
+        const float destination_top_height = top_height / corner_scale_y;
+        const float destination_bottom_height = bottom_height / corner_scale_y;
+        if (destination_width < destination_left_width + destination_right_width ||
+            destination_height < destination_top_height + destination_bottom_height)
         {
             const auto snapped_destination =
                 axis_aligned ? D2D1::RectF(snap_image_coordinate(destination.left, transform._11, transform._31, dpi_x),
@@ -1857,17 +1866,17 @@ inline int painter_image(lua_State *L)
             const float source_x[] = {source.left, center.left, center.right, source.right};
             const float source_y[] = {source.top, center.top, center.bottom, source.bottom};
             const auto destination_x =
-                axis_aligned
-                    ? snap_nine_slice_axis(destination.left, destination.left + left_width,
-                          destination.right - right_width, destination.right, transform._11, transform._31, dpi_x)
-                    : std::array<float, 4>{destination.left, destination.left + left_width,
-                          destination.right - right_width, destination.right};
+                axis_aligned ? snap_nine_slice_axis(destination.left, destination.left + destination_left_width,
+                                   destination.right - destination_right_width, destination.right, transform._11,
+                                   transform._31, dpi_x)
+                             : std::array<float, 4>{destination.left, destination.left + destination_left_width,
+                                   destination.right - destination_right_width, destination.right};
             const auto destination_y =
-                axis_aligned
-                    ? snap_nine_slice_axis(destination.top, destination.top + top_height,
-                          destination.bottom - bottom_height, destination.bottom, transform._22, transform._32, dpi_y)
-                    : std::array<float, 4>{destination.top, destination.top + top_height,
-                          destination.bottom - bottom_height, destination.bottom};
+                axis_aligned ? snap_nine_slice_axis(destination.top, destination.top + destination_top_height,
+                                   destination.bottom - destination_bottom_height, destination.bottom, transform._22,
+                                   transform._32, dpi_y)
+                             : std::array<float, 4>{destination.top, destination.top + destination_top_height,
+                                   destination.bottom - destination_bottom_height, destination.bottom};
             for (int y = 0; y < 3; ++y)
             {
                 for (int x = 0; x < 3; ++x)
