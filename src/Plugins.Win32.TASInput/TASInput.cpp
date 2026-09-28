@@ -763,7 +763,8 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             }                                                                                                          \
             else                                                                                                       \
             {                                                                                                          \
-                if (frame_counter % 2 != 0)                                                                            \
+                ctx->current_input.field = 0;                                                                          \
+                if (frame_counter % 2 != 0)                                                                           \
                     ctx->autofire_input_a.field ^= 1;                                                                  \
                 else                                                                                                   \
                     ctx->autofire_input_b.field ^= 1;                                                                  \
@@ -939,7 +940,8 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
 #define TOGGLE(field)                                                                                                  \
     {                                                                                                                  \
-        ctx->current_input.field = IsDlgButtonChecked(ctx->hwnd, LOWORD(wparam)) == BST_CHECKED ? 1 : 0;               \
+        const bool was_autofiring = ctx->autofire_input_a.field || ctx->autofire_input_b.field;                        \
+        ctx->current_input.field = was_autofiring || IsDlgButtonChecked(ctx->hwnd, LOWORD(wparam)) == BST_CHECKED;     \
         ctx->autofire_input_a.field = ctx->autofire_input_b.field = 0;                                                 \
         ctx->set_visuals(ctx->current_input);                                                                          \
     }
