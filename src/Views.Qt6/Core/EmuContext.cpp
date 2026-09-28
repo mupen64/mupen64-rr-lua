@@ -12,6 +12,7 @@
 #include <QThread>
 #include <QIcon>
 #include <QUrl>
+#include <QtConcurrent/QtConcurrent>
 
 // #include <QtUtils.hpp>
 #include <QJSInterop.hpp>
@@ -36,12 +37,18 @@ EmuContext::EmuContext(QObject *parent)
 
     m_core_params->cfg = m_core_cfg;
 
-    // use the QThreadPool available
-    m_core_params->submit_task = [&](const std::function<void()> &cb) { m_task_pool.start(cb); };
+#pragma region General integration
+    m_core_params->submit_task = [&](const std::function<void()> &cb) { QThreadPool::globalInstance()->start(cb); };
+    m_core_params->find_available_rom =
+        [&](const std::function<bool(const CoreROMHeader &)> &predicate) -> std::filesystem::path {
+        return {};
+    };
+#pragma endregion
 
 #pragma region Directories
     m_core_params->get_saves_directory = [this] { return m_paths->saveDirStdPath(); };
     m_core_params->get_backups_directory = [this] { return m_paths->backupDirStdPath(); };
+    m_core_params->get_summercart_directory = [this] { return m_paths->saveDirStdPath(); };
     m_core_params->get_summercart_path = [this]() { return m_paths->saveDirStdPath() / "cart.vhd"; };
 #pragma endregion
 
@@ -271,7 +278,7 @@ void EmuContext::saveFile(const QUrl &url)
     // To keep operations from running on the wrong frame, we also block the core from
     // advancing until the operation is queued.
     m_core_ctx->vr_wait_increment();
-    m_task_pool.start([=, this] {
+    QThreadPool::globalInstance()->start([=, this] {
         m_core_ctx->vr_wait_decrement();
         m_core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
     });
@@ -290,7 +297,7 @@ void EmuContext::loadFile(const QUrl &url)
     std::filesystem::path path = url.toLocalFile().toStdU16String();
     // see saveFile()
     m_core_ctx->vr_wait_increment();
-    m_task_pool.start([=, this] {
+    QThreadPool::globalInstance()->start([=, this] {
         m_core_ctx->vr_wait_decrement();
         m_core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
     });

@@ -66,6 +66,7 @@ set(qml_sources
     "Views/ConfigWindow.qml"
     "Views/DialogService.qml"
     "Views/MainWindow.qml"
+    "Views/RomBrowser.qml"
 )
 set(qml_settings_sources
     "Views/Settings/Actions.qml"

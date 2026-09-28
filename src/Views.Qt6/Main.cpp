@@ -35,6 +35,9 @@ static int qt_main(int argc, char *argv[])
 {
     using namespace Qt::Literals;
 
+    // Force QtQuick.Controls MenuBar to use the native menu bar.
+    QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar);
+
     // NOTE: QApplication is used here specifically to ensure KDE's desktop styles are loaded.
     // When a QGuiApplication is used, KDE switches to its fallback Breeze theme, which
     // is slightly bugged.

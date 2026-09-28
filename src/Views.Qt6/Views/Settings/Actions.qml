@@ -313,7 +313,7 @@ ActionManager {
         title: qsTrId("dialogs.loadROM.title")
         fileMode: Dialogs.FileDialog.OpenFile
         //% "N64 ROMs"
-        nameFilters: [`${qsTrId("formats.rom")} (*.n64 *.z64 *.v64)`]
+        nameFilters: [`${qsTrId("formats.rom")} (*.n64 *.z64 *.v64 *.rom)`]
         onAccepted: {
             let result = root.core.startROM(selectedFile);
             priv.showDialogForError(result);
