@@ -8,6 +8,7 @@
 #include "PianoRoll.hpp"
 #include "ThreadPool.hpp"
 #include <Common.Views/Config.hpp>
+#include <Common/I18n.hpp>
 #include <Common.Views/Messages.hpp>
 #include <components/CoreUtils.hpp>
 #include "../action/ActionMenu.hpp"
@@ -1316,16 +1317,29 @@ static bool enabled_when_editable()
 
 void PianoRoll::init()
 {
+    I18n::get().add(BASE, "Piano Roll", "en");
+    I18n::get().add(BASE + ".edit", "Edit", "en");
+    I18n::get().add(COPY, "Copy", "en");
+    I18n::get().add(PASTE, "Paste", "en");
+    I18n::get().add(UNDO, "Undo", "en");
+    I18n::get().add(REDO, "Redo", "en");
+    I18n::get().add(INSERT_FRAME, "Insert Frame", "en");
+    I18n::get().add(CLEAR, "Clear", "en");
+    I18n::get().add(DELETE, "Delete", "en");
+
     ActionManager::add({.path = PianoRoll::COPY,
         .on_press = [](const auto &...) { copy_inputs(); },
         .get_enabled = enabled_when_editable});
     ActionManager::add({.path = PianoRoll::PASTE,
         .on_press = [](const auto &...) { paste_inputs(false); },
-        .get_enabled = enabled_when_editable});
+        .get_enabled = enabled_when_editable,
+        .has_separator = true});
     ActionManager::add(
         {.path = PianoRoll::UNDO, .on_press = [](const auto &...) { undo(); }, .get_enabled = enabled_when_editable});
-    ActionManager::add(
-        {.path = PianoRoll::REDO, .on_press = [](const auto &...) { redo(); }, .get_enabled = enabled_when_editable});
+    ActionManager::add({.path = PianoRoll::REDO,
+        .on_press = [](const auto &...) { redo(); },
+        .get_enabled = enabled_when_editable,
+        .has_separator = true});
     ActionManager::add({.path = PianoRoll::CLEAR,
         .on_press = [](const auto &...) { clear_inputs_in_selection(); },
         .get_enabled = enabled_when_editable});
