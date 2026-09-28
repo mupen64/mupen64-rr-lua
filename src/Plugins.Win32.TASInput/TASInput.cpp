@@ -163,9 +163,10 @@ struct Status
     /**
      * \brief Processes the input with steps such as autofire or combo overrides
      * \param input The input to process
+     * \param for_next_frame Whether to use the autofire phase for the next frame
      * \return The processed input
      */
-    CoreButtons get_processed_input(CoreButtons input);
+    CoreButtons get_processed_input(CoreButtons input, bool for_next_frame = false);
 
     /**
      * \brief Activates the mupen window, releasing focus capture from the current window
@@ -274,12 +275,13 @@ end:
         set_status(std::format("Recording... ({})", combos[active_combo_index].samples.size()));
     }
 
-    set_visuals_lazy(*keys, false);
+    set_visuals_lazy(get_processed_input(current_input, true), false);
 }
 
-CoreButtons Status::get_processed_input(CoreButtons input)
+CoreButtons Status::get_processed_input(CoreButtons input, bool for_next_frame)
 {
-    input.value |= frame_counter % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
+    const auto frame = frame_counter + for_next_frame;
+    input.value |= frame % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
 
     if (combo_task == ComboTask::Play && !combo_paused)
     {
@@ -312,7 +314,7 @@ void Status::set_visuals(CoreButtons input, bool needs_processing)
 
     if (needs_processing)
     {
-        input = get_processed_input(input);
+        input = get_processed_input(input, true);
     }
 
     // We don't want to mess with the user's selection
@@ -745,7 +747,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             }                                                                                                          \
             else                                                                                                       \
             {                                                                                                          \
-                if (frame_counter % 2 == 0)                                                                            \
+                if (frame_counter % 2 != 0)                                                                           \
                     ctx->autofire_input_a.field ^= 1;                                                                  \
                 else                                                                                                   \
                     ctx->autofire_input_b.field ^= 1;                                                                  \
