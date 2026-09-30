@@ -15,126 +15,51 @@ struct Segment
     size_t width;
 };
 
-struct SegmentLayout
-{
-    std::vector<Segment> emu_parts;
-    std::vector<Segment> idle_parts;
+static const std::vector<Segment> EMU_PARTS = {
+    Segment{
+        .sections = {Statusbar::Section::Notification},
+        .width = 150,
+    },
+    Segment{
+        .sections = {Statusbar::Section::VCR},
+        .width = 160,
+    },
+    Segment{
+        .sections = {Statusbar::Section::Readonly},
+        .width = 80,
+    },
+    Segment{
+        .sections = {Statusbar::Section::Input},
+        .width = 80,
+    },
+    Segment{
+        .sections = {Statusbar::Section::Rerecords},
+        .width = 70,
+    },
+    Segment{
+        .sections = {Statusbar::Section::FPS},
+        .width = 80,
+    },
+    Segment{
+        .sections = {Statusbar::Section::VIs},
+        .width = 80,
+    },
+    Segment{
+        .sections = {Statusbar::Section::Slot},
+        .width = 50,
+    },
+    Segment{
+        .sections = {Statusbar::Section::MultiFrameAdvanceCount},
+        .width = 60,
+    },
 };
-
-const std::unordered_map<Config::StatusbarLayout, SegmentLayout>
-    LAYOUT_MAP =
-        {{Config::StatusbarLayout::Classic,
-             SegmentLayout{
-                 .emu_parts =
-                     {
-                         Segment{
-                             .sections = {Statusbar::Section::VCR, Statusbar::Section::Notification},
-                             .width = 260,
-                         },
-                         Segment{
-                             .sections = {Statusbar::Section::FPS},
-                             .width = 70,
-                         },
-                         Segment{
-                             .sections = {Statusbar::Section::VIs},
-                             .width = 70,
-                         },
-                         Segment{
-                             .sections = {Statusbar::Section::Input},
-                             .width = 140,
-                         },
-                     },
-                 .idle_parts = {},
-             }},
-            {Config::StatusbarLayout::Modern,
-                SegmentLayout{
-                    .emu_parts =
-                        {
-                            Segment{
-                                .sections = {Statusbar::Section::Notification, Statusbar::Section::Readonly},
-                                .width = 200,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::VCR},
-                                .width = 180,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::Input},
-                                .width = 80,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::Rerecords},
-                                .width = 70,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::FPS},
-                                .width = 80,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::VIs},
-                                .width = 80,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::Slot},
-                                .width = 50,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::MultiFrameAdvanceCount},
-                                .width = 60,
-                            },
-                        },
-                    .idle_parts = {},
-                }},
-            {Config::StatusbarLayout::ModernWithReadOnly,
-                SegmentLayout{
-                    .emu_parts =
-                        {
-                            Segment{
-                                .sections = {Statusbar::Section::Notification},
-                                .width = 150,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::VCR},
-                                .width = 160,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::Readonly},
-                                .width = 80,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::Input},
-                                .width = 80,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::Rerecords},
-                                .width = 70,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::FPS},
-                                .width = 80,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::VIs},
-                                .width = 80,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::Slot},
-                                .width = 50,
-                            },
-                            Segment{
-                                .sections = {Statusbar::Section::MultiFrameAdvanceCount},
-                                .width = 60,
-                            },
-                        },
-                    .idle_parts = {},
-                }}};
+static const std::vector<Segment> IDLE_PARTS;
 
 static HWND statusbar_hwnd;
 
-static std::vector<Segment> get_current_parts()
+static const std::vector<Segment> &get_current_parts()
 {
-    const SegmentLayout layout = LAYOUT_MAP.at(static_cast<Config::StatusbarLayout>(g_config.statusbar_layout));
-    return (g_main_ctx.CoreCtx->vr_get_launched()) ? layout.emu_parts : layout.idle_parts;
+    return g_main_ctx.CoreCtx->vr_get_launched() ? EMU_PARTS : IDLE_PARTS;
 }
 
 static size_t section_to_segment_index(const Statusbar::Section section)
@@ -156,7 +81,7 @@ static size_t section_to_segment_index(const Statusbar::Section section)
 
 static void refresh_segments()
 {
-    const auto parts = get_current_parts();
+    const auto &parts = get_current_parts();
 
     std::vector<int32_t> sizes;
     for (const auto &part : parts)
