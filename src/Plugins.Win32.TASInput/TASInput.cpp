@@ -1227,9 +1227,13 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 
 EXPORT void CALL M64RRProcessEvent(Event event)
 {
+    static int8_t init_count = 0;
+
     switch (event.type)
     {
     case M64RRSpec::Event::Type::Initiate: {
+        init_count++;
+
         g_inst = GetModuleHandle(nullptr);
         g_plugin = event.initiate.init;
 
@@ -1263,6 +1267,8 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         break;
     }
     case M64RRSpec::Event::Type::Shutdown: {
+        init_count--;
+        if (init_count > 0) break;
 
         if (icon_font)
         {
