@@ -11,6 +11,7 @@ import QtQuick.Dialogs as Dialogs
 
 import Actions
 import Core
+import Utils
 
 ActionManager {
     id: root
@@ -315,7 +316,8 @@ ActionManager {
         //% "N64 ROMs"
         nameFilters: [`${qsTrId("formats.rom")} (*.n64 *.z64 *.v64 *.rom)`]
         onAccepted: {
-            let result = root.core.startROM(selectedFile);
+            let path = Paths.toLocalFile(selectedFile);
+            let result = root.core.startROM(path);
             priv.showDialogForError(result);
         }
     }
@@ -327,7 +329,8 @@ ActionManager {
         //% "Savestates"
         nameFilters: [`${qsTrId("formats.state")} (*.st *.savestate)`]
         onAccepted: {
-            root.core.loadFile(selectedFile);
+            let path = Paths.toLocalFile(selectedFile);
+            root.core.loadFile(path);
         }
     }
     Dialogs.FileDialog {
@@ -337,7 +340,8 @@ ActionManager {
         fileMode: Dialogs.FileDialog.SaveFile
         nameFilters: [`${qsTrId("formats.state")} (*.st *.savestate)`]
         onAccepted: {
-            root.core.saveFile(selectedFile);
+            let path = Paths.toLocalFile(selectedFile);
+            root.core.saveFile(path);
         }
     }
 

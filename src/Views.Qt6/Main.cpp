@@ -8,6 +8,7 @@
 #include <Common.Views/App.hpp>
 
 #include <QApplication>
+#include <QDirIterator>
 #include <QQmlApplicationEngine>
 #include <QSettings>
 #include <QTranslator>
@@ -48,6 +49,13 @@ static int qt_main(int argc, char *argv[])
     QApplication::setApplicationName(DESKTOP_FILE_NAME);
     QApplication::setApplicationVersion(CURRENT_VERSION);
     QApplication::setApplicationDisplayName(DISPLAY_NAME);
+
+    {
+        QDirIterator it(":/Assets", QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            qDebug() << it.next();
+        }
+    }
 
     // Load fallback translations first
     auto *fallbackTranslator = new QTranslator(&app);

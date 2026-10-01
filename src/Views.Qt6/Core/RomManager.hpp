@@ -31,7 +31,7 @@ class RomData : public QObject
 
     QString path() const { return m_path; }
     int size() const { return m_size; }
-    int regionCode() const { return m_rawHeader.Country_code; }
+    int regionCode() const { return m_rawHeader.Country_code & 0xFF; }
     QString romName() const
     {
         // This incurs extra overhead converting Shift-JIS -> UTF-8 -> UTF-16, but screw it
@@ -77,6 +77,11 @@ class RomManager : public QAbstractTableModel
         ColRomName,
         ColFilename,
         ColSize
+    };
+    enum UserRoles {
+        RoleDisplayType = Qt::UserRole,
+        RoleRomPath,
+        RoleRegionCode,
     };
 
     // QML should never change this, only we do

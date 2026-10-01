@@ -60,7 +60,7 @@ class EmuContext : public QObject
     // ==========================
 
     // -> vr_start_rom
-    Q_INVOKABLE QmlCoreResult::Value startROM(const QUrl &url);
+    Q_INVOKABLE QmlCoreResult::Value startROM(const QString &path);
 
     // -> vr_close_rom
     Q_INVOKABLE QmlCoreResult::Value closeROM(bool resetVCR = true);
@@ -105,13 +105,13 @@ class EmuContext : public QObject
     Q_INVOKABLE void saveSlot(uint32_t index);
 
     // -> st_do_file
-    Q_INVOKABLE void saveFile(const QUrl &url);
+    Q_INVOKABLE void saveFile(const QString &path);
 
     // -> st_do_file (to save slot)
     Q_INVOKABLE void loadSlot(uint32_t index);
 
     // -> st_do_file
-    Q_INVOKABLE void loadFile(const QUrl &url);
+    Q_INVOKABLE void loadFile(const QString &path);
 
     // CoreCfg properties
     // ==========================

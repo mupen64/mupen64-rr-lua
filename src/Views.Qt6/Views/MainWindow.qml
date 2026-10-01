@@ -67,8 +67,9 @@ ApplicationWindow {
         currentIndex: (core.launched) ? 1 : 0
 
         RomBrowser {
-            // TODO: replace with ROM browser
+            context: core
             romManager: romManager
+
             Layout.fillHeight: true
             Layout.fillWidth: true
         }
@@ -131,6 +132,7 @@ ApplicationWindow {
 
     RomManager {
         id: romManager
+
 
         function reloadWithSettings() {
             reloadRomList(

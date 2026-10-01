@@ -40,9 +40,7 @@ EmuContext::EmuContext(QObject *parent)
 #pragma region General integration
     m_core_params->submit_task = [&](const std::function<void()> &cb) { QThreadPool::globalInstance()->start(cb); };
     m_core_params->find_available_rom =
-        [&](const std::function<bool(const CoreROMHeader &)> &predicate) -> std::filesystem::path {
-        return {};
-    };
+        [&](const std::function<bool(const CoreROMHeader &)> &predicate) -> std::filesystem::path { return {}; };
 #pragma endregion
 
 #pragma region Directories
@@ -179,9 +177,9 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-QmlCoreResult::Value EmuContext::startROM(const QUrl &url)
+QmlCoreResult::Value EmuContext::startROM(const QString &pathIn)
 {
-    std::filesystem::path path = url.toLocalFile().toStdU16String();
+    std::filesystem::path path = std::u16string_view{pathIn};
     return QmlCoreResult::from_core(m_core_ctx->vr_start_rom(path));
 }
 
@@ -269,9 +267,9 @@ void EmuContext::saveSlot(uint32_t index)
 }
 
 // -> st_do_file
-void EmuContext::saveFile(const QUrl &url)
+void EmuContext::saveFile(const QString &pathIn)
 {
-    std::filesystem::path path = url.toLocalFile().toStdU16String();
+    std::filesystem::path path = std::u16string_view{pathIn};
     std::println("saving to {}", path.string());
 
     // Save operations must be issued asynchronously as they lock a mutex.
@@ -292,9 +290,9 @@ void EmuContext::loadSlot(uint32_t index)
 }
 
 // -> st_do_file
-void EmuContext::loadFile(const QUrl &url)
+void EmuContext::loadFile(const QString &pathIn)
 {
-    std::filesystem::path path = url.toLocalFile().toStdU16String();
+    std::filesystem::path path = std::u16string_view{pathIn};
     // see saveFile()
     m_core_ctx->vr_wait_increment();
     QThreadPool::globalInstance()->start([=, this] {

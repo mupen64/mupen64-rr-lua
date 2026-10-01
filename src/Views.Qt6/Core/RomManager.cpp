@@ -45,26 +45,45 @@ QVariant RomManager::data(const QModelIndex &index, int role) const
     if (!index.isValid())
         return {};
 
+    if (role == RoleRomPath) {
+        const auto &item = m_romData[index.row()];
+        return item->path();
+    }
+
     switch (index.column())
     {
     case ColRegionCode: {
-        if (role != Qt::DisplayRole) return {};
-        return u"??"_s;
+        if (role == RoleDisplayType)
+            return u"flagIcon"_s;
+
+        const auto &item = m_romData[index.row()];
+        if (role == Qt::DisplayRole) return u"??"_s;
+        if (role == RoleRegionCode) return item->regionCode();
+        return {};
     }
     break;
     case ColRomName: {
+        if (role == RoleDisplayType)
+            return u"text"_s;
+
         const auto &item = m_romData[index.row()];
         if (role != Qt::DisplayRole) return {};
         return item->romName();
     }
     break;
     case ColFilename: {
+        if (role == RoleDisplayType)
+            return u"text"_s;
+
         const auto &item = m_romData[index.row()];
         if (role != Qt::DisplayRole) return {};
         return QFileInfo(item->path()).fileName();
     }
     break;
     case ColSize: {
+        if (role == RoleDisplayType)
+            return u"text"_s;
+
         const auto &item = m_romData[index.row()];
         if (role != Qt::DisplayRole) return {};
         //% "%1 MB"
@@ -100,8 +119,16 @@ QVariant RomManager::headerData(int section, Qt::Orientation orientation, int ro
 
 QHash<int, QByteArray> RomManager::roleNames() const
 {
-    // for now, this doesn't do anything special
-    return QAbstractTableModel::roleNames();
+    static const QHash<int, QByteArray> s_instance {
+        // text to display (QString)
+        {Qt::DisplayRole, "display"},
+        {RoleDisplayType, "displayType"},
+        // ROM path to open on double-click (QString)
+        {RoleRomPath, "romPath"},
+        // region code to render icon (var: int | null)
+        {RoleRegionCode, "regionCode"}
+    };
+    return s_instance;
 }
 Qt::ItemFlags RomManager::flags(const QModelIndex &index) const {
     if (!index.isValid())

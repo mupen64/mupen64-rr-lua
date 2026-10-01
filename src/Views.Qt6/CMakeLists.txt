@@ -42,6 +42,9 @@ target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE
     Qt::QuickControls2
 )
 
+# C++ OPTIONS
+# ===================================
+
 # MinGW needs this for std::print(ln) some reason...
 if(MINGW)
     target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE stdc++exp)
@@ -67,6 +70,7 @@ set(qml_sources
     "Views/DialogService.qml"
     "Views/MainWindow.qml"
     "Views/RomBrowser.qml"
+    "Views/RomBrowserCell.qml"
 )
 set(qml_settings_sources
     "Views/Settings/Actions.qml"
@@ -108,6 +112,29 @@ qt_add_qml_module(Mupen64RR_Views_Qt6
         ${qml_config_pages}
 )
 
+# ASSETS
+# ===================================
+
+qt_add_resources(Mupen64RR_Views_Qt6
+    BASE "Assets/"
+    FILES
+        "Assets/Regions/beta.svg"
+        "Assets/Regions/unknown.svg"
+        "Assets/Regions/flag-AU.svg"
+        "Assets/Regions/flag-BR.svg"
+        "Assets/Regions/flag-CA.svg"
+        "Assets/Regions/flag-CN.svg"
+        "Assets/Regions/flag-DE.svg"
+        "Assets/Regions/flag-ES.svg"
+        "Assets/Regions/flag-EU.svg"
+        "Assets/Regions/flag-FR.svg"
+        "Assets/Regions/flag-IT.svg"
+        "Assets/Regions/flag-JP.svg"
+        "Assets/Regions/flag-KR.svg"
+        "Assets/Regions/flag-NL.svg"
+        "Assets/Regions/flag-SE.svg"
+        "Assets/Regions/flag-US.svg"
+)
 
 # LOCALIZATION
 # ===================================
