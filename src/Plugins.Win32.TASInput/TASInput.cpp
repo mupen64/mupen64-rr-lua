@@ -764,7 +764,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             else                                                                                                       \
             {                                                                                                          \
                 ctx->current_input.field = 0;                                                                          \
-                if (frame_counter % 2 != 0)                                                                           \
+                if (frame_counter % 2 != 0)                                                                            \
                     ctx->autofire_input_a.field ^= 1;                                                                  \
                 else                                                                                                   \
                     ctx->autofire_input_b.field ^= 1;                                                                  \

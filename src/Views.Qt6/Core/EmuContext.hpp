@@ -41,7 +41,7 @@ class EmuContext : public QObject
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
 
     // Auxiliary services
-    Q_PROPERTY(RomManager* romManager READ romManager WRITE setRomManager NOTIFY romManagerChanged REQUIRED)
+    Q_PROPERTY(RomManager *romManager READ romManager WRITE setRomManager NOTIFY romManagerChanged REQUIRED)
 
     // extra properties
     Q_PROPERTY(EmuOptions *options READ options)
@@ -150,8 +150,8 @@ class EmuContext : public QObject
     // Misc. properties
     // ==========================
 
-    RomManager* romManager();
-    void setRomManager(RomManager* value);
+    RomManager *romManager();
+    void setRomManager(RomManager *value);
 
   signals:
 
@@ -243,7 +243,7 @@ class EmuContext : public QObject
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
 
-    RomManager* m_rom_manager;
+    RomManager *m_rom_manager;
 
     EmuOptions *m_options;
     EmuPaths *m_paths;
