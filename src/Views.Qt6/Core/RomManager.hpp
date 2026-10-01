@@ -5,16 +5,15 @@
  */
 #pragma once
 
+#include <memory>
+#include <vector>
+
 #include <QObject>
 #include <QAbstractTableModel>
 #include <QQmlListProperty>
 #include <qqmlintegration.h>
 
-#include <memory>
-#include <vector>
-
 #include "Core/Types.hpp"
-#include "EmuContext.hpp"
 
 // Read-only object encapsulating pre-loaded data for a single ROM.
 class RomData : public QObject
@@ -39,6 +38,8 @@ class RomData : public QObject
         return QString::fromStdString(rom_name_str);
     }
 
+    const CoreROMHeader &rawHeader() const { return m_rawHeader; }
+
   private:
     QString m_path;
     int m_size;
@@ -52,20 +53,35 @@ class RomManager : public QAbstractTableModel
 
     Q_PROPERTY(bool loading READ isLoading NOTIFY loadingChanged)
   public:
-    RomManager(QObject *parent = nullptr) : QAbstractTableModel(parent) {}
+    using RomList = std::vector<std::shared_ptr<RomData>>;
+
+    RomManager(QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+
     Qt::ItemFlags flags(const QModelIndex &index) const override;
-
     QHash<int, QByteArray> roleNames() const override;
-
 
     bool isLoading() const { return m_loading; }
 
-    Q_INVOKABLE void reloadRomList(const QString& romDir, bool recursive);
+    /**
+     * @brief Regenerates the ROM list using the given parameters.
+     *
+     * @param romDir The directory to search for ROMs.
+     * @param recursive Whether to recursively search for ROMs.
+     */
+    Q_INVOKABLE void reloadRomList(const QString &romDir, bool recursive);
+
+    /**
+     * @brief Requests a copy of the current ROM list.
+     *
+     * @param callback A callback which will send the ROM list.
+     * @throws std::logic_error if a future has already been requested.
+     */
+    void requestRomData(std::move_only_function<void(const RomList &)> &&callback);
 
   signals:
     void loadingChanged();
@@ -78,7 +94,8 @@ class RomManager : public QAbstractTableModel
         ColFilename,
         ColSize
     };
-    enum UserRoles {
+    enum UserRoles
+    {
         RoleDisplayType = Qt::UserRole,
         RoleRomPath,
         RoleRegionCode,
@@ -94,7 +111,9 @@ class RomManager : public QAbstractTableModel
 
     void clearRomList();
     Q_INVOKABLE void addRom(RomData *rom);
+    void sendRomData();
 
-    std::vector<std::unique_ptr<RomData>> m_romData;
+    std::vector<std::shared_ptr<RomData>> m_rom_data;
+    std::optional<std::move_only_function<void(const RomList &)>> m_rom_data_request;
     bool m_loading;
 };

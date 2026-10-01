@@ -95,6 +95,9 @@ ApplicationWindow {
     EmuContext {
         id: core
 
+        // ROM manager
+        romManager: romManager
+
         // Graphics integration
         onGfxRequestSize: (width, height) => coreDisplay.reserveSize(width, height)
         onUpdateScreen: coreDisplay.readPixels()

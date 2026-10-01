@@ -12,9 +12,7 @@
 #include <QThread>
 #include <QIcon>
 #include <QUrl>
-#include <QtConcurrent/QtConcurrent>
 
-// #include <QtUtils.hpp>
 #include <QJSInterop.hpp>
 
 static std::atomic<EmuContext *> g_core_instance = nullptr;
@@ -31,7 +29,8 @@ static void set_core_instance(EmuContext *ptr)
 
 EmuContext::EmuContext(QObject *parent)
     : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
-      m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this)), m_paths(new EmuPaths(this))
+      m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this)), m_paths(new EmuPaths(this)),
+      m_rom_manager(nullptr)
 {
     set_core_instance(this);
 
@@ -40,7 +39,26 @@ EmuContext::EmuContext(QObject *parent)
 #pragma region General integration
     m_core_params->submit_task = [&](const std::function<void()> &cb) { QThreadPool::globalInstance()->start(cb); };
     m_core_params->find_available_rom =
-        [&](const std::function<bool(const CoreROMHeader &)> &predicate) -> std::filesystem::path { return {}; };
+        [&](const std::function<bool(const CoreROMHeader &)> &predicate) -> std::filesystem::path {
+        // fetch ROM list from UI. If the UI is loading the ROM list, this will wait for that loading to finish.
+        std::promise<RomManager::RomList> rom_list_promise;
+        auto rom_list_future = rom_list_promise.get_future();
+        QMetaObject::invokeMethod(this, [this, rom_list_promise = std::move(rom_list_promise)] mutable {
+            auto func = [rom_list_promise = std::move(rom_list_promise)](
+                            const RomManager::RomList &list) mutable { rom_list_promise.set_value(list); };
+            m_rom_manager->requestRomData(std::move(func));
+        });
+
+        // Filter according to the core-provided predicate.
+        auto rom_list = rom_list_future.get();
+        auto candidate = std::ranges::find_if(
+            rom_list, [&predicate](const auto &rom_data) { return predicate(rom_data->rawHeader()); });
+        if (candidate == rom_list.end()) return {};
+
+        // Convert from QString to std::filesystem::path
+        auto qstr_path = (*candidate)->path();
+        return std::filesystem::path{std::u16string_view{qstr_path}};
+    };
 #pragma endregion
 
 #pragma region Directories
@@ -160,6 +178,7 @@ EmuContext::EmuContext(QObject *parent)
     connect(
         this, &EmuContext::speedModifierChanged, this, [&](int32_t) { m_core_ctx->vr_on_speed_modifier_changed(); });
 #pragma endregion
+
     core_create(m_core_params, &m_core_ctx);
 }
 
@@ -201,59 +220,6 @@ void EmuContext::invalidateVisuals()
 void EmuContext::frameAdvance(size_t frames)
 {
     m_core_ctx->vr_frame_advance(frames);
-}
-
-// vr_* properties
-// ==========================
-
-bool EmuContext::isLaunched() const
-{
-    return m_core_ctx->vr_get_launched();
-}
-
-bool EmuContext::isPaused() const
-{
-    return m_core_ctx->vr_get_paused();
-}
-void EmuContext::setPaused(bool paused)
-{
-    if (paused)
-        m_core_ctx->vr_pause_emu();
-    else
-        m_core_ctx->vr_resume_emu();
-}
-
-bool EmuContext::isCoreExecuting()
-{
-    return m_core_ctx->vr_get_core_executing();
-}
-
-bool EmuContext::isGSButton() const
-{
-    return m_core_ctx->vr_get_gs_button();
-}
-void EmuContext::setGSButton(bool pressed)
-{
-    if (pressed != m_core_ctx->vr_get_gs_button())
-    {
-        m_core_ctx->vr_set_gs_button(pressed);
-        gsButtonChanged(pressed);
-    }
-}
-
-// -> vr_get_speed_mode
-QmlCoreSpeedMode::Value EmuContext::speedMode() const
-{
-    return QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode());
-}
-// -> vr_set_speed_mode
-void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode)
-{
-    if (speedMode != QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode()))
-    {
-        m_core_ctx->vr_set_speed_mode(QmlCoreSpeedMode::to_core(speedMode));
-        speedModeChanged(speedMode);
-    }
 }
 
 // st_* functions
@@ -301,6 +267,57 @@ void EmuContext::loadFile(const QString &pathIn)
     });
 }
 
+// vr_* properties
+// ==========================
+
+bool EmuContext::isLaunched() const
+{
+    return m_core_ctx->vr_get_launched();
+}
+
+bool EmuContext::isPaused() const
+{
+    return m_core_ctx->vr_get_paused();
+}
+void EmuContext::setPaused(bool paused)
+{
+    if (paused)
+        m_core_ctx->vr_pause_emu();
+    else
+        m_core_ctx->vr_resume_emu();
+}
+
+bool EmuContext::isCoreExecuting()
+{
+    return m_core_ctx->vr_get_core_executing();
+}
+
+bool EmuContext::isGSButton() const
+{
+    return m_core_ctx->vr_get_gs_button();
+}
+void EmuContext::setGSButton(bool pressed)
+{
+    if (pressed != m_core_ctx->vr_get_gs_button())
+    {
+        m_core_ctx->vr_set_gs_button(pressed);
+        gsButtonChanged(pressed);
+    }
+}
+
+QmlCoreSpeedMode::Value EmuContext::speedMode() const
+{
+    return QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode());
+}
+void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode)
+{
+    if (speedMode != QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode()))
+    {
+        m_core_ctx->vr_set_speed_mode(QmlCoreSpeedMode::to_core(speedMode));
+        speedModeChanged(speedMode);
+    }
+}
+
 // CoreCfg properties
 // ==========================
 int32_t EmuContext::speedModifier()
@@ -345,6 +362,20 @@ void EmuContext::readVideoOutput(QImage &image)
 
     m_fn_read_video(image.bits(), nullptr, nullptr);
     // std::println("pixel: {:08X}", image.pixel(320, 240));
+}
+
+// Misc. properties
+// ==========================
+
+RomManager *EmuContext::romManager()
+{
+    return m_rom_manager;
+}
+void EmuContext::setRomManager(RomManager *value)
+{
+    if (value == m_rom_manager) return;
+    m_rom_manager = value;
+    romManagerChanged();
 }
 
 // Internal utilities

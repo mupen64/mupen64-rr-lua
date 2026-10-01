@@ -14,6 +14,8 @@
 #include <QFileInfo>
 #include <QtTranslation>
 
+#include "EmuContext.hpp"
+
 template <class T, class U> static inline bool is_one_of(const U &x, std::initializer_list<T> objs)
 {
     return std::ranges::contains(objs, x);
@@ -31,9 +33,17 @@ RomData::RomData(const std::filesystem::path &path, uintmax_t size, const std::f
     vrByteswap((uint8_t *)&m_rawHeader);
 }
 
+RomManager::RomManager(QObject *parent) : QAbstractTableModel(parent), m_loading(false)
+{
+    // resolve ROM data requests if they are still pending after a load
+    QObject::connect(this, &RomManager::loadingChanged, [this] {
+        if (m_loading) return;
+        sendRomData();
+    });
+}
 int RomManager::rowCount(const QModelIndex &) const
 {
-    return (int)m_romData.size();
+    return (int)m_rom_data.size();
 }
 int RomManager::columnCount(const QModelIndex &) const
 {
@@ -42,49 +52,45 @@ int RomManager::columnCount(const QModelIndex &) const
 QVariant RomManager::data(const QModelIndex &index, int role) const
 {
     using namespace Qt::Literals;
-    if (!index.isValid())
-        return {};
+    if (!index.isValid()) return {};
 
-    if (role == RoleRomPath) {
-        const auto &item = m_romData[index.row()];
+    if (role == RoleRomPath)
+    {
+        const auto &item = m_rom_data[index.row()];
         return item->path();
     }
 
     switch (index.column())
     {
     case ColRegionCode: {
-        if (role == RoleDisplayType)
-            return u"flag"_s;
+        if (role == RoleDisplayType) return u"flag"_s;
 
-        const auto &item = m_romData[index.row()];
+        const auto &item = m_rom_data[index.row()];
         if (role == Qt::DisplayRole) return u"??"_s;
         if (role == RoleRegionCode) return item->regionCode();
         return {};
     }
     break;
     case ColRomName: {
-        if (role == RoleDisplayType)
-            return u"text"_s;
+        if (role == RoleDisplayType) return u"text"_s;
 
-        const auto &item = m_romData[index.row()];
+        const auto &item = m_rom_data[index.row()];
         if (role != Qt::DisplayRole) return {};
         return item->romName();
     }
     break;
     case ColFilename: {
-        if (role == RoleDisplayType)
-            return u"text"_s;
+        if (role == RoleDisplayType) return u"text"_s;
 
-        const auto &item = m_romData[index.row()];
+        const auto &item = m_rom_data[index.row()];
         if (role != Qt::DisplayRole) return {};
         return QFileInfo(item->path()).fileName();
     }
     break;
     case ColSize: {
-        if (role == RoleDisplayType)
-            return u"text"_s;
+        if (role == RoleDisplayType) return u"text"_s;
 
-        const auto &item = m_romData[index.row()];
+        const auto &item = m_rom_data[index.row()];
         if (role != Qt::DisplayRole) return {};
         //% "%1 MB"
         return qtTrId("misc.units.MiB").arg(item->size() >> 20);
@@ -119,25 +125,23 @@ QVariant RomManager::headerData(int section, Qt::Orientation orientation, int ro
 
 QHash<int, QByteArray> RomManager::roleNames() const
 {
-    static const QHash<int, QByteArray> s_instance {
-        // text to display (QString)
-        {Qt::DisplayRole, "display"},
-        {RoleDisplayType, "displayType"},
+    static const QHash<int, QByteArray> s_instance{// text to display (QString)
+        {Qt::DisplayRole, "display"}, {RoleDisplayType, "displayType"},
         // ROM path to open on double-click (QString)
         {RoleRomPath, "romPath"},
         // region code to render icon (var: int | null)
-        {RoleRegionCode, "regionCode"}
-    };
+        {RoleRegionCode, "regionCode"}};
     return s_instance;
 }
-Qt::ItemFlags RomManager::flags(const QModelIndex &index) const {
-    if (!index.isValid())
-        return Qt::NoItemFlags;
+Qt::ItemFlags RomManager::flags(const QModelIndex &index) const
+{
+    if (!index.isValid()) return Qt::NoItemFlags;
     return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 
 Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive)
 {
+    std::println("loading: {}", m_loading);
     if (isLoading()) return;
 
     // set loading flag now, it will be reset once the load is done
@@ -145,8 +149,7 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
     clearRomList();
 
     // perform load on a separate thread
-    QThreadPool::globalInstance()->start([this, romDir, recursive,
-                                             vrByteswap = EmuContext::rawContext()->vr_byteswap] {
+    QThreadPool::globalInstance()->start([this, romDir, recursive, vrByteswap = EmuContext::rawContext()->vr_byteswap] {
         // ad-hoc scope guard: clear the setLoading flag on exit
         struct Guard
         {
@@ -161,6 +164,7 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
             return entry.is_regular_file() && is_one_of(entry.path().extension(), {".n64", ".v64", ".z64", ".rom"});
         });
         auto sendRomData = [this, vrByteswap](const std::filesystem::directory_entry &entry) {
+            std::println("adding {}", entry.path().string());
             auto *romData = new RomData(entry.path(), entry.file_size(), vrByteswap);
 
             // hand off romData back to UI thread
@@ -175,10 +179,19 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
     });
 }
 
+void RomManager::requestRomData(std::move_only_function<void(const RomList &)> &&callback)
+{
+//     if (m_rom_data_request.has_value()) throw std::logic_error("ROM data request already active");
+//     m_rom_data_request.emplace(std::move(callback));
+//
+//     // if result can be resolved now, resolve it now
+//     if (!m_loading) sendRomData();
+}
+
 void RomManager::clearRomList()
 {
     beginResetModel();
-    m_romData.clear();
+    m_rom_data.clear();
     endResetModel();
 }
 void RomManager::addRom(RomData *rom)
@@ -189,7 +202,15 @@ void RomManager::addRom(RomData *rom)
 
     // insert a single ROM.
     // TODO: should we batch updates instead of sending them one at a time?
-    beginInsertRows({}, m_romData.size(), m_romData.size());
-    m_romData.emplace_back(rom);
+    int index = (int)m_rom_data.size();
+    beginInsertRows({}, index, index);
+    m_rom_data.emplace_back(rom);
     endInsertRows();
+}
+void RomManager::sendRomData()
+{
+    if (!m_rom_data_request.has_value()) return;
+    // send state and release callback
+    (*m_rom_data_request)(m_rom_data);
+    m_rom_data_request.reset();
 }

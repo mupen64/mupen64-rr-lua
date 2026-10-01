@@ -14,6 +14,7 @@
 #include "plugin/Plugin.hpp"
 
 #include "CoreEnums.hpp"
+#include "RomManager.hpp"
 
 class EmuOptions;
 class EmuPaths;
@@ -38,6 +39,9 @@ class EmuContext : public QObject
 
     // CoreCfg properties
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
+
+    // Auxiliary services
+    Q_PROPERTY(RomManager* romManager READ romManager WRITE setRomManager NOTIFY romManagerChanged REQUIRED)
 
     // extra properties
     Q_PROPERTY(EmuOptions *options READ options)
@@ -74,6 +78,21 @@ class EmuContext : public QObject
     // -> vr_frame_advance
     Q_INVOKABLE void frameAdvance(size_t frames);
 
+    // st_* functions
+    // ==========================
+
+    // -> st_do_file (to save slot)
+    Q_INVOKABLE void saveSlot(uint32_t index);
+
+    // -> st_do_file
+    Q_INVOKABLE void saveFile(const QString &path);
+
+    // -> st_do_file (to save slot)
+    Q_INVOKABLE void loadSlot(uint32_t index);
+
+    // -> st_do_file
+    Q_INVOKABLE void loadFile(const QString &path);
+
     // vr_* properties
     // ==========================
 
@@ -97,21 +116,6 @@ class EmuContext : public QObject
     QmlCoreSpeedMode::Value speedMode() const;
     // -> vr_set_speed_mode
     void setSpeedMode(QmlCoreSpeedMode::Value speedMode);
-
-    // st_* functions
-    // ==========================
-
-    // -> st_do_file (to save slot)
-    Q_INVOKABLE void saveSlot(uint32_t index);
-
-    // -> st_do_file
-    Q_INVOKABLE void saveFile(const QString &path);
-
-    // -> st_do_file (to save slot)
-    Q_INVOKABLE void loadSlot(uint32_t index);
-
-    // -> st_do_file
-    Q_INVOKABLE void loadFile(const QString &path);
 
     // CoreCfg properties
     // ==========================
@@ -143,6 +147,12 @@ class EmuContext : public QObject
      */
     void readVideoOutput(QImage &image);
 
+    // Misc. properties
+    // ==========================
+
+    RomManager* romManager();
+    void setRomManager(RomManager* value);
+
   signals:
 
     // vr_* properties
@@ -171,7 +181,8 @@ class EmuContext : public QObject
 
     // extra properties
     // ==========================
-    void configSourceChanged(const QJSValue &value);
+
+    void romManagerChanged();
 
     // Graphics signals
     // ============================================
@@ -189,7 +200,7 @@ class EmuContext : public QObject
      */
     void updateScreen();
 
-    // Dialog service (to be handled by GUI)
+    // Dialog service
     // ============================================
 
     /**
@@ -231,6 +242,8 @@ class EmuContext : public QObject
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
+
+    RomManager* m_rom_manager;
 
     EmuOptions *m_options;
     EmuPaths *m_paths;
