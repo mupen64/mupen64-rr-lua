@@ -647,9 +647,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     }
     case WM_MOUSEWHEEL:
         g_main_ctx.last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
+        Main::handle_mouse_events(hwnd, Message, wParam, lParam);
 
         // https://github.com/mupen64/mupen64-rr-lua/issues/190
         LuaCallbacks::call_window_message(hwnd, Message, wParam, lParam);
+        break;
+    case WM_MOUSEHWHEEL:
+        Main::handle_mouse_events(hwnd, Message, wParam, lParam);
         break;
     case WM_NOTIFY: {
         if (wParam == IDC_ROMLIST)
