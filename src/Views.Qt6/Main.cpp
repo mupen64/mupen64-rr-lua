@@ -50,13 +50,6 @@ static int qt_main(int argc, char *argv[])
     QApplication::setApplicationVersion(CURRENT_VERSION);
     QApplication::setApplicationDisplayName(DISPLAY_NAME);
 
-    {
-        QDirIterator it(":/Assets", QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            qDebug() << it.next();
-        }
-    }
-
     // Load fallback translations first
     auto *fallbackTranslator = new QTranslator(&app);
     if (!fallbackTranslator->load("mupen64-rr_en.qm", ":/i18n"))

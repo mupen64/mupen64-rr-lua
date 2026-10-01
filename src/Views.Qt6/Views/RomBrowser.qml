@@ -61,6 +61,15 @@ Item {
 
         syncView: table
 
+        acceptedButtons: Qt.NoButton
+
+        delegate: HorizontalHeaderViewDelegate {
+            id: headerRoot
+            contentItem: Label {
+                text: headerRoot.model.display
+            }
+        }
+
     }
     TableView {
         id: table
@@ -77,41 +86,56 @@ Item {
             model: table.model
         }
 
+        acceptedButtons: Qt.NoButton
+
+        columnWidthProvider: function(column: int): real {
+            let explicitWidth = explicitColumnWidth(column);
+            let implicitWidth = implicitColumnWidth(column);
+
+            // fix size of column 0, let others change
+            if (column == 0)
+                return implicitWidth;
+            else
+                return (explicitWidth >= 0)? explicitWidth : implicitWidth;
+        }
+
         delegate: DelegateChooser {
             role: "displayType"
             DelegateChoice {
                 roleValue: "text"
                 RomBrowserCell {
-                    id: cellRoot
+                    id: textRoot
                     table: table
                     context: root.context
 
                     Label {
-                        anchors.left: cellRoot.left
-                        anchors.verticalCenter: cellRoot.verticalCenter
+                        anchors.fill: parent
                         anchors.leftMargin: 10
-                        text: cellRoot.display
+
+                        text: textRoot.display
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
                     }
                 }
             }
             DelegateChoice {
-                roleValue: "flagIcon"
+                roleValue: "flag"
                 RomBrowserCell {
-                    id: cellRoot
+                    id: flagRoot
                     table: table
                     context: root.context
 
                     Item {
-                        anchors.left: cellRoot.left
-                        anchors.verticalCenter: cellRoot.verticalCenter
+                        anchors.centerIn: parent
                         anchors.leftMargin: 10
+                        anchors.rightMargin: 10
 
-                        implicitWidth: Qt.application.font.pixelSize * 1.2
+                        implicitWidth: Qt.application.font.pixelSize * 2.0
                         implicitHeight: width
 
                         Image {
                             anchors.fill: parent
-                            source: priv.flagAssetPath(cellRoot.regionCode)
+                            source: priv.flagAssetPath(flagRoot.regionCode)
                         }
                     }
                 }
@@ -119,3 +143,6 @@ Item {
         }
     }
 }
+/*
+
+*/

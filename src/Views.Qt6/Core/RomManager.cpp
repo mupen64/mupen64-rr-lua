@@ -54,7 +54,7 @@ QVariant RomManager::data(const QModelIndex &index, int role) const
     {
     case ColRegionCode: {
         if (role == RoleDisplayType)
-            return u"flagIcon"_s;
+            return u"flag"_s;
 
         const auto &item = m_romData[index.row()];
         if (role == Qt::DisplayRole) return u"??"_s;
