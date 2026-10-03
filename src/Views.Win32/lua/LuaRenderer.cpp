@@ -12,7 +12,6 @@
 #include <lua/presenters/DCompPresenter.hpp>
 #include <lua/presenters/GDIPresenter.hpp>
 #include <lua/presenters/Presenter.hpp>
-#include <lua/LuaCallbacks.hpp>
 #include "LuaRenderer.hpp"
 #include <Common.Views/Messages.hpp>
 
@@ -101,11 +100,11 @@ static void draw_lua(bool force)
 
         bool success = true;
 
-        success &= LuaCallbacks::invoke_callbacks_with_key(lua.get(), LuaCallbacks::REG_ATPAINT);
+        success &= LuaHost::instance().invoke_callbacks_with_key(lua.get(), LuaHost::REG_ATPAINT);
         if (lua->rctx.presenter) lua->rctx.presenter->present();
 
         // GDI Graphics. Ugh.
-        success &= LuaCallbacks::invoke_callbacks_with_key(lua.get(), LuaCallbacks::REG_ATUPDATESCREEN);
+        success &= LuaHost::instance().invoke_callbacks_with_key(lua.get(), LuaHost::REG_ATUPDATESCREEN);
 
         if (lua->rctx.has_gdi_content)
         {

@@ -9,9 +9,8 @@
 #include <Common.Views/Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <components/Statusbar.hpp>
-#include <lua/LuaCallbacks.hpp>
-#include <lua/LuaManager.hpp>
 #include <lua/LuaHost.hpp>
+#include <lua/LuaManager.hpp>
 
 namespace LuaCore::Emu
 {
@@ -36,97 +35,97 @@ static int GetInputCount(lua_State *L)
 
 static int subscribe_atupdatescreen(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATUPDATESCREEN);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATUPDATESCREEN);
     return 0;
 }
 
 static int subscribe_atpaint(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATPAINT);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATPAINT);
     return 0;
 }
 
 static int subscribe_atvi(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATVI);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATVI);
     return 0;
 }
 
 static int subscribe_atinput(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATINPUT);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATINPUT);
     return 0;
 }
 
 static int subscribe_atstop(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSTOP);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATSTOP);
     return 0;
 }
 
 static int subscribe_atwindowmessage(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_WINDOWMESSAGE);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_WINDOWMESSAGE);
     return 0;
 }
 
 static int subscribe_atinterval(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATINTERVAL);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATINTERVAL);
     return 0;
 }
 
 static int subscribe_atplaymovie(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATPLAYMOVIE);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATPLAYMOVIE);
     return 0;
 }
 
 static int subscribe_atstopmovie(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSTOPMOVIE);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATSTOPMOVIE);
     return 0;
 }
 
 static int subscribe_atloadstate(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATLOADSTATE);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATLOADSTATE);
     return 0;
 }
 
 static int subscribe_atsavestate(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSAVESTATE);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATSAVESTATE);
     return 0;
 }
 
 static int subscribe_atreset(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATRESET);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATRESET);
     return 0;
 }
 
 static int subscribe_atseekcompleted(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSEEKCOMPLETED);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATSEEKCOMPLETED);
     return 0;
 }
 
 static int subscribe_atwarpmodifystatuschanged(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATWARPMODIFYSTATUSCHANGED);
     return 0;
 }
 
 static int subscribe_atkey(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATKEY);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATKEY);
     return 0;
 }
 
 static int subscribe_atmouse(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATMOUSE);
+    LuaHost::instance().register_or_unregister_function(L, LuaHost::REG_ATMOUSE);
     return 0;
 }
 

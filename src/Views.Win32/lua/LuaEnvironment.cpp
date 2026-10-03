@@ -6,8 +6,6 @@
 
 #include "Common.hpp"
 #include <Common.Views/ActionManager.hpp>
-#include <lua/LuaCallbacks.hpp>
-#include <lua/LuaEnvironment.hpp>
 #include <lua/LuaHost.hpp>
 #include <lua/LuaRegistry.hpp>
 #include <lua/LuaRenderer.hpp>
@@ -111,7 +109,7 @@ void LuaEnvironment::stop()
     const auto env = shared_from_this();
     need(env->l(), "LuaEnvironment::stop: Lua environment is already stopped");
 
-    LuaCallbacks::invoke_callbacks_with_key(env.get(), LuaCallbacks::REG_ATSTOP);
+    LuaHost::instance().invoke_callbacks_with_key(env.get(), LuaHost::REG_ATSTOP);
 
     env->destroying(env.get());
 
@@ -135,7 +133,7 @@ void LuaEnvironment::stop()
         lua_freecallback(env->l(), callback);
     }
 
-    LuaCallbacks::unregister_all(env->l());
+    LuaHost::instance().unregister_all(env->l());
 
     LuaHost::instance().remove_environment(env.get());
     LuaRenderer::destroy_renderer(&env->rctx);
