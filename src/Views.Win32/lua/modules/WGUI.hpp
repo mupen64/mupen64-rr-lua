@@ -190,7 +190,7 @@ static int GetGUIInfo(lua_State *L)
 
 static int ResizeWindow(lua_State *L)
 {
-    assert(is_on_gui_thread());
+    need(is_on_gui_thread(), "ResizeWindow must be called on the GUI thread");
 
     auto lua = LuaHost::instance().get_by_state(L);
 

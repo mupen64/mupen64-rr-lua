@@ -299,7 +299,7 @@ void LuaHost::call_by_key(callback_key key, const std::function<int(lua_State *)
     // the queue OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
     static std::queue<std::shared_ptr<LuaEnvironment>> destruction_queue;
 
-    assert(destruction_queue.empty());
+    need(destruction_queue.empty(), "destruction_queue must be empty");
 
     for (const auto &lua : LuaHost::instance().envs())
     {

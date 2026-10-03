@@ -315,7 +315,7 @@ LuaRenderingContext LuaRenderer::default_rendering_context()
 
 void LuaRenderer::repaint_visuals()
 {
-    assert(is_on_gui_thread());
+    need(is_on_gui_thread(), "must be on GUI thread");
     draw_lua(true);
 }
 
