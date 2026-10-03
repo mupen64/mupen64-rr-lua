@@ -39,7 +39,7 @@ static std::vector<std::shared_ptr<LuaEnvironment>> g_lua_environments{};
 std::unordered_map<lua_State *, LuaEnvironment *> g_lua_env_map{};
 
 LuaEnvironment::LuaEnvironment(const std::filesystem::path &path, LuaDestroyFn destroying, LuaPrintFn print)
-    : m_l(luaL_newstate()), path(path), destroying(std::move(destroying)), print(std::move(print))
+    : m_l(luaL_newstate()), m_path(path), destroying(std::move(destroying)), print(std::move(print))
 {
     need(is_on_gui_thread(), "LuaEnvironment constructor must be called on the GUI thread");
 }
@@ -108,7 +108,7 @@ std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
 {
     const auto env = shared_from_this();
 
-    if (env->started)
+    if (env->m_started)
     {
         return std::unexpected("Lua environment already started");
     }
@@ -153,7 +153,7 @@ std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
 
     // NOTE: We don't want to reach luaL_dofile if the prelude scripts failed, as that would potentially compromise
     // security (if the sandbox script fails for example).
-    if (luaL_dofile(env->l(), env->path.string().c_str()))
+    if (luaL_dofile(env->l(), env->m_path.string().c_str()))
     {
         has_error = true;
     }
@@ -169,7 +169,7 @@ fail:
         return std::unexpected(error);
     }
 
-    env->started = true;
+    env->m_started = true;
 
     return {};
 }

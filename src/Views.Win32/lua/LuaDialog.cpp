@@ -599,7 +599,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
                 std::string display_name;
                 if (ctx->env) display_name += "* ";
-                const auto &effective_path = ctx->env ? ctx->env->path : ctx->typed_path;
+                const auto &effective_path = ctx->env ? ctx->env->path() : ctx->typed_path;
                 display_name += effective_path.filename().string();
                 if (ctx->trusted()) display_name += " (trusted)";
 
