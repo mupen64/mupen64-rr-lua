@@ -136,7 +136,7 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 {
     stop(ctx);
 
-    const auto result = LuaManager::create_environment(
+    const auto result = LuaEnvironment::create(
         path,
         [](const LuaEnvironment *env) {
             const auto ctx = get_instance_context(env);

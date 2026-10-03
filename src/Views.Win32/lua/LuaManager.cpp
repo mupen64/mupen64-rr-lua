@@ -80,7 +80,7 @@ LuaEnvironment *LuaManager::get_environment_for_state(lua_State *lua_state)
 }
 
 
-std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaManager::create_environment(const std::filesystem::path &path,
+std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaEnvironment::create(const std::filesystem::path &path,
     const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback)
 {
     need(is_on_gui_thread(), "not on GUI thread");

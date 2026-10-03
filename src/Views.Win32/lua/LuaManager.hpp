@@ -24,6 +24,9 @@ public:
     LuaEnvironment(const std::filesystem::path &path, LuaDestroyFn destroying, LuaPrintFn print);
     ~LuaEnvironment();
 
+    static std::expected<std::shared_ptr<LuaEnvironment>, std::string> create(const std::filesystem::path &path,
+        const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback);
+
     LuaEnvironment(const LuaEnvironment &) = delete;
     LuaEnvironment &operator=(const LuaEnvironment &) = delete;
     LuaEnvironment(LuaEnvironment &&) = delete;
@@ -63,15 +66,6 @@ const std::vector<std::shared_ptr<LuaEnvironment>> &envs();
  */
 LuaEnvironment *get_environment_for_state(lua_State *lua_state);
 
-/**
- * \brief Creates a lua environment.
- * \param path The script path.
- * \param destroying_callback A callback that is called when the Lua environment is destroyed.
- * \param print_callback A callback that is called when the Lua environment prints text.
- * \return The newly created lua environment or an error message if the operation failed.
- */
-std::expected<std::shared_ptr<LuaEnvironment>, std::string> create_environment(const std::filesystem::path &path,
-    const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback);
 
 
 } // namespace LuaManager
