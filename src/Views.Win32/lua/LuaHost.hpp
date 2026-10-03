@@ -93,6 +93,4 @@ class LuaHost
 
     bool call_by_key(const LuaEnvironment *env, callback_key key);
     void call_by_key(callback_key key);
-
-    void unregister_all(lua_State *state);
 };

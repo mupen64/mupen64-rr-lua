@@ -133,7 +133,25 @@ void LuaEnvironment::stop()
         lua_freecallback(env->l(), callback);
     }
 
-    LuaHost::instance().unregister_all(env->l());
+    for (auto &[key, count] : LuaHost::instance().m_callback_count_map)
+    {
+        lua_rawgeti(env->l(), LUA_REGISTRYINDEX, key);
+        if (lua_isnil(env->l(), -1))
+        {
+            lua_pop(env->l(), 1);
+            continue;
+        }
+
+        const int n = luaL_len(env->l(), -1);
+        g_view_logger->trace(L"Unsubscribing {} functions of key {}...", n, static_cast<int>(key));
+
+        LuaHost::instance().m_callback_count_map[key] -= n;
+
+        lua_newtable(env->l());
+        lua_rawseti(env->l(), LUA_REGISTRYINDEX, key);
+
+        lua_pop(env->l(), 0);
+    }
 
     LuaHost::instance().remove_environment(env.get());
     LuaRenderer::destroy_renderer(&env->rctx);
