@@ -31,7 +31,7 @@
 #include <components/Seeker.hpp>
 #include <components/Statusbar.hpp>
 #include <lua/LuaCallbacks.hpp>
-#include <lua/LuaManager.hpp>
+
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaDialog.hpp>
 #include <HotkeyUtils.hpp>

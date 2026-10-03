@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <lua/LuaManager.hpp>
+
 namespace LuaCore::Joypad
 {
 static int lua_get_joypad(lua_State *L)

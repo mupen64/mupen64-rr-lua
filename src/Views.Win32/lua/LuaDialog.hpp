@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <lua/LuaManager.hpp>
+#include <lua/LuaHost.hpp>
 
 /**
  * \brief A module responsible for implementing the Lua manager dialog and related functionality.

@@ -6,13 +6,14 @@
 
 #include "Common.hpp"
 #include <lua/LuaCallbacks.hpp>
+#include <lua/LuaHost.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/modules/Painter.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
     {                                                                                                                  \
-        if (LuaEnvironment::envs().empty()) return;                                                                        \
+        if (LuaHost::instance().envs().empty()) return;                                                                        \
         if (m_ctx.callback_count_map.at(key).load() == 0) return;                                                      \
     } while (false)
 
@@ -345,7 +346,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(callback_key key)
 
     const auto function = get_function_for_callback(key);
 
-    for (const auto &lua : LuaEnvironment::envs())
+    for (const auto &lua : LuaHost::instance().envs())
     {
         if (!invoke_callbacks_with_key_impl(lua.get(), function, key))
         {

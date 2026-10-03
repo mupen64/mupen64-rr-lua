@@ -17,7 +17,7 @@
 #include <components/Dispatcher.hpp>
 #include <components/MGECompositor.hpp>
 #include <lua/LuaRenderer.hpp>
-#include <lua/LuaManager.hpp>
+
 
 namespace CaptureManager
 {

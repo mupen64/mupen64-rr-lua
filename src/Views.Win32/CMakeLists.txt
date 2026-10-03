@@ -40,7 +40,8 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "Main.hpp"
     "lua/LuaHelpers.hpp"
     "lua/LuaTypes.hpp"
-
+    "lua/LuaEnvironment.hpp"
+    "lua/LuaHost.hpp"
     "lua/LuaManager.hpp"
     "lua/LuaCallbacks.hpp"
     "lua/LuaRegistry.hpp"
@@ -105,7 +106,8 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "action/AppActions.cpp"
     "Main.cpp"
     "lua/LuaHelpers.cpp"
-
+    "lua/LuaEnvironment.cpp"
+    "lua/LuaHost.cpp"
     "lua/LuaManager.cpp"
     "lua/LuaCallbacks.cpp"
     "lua/LuaRegistry.cpp"

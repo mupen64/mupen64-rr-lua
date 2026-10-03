@@ -10,7 +10,7 @@ namespace LuaCore::Global
 {
 static int print(lua_State *L)
 {
-    auto lua = LuaEnvironment::get_by_state(L);
+    auto lua = LuaHost::instance().get_by_state(L);
 
     const int nargs = lua_gettop(L);
 
@@ -58,7 +58,7 @@ static int print(lua_State *L)
 
 static int tostringexs(lua_State *L)
 {
-    auto lua = LuaEnvironment::get_by_state(L);
+    auto lua = LuaHost::instance().get_by_state(L);
 
     const int nargs = lua_gettop(L);
 

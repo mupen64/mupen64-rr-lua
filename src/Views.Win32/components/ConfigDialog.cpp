@@ -15,7 +15,7 @@
 #include <Common.Win32/SettingsListView.hpp>
 #include <components/TextEditDialog.hpp>
 #include <components/ConfigDialog.hpp>
-#include <lua/LuaManager.hpp>
+#include <lua/LuaHost.hpp>
 #include <Common.Views/Hotkey.hpp>
 #include <HotkeyUtils.hpp>
 
@@ -68,7 +68,7 @@ static std::optional<std::string> readonly_when_capturing()
 
 static std::optional<std::string> readonly_when_lua_active()
 {
-    if (!LuaEnvironment::envs().empty()) return "All Lua scripts need to be stopped before changing this option";
+    if (!LuaHost::instance().envs().empty()) return "All Lua scripts need to be stopped before changing this option";
     return std::nullopt;
 }
 

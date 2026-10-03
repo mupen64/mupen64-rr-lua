@@ -7,7 +7,7 @@
 #pragma once
 
 #include <lua/LuaDialog.hpp>
-#include <lua/LuaManager.hpp>
+#include <lua/LuaHost.hpp>
 #include <Common.Views/Hotkey.hpp>
 #include <HotkeyUtils.hpp>
 
