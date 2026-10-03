@@ -16,7 +16,7 @@ namespace LuaManager
 void init();
 
 /**
- * \brief Gets the active Lua environments without copying the collection.
+ * \brief Gets the active Lua environments.
  */
 const std::vector<std::shared_ptr<LuaEnvironment>> &envs();
 
