@@ -7,7 +7,6 @@
 #include "Common.hpp"
 
 #include <lua/LuaHost.hpp>
-#include <lua/LuaManager.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
@@ -174,14 +173,14 @@ void LuaHost::call_input(CoreButtons *input, int index)
             lua_pushinteger(l, index);
             return lua_pcall(l, 1, 0, 0);
         });
-        g_input_count++;
+        LuaHost::instance().input_count++;
     });
 
-    if (g_overwrite_controller_data[index])
+    if (LuaHost::instance().overwrite_controller_data[index])
     {
-        *input = g_new_controller_data[index];
+        *input = LuaHost::instance().new_controller_data[index];
         g_main_ctx.last_controller_data[index] = *input;
-        g_overwrite_controller_data[index] = false;
+        LuaHost::instance().overwrite_controller_data[index] = false;
     }
 }
 

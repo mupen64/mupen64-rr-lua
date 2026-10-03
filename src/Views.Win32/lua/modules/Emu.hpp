@@ -10,7 +10,6 @@
 #include <plugin/Plugin.hpp>
 #include <components/Statusbar.hpp>
 #include <lua/LuaHost.hpp>
-#include <lua/LuaManager.hpp>
 
 namespace LuaCore::Emu
 {
@@ -29,7 +28,7 @@ static int GetSampleCount(lua_State *L)
 
 static int GetInputCount(lua_State *L)
 {
-    lua_pushinteger(L, g_input_count);
+    lua_pushinteger(L, LuaHost::instance().input_count);
     return 1;
 }
 

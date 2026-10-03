@@ -59,6 +59,15 @@ class LuaHost
 
     static LuaHost &instance();
 
+    // The modified control data to be pushed the next frame.
+    CoreButtons new_controller_data[4];
+
+    // Whether the modified controller data should be pushed next frame.
+    bool overwrite_controller_data[4];
+
+    // Amount of call_input calls.
+    size_t input_count = 0;
+
     /**
      * \brief Tries to create a new Lua environment from the specified Lua script path and add it to the active
      * environment list.
