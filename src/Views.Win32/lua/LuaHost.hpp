@@ -72,10 +72,40 @@ class LuaHost
 
     static LuaHost &instance();
 
+    /**
+     * \brief Tries to create a new Lua environment from the specified Lua script path and add it to the active
+     * environment list.
+     * \param path The path to the Lua script file.
+     * \param destroying_callback The callback to invoke when the environment is destroyed.
+     * \param print_callback The callback to invoke for printing messages.
+     * \return A shared pointer to the new Lua environment, or an error message if creation fails.
+     */
     std::expected<std::shared_ptr<LuaEnvironment>, std::string> create(
         const std::filesystem::path &path, const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback);
+
+    /**
+     * \return All active Lua environments.
+     */
     const std::vector<std::shared_ptr<LuaEnvironment>> &envs() const;
+
+    /**
+     * \return The Lua environment associated with the specified Lua state, or nullptr if none is found.
+     */
     LuaEnvironment *get_by_state(lua_State *lua_state) const;
+
+    /**
+     * \brief Calls the specified callback key on the given Lua environment.
+     * \param env The Lua environment to call the callback on.
+     * \param key The callback key to invoke.
+     * \return True if the callback was successfully invoked, false otherwise.
+     */
+    bool call_by_key(const LuaEnvironment *env, callback_key key);
+
+    /**
+     * \brief Calls the specified callback key on all active Lua environments.
+     * \param key The callback key to invoke.
+     */
+    void call_by_key(callback_key key);
 
     void call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l);
     void call_vi();
@@ -90,7 +120,4 @@ class LuaHost
     void call_warp_modify_status_changed(int32_t status);
     void call_atkey(const LuaKeyEventArgs &args);
     void call_atmouse(const LuaMouseEventArgs &args);
-
-    bool call_by_key(const LuaEnvironment *env, callback_key key);
-    void call_by_key(callback_key key);
 };
