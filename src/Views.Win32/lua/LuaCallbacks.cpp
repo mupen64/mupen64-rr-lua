@@ -301,7 +301,7 @@ bool invoke_callbacks_with_key_impl(
 {
     need(is_on_gui_thread(), "not on GUI thread");
 
-    lua_State *L = lua->L;
+    lua_State *L = lua->l();
 
     lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     if (lua_isnil(L, -1))

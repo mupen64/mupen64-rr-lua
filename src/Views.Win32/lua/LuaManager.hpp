@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <lua/LuaTypes.hpp>
+#include <lua/LuaEnvironment.hpp>
 
 namespace LuaManager
 {
@@ -28,7 +28,7 @@ LuaEnvironment *get_environment_for_state(lua_State *lua_state);
  * \return The newly created lua environment or an error message if the operation failed.
  */
 std::expected<std::shared_ptr<LuaEnvironment>, std::string> create_environment(const std::filesystem::path &path,
-    const LuaEnvironment::destroying_func &destroying_callback, const LuaEnvironment::print_func &print_callback);
+    const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback);
 
 /**
  * \brief Begins code execution in the a Lua environment.

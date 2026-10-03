@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <lua/LuaEnvironment.hpp>
+
 /**
  * \brief A module responsible for implementing Lua rendering-related functionality.
  */

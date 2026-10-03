@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <lua/LuaEnvironment.hpp>
 #include <lua.h>
 
 /**
