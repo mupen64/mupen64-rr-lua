@@ -1193,6 +1193,13 @@ CoreVCRSeekInfo vcr_get_seek_info()
 
 bool show_controller_warning(const CoreVCRMovieHeader &header)
 {
+    for (const auto &controller : g_core->controls)
+    {
+        if (!controller.present || !controller.raw) continue;
+        g_core->show_notification(rawdata_warning_message, "VCR", CoreMessageTone::Warn);
+        break;
+    }
+
     for (int32_t i = 0; i < 4; ++i)
     {
         if (!g_core->controls[i].present && header.controller_flags & CONTROLLER_X_PRESENT(i))
@@ -1230,36 +1237,81 @@ bool show_controller_warning(const CoreVCRMovieHeader &header)
     return true;
 }
 
-/**
- * \brief Shows a dialog to the user warning about a ROM conflict between the movie and currently loaded ROM, and asks
- * them how to proceed.
- * \param id The dialog ID.
- * \param message The message to show in the dialog.
- * \param movie_path The path of the movie being loaded.
- * \return A `CoreResult` indicating the user's choice, or `std::nullopt` if the user chose to play anyway.
- */
-static std::optional<CoreResult> ask_user_rom_conflict(
-    std::string_view id, const std::string &message, const std::filesystem::path &movie_path)
+static void show_extended_format_warnings(const CoreVCRMovieHeader &header)
 {
-    const auto choice = g_core->show_multiple_choice_dialog(
-        id, {"Switch ROM", "Play Anyway", "Cancel"}, message.c_str(), "VCR", CoreMessageTone::Warn);
-
-    if (choice == 0)
+    const auto sync_data = vcr_get_sync_data_from_header(header);
+    if (!sync_data)
+        g_core->show_notification(extended_format_from_future, "VCR", CoreMessageTone::Warn);
+    else
     {
-        g_core->submit_task([=] {
-            const auto result = g_ctx.vr_start_rom(movie_path);
-            if (result != CoreResult::Res_Ok)
-            {
-                g_core->log_error("vr_start_rom failed while switching ROM for movie playback");
-                return;
-            }
-            g_ctx.vcr_start_playback(movie_path);
-        });
-        return CoreResult::Res_Cancelled;
-    }
-    if (choice == 2) return CoreResult::Res_Cancelled;
+        const auto warnings = vcr_get_sync_warnings(*sync_data);
 
-    return std::nullopt;
+        // Suspicious! Someone shoved data where it didn't belong...
+        if (header.extended_version == 0 && header.extended_flags.data != 0)
+            g_core->show_notification(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
+
+        if (!warnings.empty())
+        {
+            std::string warning = "The movie has different synchronization characteristics than expected:\n";
+            for (const auto &w : warnings)
+            {
+                warning += w + "\n";
+            }
+            warning += "Playback might desynchronize.";
+            g_core->show_notification(warning.c_str(), "VCR", CoreMessageTone::Warn);
+        }
+    }
+}
+
+static std::optional<CoreResult> show_rom_warnings(const CoreVCRMovieHeader &header, const std::filesystem::path &path)
+{
+    const auto ask_user_rom_conflict = [&](std::string_view id,
+                                           const std::string &message) -> std::optional<CoreResult> {
+        const auto choice = g_core->show_multiple_choice_dialog(
+            id, {"Switch ROM", "Play Anyway", "Cancel"}, message.c_str(), "VCR", CoreMessageTone::Warn);
+
+        if (choice == 0)
+        {
+            g_core->submit_task([=] {
+                const auto result = g_ctx.vr_start_rom(path);
+                if (result != CoreResult::Res_Ok)
+                {
+                    g_core->log_error("vr_start_rom failed while switching ROM for movie playback");
+                    return;
+                }
+                g_ctx.vcr_start_playback(path);
+            });
+            return CoreResult::Res_Cancelled;
+        }
+        if (choice == 2) return CoreResult::Res_Cancelled;
+
+        return std::nullopt;
+    };
+
+    if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
+    {
+        const auto ask_message = std::format(rom_name_warning_message, header.rom_name, (char *)ROM_HEADER.nom);
+        const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_NAME_WARNING, ask_message);
+        if (result.has_value()) return result.value();
+    }
+    else
+    {
+        if (header.rom_country != ROM_HEADER.Country_code)
+        {
+            const auto source_country_name = g_ctx.vr_country_code_to_country_name(header.rom_country);
+            const auto current_country_name = g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code);
+            const auto ask_message =
+                std::format(rom_country_warning_message, source_country_name, current_country_name);
+            const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CCODE_WARNING, ask_message);
+            if (result.has_value()) return result.value();
+        }
+        else if (header.rom_crc1 != ROM_HEADER.CRC1)
+        {
+            const auto ask_message = std::format(rom_crc_warning_message, header.rom_crc1, ROM_HEADER.CRC1);
+            const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CRC_WARNING, ask_message);
+            if (result.has_value()) return result.value();
+        }
+    }
 }
 
 std::optional<SyncData> vcr_get_sync_data_from_header(const CoreVCRMovieHeader &header)
@@ -1394,68 +1446,12 @@ CoreResult vcr_start_playback(std::filesystem::path path)
     memcpy(movie_inputs.data(), movie_buf.data() + sizeof(CoreVCRMovieHeader),
         sizeof(CoreButtons) * header.length_samples);
 
-    for (auto &[Present, RawData, Plugin] : g_core->controls)
-    {
-        if (!Present || !RawData) continue;
-
-        g_core->show_notification(rawdata_warning_message, "VCR", CoreMessageTone::Warn);
-        break;
-    }
-
-    if (!show_controller_warning(header))
-    {
-        return CoreResult::VCR_InvalidControllers;
-    }
-
     g_core->log_info(std::format("[VCR] Movie has extended version {}", header.extended_version));
 
-    const auto sync_data = vcr_get_sync_data_from_header(header);
-    if (!sync_data)
-        g_core->show_notification(extended_format_from_future, "VCR", CoreMessageTone::Warn);
-    else
-    {
-        const auto warnings = vcr_get_sync_warnings(*sync_data);
-
-        // Suspicious! Someone shoved data where it didn't belong...
-        if (header.extended_version == 0 && header.extended_flags.data != 0)
-            g_core->show_notification(old_movie_extended_section_nonzero_message, "VCR", CoreMessageTone::Warn);
-
-        if (!warnings.empty())
-        {
-            std::string warning = "The movie has different synchronization characteristics than expected:\n";
-            for (const auto &w : warnings)
-            {
-                warning += w + "\n";
-            }
-            warning += "Playback might desynchronize.";
-            g_core->show_notification(warning.c_str(), "VCR", CoreMessageTone::Warn);
-        }
-    }
-
-    if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
-    {
-        const auto ask_message = std::format(rom_name_warning_message, header.rom_name, (char *)ROM_HEADER.nom);
-        const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_NAME_WARNING, ask_message, path);
-        if (result.has_value()) return result.value();
-    }
-    else
-    {
-        if (header.rom_country != ROM_HEADER.Country_code)
-        {
-            const auto source_country_name = g_ctx.vr_country_code_to_country_name(header.rom_country);
-            const auto current_country_name = g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code);
-            const auto ask_message =
-                std::format(rom_country_warning_message, source_country_name, current_country_name);
-            const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CCODE_WARNING, ask_message, path);
-            if (result.has_value()) return result.value();
-        }
-        else if (header.rom_crc1 != ROM_HEADER.CRC1)
-        {
-            const auto ask_message = std::format(rom_crc_warning_message, header.rom_crc1, ROM_HEADER.CRC1);
-            const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CRC_WARNING, ask_message, path);
-            if (result.has_value()) return result.value();
-        }
-    }
+    if (!show_controller_warning(header)) return CoreResult::VCR_InvalidControllers;
+    show_extended_format_warnings(header);
+    const auto rom_warnings_result = show_rom_warnings(header, path);
+    if (rom_warnings_result.has_value()) return rom_warnings_result.value();
 
     const auto cht_path = find_accompanying_file_for_movie(path, {".cht"});
 
