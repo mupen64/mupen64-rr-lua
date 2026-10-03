@@ -14,24 +14,10 @@ class LuaHost
   private:
     LuaHost();
 
-    friend std::function<int(lua_State *)> get_function_for_callback(uint8_t key);
-
     std::vector<std::shared_ptr<LuaEnvironment>> m_environments;
     std::unordered_map<lua_State *, LuaEnvironment *> m_environment_by_state;
 
-    struct AtwindowmessageContext
-    {
-        void *wnd;
-        unsigned int msg;
-        std::uintptr_t w_param;
-        std::intptr_t l_param;
-    };
-
     std::unordered_map<uint8_t, std::atomic<size_t>> m_callback_count_map;
-    AtwindowmessageContext m_atwindowmessage_ctx{};
-    LuaKeyEventArgs m_atkey_ctx{};
-    LuaMouseEventArgs m_atmouse_ctx{};
-    int m_current_input_n = 0;
 
     void rebuild_environment_map();
     void add_environment(std::shared_ptr<LuaEnvironment> env);
@@ -97,16 +83,21 @@ class LuaHost
      * \brief Calls the specified callback key on the given Lua environment.
      * \param env The Lua environment to call the callback on.
      * \param key The callback key to invoke.
+     * \param function Invokes the Lua function on the stack, supplying any event arguments.
      * \return True if the callback was successfully invoked, false otherwise.
      */
-    bool call_by_key(const LuaEnvironment *env, callback_key key);
+    bool call_by_key(
+        const LuaEnvironment *env, callback_key key,
+        const std::function<int(lua_State *)> &function = [](lua_State *l) { return lua_pcall(l, 0, 0, 0); });
 
     /**
      * \brief Calls the specified callback key on all active Lua environments.
      * \param key The callback key to invoke.
+     * \param function Invokes the Lua function on the stack, supplying any event arguments.
      */
-    void call_by_key(callback_key key);
-
+    void call_by_key(
+        callback_key key,
+        const std::function<int(lua_State *)> &function = [](lua_State *l) { return lua_pcall(l, 0, 0, 0); });
     void call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l);
     void call_vi();
     void call_input(CoreButtons *input, int index);

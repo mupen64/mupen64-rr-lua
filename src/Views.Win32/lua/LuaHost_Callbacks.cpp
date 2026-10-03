@@ -8,7 +8,6 @@
 
 #include <lua/LuaHost.hpp>
 #include <lua/LuaManager.hpp>
-#include <lua/modules/Painter.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
@@ -23,167 +22,141 @@ LuaHost::LuaHost()
         m_callback_count_map.emplace(i, 0);
 }
 
-std::function<int(lua_State *)> get_function_for_callback(const uint8_t raw_key)
+static int invoke_key_callback(lua_State *l, const LuaKeyEventArgs &args)
 {
-    const auto key = static_cast<LuaHost::callback_key>(raw_key);
-    static const std::unordered_map<LuaHost::callback_key, std::function<int(lua_State *)>> CALLBACK_FUNC_MAP = {
-        {LuaHost::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback},
-        {LuaHost::REG_ATINPUT,
-            [](auto l) -> int {
-                lua_pushinteger(l, LuaHost::instance().m_current_input_n);
-                return lua_pcall(l, 1, 0, 0);
-            }},
-        {LuaHost::REG_WINDOWMESSAGE,
-            [](auto l) -> int {
-                lua_pushinteger(l, (lua_Integer)LuaHost::instance().m_atwindowmessage_ctx.wnd);
-                lua_pushinteger(l, LuaHost::instance().m_atwindowmessage_ctx.msg);
-                lua_pushinteger(l, LuaHost::instance().m_atwindowmessage_ctx.w_param);
-                lua_pushinteger(l, LuaHost::instance().m_atwindowmessage_ctx.l_param);
-                return lua_pcall(l, 4, 0, 0);
-            }},
-        {LuaHost::REG_ATWARPMODIFYSTATUSCHANGED,
-            [](auto l) -> int {
-                lua_pushinteger(l, g_main_ctx.CoreCtx->vcr_get_warp_modify_status());
-                return lua_pcall(l, 1, 0, 0);
-            }},
-        {LuaHost::REG_ATKEY,
-            [](auto l) -> int {
-                lua_newtable(l);
-                if (LuaHost::instance().m_atkey_ctx.keycode.has_value())
-                {
-                    lua_pushstring(l, "keycode");
-                    lua_pushinteger(l, LuaHost::instance().m_atkey_ctx.keycode.value());
-                    lua_settable(l, -3);
-                }
-                if (LuaHost::instance().m_atkey_ctx.keycode2.has_value())
-                {
-                    lua_pushstring(l, "keycode2");
-                    lua_pushinteger(l, LuaHost::instance().m_atkey_ctx.keycode2.value());
-                    lua_settable(l, -3);
-                }
-                if (LuaHost::instance().m_atkey_ctx.pressed.has_value())
-                {
-                    lua_pushstring(l, "pressed");
-                    lua_pushboolean(l, LuaHost::instance().m_atkey_ctx.pressed.value());
-                    lua_settable(l, -3);
-                }
-                if (LuaHost::instance().m_atkey_ctx.text.has_value())
-                {
-                    lua_pushstring(l, "text");
-                    lua_pushstring(l, LuaHost::instance().m_atkey_ctx.text.value().c_str());
-                    lua_settable(l, -3);
-                }
-                lua_pushstring(l, "ctrl");
-                lua_pushboolean(l, LuaHost::instance().m_atkey_ctx.ctrl);
-                lua_settable(l, -3);
-
-                lua_pushstring(l, "alt");
-                lua_pushboolean(l, LuaHost::instance().m_atkey_ctx.alt);
-                lua_settable(l, -3);
-
-                lua_pushstring(l, "shift");
-                lua_pushboolean(l, LuaHost::instance().m_atkey_ctx.shift);
-                lua_settable(l, -3);
-
-                lua_pushstring(l, "meta");
-                lua_pushboolean(l, LuaHost::instance().m_atkey_ctx.meta);
-                lua_settable(l, -3);
-
-                lua_pushstring(l, "repeat");
-                lua_pushboolean(l, LuaHost::instance().m_atkey_ctx.repeat);
-                lua_settable(l, -3);
-                return lua_pcall(l, 1, 0, 0);
-            }},
-        {LuaHost::REG_ATMOUSE,
-            [](auto l) -> int {
-                lua_newtable(l);
-
-                lua_pushstring(l, "x");
-                lua_pushinteger(l, LuaHost::instance().m_atmouse_ctx.x);
-                lua_settable(l, -3);
-
-                lua_pushstring(l, "y");
-                lua_pushinteger(l, LuaHost::instance().m_atmouse_ctx.y);
-                lua_settable(l, -3);
-
-                lua_pushstring(l, "ctrl");
-                lua_pushboolean(l, LuaHost::instance().m_atmouse_ctx.ctrl);
-                lua_settable(l, -3);
-
-                lua_pushstring(l, "alt");
-                lua_pushboolean(l, LuaHost::instance().m_atmouse_ctx.alt);
-                lua_settable(l, -3);
-
-                lua_pushstring(l, "shift");
-                lua_pushboolean(l, LuaHost::instance().m_atmouse_ctx.shift);
-                lua_settable(l, -3);
-
-                lua_pushstring(l, "meta");
-                lua_pushboolean(l, LuaHost::instance().m_atmouse_ctx.meta);
-                lua_settable(l, -3);
-
-                if (LuaHost::instance().m_atmouse_ctx.x_wheel.has_value())
-                {
-                    lua_pushstring(l, "x_wheel");
-                    lua_pushinteger(l, LuaHost::instance().m_atmouse_ctx.x_wheel.value());
-                    lua_settable(l, -3);
-                }
-
-                if (LuaHost::instance().m_atmouse_ctx.y_wheel.has_value())
-                {
-                    lua_pushstring(l, "y_wheel");
-                    lua_pushinteger(l, LuaHost::instance().m_atmouse_ctx.y_wheel.value());
-                    lua_settable(l, -3);
-                }
-
-                if (LuaHost::instance().m_atmouse_ctx.button.has_value())
-                {
-                    lua_pushstring(l, "button");
-                    lua_pushinteger(l, LuaHost::instance().m_atmouse_ctx.button.value());
-                    lua_settable(l, -3);
-                }
-
-                if (LuaHost::instance().m_atmouse_ctx.pressed.has_value())
-                {
-                    lua_pushstring(l, "pressed");
-                    lua_pushboolean(l, LuaHost::instance().m_atmouse_ctx.pressed.value());
-                    lua_settable(l, -3);
-                }
-
-                if (LuaHost::instance().m_atmouse_ctx.double_click.has_value())
-                {
-                    lua_pushstring(l, "double_click");
-                    lua_pushboolean(l, LuaHost::instance().m_atmouse_ctx.double_click.value());
-                    lua_settable(l, -3);
-                }
-
-                if (LuaHost::instance().m_atmouse_ctx.triple_click.has_value())
-                {
-                    lua_pushstring(l, "triple_click");
-                    lua_pushboolean(l, LuaHost::instance().m_atmouse_ctx.triple_click.value());
-                    lua_settable(l, -3);
-                }
-
-                return lua_pcall(l, 1, 0, 0);
-            }},
-
-    };
-
-    if (CALLBACK_FUNC_MAP.contains(key))
+    lua_newtable(l);
+    if (args.keycode.has_value())
     {
-        return CALLBACK_FUNC_MAP.at(key);
+        lua_pushstring(l, "keycode");
+        lua_pushinteger(l, args.keycode.value());
+        lua_settable(l, -3);
+    }
+    if (args.keycode2.has_value())
+    {
+        lua_pushstring(l, "keycode2");
+        lua_pushinteger(l, args.keycode2.value());
+        lua_settable(l, -3);
+    }
+    if (args.pressed.has_value())
+    {
+        lua_pushstring(l, "pressed");
+        lua_pushboolean(l, args.pressed.value());
+        lua_settable(l, -3);
+    }
+    if (args.text.has_value())
+    {
+        lua_pushstring(l, "text");
+        lua_pushstring(l, args.text.value().c_str());
+        lua_settable(l, -3);
+    }
+    lua_pushstring(l, "ctrl");
+    lua_pushboolean(l, args.ctrl);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "alt");
+    lua_pushboolean(l, args.alt);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "shift");
+    lua_pushboolean(l, args.shift);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "meta");
+    lua_pushboolean(l, args.meta);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "repeat");
+    lua_pushboolean(l, args.repeat);
+    lua_settable(l, -3);
+    return lua_pcall(l, 1, 0, 0);
+}
+
+static int invoke_mouse_callback(lua_State *l, const LuaMouseEventArgs &args)
+{
+    lua_newtable(l);
+
+    lua_pushstring(l, "x");
+    lua_pushinteger(l, args.x);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "y");
+    lua_pushinteger(l, args.y);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "ctrl");
+    lua_pushboolean(l, args.ctrl);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "alt");
+    lua_pushboolean(l, args.alt);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "shift");
+    lua_pushboolean(l, args.shift);
+    lua_settable(l, -3);
+
+    lua_pushstring(l, "meta");
+    lua_pushboolean(l, args.meta);
+    lua_settable(l, -3);
+
+    if (args.x_wheel.has_value())
+    {
+        lua_pushstring(l, "x_wheel");
+        lua_pushinteger(l, args.x_wheel.value());
+        lua_settable(l, -3);
     }
 
-    return [](lua_State *L) { return lua_pcall(L, 0, 0, 0); };
+    if (args.y_wheel.has_value())
+    {
+        lua_pushstring(l, "y_wheel");
+        lua_pushinteger(l, args.y_wheel.value());
+        lua_settable(l, -3);
+    }
+
+    if (args.button.has_value())
+    {
+        lua_pushstring(l, "button");
+        lua_pushinteger(l, args.button.value());
+        lua_settable(l, -3);
+    }
+
+    if (args.pressed.has_value())
+    {
+        lua_pushstring(l, "pressed");
+        lua_pushboolean(l, args.pressed.value());
+        lua_settable(l, -3);
+    }
+
+    if (args.double_click.has_value())
+    {
+        lua_pushstring(l, "double_click");
+        lua_pushboolean(l, args.double_click.value());
+        lua_settable(l, -3);
+    }
+
+    if (args.triple_click.has_value())
+    {
+        lua_pushstring(l, "triple_click");
+        lua_pushboolean(l, args.triple_click.value());
+        lua_settable(l, -3);
+    }
+
+    return lua_pcall(l, 1, 0, 0);
 }
 
 void LuaHost::call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l)
 {
     RET_IF_NOT_REGISTERED(REG_WINDOWMESSAGE);
 
-    LuaHost::instance().m_atwindowmessage_ctx = {.wnd = wnd, .msg = msg, .w_param = w, .l_param = l};
-
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_WINDOWMESSAGE); });
+    g_main_ctx.dispatcher->invoke([=] {
+        LuaHost::instance().call_by_key(REG_WINDOWMESSAGE, [=](lua_State *state) {
+            lua_pushinteger(state, (lua_Integer)wnd);
+            lua_pushinteger(state, msg);
+            lua_pushinteger(state, w);
+            lua_pushinteger(state, l);
+            return lua_pcall(state, 4, 0, 0);
+        });
+    });
 }
 
 void LuaHost::call_vi()
@@ -197,8 +170,10 @@ void LuaHost::call_input(CoreButtons *input, int index)
     RET_IF_NOT_REGISTERED(REG_ATINPUT);
 
     g_main_ctx.dispatcher->invoke([=] {
-        LuaHost::instance().m_current_input_n = index;
-        LuaHost::instance().call_by_key(REG_ATINPUT);
+        LuaHost::instance().call_by_key(REG_ATINPUT, [index](lua_State *l) {
+            lua_pushinteger(l, index);
+            return lua_pcall(l, 1, 0, 0);
+        });
         g_input_count++;
     });
 
@@ -255,21 +230,28 @@ void LuaHost::call_seek_completed()
 void LuaHost::call_warp_modify_status_changed(const int32_t status)
 {
     RET_IF_NOT_REGISTERED(REG_ATWARPMODIFYSTATUSCHANGED);
-    g_main_ctx.dispatcher->invoke([=] { LuaHost::instance().call_by_key(REG_ATWARPMODIFYSTATUSCHANGED); });
+    g_main_ctx.dispatcher->invoke([] {
+        LuaHost::instance().call_by_key(REG_ATWARPMODIFYSTATUSCHANGED, [](lua_State *l) {
+            lua_pushinteger(l, g_main_ctx.CoreCtx->vcr_get_warp_modify_status());
+            return lua_pcall(l, 1, 0, 0);
+        });
+    });
 }
 
 void LuaHost::call_atkey(const LuaKeyEventArgs &args)
 {
     RET_IF_NOT_REGISTERED(REG_ATKEY);
-    LuaHost::instance().m_atkey_ctx = args;
-    g_main_ctx.dispatcher->invoke([=] { LuaHost::instance().call_by_key(REG_ATKEY); });
+    g_main_ctx.dispatcher->invoke([args] {
+        LuaHost::instance().call_by_key(REG_ATKEY, [&args](lua_State *l) { return invoke_key_callback(l, args); });
+    });
 }
 
 void LuaHost::call_atmouse(const LuaMouseEventArgs &args)
 {
     RET_IF_NOT_REGISTERED(REG_ATMOUSE);
-    LuaHost::instance().m_atmouse_ctx = args;
-    g_main_ctx.dispatcher->invoke([=] { LuaHost::instance().call_by_key(REG_ATMOUSE); });
+    g_main_ctx.dispatcher->invoke([args] {
+        LuaHost::instance().call_by_key(REG_ATMOUSE, [&args](lua_State *l) { return invoke_mouse_callback(l, args); });
+    });
 }
 
 bool invoke_callbacks_with_key_impl(
@@ -305,21 +287,19 @@ bool invoke_callbacks_with_key_impl(
     return true;
 }
 
-bool LuaHost::call_by_key(const LuaEnvironment *lua, const callback_key key)
+bool LuaHost::call_by_key(
+    const LuaEnvironment *lua, const callback_key key, const std::function<int(lua_State *)> &function)
 {
-    const auto func = get_function_for_callback(static_cast<uint8_t>(key));
-    return invoke_callbacks_with_key_impl(lua, func, key);
+    return invoke_callbacks_with_key_impl(lua, function, key);
 }
 
-void LuaHost::call_by_key(callback_key key)
+void LuaHost::call_by_key(callback_key key, const std::function<int(lua_State *)> &function)
 {
     // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone
     // the queue OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
     static std::queue<std::shared_ptr<LuaEnvironment>> destruction_queue;
 
     assert(destruction_queue.empty());
-
-    const auto function = get_function_for_callback(static_cast<uint8_t>(key));
 
     for (const auto &lua : LuaHost::instance().envs())
     {

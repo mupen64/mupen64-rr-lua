@@ -9,6 +9,7 @@
 #include <components/Statusbar.hpp>
 #include <lua/LuaHost.hpp>
 #include <lua/LuaRenderer.hpp>
+#include <lua/modules/Painter.hpp>
 #include <lua/presenters/DCompPresenter.hpp>
 #include <lua/presenters/GDIPresenter.hpp>
 #include <lua/presenters/Presenter.hpp>
@@ -100,7 +101,8 @@ static void draw_lua(bool force)
 
         bool success = true;
 
-        success &= LuaHost::instance().call_by_key(lua.get(), LuaHost::REG_ATPAINT);
+        success &=
+            LuaHost::instance().call_by_key(lua.get(), LuaHost::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback);
         if (lua->rctx.presenter) lua->rctx.presenter->present();
 
         // GDI Graphics. Ugh.
