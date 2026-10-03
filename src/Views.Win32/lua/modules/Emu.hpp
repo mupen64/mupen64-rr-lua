@@ -13,6 +13,40 @@
 
 namespace LuaCore::Emu
 {
+static constexpr std::string_view RESTART_WITH_EMU_HINT = "restart_with_emu";
+
+static int get_hint(lua_State *L)
+{
+    const char *hint = luaL_checkstring(L, 1);
+    if (RESTART_WITH_EMU_HINT != hint)
+    {
+        return luaL_error(L, "Invalid hint: %s", hint);
+    }
+
+    auto *env = LuaManager::get_environment_for_state(L);
+    const auto value = env->hints.find(hint);
+    lua_pushstring(L, value == env->hints.end() ? "0" : value->second.c_str());
+    return 1;
+}
+
+static int set_hint(lua_State *L)
+{
+    const char *hint = luaL_checkstring(L, 1);
+    const char *value = luaL_checkstring(L, 2);
+    if (RESTART_WITH_EMU_HINT != hint)
+    {
+        return luaL_error(L, "Invalid hint: %s", hint);
+    }
+    if (strcmp(value, "0") != 0 && strcmp(value, "1") != 0)
+    {
+        return luaL_error(L, "Invalid value for hint '%s': expected '0' or '1'", hint);
+    }
+
+    auto *env = LuaManager::get_environment_for_state(L);
+    env->hints[hint] = value;
+    return 0;
+}
+
 static int GetVICount(lua_State *L)
 {
     lua_pushinteger(L, g_main_ctx.CoreCtx->vcr_get_current_vi());

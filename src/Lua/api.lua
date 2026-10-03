@@ -744,6 +744,19 @@ function os.exit(code, close) end
 -- emu functions
 --#region
 
+---@alias MupenHint
+---| "restart_with_emu" -- Whether the script is closed when emulation stops, and automatically restarted when emulation restarts. Defaults to `0`. Can be `0` or `1`.
+
+---Gets the value of a hint.
+---@param hint MupenHint
+---@return string
+function emu.get_hint(hint) end
+
+---Sets a hint.
+---@param hint MupenHint
+---@param value string
+function emu.set_hint(hint, value) end
+
 ---Displays the text `message` in the console. Similar to `print`, but only accepts strings or numbers.
 ---Also, `emu.console` does not insert a newline character.
 ---Because of this, `print` should be used instead.

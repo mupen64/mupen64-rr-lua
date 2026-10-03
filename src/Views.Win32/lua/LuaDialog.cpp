@@ -730,6 +730,13 @@ void LuaDialog::store_running_scripts()
         {
             continue;
         }
+
+        const auto hint = ctx->env->hints.find("restart_with_emu");
+        if (hint == ctx->env->hints.end() || hint->second != "1")
+        {
+            continue;
+        }
+
         g_dlg.stored_contexts.emplace_back(ctx);
     }
 }

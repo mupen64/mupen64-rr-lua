@@ -98,6 +98,7 @@ struct LuaEnvironment
     lua_State *L;
     LuaRenderingContext rctx;
     bool started{};
+    std::unordered_map<std::string, std::string> hints{};
 
     // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<ActionManager::action_path> registered_actions{};
