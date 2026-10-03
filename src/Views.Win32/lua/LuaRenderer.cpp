@@ -30,7 +30,7 @@ static void set_overlay_visibility(bool visible)
 {
     if (!g_detached_overlays) return;
 
-    for (const auto &lua : g_lua_environments)
+    for (const auto &lua : LuaManager::envs())
     {
         const auto set_window_visibility = [&](HWND hwnd) {
             if (!IsWindow(hwnd)) return;
@@ -89,7 +89,7 @@ static void draw_lua(bool force)
     const auto now = std::chrono::steady_clock::now();
 
     std::vector<std::shared_ptr<LuaEnvironment>> to_destroy;
-    for (const auto &lua : g_lua_environments)
+    for (const auto &lua : LuaManager::envs())
     {
         const auto time_since_last_render =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - lua->rctx.last_render_time).count();
@@ -195,7 +195,7 @@ static void resize(uint32_t width, uint32_t height)
     width = std::max(width, 1u);
     height = std::max(height, 1u);
 
-    for (const auto &lua : g_lua_environments)
+    for (const auto &lua : LuaManager::envs())
     {
         if (lua->rctx.dc_size.width == width && lua->rctx.dc_size.height == height) continue;
 
@@ -247,7 +247,7 @@ static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnd
         wnds = *hwnds;
     else
     {
-        for (const auto &lua : g_lua_environments)
+        for (const auto &lua : LuaManager::envs())
         {
             wnds.push_back(lua->rctx.gdi_overlay_hwnd);
             wnds.push_back(lua->rctx.d2d_overlay_hwnd);
@@ -363,7 +363,7 @@ void LuaRenderer::create_renderer(LuaRenderingContext *ctx, LuaEnvironment *env)
     ctx->d2d_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, ctx->dc_size.width,
         ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
-    // This env isn't in g_lua_environments yet, so we provide these hwnds manually.
+    // This env isn't in LuaManager::envs() yet, so we provide these hwnds manually.
     move_and_order_overlays(std::vector<HWND>{ctx->gdi_overlay_hwnd, ctx->d2d_overlay_hwnd});
 
     // Put these over the MGE compositor.
@@ -486,7 +486,7 @@ HBRUSH LuaRenderer::alpha_mask_brush()
 
 void LuaRenderer::blit_all(HDC hdc)
 {
-    for (const auto &lua : g_lua_environments)
+    for (const auto &lua : LuaManager::envs())
     {
         if (!lua->rctx.presenter) continue;
 
@@ -494,7 +494,7 @@ void LuaRenderer::blit_all(HDC hdc)
         lua->rctx.presenter->blit(hdc, {0, 0, (LONG)presenter_size.width, (LONG)presenter_size.height});
     }
 
-    for (const auto &lua : g_lua_environments)
+    for (const auto &lua : LuaManager::envs())
     {
         if (!lua->rctx.has_gdi_content) continue;
 

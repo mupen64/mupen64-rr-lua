@@ -68,7 +68,7 @@ static std::optional<std::string> readonly_when_capturing()
 
 static std::optional<std::string> readonly_when_lua_active()
 {
-    if (!g_lua_environments.empty()) return "All Lua scripts need to be stopped before changing this option";
+    if (!LuaManager::envs().empty()) return "All Lua scripts need to be stopped before changing this option";
     return std::nullopt;
 }
 

@@ -21,7 +21,7 @@ std::string g_mupen_api_lua_code{};
 std::string g_inspect_lua_code{};
 std::string g_sandbox_lua_code{};
 
-std::vector<std::shared_ptr<LuaEnvironment>> g_lua_environments{};
+static std::vector<std::shared_ptr<LuaEnvironment>> g_lua_environments{};
 std::unordered_map<lua_State *, LuaEnvironment *> g_lua_env_map{};
 
 static int at_panic(lua_State *L)
@@ -41,6 +41,11 @@ static void rebuild_lua_env_map()
     {
         g_lua_env_map[lua->l()] = lua.get();
     }
+}
+
+const std::vector<std::shared_ptr<LuaEnvironment>> &LuaManager::envs()
+{
+    return g_lua_environments;
 }
 
 void LuaManager::init()

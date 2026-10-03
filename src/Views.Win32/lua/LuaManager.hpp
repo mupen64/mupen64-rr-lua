@@ -16,6 +16,11 @@ namespace LuaManager
 void init();
 
 /**
+ * \brief Gets the active Lua environments without copying the collection.
+ */
+const std::vector<std::shared_ptr<LuaEnvironment>> &envs();
+
+/**
  * \brief Gets the Lua environment associated with a Lua state, or nullptr if none exists.
  */
 LuaEnvironment *get_environment_for_state(lua_State *lua_state);
@@ -47,7 +52,6 @@ void destroy_environment(std::shared_ptr<LuaEnvironment>);
 
 } // namespace LuaManager
 
-extern std::vector<std::shared_ptr<LuaEnvironment>> g_lua_environments;
 
 /**
  * \brief The modified control data to be pushed the next frame
