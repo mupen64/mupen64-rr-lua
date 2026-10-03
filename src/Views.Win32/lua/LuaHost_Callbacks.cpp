@@ -13,7 +13,7 @@
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
     {                                                                                                                  \
-        if (LuaHost::instance().envs().empty()) return;                                                                        \
+        if (LuaHost::instance().envs().empty()) return;                                                                \
         if (m_ctx.callback_count_map.at(key).load() == 0) return;                                                      \
     } while (false)
 
@@ -410,18 +410,21 @@ static void unregister_function(lua_State *L, LuaHost::callback_key key)
     lua_error(L);
 }
 
-void LuaHost::register_or_unregister_function(lua_State *l, const callback_key key)
+void LuaEnvironment::register_or_unregister_function(const uint8_t callback_key)
 {
-    if (lua_toboolean(l, 2))
+    lua_State *state = l();
+    const auto key = static_cast<LuaHost::callback_key>(callback_key);
+
+    if (lua_toboolean(state, 2))
     {
-        lua_pop(l, 1);
-        unregister_function(l, key);
+        lua_pop(state, 1);
+        unregister_function(state, key);
         m_ctx.callback_count_map[key]--;
     }
     else
     {
-        if (lua_gettop(l) == 2) lua_pop(l, 1);
-        register_function(l, key);
+        if (lua_gettop(state) == 2) lua_pop(state, 1);
+        register_function(state, key);
         m_ctx.callback_count_map[key]++;
     }
 }

@@ -17,12 +17,12 @@ using LuaPrintFn = std::function<void(const LuaEnvironment *env, const std::stri
  */
 class LuaEnvironment : public std::enable_shared_from_this<LuaEnvironment>
 {
-private:
+  private:
     lua_State *m_l;
     std::filesystem::path m_path;
     bool m_started{};
 
-public:
+  public:
     LuaEnvironment(const std::filesystem::path &path, LuaDestroyFn destroying, LuaPrintFn print);
     ~LuaEnvironment();
 
@@ -33,6 +33,7 @@ public:
 
     std::expected<void, std::string> start(bool trusted);
     void stop();
+    void register_or_unregister_function(uint8_t key);
 
     lua_State *l() const { return m_l; }
     std::filesystem::path path() const { return m_path; }
