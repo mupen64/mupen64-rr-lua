@@ -12,10 +12,26 @@
 class LuaHost
 {
   private:
-    LuaHost() = default;
+    LuaHost();
+
+    friend std::function<int(lua_State *)> get_function_for_callback(uint8_t key);
 
     std::vector<std::shared_ptr<LuaEnvironment>> m_environments;
     std::unordered_map<lua_State *, LuaEnvironment *> m_environment_by_state;
+
+    struct AtwindowmessageContext
+    {
+        void *wnd;
+        unsigned int msg;
+        std::uintptr_t w_param;
+        std::intptr_t l_param;
+    };
+
+    std::unordered_map<uint8_t, std::atomic<size_t>> m_callback_count_map;
+    AtwindowmessageContext m_atwindowmessage_ctx{};
+    LuaKeyEventArgs m_atkey_ctx{};
+    LuaMouseEventArgs m_atmouse_ctx{};
+    int m_current_input_n = 0;
 
     void rebuild_environment_map();
     void add_environment(std::shared_ptr<LuaEnvironment> env);
