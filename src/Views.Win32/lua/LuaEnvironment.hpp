@@ -15,7 +15,7 @@ using LuaPrintFn = std::function<void(const LuaEnvironment *env, const std::stri
 /**
  * \brief Describes a Lua instance.
  */
-class LuaEnvironment
+class LuaEnvironment : public std::enable_shared_from_this<LuaEnvironment>
 {
 private:
     lua_State *m_l;
@@ -30,6 +30,7 @@ public:
     LuaEnvironment &operator=(LuaEnvironment &&) = delete;
 
     lua_State *l() const { return m_l; }
+    std::expected<void, std::string> start(bool trusted);
 
     std::filesystem::path path;
     LuaRenderingContext rctx;

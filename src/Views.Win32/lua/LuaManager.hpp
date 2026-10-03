@@ -35,15 +35,6 @@ LuaEnvironment *get_environment_for_state(lua_State *lua_state);
 std::expected<std::shared_ptr<LuaEnvironment>, std::string> create_environment(const std::filesystem::path &path,
     const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback);
 
-/**
- * \brief Begins code execution in the a Lua environment.
- * \param env The Lua environment to start.
- * \param trusted Whether the Lua environment is running in trusted mode. See sandbox.lua for more details.
- * \return An error message if the operation failed.
- * \details Environments can only be started once. If you wish to restart an environment, you create a new environment
- * and start that.
- */
-std::expected<void, std::string> start_environment(const std::shared_ptr<LuaEnvironment> &env, bool trusted);
 
 /**
  * \brief Destroys a lua environment.

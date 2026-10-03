@@ -167,7 +167,7 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 
     ctx.env = result.value();
 
-    const auto start_result = LuaManager::start_environment(result.value(), ctx.trusted());
+    const auto start_result = ctx.env->start(ctx.trusted());
 
     if (!start_result.has_value())
     {

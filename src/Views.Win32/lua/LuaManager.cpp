@@ -80,8 +80,10 @@ std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaManager::create_e
     return lua;
 }
 
-std::expected<void, std::string> LuaManager::start_environment(const std::shared_ptr<LuaEnvironment> &env, const bool trusted)
+std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
 {
+    const auto env = shared_from_this();
+
     if (env->started)
     {
         return std::unexpected("Lua environment already started");
@@ -137,7 +139,7 @@ fail:
     {
 
         const std::string error = lua_tostring(env->l(), -1);
-        destroy_environment(env);
+        LuaManager::destroy_environment(env);
 
 
         return std::unexpected(error);
