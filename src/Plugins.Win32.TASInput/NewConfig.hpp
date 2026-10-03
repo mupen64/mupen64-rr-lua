@@ -261,6 +261,7 @@ struct InputConfig
     int32_t relative_mode = false;
     int32_t approach_mode = false;
     int32_t wrap_joystick = false;
+    int32_t zero_input = true;
     ControllerConfig controller_config[4] = {ControllerConfig::keyboard_config(), {}, {}, {}};
     std::optional<SDL_GUID> preferred_device_guid;
     std::optional<std::string> preferred_device_path;
@@ -279,6 +280,7 @@ struct InputConfig
             TASINPUT_FIELD(relative_mode),
             TASINPUT_FIELD(approach_mode),
             TASINPUT_FIELD(wrap_joystick),
+            TASINPUT_FIELD(zero_input),
             TASINPUT_FIELD(preferred_device_guid),
             TASINPUT_FIELD(preferred_device_path),
         });
@@ -307,6 +309,7 @@ struct InputConfig
             TASINPUT_FIELD(relative_mode);
             TASINPUT_FIELD(approach_mode);
             TASINPUT_FIELD(wrap_joystick);
+            TASINPUT_FIELD(zero_input);
             TASINPUT_FIELD(dialog_expanded);
             TASINPUT_FIELD(controller_active);
             TASINPUT_FIELD(controller_mempak);
