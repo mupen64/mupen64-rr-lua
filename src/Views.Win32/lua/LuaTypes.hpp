@@ -86,8 +86,9 @@ struct ActionParamMeta
     uintptr_t *get_hints{};
 };
 
+inline const std::string LUA_HINT_RESTART_WITH_EMU = "restart_with_emu";
 inline const std::unordered_map<std::string, std::pair<std::string, std::vector<std::string>>> LUA_HINTS = {
-    {"restart_with_emu", {"0", {"0", "1"}}},
+    {LUA_HINT_RESTART_WITH_EMU, {"1", {"0", "1"}}},
 };
 
 /**
@@ -118,13 +119,13 @@ struct LuaEnvironment
 
     print_func print{};
 
-    std::string query_hint(std::string name)
+    std::string query_hint(const std::string &name)
     {
         if (hints.contains(name)) return hints.at(name);
         return LUA_HINTS.at(name).first;
     }
 
-    std::expected<void, std::string> try_set_hint(std::string name, std::string value)
+    std::expected<void, std::string> try_set_hint(const std::string &name, const std::string &value)
     {
         if (!LUA_HINTS.contains(name)) return std::unexpected(std::format("Unknown hint '{}'", name));
 

@@ -13,8 +13,6 @@
 
 namespace LuaCore::Emu
 {
-static constexpr std::string_view RESTART_WITH_EMU_HINT = "restart_with_emu";
-
 static int get_hint(lua_State *L)
 {
     const char *hint = luaL_checkstring(L, 1);

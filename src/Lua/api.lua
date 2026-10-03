@@ -745,7 +745,7 @@ function os.exit(code, close) end
 --#region
 
 ---@alias MupenHint
----| "restart_with_emu" -- Whether the script is closed when emulation stops, and automatically restarted when emulation restarts. Defaults to `0`. Can be `0` or `1`.
+---| "restart_with_emu" -- Whether the script is closed when emulation stops, and automatically restarted when emulation restarts. Defaults to `1`. Can be `0` or `1`.
 
 ---Gets the value of a hint.
 ---@param hint MupenHint
