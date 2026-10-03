@@ -30,7 +30,7 @@ static int do_file(lua_State *L)
             path, job,
             [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buf) {
                 g_main_ctx.dispatcher->invoke([=] {
-                    if (!LuaManager::get_environment_for_state(L))
+                    if (!LuaEnvironment::get_by_state(L))
                     {
                         return;
                     }
@@ -59,7 +59,7 @@ static int do_slot(lua_State *L)
             get_st_with_slot_path(slot), job,
             [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buf) {
                 g_main_ctx.dispatcher->invoke([=] {
-                    if (!LuaManager::get_environment_for_state(L))
+                    if (!LuaEnvironment::get_by_state(L))
                     {
                         return;
                     }
@@ -90,7 +90,7 @@ static int do_memory(lua_State *L)
             buffer, job,
             [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buf) {
                 g_main_ctx.dispatcher->invoke([=] {
-                    if (!LuaManager::get_environment_for_state(L))
+                    if (!LuaEnvironment::get_by_state(L))
                     {
                         return;
                     }

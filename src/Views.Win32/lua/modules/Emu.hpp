@@ -137,7 +137,7 @@ static int Screenshot(lua_State *L)
 
 static int IsMainWindowInForeground(lua_State *L)
 {
-    auto lua = LuaManager::get_environment_for_state(L);
+    auto lua = LuaEnvironment::get_by_state(L);
     lua_pushboolean(L, GetForegroundWindow() == g_main_ctx.hwnd || GetActiveWindow() == g_main_ctx.hwnd);
     return 1;
 }
@@ -266,7 +266,7 @@ static int GetMupenVersion(lua_State *L)
 // emu
 static int ConsoleWriteLua(lua_State *L)
 {
-    auto lua = LuaManager::get_environment_for_state(L);
+    auto lua = LuaEnvironment::get_by_state(L);
     const auto str = luaL_checkstring(L, 1);
 
     lua->print(lua, std::string(str) + "\r\n");

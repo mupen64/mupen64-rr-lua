@@ -35,6 +35,8 @@ public:
     lua_State *l() const { return m_l; }
     std::expected<void, std::string> start(bool trusted);
     void stop();
+    static const std::vector<std::shared_ptr<LuaEnvironment>> &envs();
+    static LuaEnvironment *get_by_state(lua_State *lua_state);
 
     std::filesystem::path path;
     LuaRenderingContext rctx;
@@ -48,23 +50,6 @@ public:
     LuaDestroyFn destroying{};
     LuaPrintFn print{};
 };
-
-namespace LuaManager
-{
-
-/**
- * \brief Gets the active Lua environments.
- */
-const std::vector<std::shared_ptr<LuaEnvironment>> &envs();
-
-/**
- * \brief Gets the Lua environment associated with a Lua state, or nullptr if none exists.
- */
-LuaEnvironment *get_environment_for_state(lua_State *lua_state);
-
-
-
-} // namespace LuaManager
 
 
 /**

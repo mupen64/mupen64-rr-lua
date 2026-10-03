@@ -72,13 +72,13 @@ static void rebuild_lua_env_map()
     }
 }
 
-const std::vector<std::shared_ptr<LuaEnvironment>> &LuaManager::envs()
+const std::vector<std::shared_ptr<LuaEnvironment>> &LuaEnvironment::envs()
 {
     return g_lua_environments;
 }
 
 
-LuaEnvironment *LuaManager::get_environment_for_state(lua_State *lua_state)
+LuaEnvironment *LuaEnvironment::get_by_state(lua_State *lua_state)
 {
     if (!g_lua_env_map.contains(lua_state))
     {
