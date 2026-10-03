@@ -23,11 +23,6 @@ LuaHost::LuaHost()
         m_callback_count_map.emplace(i, 0);
 }
 
-static int pcall_no_params(lua_State *L)
-{
-    return lua_pcall(L, 0, 0, 0);
-}
-
 std::function<int(lua_State *)> get_function_for_callback(const uint8_t raw_key)
 {
     const auto key = static_cast<LuaHost::callback_key>(raw_key);
@@ -178,7 +173,8 @@ std::function<int(lua_State *)> get_function_for_callback(const uint8_t raw_key)
     {
         return CALLBACK_FUNC_MAP.at(key);
     }
-    return pcall_no_params;
+
+    return [](lua_State *L) { return lua_pcall(L, 0, 0, 0); };
 }
 
 void LuaHost::call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l)

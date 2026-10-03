@@ -10,15 +10,6 @@
 #include <lua/LuaRegistry.hpp>
 #include <lua/LuaRenderer.hpp>
 
-static int at_panic(lua_State *L)
-{
-    const char *raw_msg = lua_tostring(L, -1);
-    const std::string_view message = raw_msg ? raw_msg : "";
-
-    DialogService::show_dialog(message, "Lua", CoreMessageTone::Error);
-    return 0;
-}
-
 LuaHost &LuaHost::instance()
 {
     static LuaHost host;
@@ -65,7 +56,12 @@ std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaHost::create(cons
     auto env = std::make_shared<LuaEnvironment>(path, destroying_callback, print_callback);
     env->rctx = LuaRenderer::default_rendering_context();
 
-    lua_atpanic(env->l(), at_panic);
+    lua_atpanic(env->l(), [](lua_State *L) {
+        const char *raw_msg = lua_tostring(L, -1);
+        const std::string_view message = raw_msg ? raw_msg : "";
+        DialogService::show_dialog(message, "Lua", CoreMessageTone::Error);
+        return 0;
+    });
     LuaRegistry::register_functions(env->l());
     LuaRenderer::create_renderer(&env->rctx, env.get());
 
