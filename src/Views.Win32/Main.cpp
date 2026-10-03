@@ -1226,7 +1226,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     WinDarkMode::init();
 
-    LuaManager::init();
+
     CrashManager::init();
     MGECompositor::init();
     CaptureManager::init();

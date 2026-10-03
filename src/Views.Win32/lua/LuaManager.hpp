@@ -51,10 +51,6 @@ public:
 
 namespace LuaManager
 {
-/**
- * \brief Initializes the lua subsystem.
- */
-void init();
 
 /**
  * \brief Gets the active Lua environments.

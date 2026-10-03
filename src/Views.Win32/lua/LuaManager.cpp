@@ -17,9 +17,23 @@ CoreButtons g_new_controller_data[4]{};
 bool g_overwrite_controller_data[4]{};
 size_t g_input_count{};
 
-std::string g_mupen_api_lua_code{};
-std::string g_inspect_lua_code{};
-std::string g_sandbox_lua_code{};
+static const std::string &mupen_api_lua_code()
+{
+    static const std::string code = load_resource_as_string(IDR_API_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
+    return code;
+}
+
+static const std::string &inspect_lua_code()
+{
+    static const std::string code = load_resource_as_string(IDR_INSPECT_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
+    return code;
+}
+
+static const std::string &sandbox_lua_code()
+{
+    static const std::string code = load_resource_as_string(IDR_SANDBOX_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
+    return code;
+}
 
 static std::vector<std::shared_ptr<LuaEnvironment>> g_lua_environments{};
 std::unordered_map<lua_State *, LuaEnvironment *> g_lua_env_map{};
@@ -63,12 +77,6 @@ const std::vector<std::shared_ptr<LuaEnvironment>> &LuaManager::envs()
     return g_lua_environments;
 }
 
-void LuaManager::init()
-{
-    g_mupen_api_lua_code = load_resource_as_string(IDR_API_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
-    g_inspect_lua_code = load_resource_as_string(IDR_INSPECT_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
-    g_sandbox_lua_code = load_resource_as_string(IDR_SANDBOX_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
-}
 
 LuaEnvironment *LuaManager::get_environment_for_state(lua_State *lua_state)
 {
@@ -111,7 +119,7 @@ std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
 
     bool has_error = false;
 
-    if (luaL_dostring(env->l(), g_mupen_api_lua_code.c_str()))
+    if (luaL_dostring(env->l(), mupen_api_lua_code().c_str()))
     {
         has_error = true;
         goto fail;
@@ -119,7 +127,7 @@ std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
 
     LuaRegistry::register_functions(env->l());
 
-    if (luaL_dostring(env->l(), g_inspect_lua_code.c_str()))
+    if (luaL_dostring(env->l(), inspect_lua_code().c_str()))
     {
         has_error = true;
         goto fail;
@@ -136,7 +144,7 @@ std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
 
     if (!trusted)
     {
-        if (luaL_dostring(env->l(), g_sandbox_lua_code.c_str()))
+        if (luaL_dostring(env->l(), sandbox_lua_code().c_str()))
         {
             has_error = true;
             goto fail;
