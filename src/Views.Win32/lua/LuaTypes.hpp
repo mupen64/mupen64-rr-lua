@@ -8,8 +8,11 @@
 
 #include <Common.Views/ActionManager.hpp>
 #include <SDL3/SDL_keycode.h>
+
 #include <lua/presenters/Presenter.hpp>
 #include <memory>
+
+class LuaEnvironment;
 
 namespace LuaCore::Painter::Detail
 {
@@ -86,33 +89,7 @@ struct ActionParamMeta
     uintptr_t *get_hints{};
 };
 
-/**
- * \brief Describes a Lua instance.
- */
-struct LuaEnvironment
-{
-    using destroying_func = std::function<void(const LuaEnvironment *env)>;
-    using print_func = std::function<void(const LuaEnvironment *env, const std::string &text)>;
 
-    std::filesystem::path path;
-    lua_State *L;
-    LuaRenderingContext rctx;
-    bool started{};
-
-    // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
-    std::vector<ActionManager::action_path> registered_actions{};
-
-    std::unordered_map<std::string, std::vector<ActionParamMeta>> param_meta_map;
-
-    // All the breakpoints registered by the script. Stored so we can remove them when the script is destroyed.
-    std::vector<std::pair<CoreBreakpointId, uintptr_t *>> active_breakpoints;
-
-    std::vector<uintptr_t *> step_callbacks;
-
-    destroying_func destroying{};
-
-    print_func print{};
-};
 
 /**
  * \brief Represents the arguments for a key event callback. See `KeyEventArgs` in `api.lua`.

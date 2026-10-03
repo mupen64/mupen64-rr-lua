@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <lua/LuaHost.hpp>
+
 namespace LuaCore::Joypad
 {
 static int lua_get_joypad(lua_State *L)
@@ -61,7 +63,7 @@ static int lua_set_joypad(lua_State *L)
     lua_pushvalue(L, a_2);
 #define A(a, s)                                                                                                        \
     lua_getfield(L, -1, s);                                                                                            \
-    g_new_controller_data[i].a = lua_toboolean(L, -1);                                                                 \
+    LuaHost::instance().new_controller_data[i].a = lua_toboolean(L, -1);                                               \
     lua_pop(L, 1)
     A(dr, "right");
     A(dl, "left");
@@ -78,12 +80,12 @@ static int lua_set_joypad(lua_State *L)
     A(r, "R");
     A(l, "L");
     lua_getfield(L, -1, "Y");
-    g_new_controller_data[i].y = lua_tointeger(L, -1);
+    LuaHost::instance().new_controller_data[i].y = lua_tointeger(L, -1);
     lua_pop(L, 1);
     lua_getfield(L, -1, "X");
-    g_new_controller_data[i].x = lua_tointeger(L, -1);
+    LuaHost::instance().new_controller_data[i].x = lua_tointeger(L, -1);
     lua_pop(L, 1);
-    g_overwrite_controller_data[i] = true;
+    LuaHost::instance().overwrite_controller_data[i] = true;
 #undef A
     return 1;
 }

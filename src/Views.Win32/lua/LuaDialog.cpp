@@ -8,7 +8,7 @@
 #include <Common.Views/Messages.hpp>
 #include <components/FilePicker.hpp>
 #include <components/ReorderableListView.hpp>
-#include <lua/LuaManager.hpp>
+#include <lua/LuaHost.hpp>
 #include <lua/LuaDialog.hpp>
 
 // wParam: either nullptr, or a pointer to a InstanceContext whose running state has changed
@@ -21,7 +21,7 @@ struct InstanceContext
     HWND hwnd{};
     std::filesystem::path typed_path{};
     std::string logs{};
-    LuaEnvironment *env{};
+    std::shared_ptr<LuaEnvironment> env{};
 
     [[nodiscard]] bool trusted() const { return g_config.trusted_lua_paths.contains(typed_path.string()); }
 };
@@ -43,7 +43,7 @@ static InstanceContext *get_instance_context(const LuaEnvironment *env)
 {
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
     {
-        if (ctx->env == env)
+        if (ctx->env.get() == env)
         {
             return ctx.get();
         }
@@ -125,8 +125,8 @@ static void stop(InstanceContext &ctx)
         return;
     }
 
-    LuaManager::destroy_environment(ctx.env);
-    ctx.env = nullptr;
+    ctx.env->stop();
+    ctx.env.reset();
 }
 
 /**
@@ -136,14 +136,14 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 {
     stop(ctx);
 
-    const auto result = LuaManager::create_environment(
+    const auto result = LuaHost::instance().create(
         path,
         [](const LuaEnvironment *env) {
             const auto ctx = get_instance_context(env);
 
             if (ctx)
             {
-                ctx->env = nullptr;
+                ctx->env.reset();
                 PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
             }
 
@@ -167,11 +167,11 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 
     ctx.env = result.value();
 
-    const auto start_result = LuaManager::start_environment(result.value(), ctx.trusted());
+    const auto start_result = ctx.env->start(ctx.trusted());
 
     if (!start_result.has_value())
     {
-        ctx.env = nullptr;
+        ctx.env.reset();
         print(ctx, start_result.error());
         return;
     }
@@ -599,7 +599,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
                 std::string display_name;
                 if (ctx->env) display_name += "* ";
-                const auto &effective_path = ctx->env ? ctx->env->path : ctx->typed_path;
+                const auto &effective_path = ctx->env ? ctx->env->path() : ctx->typed_path;
                 display_name += effective_path.filename().string();
                 if (ctx->trusted()) display_name += " (trusted)";
 
@@ -748,7 +748,7 @@ void LuaDialog::print(const LuaEnvironment &ctx, const std::string &text)
     // Find the context for the given Lua environment
     for (const auto &wnd_ctx : g_lua_instance_wnd_ctxs)
     {
-        if (!wnd_ctx->env || wnd_ctx->env != &ctx)
+        if (!wnd_ctx->env || wnd_ctx->env.get() != &ctx)
         {
             continue;
         }

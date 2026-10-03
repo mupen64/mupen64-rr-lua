@@ -7,7 +7,7 @@
 #pragma once
 
 #include <lua/LuaRenderer.hpp>
-#include <lua/LuaManager.hpp>
+#include <lua/LuaHost.hpp>
 
 namespace LuaCore::Debugger
 {
@@ -23,13 +23,13 @@ static void push_cpu_state(lua_State *L, const CoreDbgCPUState &state)
 
 static int add_breakpoint(lua_State *L)
 {
-    const auto env = LuaManager::get_environment_for_state(L);
+    const auto env = LuaHost::instance().get_by_state(L);
 
     const uintptr_t address = luaL_checkinteger(L, 1);
     const auto callback = lua_optcallback(L, 2);
 
     const auto functor = [=](const CoreDbgCPUState &state) {
-        if (!callback || !LuaManager::get_environment_for_state(L)) return;
+        if (!callback || !LuaHost::instance().get_by_state(L)) return;
         lua_pushcallback(L, callback, false);
         push_cpu_state(L, state);
         lua_pcall(L, 1, 0, 0);
@@ -46,7 +46,7 @@ static int add_breakpoint(lua_State *L)
 
 static int remove_breakpoint(lua_State *L)
 {
-    const auto env = LuaManager::get_environment_for_state(L);
+    const auto env = LuaHost::instance().get_by_state(L);
 
     const CoreBreakpointId id = luaL_checkinteger(L, 1);
 
