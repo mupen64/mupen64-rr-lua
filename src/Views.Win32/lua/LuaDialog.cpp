@@ -125,7 +125,7 @@ static void stop(InstanceContext &ctx)
         return;
     }
 
-    LuaManager::destroy_environment(ctx.env);
+    ctx.env->stop();
     ctx.env.reset();
 }
 

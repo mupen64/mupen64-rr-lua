@@ -24,6 +24,21 @@ std::string g_sandbox_lua_code{};
 static std::vector<std::shared_ptr<LuaEnvironment>> g_lua_environments{};
 std::unordered_map<lua_State *, LuaEnvironment *> g_lua_env_map{};
 
+LuaEnvironment::LuaEnvironment(const std::filesystem::path &path, LuaDestroyFn destroying, LuaPrintFn print)
+    : m_l(luaL_newstate()), path(path), destroying(std::move(destroying)), print(std::move(print))
+{
+    need(is_on_gui_thread(), "LuaEnvironment constructor must be called on the GUI thread");
+}
+
+LuaEnvironment::~LuaEnvironment()
+{
+    if (m_l)
+    {
+        lua_close(m_l);
+        m_l = nullptr;
+    }
+}
+
 static int at_panic(lua_State *L)
 {
     const char *raw_msg = lua_tostring(L, -1);
@@ -63,6 +78,7 @@ LuaEnvironment *LuaManager::get_environment_for_state(lua_State *lua_state)
     }
     return g_lua_env_map[lua_state];
 }
+
 
 std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaManager::create_environment(const std::filesystem::path &path,
     const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback)
@@ -139,7 +155,7 @@ fail:
     {
 
         const std::string error = lua_tostring(env->l(), -1);
-        LuaManager::destroy_environment(env);
+        env->stop();
 
 
         return std::unexpected(error);
@@ -150,43 +166,43 @@ fail:
     return {};
 }
 
-void LuaManager::destroy_environment(std::shared_ptr<LuaEnvironment> lua)
+void LuaEnvironment::stop()
 {
-    need(lua && lua->l(), "LuaManager::destroy_environment: Lua environment is already destroyed");
+    const auto env = shared_from_this();
+    need(env->l(), "LuaEnvironment::stop: Lua environment is already stopped");
 
-    LuaCallbacks::invoke_callbacks_with_key(lua.get(), LuaCallbacks::REG_ATSTOP);
+    LuaCallbacks::invoke_callbacks_with_key(env.get(), LuaCallbacks::REG_ATSTOP);
 
-    lua->destroying(lua.get());
+    env->destroying(env.get());
 
-    LuaRenderer::pre_destroy_renderer(&lua->rctx);
+    LuaRenderer::pre_destroy_renderer(&env->rctx);
 
     ActionManager::begin_batch_work();
-    for (const auto &action : lua->registered_actions)
+    for (const auto &action : env->registered_actions)
     {
         ActionManager::remove(action);
     }
     ActionManager::end_batch_work();
 
     // Remove any breakpoints registered by the script.
-    for (const auto &pair : lua->active_breakpoints)
+    for (const auto &pair : env->active_breakpoints)
     {
         g_main_ctx.CoreCtx->dbg_remove_breakpoint(pair.first);
-        lua_freecallback(lua->l(), pair.second);
+        lua_freecallback(env->l(), pair.second);
     }
 
-    for (auto callback : lua->step_callbacks)
+    for (auto callback : env->step_callbacks)
     {
-        lua_freecallback(lua->l(), callback);
+        lua_freecallback(env->l(), callback);
     }
 
-    LuaCallbacks::unregister_all(lua->l());
+    LuaCallbacks::unregister_all(env->l());
 
-    // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
-    // After this point, it's game over and no callbacks will be called anymore.
-    std::erase_if(g_lua_environments, [&](const auto &v) { return v == lua; });
+    // This must happen after atstop callbacks while the environment is still valid.
+    std::erase_if(g_lua_environments, [&](const auto &active) { return active == env; });
     rebuild_lua_env_map();
 
-    LuaRenderer::destroy_renderer(&lua->rctx);
+    LuaRenderer::destroy_renderer(&env->rctx);
 
     g_view_logger->info("Lua destroyed");
 }

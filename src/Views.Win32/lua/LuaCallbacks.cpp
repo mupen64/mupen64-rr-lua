@@ -355,7 +355,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(callback_key key)
 
     while (!destruction_queue.empty())
     {
-        LuaManager::destroy_environment(destruction_queue.front());
+        destruction_queue.front()->stop();
         destruction_queue.pop();
     }
 }

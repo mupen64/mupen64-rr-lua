@@ -6,7 +6,45 @@
 
 #pragma once
 
-#include <lua/LuaEnvironment.hpp>
+#include <lua/LuaTypes.hpp>
+#include <lua.h>
+
+using LuaDestroyFn = std::function<void(const LuaEnvironment *env)>;
+using LuaPrintFn = std::function<void(const LuaEnvironment *env, const std::string &text)>;
+
+/**
+ * \brief Describes a Lua instance.
+ */
+class LuaEnvironment : public std::enable_shared_from_this<LuaEnvironment>
+{
+private:
+    lua_State *m_l;
+
+public:
+    LuaEnvironment(const std::filesystem::path &path, LuaDestroyFn destroying, LuaPrintFn print);
+    ~LuaEnvironment();
+
+    LuaEnvironment(const LuaEnvironment &) = delete;
+    LuaEnvironment &operator=(const LuaEnvironment &) = delete;
+    LuaEnvironment(LuaEnvironment &&) = delete;
+    LuaEnvironment &operator=(LuaEnvironment &&) = delete;
+
+    lua_State *l() const { return m_l; }
+    std::expected<void, std::string> start(bool trusted);
+    void stop();
+
+    std::filesystem::path path;
+    LuaRenderingContext rctx;
+    bool started{};
+
+    std::vector<ActionManager::action_path> registered_actions{};
+    std::unordered_map<std::string, std::vector<ActionParamMeta>> param_meta_map;
+    std::vector<std::pair<CoreBreakpointId, uintptr_t *>> active_breakpoints;
+    std::vector<uintptr_t *> step_callbacks;
+
+    LuaDestroyFn destroying{};
+    LuaPrintFn print{};
+};
 
 namespace LuaManager
 {
@@ -35,11 +73,6 @@ LuaEnvironment *get_environment_for_state(lua_State *lua_state);
 std::expected<std::shared_ptr<LuaEnvironment>, std::string> create_environment(const std::filesystem::path &path,
     const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback);
 
-
-/**
- * \brief Destroys a lua environment.
- */
-void destroy_environment(std::shared_ptr<LuaEnvironment>);
 
 } // namespace LuaManager
 

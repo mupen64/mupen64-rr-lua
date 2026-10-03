@@ -119,7 +119,7 @@ static void draw_lua(bool force)
 
     for (const auto &lua : to_destroy)
     {
-        LuaManager::destroy_environment(lua);
+        lua->stop();
     }
 }
 

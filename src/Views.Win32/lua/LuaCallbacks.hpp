@@ -6,8 +6,7 @@
 
 #pragma once
 
-#include <lua/LuaEnvironment.hpp>
-#include <lua.h>
+#include <lua/LuaManager.hpp>
 
 /**
  * \brief A module responsible for implementing Lua callbacks.
