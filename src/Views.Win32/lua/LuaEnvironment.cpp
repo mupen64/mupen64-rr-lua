@@ -7,7 +7,6 @@
 #include "Common.hpp"
 #include <Common.Views/ActionManager.hpp>
 #include <lua/LuaHost.hpp>
-#include <lua/LuaRegistry.hpp>
 #include <lua/LuaRenderer.hpp>
 
 static const std::string &mupen_api_lua_code()
@@ -63,7 +62,7 @@ std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
         goto fail;
     }
 
-    LuaRegistry::register_functions(env->l());
+    LuaHost::instance().register_functions(env->l());
 
     if (luaL_dostring(env->l(), inspect_lua_code().c_str()))
     {

@@ -22,6 +22,7 @@ class LuaHost
     void rebuild_environment_map();
     void add_environment(std::shared_ptr<LuaEnvironment> env);
     void remove_environment(const LuaEnvironment *env);
+    void register_functions(lua_State *L);
 
     friend class LuaEnvironment;
 
