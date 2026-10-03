@@ -339,7 +339,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(callback_key key)
 {
     // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone
     // the queue OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
-    static std::queue<LuaEnvironment *> destruction_queue;
+    static std::queue<std::shared_ptr<LuaEnvironment>> destruction_queue;
 
     assert(destruction_queue.empty());
 
@@ -347,7 +347,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(callback_key key)
 
     for (const auto &lua : g_lua_environments)
     {
-        if (!invoke_callbacks_with_key_impl(lua, function, key))
+        if (!invoke_callbacks_with_key_impl(lua.get(), function, key))
         {
             destruction_queue.push(lua);
         }

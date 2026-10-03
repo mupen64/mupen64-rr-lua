@@ -21,7 +21,7 @@ std::string g_mupen_api_lua_code{};
 std::string g_inspect_lua_code{};
 std::string g_sandbox_lua_code{};
 
-std::vector<LuaEnvironment *> g_lua_environments{};
+std::vector<std::shared_ptr<LuaEnvironment>> g_lua_environments{};
 std::unordered_map<lua_State *, LuaEnvironment *> g_lua_env_map{};
 
 static int at_panic(lua_State *L)
@@ -39,7 +39,7 @@ static void rebuild_lua_env_map()
     g_lua_env_map.clear();
     for (const auto &lua : g_lua_environments)
     {
-        g_lua_env_map[lua->L] = lua;
+        g_lua_env_map[lua->L] = lua.get();
     }
 }
 
@@ -59,12 +59,12 @@ LuaEnvironment *LuaManager::get_environment_for_state(lua_State *lua_state)
     return g_lua_env_map[lua_state];
 }
 
-std::expected<LuaEnvironment *, std::string> LuaManager::create_environment(const std::filesystem::path &path,
+std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaManager::create_environment(const std::filesystem::path &path,
     const LuaEnvironment::destroying_func &destroying_callback, const LuaEnvironment::print_func &print_callback)
 {
     need(is_on_gui_thread(), "not on GUI thread");
 
-    auto lua = new LuaEnvironment();
+    auto lua = std::make_shared<LuaEnvironment>();
 
     lua->path = path;
     lua->destroying = destroying_callback;
@@ -74,12 +74,12 @@ std::expected<LuaEnvironment *, std::string> LuaManager::create_environment(cons
 
     lua_atpanic(lua->L, at_panic);
     LuaRegistry::register_functions(lua->L);
-    LuaRenderer::create_renderer(&lua->rctx, lua);
+    LuaRenderer::create_renderer(&lua->rctx, lua.get());
 
     return lua;
 }
 
-std::expected<void, std::string> LuaManager::start_environment(LuaEnvironment *env, const bool trusted)
+std::expected<void, std::string> LuaManager::start_environment(const std::shared_ptr<LuaEnvironment> &env, const bool trusted)
 {
     if (env->started)
     {
@@ -135,11 +135,9 @@ fail:
     if (has_error)
     {
 
-        const auto error = lua_tostring(env->L, -1);
+        const std::string error = lua_tostring(env->L, -1);
         destroy_environment(env);
 
-        delete env;
-        env = nullptr;
 
         return std::unexpected(error);
     }
@@ -149,13 +147,13 @@ fail:
     return {};
 }
 
-void LuaManager::destroy_environment(LuaEnvironment *lua)
+void LuaManager::destroy_environment(std::shared_ptr<LuaEnvironment> lua)
 {
     need(lua && lua->L, "LuaManager::destroy_environment: Lua environment is already destroyed");
 
-    LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATSTOP);
+    LuaCallbacks::invoke_callbacks_with_key(lua.get(), LuaCallbacks::REG_ATSTOP);
 
-    lua->destroying(lua);
+    lua->destroying(lua.get());
 
     LuaRenderer::pre_destroy_renderer(&lua->rctx);
 
@@ -182,7 +180,7 @@ void LuaManager::destroy_environment(LuaEnvironment *lua)
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
     // After this point, it's game over and no callbacks will be called anymore.
-    std::erase_if(g_lua_environments, [=](const LuaEnvironment *v) { return v == lua; });
+    std::erase_if(g_lua_environments, [&](const auto &v) { return v == lua; });
     rebuild_lua_env_map();
 
     lua_close(lua->L);

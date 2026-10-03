@@ -91,6 +91,12 @@ struct ActionParamMeta
  */
 struct LuaEnvironment
 {
+    LuaEnvironment() = default;
+    LuaEnvironment(const LuaEnvironment &) = delete;
+    LuaEnvironment &operator=(const LuaEnvironment &) = delete;
+    LuaEnvironment(LuaEnvironment &&) = delete;
+    LuaEnvironment &operator=(LuaEnvironment &&) = delete;
+
     using destroying_func = std::function<void(const LuaEnvironment *env)>;
     using print_func = std::function<void(const LuaEnvironment *env, const std::string &text)>;
 

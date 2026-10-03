@@ -88,7 +88,7 @@ static void draw_lua(bool force)
 {
     const auto now = std::chrono::steady_clock::now();
 
-    std::vector<LuaEnvironment *> to_destroy;
+    std::vector<std::shared_ptr<LuaEnvironment>> to_destroy;
     for (const auto &lua : g_lua_environments)
     {
         const auto time_since_last_render =
@@ -101,15 +101,15 @@ static void draw_lua(bool force)
 
         bool success = true;
 
-        success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATPAINT);
+        success &= LuaCallbacks::invoke_callbacks_with_key(lua.get(), LuaCallbacks::REG_ATPAINT);
         if (lua->rctx.presenter) lua->rctx.presenter->present();
 
         // GDI Graphics. Ugh.
-        success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATUPDATESCREEN);
+        success &= LuaCallbacks::invoke_callbacks_with_key(lua.get(), LuaCallbacks::REG_ATUPDATESCREEN);
 
         if (lua->rctx.has_gdi_content)
         {
-            present_gdi_content(lua);
+            present_gdi_content(lua.get());
         }
 
         lua->rctx.last_render_time = now;

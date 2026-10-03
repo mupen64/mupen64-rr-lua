@@ -21,7 +21,7 @@ struct InstanceContext
     HWND hwnd{};
     std::filesystem::path typed_path{};
     std::string logs{};
-    LuaEnvironment *env{};
+    std::shared_ptr<LuaEnvironment> env{};
 
     [[nodiscard]] bool trusted() const { return g_config.trusted_lua_paths.contains(typed_path.string()); }
 };
@@ -43,7 +43,7 @@ static InstanceContext *get_instance_context(const LuaEnvironment *env)
 {
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
     {
-        if (ctx->env == env)
+        if (ctx->env.get() == env)
         {
             return ctx.get();
         }
@@ -126,7 +126,7 @@ static void stop(InstanceContext &ctx)
     }
 
     LuaManager::destroy_environment(ctx.env);
-    ctx.env = nullptr;
+    ctx.env.reset();
 }
 
 /**
@@ -143,7 +143,7 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 
             if (ctx)
             {
-                ctx->env = nullptr;
+                ctx->env.reset();
                 PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
             }
 
@@ -171,7 +171,7 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 
     if (!start_result.has_value())
     {
-        ctx.env = nullptr;
+        ctx.env.reset();
         print(ctx, start_result.error());
         return;
     }
@@ -748,7 +748,7 @@ void LuaDialog::print(const LuaEnvironment &ctx, const std::string &text)
     // Find the context for the given Lua environment
     for (const auto &wnd_ctx : g_lua_instance_wnd_ctxs)
     {
-        if (!wnd_ctx->env || wnd_ctx->env != &ctx)
+        if (!wnd_ctx->env || wnd_ctx->env.get() != &ctx)
         {
             continue;
         }

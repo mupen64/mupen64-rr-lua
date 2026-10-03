@@ -27,7 +27,7 @@ LuaEnvironment *get_environment_for_state(lua_State *lua_state);
  * \param print_callback A callback that is called when the Lua environment prints text.
  * \return The newly created lua environment or an error message if the operation failed.
  */
-std::expected<LuaEnvironment *, std::string> create_environment(const std::filesystem::path &path,
+std::expected<std::shared_ptr<LuaEnvironment>, std::string> create_environment(const std::filesystem::path &path,
     const LuaEnvironment::destroying_func &destroying_callback, const LuaEnvironment::print_func &print_callback);
 
 /**
@@ -38,16 +38,16 @@ std::expected<LuaEnvironment *, std::string> create_environment(const std::files
  * \details Environments can only be started once. If you wish to restart an environment, you create a new environment
  * and start that.
  */
-std::expected<void, std::string> start_environment(LuaEnvironment *env, bool trusted);
+std::expected<void, std::string> start_environment(const std::shared_ptr<LuaEnvironment> &env, bool trusted);
 
 /**
  * \brief Destroys a lua environment.
  */
-void destroy_environment(LuaEnvironment *);
+void destroy_environment(std::shared_ptr<LuaEnvironment>);
 
 } // namespace LuaManager
 
-extern std::vector<LuaEnvironment *> g_lua_environments;
+extern std::vector<std::shared_ptr<LuaEnvironment>> g_lua_environments;
 
 /**
  * \brief The modified control data to be pushed the next frame
