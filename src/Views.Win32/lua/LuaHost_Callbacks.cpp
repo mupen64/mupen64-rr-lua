@@ -208,13 +208,13 @@ void LuaHost::call_window_message(void *wnd, unsigned int msg, std::uintptr_t w,
         .w_param = static_cast<WPARAM>(w),
         .l_param = static_cast<LPARAM>(l)};
 
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_WINDOWMESSAGE); });
+    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_WINDOWMESSAGE); });
 }
 
 void LuaHost::call_vi()
 {
     RET_IF_NOT_REGISTERED(REG_ATVI);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATVI); });
+    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATVI); });
 }
 
 void LuaHost::call_input(CoreButtons *input, int index)
@@ -223,7 +223,7 @@ void LuaHost::call_input(CoreButtons *input, int index)
 
     g_main_ctx.dispatcher->invoke([=] {
         current_input_n = index;
-        LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATINPUT);
+        LuaHost::instance().call_by_key(REG_ATINPUT);
         g_input_count++;
     });
 
@@ -238,63 +238,63 @@ void LuaHost::call_input(CoreButtons *input, int index)
 void LuaHost::call_interval()
 {
     RET_IF_NOT_REGISTERED(REG_ATINTERVAL);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATINTERVAL); });
+    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATINTERVAL); });
 }
 
 void LuaHost::call_play_movie()
 {
     RET_IF_NOT_REGISTERED(REG_ATPLAYMOVIE);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATPLAYMOVIE); });
+    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATPLAYMOVIE); });
 }
 
 void LuaHost::call_stop_movie()
 {
     RET_IF_NOT_REGISTERED(REG_ATSTOPMOVIE);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATSTOPMOVIE); });
+    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATSTOPMOVIE); });
 }
 
 void LuaHost::call_load_state()
 {
     RET_IF_NOT_REGISTERED(REG_ATLOADSTATE);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATLOADSTATE); });
+    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATLOADSTATE); });
 }
 
 void LuaHost::call_save_state()
 {
     RET_IF_NOT_REGISTERED(REG_ATSAVESTATE);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATSAVESTATE); });
+    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATSAVESTATE); });
 }
 
 void LuaHost::call_reset()
 {
     RET_IF_NOT_REGISTERED(REG_ATRESET);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATRESET); });
+    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATRESET); });
 }
 
 void LuaHost::call_seek_completed()
 {
     RET_IF_NOT_REGISTERED(REG_ATSEEKCOMPLETED);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATSEEKCOMPLETED); });
+    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATSEEKCOMPLETED); });
 }
 
 void LuaHost::call_warp_modify_status_changed(const int32_t status)
 {
     RET_IF_NOT_REGISTERED(REG_ATWARPMODIFYSTATUSCHANGED);
-    g_main_ctx.dispatcher->invoke([=] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATWARPMODIFYSTATUSCHANGED); });
+    g_main_ctx.dispatcher->invoke([=] { LuaHost::instance().call_by_key(REG_ATWARPMODIFYSTATUSCHANGED); });
 }
 
 void LuaHost::call_atkey(const LuaKeyEventArgs &args)
 {
     RET_IF_NOT_REGISTERED(REG_ATKEY);
     atkey_ctx = args;
-    g_main_ctx.dispatcher->invoke([=] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATKEY); });
+    g_main_ctx.dispatcher->invoke([=] { LuaHost::instance().call_by_key(REG_ATKEY); });
 }
 
 void LuaHost::call_atmouse(const LuaMouseEventArgs &args)
 {
     RET_IF_NOT_REGISTERED(REG_ATMOUSE);
     atmouse_ctx = args;
-    g_main_ctx.dispatcher->invoke([=] { LuaHost::instance().invoke_callbacks_with_key_on_all_instances(REG_ATMOUSE); });
+    g_main_ctx.dispatcher->invoke([=] { LuaHost::instance().call_by_key(REG_ATMOUSE); });
 }
 
 bool invoke_callbacks_with_key_impl(
@@ -330,13 +330,13 @@ bool invoke_callbacks_with_key_impl(
     return true;
 }
 
-bool LuaHost::invoke_callbacks_with_key(const LuaEnvironment *lua, const callback_key key)
+bool LuaHost::call_by_key(const LuaEnvironment *lua, const callback_key key)
 {
     const auto func = get_function_for_callback(key);
     return invoke_callbacks_with_key_impl(lua, func, key);
 }
 
-void LuaHost::invoke_callbacks_with_key_on_all_instances(callback_key key)
+void LuaHost::call_by_key(callback_key key)
 {
     // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone
     // the queue OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry

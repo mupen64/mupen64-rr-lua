@@ -11,7 +11,7 @@
 
 class LuaHost
 {
-private:
+  private:
     LuaHost() = default;
 
     std::vector<std::shared_ptr<LuaEnvironment>> m_environments;
@@ -23,7 +23,7 @@ private:
 
     friend class LuaEnvironment;
 
-public:
+  public:
     enum callback_key : uint8_t
     {
         REG_LUACLASS = LUA_RIDX_LAST + 1,
@@ -56,8 +56,8 @@ public:
 
     static LuaHost &instance();
 
-    std::expected<std::shared_ptr<LuaEnvironment>, std::string> create(const std::filesystem::path &path,
-        const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback);
+    std::expected<std::shared_ptr<LuaEnvironment>, std::string> create(
+        const std::filesystem::path &path, const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback);
     const std::vector<std::shared_ptr<LuaEnvironment>> &envs() const;
     LuaEnvironment *get_by_state(lua_State *lua_state) const;
 
@@ -75,8 +75,9 @@ public:
     void call_atkey(const LuaKeyEventArgs &args);
     void call_atmouse(const LuaMouseEventArgs &args);
 
-    bool invoke_callbacks_with_key(const LuaEnvironment *env, callback_key key);
-    void invoke_callbacks_with_key_on_all_instances(callback_key key);
+    bool call_by_key(const LuaEnvironment *env, callback_key key);
+    void call_by_key(callback_key key);
+
     void register_or_unregister_function(lua_State *state, callback_key key);
     void unregister_all(lua_State *state);
 };

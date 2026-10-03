@@ -109,7 +109,7 @@ void LuaEnvironment::stop()
     const auto env = shared_from_this();
     need(env->l(), "LuaEnvironment::stop: Lua environment is already stopped");
 
-    LuaHost::instance().invoke_callbacks_with_key(env.get(), LuaHost::REG_ATSTOP);
+    LuaHost::instance().call_by_key(env.get(), LuaHost::REG_ATSTOP);
 
     env->destroying(env.get());
 

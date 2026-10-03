@@ -100,11 +100,11 @@ static void draw_lua(bool force)
 
         bool success = true;
 
-        success &= LuaHost::instance().invoke_callbacks_with_key(lua.get(), LuaHost::REG_ATPAINT);
+        success &= LuaHost::instance().call_by_key(lua.get(), LuaHost::REG_ATPAINT);
         if (lua->rctx.presenter) lua->rctx.presenter->present();
 
         // GDI Graphics. Ugh.
-        success &= LuaHost::instance().invoke_callbacks_with_key(lua.get(), LuaHost::REG_ATUPDATESCREEN);
+        success &= LuaHost::instance().call_by_key(lua.get(), LuaHost::REG_ATUPDATESCREEN);
 
         if (lua->rctx.has_gdi_content)
         {
