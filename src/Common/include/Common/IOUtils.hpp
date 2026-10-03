@@ -15,7 +15,7 @@
 #if defined(_WIN32)
 #include <share.h>
 #include <windows.h>
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 #include <stdexcept>
 #include <cstdio>
 #include <cstring>
@@ -23,6 +23,10 @@
 #include <iconv.h>
 #else
 #error Unsupported platform!
+#endif
+
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
 #endif
 
 namespace IOUtils
@@ -316,7 +320,7 @@ inline std::string rom_name_to_string(const uint8_t str[20])
     return std::string(reinterpret_cast<const char *>(str), 20);
 }
 
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 
 // SHIFT-JIS DECODING via iconv.h
 // ====================================
@@ -443,6 +447,17 @@ inline std::filesystem::path compute_exe_path()
     return std::filesystem::path(path_buffer);
 #elif defined(__linux__)
     return std::filesystem::read_symlink("/proc/self/exe");
+#elif defined(__APPLE__)
+    uint32_t size = 0;
+    _NSGetExecutablePath(nullptr, &size);
+
+    std::string path_buffer(size, '\0');
+    if (_NSGetExecutablePath(path_buffer.data(), &size) != 0)
+    {
+        throw std::runtime_error("_NSGetExecutablePath() failed");
+    }
+
+    return std::filesystem::canonical(path_buffer.c_str());
 #else
 #error TODO: compute_exe_path() not defined on this platform
 #endif
@@ -471,7 +486,7 @@ inline std::filesystem::path compute_config_path()
 
     auto dir = std::filesystem::path(path_buffer) / "mupen64-rr-lua";
     return dir;
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
     const char *env_config = getenv("XDG_CONFIG_HOME");
     if (env_config != nullptr)
     {

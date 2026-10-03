@@ -1,13 +1,11 @@
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
 #include "decan.hpp"
 
 #include <mutex>
 #include <stdexcept>
 
 #include <dlfcn.h>
-#include <elf.h>
-#include <link.h>
 
 static std::mutex g_dl_lock;
 
@@ -36,6 +34,6 @@ void *library::get(const char *symbol) const
     if (char *err = dlerror(); err != nullptr) throw dll_error(err);
     return res;
 }
-} // namespace decan
+}
 
 #endif

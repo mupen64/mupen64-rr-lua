@@ -12,7 +12,13 @@ namespace
 {
     const std::string display_message = std::format("An error has occured:\n\n{}\n\nThe application will now exit.",
         message.empty() ? "No further information." : std::string(message));
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Assertion failed", display_message.c_str(), nullptr);
+
+    std::println(stderr, "[ASSERT] {}", display_message);
+
+    if (SDL_IsMainThread())
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Assertion failed", display_message.c_str(), nullptr);
+    }
 
     std::abort();
 }

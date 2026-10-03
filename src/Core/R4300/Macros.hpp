@@ -14,6 +14,11 @@
 #include <intrin.h>
 #endif
 
+#elif defined(_M_ARM64) || defined(__aarch64__)
+#include <cmath>
+#include <fenv.h>
+#include <limits>
+
 #endif
 
 #define sign_extended(a) a = (int64_t)((int32_t)a)
@@ -123,6 +128,72 @@ inline int32_t convert_double_to_int32(double d)
 inline uint16_t read_x87_status_word()
 {
     return _mm_getcsr() & 0x3F;
+}
+
+#define FLOAT_CONVERT_L_S(s, d) (*(int64_t *)(d) = convert_float_to_int64(*(float *)(s)))
+#define FLOAT_CONVERT_W_S(s, d) (*(int32_t *)(d) = convert_float_to_int32(*(float *)(s)))
+#define FLOAT_CONVERT_L_D(s, d) (*(int64_t *)(d) = convert_double_to_int64(*(double *)(s)))
+#define FLOAT_CONVERT_W_D(s, d) (*(int32_t *)(d) = convert_double_to_int32(*(double *)(s)))
+
+#elif defined(_M_ARM64) || defined(__aarch64__)
+
+#define MUP_ROUND_TRUNC FE_TOWARDZERO
+#define MUP_ROUND_NEAREST FE_TONEAREST
+#define MUP_ROUND_CEIL FE_UPWARD
+#define MUP_ROUND_FLOOR FE_DOWNWARD
+
+#define set_rounding() fesetround(rounding_mode)
+#define set_trunc() fesetround(FE_TOWARDZERO)
+#define set_round_to_nearest() fesetround(FE_TONEAREST)
+#define set_ceil() fesetround(FE_UPWARD)
+#define set_floor() fesetround(FE_DOWNWARD)
+
+#define clear_x87_exceptions() feclearexcept(FE_ALL_EXCEPT)
+
+template <typename I, typename F>
+inline I convert_like_x86(F v)
+{
+    fexcept_t inexact;
+    fegetexceptflag(&inexact, FE_INEXACT);
+    const F r = std::rint(v);
+    const F limit = -static_cast<F>(std::numeric_limits<I>::min());
+    if (r >= -limit && r < limit) return static_cast<I>(r);
+    fesetexceptflag(&inexact, FE_INEXACT);
+    feraiseexcept(FE_INVALID);
+    return std::numeric_limits<I>::min();
+}
+
+inline int64_t convert_float_to_int64(float f)
+{
+    return convert_like_x86<int64_t>(f);
+}
+
+inline int32_t convert_float_to_int32(float f)
+{
+    return convert_like_x86<int32_t>(f);
+}
+
+inline int64_t convert_double_to_int64(double d)
+{
+    return convert_like_x86<int64_t>(d);
+}
+
+inline int32_t convert_double_to_int32(double d)
+{
+    return convert_like_x86<int32_t>(d);
+}
+
+inline uint16_t read_x87_status_word()
+{
+    const int excepts = fetestexcept(FE_ALL_EXCEPT);
+
+    uint16_t status = 0;
+    if (excepts & FE_INVALID) status |= 1 << 0;
+    if (excepts & FE_DIVBYZERO) status |= 1 << 2;
+    if (excepts & FE_OVERFLOW) status |= 1 << 3;
+    if (excepts & FE_UNDERFLOW) status |= 1 << 4;
+    if (excepts & FE_INEXACT) status |= 1 << 5;
+    return status;
 }
 
 #define FLOAT_CONVERT_L_S(s, d) (*(int64_t *)(d) = convert_float_to_int64(*(float *)(s)))

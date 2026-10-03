@@ -27,6 +27,9 @@
 #define DECAN_STDCALL
 // The platform library extension.
 #define DECAN_LIB_EXT ".so"
+#elif defined(__APPLE__)
+#define DECAN_STDCALL
+#define DECAN_LIB_EXT ".dylib"
 #endif
 
 namespace decan
@@ -34,7 +37,7 @@ namespace decan
 
 #if defined(_WIN32)
 using handle_t = HMODULE;
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 using handle_t = void *;
 #endif
 

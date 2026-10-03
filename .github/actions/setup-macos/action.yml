@@ -1,0 +1,57 @@
+name: "macOS environment setup"
+description: "Sets up the mupen64-rr dev environment on macOS"
+
+inputs:
+  safeclib_version:
+    description: "safeclib release to build, since Homebrew does not package it."
+    required: false
+    default: "3.9.2"
+
+runs:
+  using: composite
+  steps:
+    - name: Install development tools
+      shell: sh
+      run: brew install ninja pkgconf
+
+    - name: Install dependencies
+      shell: sh
+      run: |
+        brew install \
+        qtbase \
+        qtdeclarative \
+        qttools \
+        nlohmann-json \
+        ffmpeg \
+        catch2 \
+        libdeflate \
+        lua \
+        lz4 \
+        sdl3 \
+        spdlog \
+        speexdsp \
+        glew
+
+    - name: Restore safeclib
+      id: safeclib-cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/safeclib
+        key: safeclib-${{ inputs.safeclib_version }}-${{ runner.os }}-${{ runner.arch }}
+
+    - name: Build safeclib
+      if: ${{ steps.safeclib-cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: |
+        version="${{ inputs.safeclib_version }}"
+        cd "$RUNNER_TEMP"
+        curl -fsSL -o safeclib.tar.xz "https://github.com/rurban/safeclib/releases/download/v$version/safeclib-$version.tar.xz"
+        tar xf safeclib.tar.xz
+        cd "safeclib-$version"
+        ./configure --prefix="$RUNNER_TEMP/safeclib" --disable-shared --disable-doc --disable-valgrind
+        make -j"$(sysctl -n hw.ncpu)"
+        make install
+
+    - name: Expose safeclib to pkg-config
+      shell: sh
+      run: echo "PKG_CONFIG_PATH=$RUNNER_TEMP/safeclib/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}" >> "$GITHUB_ENV"

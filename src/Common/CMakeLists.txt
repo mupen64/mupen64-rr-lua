@@ -34,7 +34,7 @@ target_link_libraries(Mupen64RR_Common PUBLIC
 
 # only MSVCRT implements C11 Annex K, libsafec is needed on other platforms
 if (NOT WIN32)
-    target_link_libraries(Mupen64RR_Common PUBLIC PkgConfig::libsafec)
+    target_link_libraries(Mupen64RR_Common PUBLIC PkgConfig::libsafec Iconv::Iconv)
 endif()
 
 target_compile_definitions(Mupen64RR_Common PUBLIC NOMINMAX)

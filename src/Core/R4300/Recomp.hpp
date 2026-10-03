@@ -11,6 +11,8 @@
 #include <R4300/x86_64/Assemble.hpp>
 #elif defined(_M_IX86) || defined(__i386__)
 #include <R4300/x86/Assemble.hpp>
+#elif defined(_M_ARM64) || defined(__aarch64__)
+#include <R4300/arm64/Assemble.hpp>
 #elif defined(MUPEN64RR_ENABLE_DYNAREC)
 #error "No dynarec backend exists for this architecture; build with MUPEN64RR_ENABLE_DYNAREC=OFF."
 #else
@@ -21,6 +23,12 @@ typedef struct
 {
     int32_t need_map;
 } reg_cache_struct;
+#endif
+
+#if defined(_M_X64) || defined(__x86_64__) || defined(_M_IX86) || defined(__i386__)
+#define MUPEN64RR_PRECOMP_NEEDS_EXEC 1
+#else
+#define MUPEN64RR_PRECOMP_NEEDS_EXEC 0
 #endif
 
 typedef struct _precomp_instr
@@ -94,3 +102,11 @@ void dyna_stop();
 void vr_recompile(uint32_t addr);
 
 extern precomp_instr *dst;
+
+inline void reset_reg_cache_infos(precomp_instr *instr)
+{
+    instr->reg_cache_infos.need_map = 0;
+#if defined(_M_ARM64) || defined(__aarch64__)
+    for (auto &needed : instr->reg_cache_infos.needed_registers) needed = nullptr;
+#endif
+}

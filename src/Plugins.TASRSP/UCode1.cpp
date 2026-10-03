@@ -6,7 +6,11 @@
 
 #include "Main.hpp"
 #include "HLE.hpp"
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
 #include <tmmintrin.h>
+#else
+#include <sse2neon.h>
+#endif
 
 /******** DMEM Memory Map for ABI 1 ***************
 Address/Range		Description
