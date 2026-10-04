@@ -411,21 +411,24 @@ inline std::vector<GradientStop> check_gradient_stops(lua_State *L, int index)
     const int absolute = lua_absindex(L, index);
     const size_t count = lua_rawlen(L, absolute);
     if (count < 2) luaL_error(L, "a gradient requires at least two color stops");
-    if (count > UINT32_MAX) luaL_error(L, "a gradient has too many color stops");
+    if (count > UINT32_MAX || count > std::numeric_limits<size_t>::max() / sizeof(GradientStop))
+        luaL_error(L, "a gradient has too many color stops");
 
-    std::vector<GradientStop> stops;
-    stops.reserve(count);
-    for (size_t i = 1; i <= count; ++i)
+    auto *parsed = static_cast<GradientStop *>(lua_newuserdata(L, count * sizeof(GradientStop)));
+    for (size_t i = 0; i < count; ++i)
     {
-        lua_rawgeti(L, absolute, static_cast<lua_Integer>(i));
+        lua_rawgeti(L, absolute, static_cast<lua_Integer>(i + 1));
         luaL_checktype(L, -1, LUA_TTABLE);
         const float value = table_painter_number(L, -1, "offset", 0, true);
         const float offset = std::isfinite(value) ? std::clamp(value, 0.0f, 1.0f) : 1.0f;
         lua_getfield(L, -1, "color");
         const auto color = check_color(L, -1);
         lua_pop(L, 2);
-        stops.push_back({offset, color});
+        new (&parsed[i]) GradientStop{offset, color};
     }
+
+    std::vector<GradientStop> stops(parsed, parsed + count);
+    lua_pop(L, 1);
     std::stable_sort(stops.begin(), stops.end(), [](const auto &a, const auto &b) { return a.offset < b.offset; });
     return stops;
 }
