@@ -181,7 +181,7 @@ static void register_function(lua_State *L, const std::string &name, const lua_C
     lua_pop(L, 1);
 }
 
-void LuaHost::register_functions(lua_State *L)
+void LuaEnvironmentManager::register_functions(lua_State *L)
 {
     luaL_openlibs(L);
 

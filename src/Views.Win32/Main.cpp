@@ -30,7 +30,7 @@
 #include <components/RomBrowser.hpp>
 #include <components/Seeker.hpp>
 #include <components/Statusbar.hpp>
-#include <lua/LuaHost.hpp>
+#include <lua/LuaEnvironmentManager.hpp>
 
 #include <lua/LuaRendererManager.hpp>
 #include <lua/LuaDialog.hpp>
@@ -490,12 +490,12 @@ void on_config_needs_patching(Config &cfg)
 
 void on_seek_completed()
 {
-    LuaHost::instance().call_seek_completed();
+    LuaEnvironmentManager::instance().call_seek_completed();
 }
 
 void on_warp_modify_status_changed(bool value)
 {
-    LuaHost::instance().call_warp_modify_status_changed(value);
+    LuaEnvironmentManager::instance().call_warp_modify_status_changed(value);
 }
 
 void on_emu_starting_changed(bool value)
@@ -616,7 +616,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         args.pressed = true;
         args.repeat = repeat;
 
-        LuaHost::instance().call_atkey(args);
+        LuaEnvironmentManager::instance().call_atkey(args);
         PluginUtil::key_down(wParam, lParam);
         break;
     }
@@ -629,7 +629,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         args.pressed = false;
         args.repeat = false;
 
-        LuaHost::instance().call_atkey(args);
+        LuaEnvironmentManager::instance().call_atkey(args);
         PluginUtil::key_up(wParam, lParam);
         break;
     }
@@ -642,7 +642,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         args.text = std::string(1, chr);
         args.repeat = repeat;
-        LuaHost::instance().call_atkey(args);
+        LuaEnvironmentManager::instance().call_atkey(args);
         break;
     }
     case WM_MOUSEWHEEL:
@@ -650,7 +650,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         Main::handle_mouse_events(hwnd, Message, wParam, lParam);
 
         // https://github.com/mupen64/mupen64-rr-lua/issues/190
-        LuaHost::instance().call_window_message(hwnd, Message, wParam, lParam);
+        LuaEnvironmentManager::instance().call_window_message(hwnd, Message, wParam, lParam);
         break;
     case WM_MOUSEHWHEEL:
         Main::handle_mouse_events(hwnd, Message, wParam, lParam);
@@ -867,32 +867,32 @@ static CoreResult init_core()
     // g_main_ctx.core.io_service = &g_main_ctx.io_service;
     g_main_ctx.core.callbacks = {};
     g_main_ctx.core.callbacks.vi = [](const auto &...) {
-        LuaHost::instance().call_interval();
-        LuaHost::instance().call_vi();
+        LuaEnvironmentManager::instance().call_interval();
+        LuaEnvironmentManager::instance().call_vi();
         if (CaptureManager::is_capturing()) CaptureManager::vi();
     };
     g_main_ctx.core.callbacks.input = [](CoreButtons *input, int index) {
         g_main_ctx.last_controller_data[index] = *input;
-        LuaHost::instance().call_input(input, index);
+        LuaEnvironmentManager::instance().call_input(input, index);
         if (CaptureManager::is_capturing()) CaptureManager::input();
     };
     g_main_ctx.core.callbacks.frame = [] { g_frame_changed = true; };
-    g_main_ctx.core.callbacks.interval = [] { LuaHost::instance().call_interval(); };
+    g_main_ctx.core.callbacks.interval = [] { LuaEnvironmentManager::instance().call_interval(); };
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;
-    g_main_ctx.core.callbacks.play_movie = [] { LuaHost::instance().call_play_movie(); };
+    g_main_ctx.core.callbacks.play_movie = [] { LuaEnvironmentManager::instance().call_play_movie(); };
     g_main_ctx.core.callbacks.stop_movie = [] {
-        LuaHost::instance().call_stop_movie();
+        LuaEnvironmentManager::instance().call_stop_movie();
         if (g_config.stop_capture_at_movie_end && CaptureManager::is_capturing()) CaptureManager::stop_capture();
     };
     g_main_ctx.core.callbacks.loop_movie = [] {
         if (g_config.stop_capture_at_movie_end && CaptureManager::is_capturing()) CaptureManager::stop_capture();
     };
-    g_main_ctx.core.callbacks.save_state = [] { LuaHost::instance().call_save_state(); };
-    g_main_ctx.core.callbacks.load_state = [] { LuaHost::instance().call_load_state(); };
-    g_main_ctx.core.callbacks.reset = [] { LuaHost::instance().call_reset(); };
+    g_main_ctx.core.callbacks.save_state = [] { LuaEnvironmentManager::instance().call_save_state(); };
+    g_main_ctx.core.callbacks.load_state = [] { LuaEnvironmentManager::instance().call_load_state(); };
+    g_main_ctx.core.callbacks.reset = [] { LuaEnvironmentManager::instance().call_reset(); };
     g_main_ctx.core.callbacks.seek_completed = [] {
         Messenger::broadcast<Messenger::Message::SeekCompleted>();
-        LuaHost::instance().call_seek_completed();
+        LuaEnvironmentManager::instance().call_seek_completed();
     };
     g_main_ctx.core.callbacks.core_executing_changed = [](bool value) {
         Messenger::broadcast<Messenger::Message::CoreExecutingChanged>(value);
@@ -1154,7 +1154,7 @@ void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
         args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
 
-        LuaHost::instance().call_atmouse(args);
+        LuaEnvironmentManager::instance().call_atmouse(args);
         break;
     }
     }

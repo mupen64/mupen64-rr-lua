@@ -7,7 +7,7 @@
 #pragma once
 
 #include <Main.hpp>
-#include <lua/LuaHost.hpp>
+#include <lua/LuaEnvironmentManager.hpp>
 
 namespace LuaCore::Savestate
 {
@@ -30,7 +30,7 @@ static int do_file(lua_State *L)
             path, job,
             [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buf) {
                 g_main_ctx.dispatcher->invoke([=] {
-                    if (!LuaHost::instance().get_by_state(L))
+                    if (!LuaEnvironmentManager::instance().get_by_state(L))
                     {
                         return;
                     }
@@ -59,7 +59,7 @@ static int do_slot(lua_State *L)
             get_st_with_slot_path(slot), job,
             [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buf) {
                 g_main_ctx.dispatcher->invoke([=] {
-                    if (!LuaHost::instance().get_by_state(L))
+                    if (!LuaEnvironmentManager::instance().get_by_state(L))
                     {
                         return;
                     }
@@ -90,7 +90,7 @@ static int do_memory(lua_State *L)
             buffer, job,
             [=](const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buf) {
                 g_main_ctx.dispatcher->invoke([=] {
-                    if (!LuaHost::instance().get_by_state(L))
+                    if (!LuaEnvironmentManager::instance().get_by_state(L))
                     {
                         return;
                     }

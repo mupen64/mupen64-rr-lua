@@ -9,10 +9,10 @@
 #include <Core/Types.hpp>
 #include <lua/LuaEnvironment.hpp>
 
-class LuaHost
+class LuaEnvironmentManager
 {
   private:
-    LuaHost();
+    LuaEnvironmentManager();
 
     std::vector<std::shared_ptr<LuaEnvironment>> m_environments;
     std::unordered_map<lua_State *, LuaEnvironment *> m_environment_by_state;
@@ -52,12 +52,12 @@ class LuaHost
         _COUNT,
     };
 
-    LuaHost(const LuaHost &) = delete;
-    LuaHost &operator=(const LuaHost &) = delete;
-    LuaHost(LuaHost &&) = delete;
-    LuaHost &operator=(LuaHost &&) = delete;
+    LuaEnvironmentManager(const LuaEnvironmentManager &) = delete;
+    LuaEnvironmentManager &operator=(const LuaEnvironmentManager &) = delete;
+    LuaEnvironmentManager(LuaEnvironmentManager &&) = delete;
+    LuaEnvironmentManager &operator=(LuaEnvironmentManager &&) = delete;
 
-    static LuaHost &instance();
+    static LuaEnvironmentManager &instance();
 
     // The modified control data to be pushed the next frame.
     CoreButtons new_controller_data[4];

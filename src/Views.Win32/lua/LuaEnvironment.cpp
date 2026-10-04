@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <Common.Views/ActionManager.hpp>
-#include <lua/LuaHost.hpp>
+#include <lua/LuaEnvironmentManager.hpp>
 #include <lua/LuaRendererManager.hpp>
 
 static const std::string &mupen_api_lua_code()
@@ -59,7 +59,7 @@ std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
     }
 
     // Register before executing user code so API calls can find this environment.
-    LuaHost::instance().add_environment(env);
+    LuaEnvironmentManager::instance().add_environment(env);
 
     bool has_error = false;
 
@@ -69,7 +69,7 @@ std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
         goto fail;
     }
 
-    LuaHost::instance().register_functions(env->l());
+    LuaEnvironmentManager::instance().register_functions(env->l());
 
     if (luaL_dostring(env->l(), inspect_lua_code().c_str()))
     {
@@ -115,7 +115,7 @@ void LuaEnvironment::stop()
     const auto env = shared_from_this();
     need(env->l(), "LuaEnvironment::stop: Lua environment is already stopped");
 
-    LuaHost::instance().call_by_key(env.get(), LuaHost::REG_ATSTOP);
+    LuaEnvironmentManager::instance().call_by_key(env.get(), LuaEnvironmentManager::REG_ATSTOP);
 
     env->stopping(env.get());
 
@@ -139,7 +139,7 @@ void LuaEnvironment::stop()
         lua_freecallback(env->l(), callback);
     }
 
-    for (auto &[key, count] : LuaHost::instance().m_callback_count_map)
+    for (auto &[key, count] : LuaEnvironmentManager::instance().m_callback_count_map)
     {
         lua_rawgeti(env->l(), LUA_REGISTRYINDEX, key);
         if (lua_isnil(env->l(), -1))
@@ -151,7 +151,7 @@ void LuaEnvironment::stop()
         const int n = luaL_len(env->l(), -1);
         g_view_logger->trace(L"Unsubscribing {} functions of key {}...", n, static_cast<int>(key));
 
-        LuaHost::instance().m_callback_count_map[key] -= n;
+        LuaEnvironmentManager::instance().m_callback_count_map[key] -= n;
 
         lua_newtable(env->l());
         lua_rawseti(env->l(), LUA_REGISTRYINDEX, key);
@@ -159,7 +159,7 @@ void LuaEnvironment::stop()
         lua_pop(env->l(), 0);
     }
 
-    LuaHost::instance().remove_environment(env.get());
+    LuaEnvironmentManager::instance().remove_environment(env.get());
     env->renderer.shutdown();
 
     g_view_logger->info("Lua destroyed");

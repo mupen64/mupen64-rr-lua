@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <lua/LuaHost.hpp>
+#include <lua/LuaEnvironmentManager.hpp>
 
 namespace LuaCore::Clipboard
 {

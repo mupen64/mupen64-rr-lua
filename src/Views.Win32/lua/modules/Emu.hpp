@@ -9,7 +9,7 @@
 #include <Common.Views/Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <components/Statusbar.hpp>
-#include <lua/LuaHost.hpp>
+#include <lua/LuaEnvironmentManager.hpp>
 
 namespace LuaCore::Emu
 {
@@ -28,95 +28,95 @@ static int GetSampleCount(lua_State *L)
 
 static int GetInputCount(lua_State *L)
 {
-    lua_pushinteger(L, LuaHost::instance().input_count);
+    lua_pushinteger(L, LuaEnvironmentManager::instance().input_count);
     return 1;
 }
 
-static int register_callback(lua_State *L, const LuaHost::callback_key key)
+static int register_callback(lua_State *L, const LuaEnvironmentManager::callback_key key)
 {
-    auto *env = LuaHost::instance().get_by_state(L);
+    auto *env = LuaEnvironmentManager::instance().get_by_state(L);
     env->register_or_unregister_function(static_cast<uint8_t>(key));
     return 0;
 }
 
 static int subscribe_atupdatescreen(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATUPDATESCREEN);
+    return register_callback(L, LuaEnvironmentManager::REG_ATUPDATESCREEN);
 }
 
 static int subscribe_atpaint(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATPAINT);
+    return register_callback(L, LuaEnvironmentManager::REG_ATPAINT);
 }
 
 static int subscribe_atvi(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATVI);
+    return register_callback(L, LuaEnvironmentManager::REG_ATVI);
 }
 
 static int subscribe_atinput(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATINPUT);
+    return register_callback(L, LuaEnvironmentManager::REG_ATINPUT);
 }
 
 static int subscribe_atstop(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATSTOP);
+    return register_callback(L, LuaEnvironmentManager::REG_ATSTOP);
 }
 
 static int subscribe_atwindowmessage(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_WINDOWMESSAGE);
+    return register_callback(L, LuaEnvironmentManager::REG_WINDOWMESSAGE);
 }
 
 static int subscribe_atinterval(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATINTERVAL);
+    return register_callback(L, LuaEnvironmentManager::REG_ATINTERVAL);
 }
 
 static int subscribe_atplaymovie(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATPLAYMOVIE);
+    return register_callback(L, LuaEnvironmentManager::REG_ATPLAYMOVIE);
 }
 
 static int subscribe_atstopmovie(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATSTOPMOVIE);
+    return register_callback(L, LuaEnvironmentManager::REG_ATSTOPMOVIE);
 }
 
 static int subscribe_atloadstate(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATLOADSTATE);
+    return register_callback(L, LuaEnvironmentManager::REG_ATLOADSTATE);
 }
 
 static int subscribe_atsavestate(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATSAVESTATE);
+    return register_callback(L, LuaEnvironmentManager::REG_ATSAVESTATE);
 }
 
 static int subscribe_atreset(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATRESET);
+    return register_callback(L, LuaEnvironmentManager::REG_ATRESET);
 }
 
 static int subscribe_atseekcompleted(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATSEEKCOMPLETED);
+    return register_callback(L, LuaEnvironmentManager::REG_ATSEEKCOMPLETED);
 }
 
 static int subscribe_atwarpmodifystatuschanged(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATWARPMODIFYSTATUSCHANGED);
+    return register_callback(L, LuaEnvironmentManager::REG_ATWARPMODIFYSTATUSCHANGED);
 }
 
 static int subscribe_atkey(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATKEY);
+    return register_callback(L, LuaEnvironmentManager::REG_ATKEY);
 }
 
 static int subscribe_atmouse(lua_State *L)
 {
-    return register_callback(L, LuaHost::REG_ATMOUSE);
+    return register_callback(L, LuaEnvironmentManager::REG_ATMOUSE);
 }
 
 static int Screenshot(lua_State *L)
@@ -128,7 +128,7 @@ static int Screenshot(lua_State *L)
 
 static int IsMainWindowInForeground(lua_State *L)
 {
-    auto lua = LuaHost::instance().get_by_state(L);
+    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
     lua_pushboolean(L, GetForegroundWindow() == g_main_ctx.hwnd || GetActiveWindow() == g_main_ctx.hwnd);
     return 1;
 }
@@ -257,7 +257,7 @@ static int GetMupenVersion(lua_State *L)
 // emu
 static int ConsoleWriteLua(lua_State *L)
 {
-    auto lua = LuaHost::instance().get_by_state(L);
+    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
     const auto str = luaL_checkstring(L, 1);
 
     lua->print(lua, std::string(str) + "\r\n");

@@ -8,7 +8,7 @@
 #include <Common.Views/Messages.hpp>
 #include <components/FilePicker.hpp>
 #include <components/ReorderableListView.hpp>
-#include <lua/LuaHost.hpp>
+#include <lua/LuaEnvironmentManager.hpp>
 #include <lua/LuaDialog.hpp>
 
 // wParam: either nullptr, or a pointer to a InstanceContext whose running state has changed
@@ -157,7 +157,7 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 
             print(*ctx, text);
         });
-    LuaHost::instance().add(ctx.env);
+    LuaEnvironmentManager::instance().add(ctx.env);
 
     const auto start_result = ctx.env->start(ctx.trusted());
 

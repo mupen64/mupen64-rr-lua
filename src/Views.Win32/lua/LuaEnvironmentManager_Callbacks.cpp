@@ -6,13 +6,13 @@
 
 #include "Common.hpp"
 
-#include <lua/LuaHost.hpp>
+#include <lua/LuaEnvironmentManager.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
     {                                                                                                                  \
-        if (LuaHost::instance().envs().empty()) return;                                                                \
-        if (LuaHost::instance().m_callback_count_map.at(key).load() == 0) return;                                      \
+        if (LuaEnvironmentManager::instance().envs().empty()) return;                                                                \
+        if (LuaEnvironmentManager::instance().m_callback_count_map.at(key).load() == 0) return;                                      \
     } while (false)
 
 static int invoke_key_callback(lua_State *l, const LuaKeyEventArgs &args)
@@ -137,7 +137,7 @@ static int invoke_mouse_callback(lua_State *l, const LuaMouseEventArgs &args)
     return lua_pcall(l, 1, 0, 0);
 }
 
-static int register_function(lua_State *L, LuaHost::callback_key key)
+static int register_function(lua_State *L, LuaEnvironmentManager::callback_key key)
 {
     lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     if (lua_isnil(L, -1))
@@ -155,7 +155,7 @@ static int register_function(lua_State *L, LuaHost::callback_key key)
     return i;
 }
 
-static void unregister_function(lua_State *L, LuaHost::callback_key key)
+static void unregister_function(lua_State *L, LuaEnvironmentManager::callback_key key)
 {
     lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     if (lua_isnil(L, -1))
@@ -186,18 +186,18 @@ static void unregister_function(lua_State *L, LuaHost::callback_key key)
     lua_error(L);
 }
 
-LuaHost::LuaHost()
+LuaEnvironmentManager::LuaEnvironmentManager()
 {
-    for (uint8_t i = LuaHost::callback_key::REG_LUACLASS; i < LuaHost::callback_key::_COUNT; ++i)
+    for (uint8_t i = LuaEnvironmentManager::callback_key::REG_LUACLASS; i < LuaEnvironmentManager::callback_key::_COUNT; ++i)
         m_callback_count_map.emplace(i, 0);
 }
 
-void LuaHost::call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l)
+void LuaEnvironmentManager::call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l)
 {
     RET_IF_NOT_REGISTERED(REG_WINDOWMESSAGE);
 
     g_main_ctx.dispatcher->invoke([=] {
-        LuaHost::instance().call_by_key(REG_WINDOWMESSAGE, [=](lua_State *state) {
+        LuaEnvironmentManager::instance().call_by_key(REG_WINDOWMESSAGE, [=](lua_State *state) {
             lua_pushinteger(state, (lua_Integer)wnd);
             lua_pushinteger(state, msg);
             lua_pushinteger(state, w);
@@ -207,103 +207,103 @@ void LuaHost::call_window_message(void *wnd, unsigned int msg, std::uintptr_t w,
     });
 }
 
-void LuaHost::call_vi()
+void LuaEnvironmentManager::call_vi()
 {
     RET_IF_NOT_REGISTERED(REG_ATVI);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATVI); });
+    g_main_ctx.dispatcher->invoke([] { LuaEnvironmentManager::instance().call_by_key(REG_ATVI); });
 }
 
-void LuaHost::call_input(CoreButtons *input, int index)
+void LuaEnvironmentManager::call_input(CoreButtons *input, int index)
 {
     RET_IF_NOT_REGISTERED(REG_ATINPUT);
 
     g_main_ctx.dispatcher->invoke([=] {
-        LuaHost::instance().call_by_key(REG_ATINPUT, [index](lua_State *l) {
+        LuaEnvironmentManager::instance().call_by_key(REG_ATINPUT, [index](lua_State *l) {
             lua_pushinteger(l, index);
             return lua_pcall(l, 1, 0, 0);
         });
-        LuaHost::instance().input_count++;
+        LuaEnvironmentManager::instance().input_count++;
     });
 
-    if (LuaHost::instance().overwrite_controller_data[index])
+    if (LuaEnvironmentManager::instance().overwrite_controller_data[index])
     {
-        *input = LuaHost::instance().new_controller_data[index];
+        *input = LuaEnvironmentManager::instance().new_controller_data[index];
         g_main_ctx.last_controller_data[index] = *input;
-        LuaHost::instance().overwrite_controller_data[index] = false;
+        LuaEnvironmentManager::instance().overwrite_controller_data[index] = false;
     }
 }
 
-void LuaHost::call_interval()
+void LuaEnvironmentManager::call_interval()
 {
     RET_IF_NOT_REGISTERED(REG_ATINTERVAL);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATINTERVAL); });
+    g_main_ctx.dispatcher->invoke([] { LuaEnvironmentManager::instance().call_by_key(REG_ATINTERVAL); });
 }
 
-void LuaHost::call_play_movie()
+void LuaEnvironmentManager::call_play_movie()
 {
     RET_IF_NOT_REGISTERED(REG_ATPLAYMOVIE);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATPLAYMOVIE); });
+    g_main_ctx.dispatcher->invoke([] { LuaEnvironmentManager::instance().call_by_key(REG_ATPLAYMOVIE); });
 }
 
-void LuaHost::call_stop_movie()
+void LuaEnvironmentManager::call_stop_movie()
 {
     RET_IF_NOT_REGISTERED(REG_ATSTOPMOVIE);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATSTOPMOVIE); });
+    g_main_ctx.dispatcher->invoke([] { LuaEnvironmentManager::instance().call_by_key(REG_ATSTOPMOVIE); });
 }
 
-void LuaHost::call_load_state()
+void LuaEnvironmentManager::call_load_state()
 {
     RET_IF_NOT_REGISTERED(REG_ATLOADSTATE);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATLOADSTATE); });
+    g_main_ctx.dispatcher->invoke([] { LuaEnvironmentManager::instance().call_by_key(REG_ATLOADSTATE); });
 }
 
-void LuaHost::call_save_state()
+void LuaEnvironmentManager::call_save_state()
 {
     RET_IF_NOT_REGISTERED(REG_ATSAVESTATE);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATSAVESTATE); });
+    g_main_ctx.dispatcher->invoke([] { LuaEnvironmentManager::instance().call_by_key(REG_ATSAVESTATE); });
 }
 
-void LuaHost::call_reset()
+void LuaEnvironmentManager::call_reset()
 {
     RET_IF_NOT_REGISTERED(REG_ATRESET);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATRESET); });
+    g_main_ctx.dispatcher->invoke([] { LuaEnvironmentManager::instance().call_by_key(REG_ATRESET); });
 }
 
-void LuaHost::call_seek_completed()
+void LuaEnvironmentManager::call_seek_completed()
 {
     RET_IF_NOT_REGISTERED(REG_ATSEEKCOMPLETED);
-    g_main_ctx.dispatcher->invoke([] { LuaHost::instance().call_by_key(REG_ATSEEKCOMPLETED); });
+    g_main_ctx.dispatcher->invoke([] { LuaEnvironmentManager::instance().call_by_key(REG_ATSEEKCOMPLETED); });
 }
 
-void LuaHost::call_warp_modify_status_changed(const int32_t status)
+void LuaEnvironmentManager::call_warp_modify_status_changed(const int32_t status)
 {
     RET_IF_NOT_REGISTERED(REG_ATWARPMODIFYSTATUSCHANGED);
     g_main_ctx.dispatcher->invoke([] {
-        LuaHost::instance().call_by_key(REG_ATWARPMODIFYSTATUSCHANGED, [](lua_State *l) {
+        LuaEnvironmentManager::instance().call_by_key(REG_ATWARPMODIFYSTATUSCHANGED, [](lua_State *l) {
             lua_pushinteger(l, g_main_ctx.CoreCtx->vcr_get_warp_modify_status());
             return lua_pcall(l, 1, 0, 0);
         });
     });
 }
 
-void LuaHost::call_atkey(const LuaKeyEventArgs &args)
+void LuaEnvironmentManager::call_atkey(const LuaKeyEventArgs &args)
 {
     RET_IF_NOT_REGISTERED(REG_ATKEY);
     g_main_ctx.dispatcher->invoke([args] {
-        LuaHost::instance().call_by_key(REG_ATKEY, [&args](lua_State *l) { return invoke_key_callback(l, args); });
+        LuaEnvironmentManager::instance().call_by_key(REG_ATKEY, [&args](lua_State *l) { return invoke_key_callback(l, args); });
     });
 }
 
-void LuaHost::call_atmouse(const LuaMouseEventArgs &args)
+void LuaEnvironmentManager::call_atmouse(const LuaMouseEventArgs &args)
 {
     RET_IF_NOT_REGISTERED(REG_ATMOUSE);
     g_main_ctx.dispatcher->invoke([args] {
-        LuaHost::instance().call_by_key(REG_ATMOUSE, [&args](lua_State *l) { return invoke_mouse_callback(l, args); });
+        LuaEnvironmentManager::instance().call_by_key(REG_ATMOUSE, [&args](lua_State *l) { return invoke_mouse_callback(l, args); });
     });
 }
 
 bool invoke_callbacks_with_key_impl(
-    const LuaEnvironment *lua, const std::function<int(lua_State *)> &function, LuaHost::callback_key key)
+    const LuaEnvironment *lua, const std::function<int(lua_State *)> &function, LuaEnvironmentManager::callback_key key)
 {
     need(is_on_gui_thread(), "not on GUI thread");
 
@@ -335,13 +335,13 @@ bool invoke_callbacks_with_key_impl(
     return true;
 }
 
-bool LuaHost::call_by_key(
+bool LuaEnvironmentManager::call_by_key(
     const LuaEnvironment *lua, const callback_key key, const std::function<int(lua_State *)> &function)
 {
     return invoke_callbacks_with_key_impl(lua, function, key);
 }
 
-void LuaHost::call_by_key(callback_key key, const std::function<int(lua_State *)> &function)
+void LuaEnvironmentManager::call_by_key(callback_key key, const std::function<int(lua_State *)> &function)
 {
     // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone
     // the queue OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
@@ -349,7 +349,7 @@ void LuaHost::call_by_key(callback_key key, const std::function<int(lua_State *)
 
     need(destruction_queue.empty(), "destruction_queue must be empty");
 
-    for (const auto &lua : LuaHost::instance().envs())
+    for (const auto &lua : LuaEnvironmentManager::instance().envs())
     {
         if (!invoke_callbacks_with_key_impl(lua.get(), function, key))
         {
@@ -367,18 +367,18 @@ void LuaHost::call_by_key(callback_key key, const std::function<int(lua_State *)
 void LuaEnvironment::register_or_unregister_function(const uint8_t callback_key)
 {
     lua_State *state = l();
-    const auto key = static_cast<LuaHost::callback_key>(callback_key);
+    const auto key = static_cast<LuaEnvironmentManager::callback_key>(callback_key);
 
     if (lua_toboolean(state, 2))
     {
         lua_pop(state, 1);
         unregister_function(state, key);
-        LuaHost::instance().m_callback_count_map[key]--;
+        LuaEnvironmentManager::instance().m_callback_count_map[key]--;
     }
     else
     {
         if (lua_gettop(state) == 2) lua_pop(state, 1);
         register_function(state, key);
-        LuaHost::instance().m_callback_count_map[key]++;
+        LuaEnvironmentManager::instance().m_callback_count_map[key]++;
     }
 }
