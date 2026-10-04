@@ -21,8 +21,6 @@ struct ActionParamMeta
     uintptr_t *get_hints{};
 };
 
-
-
 /**
  * \brief Represents the arguments for a key event callback. See `KeyEventArgs` in `api.lua`.
  */

@@ -29,21 +29,16 @@ class LuaRenderer
     LuaRenderer(LuaRenderer &&) = delete;
     LuaRenderer &operator=(LuaRenderer &&) = delete;
 
-    // The current presenter, or null
     Presenter *presenter{};
+    D2D1_SIZE_U dc_size{};
 
-    // The DC for GDI/GDI+ drawings. Commands can be issued to it anytime and it is never cleared.
     HDC gdi_back_dc{};
     HBITMAP gdi_bmp{};
 
-    // Dimensions of the drawing surfaces
-    D2D1_SIZE_U dc_size{};
-
-    // Painter caches and render-target stack
-    std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts{};
-    std::shared_ptr<LuaCore::Painter::Detail::TextMeasurementCache> painter_text_measurements{};
-    std::shared_ptr<LuaCore::Painter::Detail::TextFactoryCache> painter_text_factory{};
-    std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
+    std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts;
+    std::shared_ptr<LuaCore::Painter::Detail::TextMeasurementCache> painter_text_measurements;
+    std::shared_ptr<LuaCore::Painter::Detail::TextFactoryCache> painter_text_factory;
+    std::stack<ID2D1RenderTarget *> d2d_render_target_stack;
 
     // GDI+ images and drawing state
     std::unordered_map<size_t, Gdiplus::Bitmap *> image_pool{};
@@ -56,8 +51,8 @@ class LuaRenderer
     COLORREF col, bkcol{};
     int bkmode{};
 
-    std::optional<float> target_fps{};
-    std::chrono::steady_clock::time_point last_render_time{};
+    std::optional<float> target_fps;
+    std::chrono::steady_clock::time_point last_render_time;
 
     void initialize();
     void pre_shutdown();
@@ -77,7 +72,6 @@ class LuaRenderer
   private:
     static constexpr uint32_t m_lua_gdi_color_mask = RGB(255, 0, 255);
 
-    // Overlay handles and renderer state exposed to the manager through read-only accessors.
     HWND m_d2d_overlay_hwnd{};
     HWND m_gdi_overlay_hwnd{};
     bool m_has_gdi_content{};
