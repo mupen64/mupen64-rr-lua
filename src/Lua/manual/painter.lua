@@ -458,6 +458,299 @@ custom_row("global alpha", "get_alpha() / set_alpha(alpha)", {
     },
 })
 
+custom_row("linear gradient", "type='linear_gradient', x0/y0/x1/y1, stops", {
+    {
+        caption = "horizontal",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                stops = {
+                    { offset = 0, color = colors.orange },
+                    { offset = 1, color = colors.blue },
+                },
+            }
+            q:begin_path()
+            q:round_rect(rect(x + 24, y + 22, 137, 58), 8)
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "vertical",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 92, y0 = y + 18, x1 = x + 92, y1 = y + 86,
+                stops = {
+                    { offset = 0, color = colors.green },
+                    { offset = 1, color = colors.purple },
+                },
+            }
+            q:begin_path()
+            q:circle(rect(x + 53, y + 14, 78, 78))
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "animated angle",
+        draw = function(q, x, y)
+            local time = os.clock()
+            local angle = time * 0.8
+            local dx = 65 * math.cos(angle)
+            local dy = 32 * math.sin(angle)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 92 - dx, y0 = y + 50 - dy, x1 = x + 92 + dx, y1 = y + 50 + dy,
+                stops = {
+                    { offset = 0, color = colors.blue },
+                    { offset = 1, color = colors.orange },
+                },
+            }
+            q:begin_path()
+            q:polygon({ x + 29, y + 78, x + 54, y + 24, x + 132, y + 18, x + 157, y + 75 })
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "three color stops",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                stops = {
+                    { offset = 0, color = colors.orange },
+                    { offset = 0.5, color = colors.green },
+                    { offset = 1, color = colors.purple },
+                },
+            }
+            q:begin_path()
+            q:rect(rect(x + 24, y + 22, 137, 58))
+            q:fill(gradient)
+        end,
+    },
+})
+
+custom_row("radial gradient", "type='radial_gradient', center_x/y, radius_x/y, stops", {
+    {
+        caption = "circular",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "radial_gradient",
+                center_x = x + 92, center_y = y + 51, radius_x = 40, radius_y = 40,
+                stops = {
+                    { offset = 0, color = colors.orange },
+                    { offset = 1, color = colors.blue },
+                },
+            }
+            q:begin_path()
+            q:circle(rect(x + 48, y + 7, 88, 88))
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "elliptical",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "radial_gradient",
+                center_x = x + 92, center_y = y + 51, radius_x = 68, radius_y = 29,
+                stops = {
+                    { offset = 0, color = colors.green },
+                    { offset = 1, color = colors.purple },
+                },
+            }
+            q:begin_path()
+            q:round_rect(rect(x + 22, y + 24, 140, 54), 24)
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "animated center",
+        draw = function(q, x, y)
+            local time = os.clock()
+            local center_x = x + 70 + 18 * math.sin(time * 1.1)
+            local center_y = y + 42 + 9 * math.cos(time * 1.4)
+            local radius = 32 + 8 * (0.5 + 0.5 * math.sin(time * 1.7))
+            local gradient = {
+                type = "radial_gradient",
+                center_x = center_x, center_y = center_y, radius_x = radius, radius_y = radius,
+                stops = {
+                    { offset = 0, color = colors.orange },
+                    { offset = 0.55, color = colors.green },
+                    { offset = 1, color = colors.blue },
+                },
+            }
+            q:begin_path()
+            q:rect(rect(x + 24, y + 18, 137, 66))
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "small radius / clamped",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "radial_gradient",
+                center_x = x + 92, center_y = y + 51, radius_x = 24, radius_y = 24,
+                stops = {
+                    { offset = 0, color = colors.text },
+                    { offset = 1, color = colors.purple },
+                },
+            }
+            q:begin_path()
+            q:rect(rect(x + 24, y + 18, 137, 66))
+            q:fill(gradient)
+        end,
+    },
+})
+
+custom_row("gradient stops", "sorted stops, alpha, and clamping", {
+    {
+        caption = "animated stop positions",
+        draw = function(q, x, y)
+            local time = os.clock()
+            local pulse = 0.5 + 0.5 * math.sin(time * 1.2)
+            local first_stop = 0.16 + 0.18 * pulse
+            local second_stop = 0.82 - 0.14 * pulse
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                stops = {
+                    { offset = 0, color = colors.blue },
+                    { offset = first_stop, color = colors.orange },
+                    { offset = second_stop, color = colors.green },
+                    { offset = 1, color = colors.purple },
+                },
+            }
+            q:begin_path()
+            q:round_rect(rect(x + 24, y + 22, 137, 58), 8)
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "input stops are sorted",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                stops = {
+                    { offset = 1, color = colors.purple },
+                    { offset = 0.5, color = colors.green },
+                    { offset = 0, color = colors.orange },
+                },
+            }
+            q:begin_path()
+            q:rect(rect(x + 24, y + 22, 137, 58))
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "transparent stop",
+        draw = function(q, x, y)
+            q:begin_path()
+            q:rect(rect(x + 24, y + 22, 137, 58))
+            q:fill(colors.blue)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                stops = {
+                    { offset = 0, color = color(0.78, 0.52, 0.30, 0) },
+                    { offset = 1, color = colors.orange },
+                },
+            }
+            q:begin_path()
+            q:round_rect(rect(x + 24, y + 22, 137, 58), 8)
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "gradient extends past endpoints",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 65, y0 = y + 50, x1 = x + 120, y1 = y + 50,
+                stops = {
+                    { offset = 0, color = colors.orange },
+                    { offset = 1, color = colors.blue },
+                },
+            }
+            q:begin_path()
+            q:rect(rect(x + 24, y + 22, 137, 58))
+            q:fill(gradient)
+        end,
+    },
+})
+
+custom_row("gradient paints", "reuse gradients with fill and stroke", {
+    {
+        caption = "fill a shape",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 26, y0 = y + 50, x1 = x + 159, y1 = y + 50,
+                stops = {
+                    { offset = 0, color = colors.orange },
+                    { offset = 1, color = colors.blue },
+                },
+            }
+            q:begin_path()
+            q:circle(rect(x + 55, y + 12, 76, 76))
+            q:fill(gradient)
+        end,
+    },
+    {
+        caption = "stroke a shape",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                stops = {
+                    { offset = 0, color = colors.green },
+                    { offset = 1, color = colors.purple },
+                },
+            }
+            q:begin_path()
+            q:round_rect(rect(x + 29, y + 25, 127, 50), 12)
+            q:stroke(gradient, { width = 8 })
+        end,
+    },
+    {
+        caption = "same gradient, fill + stroke",
+        draw = function(q, x, y)
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                stops = {
+                    { offset = 0, color = colors.orange },
+                    { offset = 0.5, color = colors.green },
+                    { offset = 1, color = colors.blue },
+                },
+            }
+            q:begin_path()
+            q:round_rect(rect(x + 31, y + 25, 123, 50), 10)
+            q:fill(gradient)
+            q:stroke(gradient, { width = 5 })
+        end,
+    },
+    {
+        caption = "animated gradient text",
+        draw = function(q, x, y)
+            local time = os.clock()
+            local midpoint = 0.25 + 0.5 * (0.5 + 0.5 * math.sin(time * 1.3))
+            local gradient = {
+                type = "linear_gradient",
+                x0 = x + 18, y0 = y + 50, x1 = x + 167, y1 = y + 50,
+                stops = {
+                    { offset = 0, color = colors.orange },
+                    { offset = midpoint, color = colors.green },
+                    { offset = 1, color = colors.blue },
+                },
+            }
+            q:begin_path()
+            q:text("Gradient", rect(x + 18, y + 30, 149, 40), { size = 28, weight = 700, align_x = "center" })
+            q:fill(gradient)
+        end,
+    },
+})
+
 custom_row("render target", "PainterImage:paint(callback)", {
     {
         caption = "nine-sliced image",
