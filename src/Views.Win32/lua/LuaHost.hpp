@@ -108,6 +108,7 @@ class LuaHost
     void call_by_key(
         callback_key key,
         const std::function<int(lua_State *)> &function = [](lua_State *l) { return lua_pcall(l, 0, 0, 0); });
+
     void call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l);
     void call_vi();
     void call_input(CoreButtons *input, int index);
