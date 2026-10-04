@@ -61,7 +61,7 @@ std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaHost::create(cons
         return 0;
     });
     LuaHost::instance().register_functions(env->l());
-    env->renderer.create_renderer();
+    env->renderer.initialize();
 
     return env;
 }

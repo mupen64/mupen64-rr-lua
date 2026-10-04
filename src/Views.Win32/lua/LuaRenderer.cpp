@@ -302,13 +302,13 @@ LuaRenderer::LuaRenderer()
     bkmode = TRANSPARENT;
 }
 
-void LuaRenderer::repaint_visuals()
+void LuaRenderer::draw_all()
 {
     need(is_on_gui_thread(), "must be on GUI thread");
     draw_lua(true);
 }
 
-void LuaRenderer::create_renderer()
+void LuaRenderer::initialize()
 {
     if (gdi_back_dc != nullptr || ignore_create_renderer)
     {
@@ -367,20 +367,20 @@ void LuaRenderer::create_renderer()
 
     if (!g_config.lazy_renderer_init)
     {
-        ensure_d2d_renderer_created();
+        mark_d2d_content_present();
         mark_gdi_content_present();
     }
 
     create_loadscreen();
 }
 
-void LuaRenderer::pre_destroy_renderer()
+void LuaRenderer::pre_shutdown()
 {
     g_view_logger->info("Pre-destroying Lua renderer...");
     ignore_create_renderer = true;
 }
 
-void LuaRenderer::destroy_renderer()
+void LuaRenderer::shutdown()
 {
     g_view_logger->info("Destroying Lua renderer...");
 
@@ -422,7 +422,7 @@ void LuaRenderer::destroy_renderer()
     }
 }
 
-void LuaRenderer::ensure_d2d_renderer_created()
+void LuaRenderer::mark_d2d_content_present()
 {
     if (presenter || ignore_create_renderer)
     {

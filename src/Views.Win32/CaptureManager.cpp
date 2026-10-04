@@ -133,7 +133,7 @@ void readscreen_hybrid()
         // Since atupdatescreen might not have occured for a long time, we force it now.
         // This avoids "outdated" visuals, which are otherwise acceptable during normal gameplay, being blitted to the
         // video stream.
-        LuaRenderer::repaint_visuals();
+        LuaRenderer::draw_all();
 
         GdiFlush();
 

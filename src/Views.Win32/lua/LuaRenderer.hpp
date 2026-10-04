@@ -95,7 +95,7 @@ class LuaRenderer
      * \brief Forces an immediate repaint of all visual layers of all running Lua scripts.
      * \remarks Must be called from the UI thread.
      */
-    static void repaint_visuals();
+    static void draw_all();
 
     /**
      * \brief Blits the graphics contents of all active Lua instances to the given HDC.
@@ -105,23 +105,23 @@ class LuaRenderer
     /**
      * \brief Initializes this renderer. Does nothing if the renderer is initialized.
      */
-    void create_renderer();
+    void initialize();
 
     /**
      * \brief Prepares this renderer for deinitialization. Does nothing if the renderer isn't initialized.
      */
-    void pre_destroy_renderer();
+    void pre_shutdown();
 
     /**
      * \brief Deinitializes this renderer. Does nothing if the renderer isn't initialized.
      */
-    void destroy_renderer();
+    void shutdown();
 
     /**
      * \brief Ensures that the D2D renderer is created for a Lua environment. Does nothing if the renderer already
      * exists.
      */
-    void ensure_d2d_renderer_created();
+    void mark_d2d_content_present();
 
     /**
      * \brief Tells the renderer that GDI content is present in the rendering context.
