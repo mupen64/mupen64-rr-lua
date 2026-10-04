@@ -60,7 +60,7 @@ LRESULT CALLBACK LuaRendererManager::main_window_subclass_proc(
     return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
-void LuaRendererManager::draw_lua(bool force)
+void LuaRendererManager::draw(bool force)
 {
     const auto now = std::chrono::steady_clock::now();
 
@@ -124,7 +124,7 @@ void LuaRendererManager::draw_clock_proc(std::stop_token stop_token)
 {
     while (!stop_token.stop_requested())
     {
-        g_main_ctx.dispatcher->invoke([]() { instance().draw_lua(false); });
+        g_main_ctx.dispatcher->invoke([]() { instance().draw(false); });
         std::this_thread::sleep_for(std::chrono::duration<double>(1.0 / instance().get_screen_refresh_rate()));
     }
 }
@@ -295,12 +295,6 @@ LuaRenderer::LuaRenderer()
     font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
     col = bkcol = 0;
     bkmode = TRANSPARENT;
-}
-
-void LuaRendererManager::draw_all()
-{
-    need(is_on_gui_thread(), "must be on GUI thread");
-    draw_lua(true);
 }
 
 void LuaRenderer::initialize()

@@ -28,7 +28,7 @@ class LuaRendererManager
 
     void init();
     void stop();
-    void draw_all();
+    void draw(bool force = false);
     void blit_all(HDC hdc);
     void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds = std::nullopt);
 
@@ -53,7 +53,6 @@ class LuaRendererManager
     static void draw_clock_proc(std::stop_token stop_token);
 
     void set_overlay_visibility(bool visible);
-    void draw_lua(bool force);
     UINT get_screen_refresh_rate();
     void start_draw_clock();
     void stop_draw_clock();
