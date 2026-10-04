@@ -136,8 +136,7 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 {
     stop(ctx);
 
-    const auto result = LuaHost::instance().create(
-        path,
+    ctx.env = LuaEnvironment::create(path,
         [](const LuaEnvironment *env) {
             const auto ctx = get_instance_context(env);
 
@@ -158,14 +157,7 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 
             print(*ctx, text);
         });
-
-    if (!result.has_value())
-    {
-        print(ctx, result.error());
-        return;
-    }
-
-    ctx.env = result.value();
+    LuaHost::instance().add(ctx.env);
 
     const auto start_result = ctx.env->start(ctx.trusted());
 

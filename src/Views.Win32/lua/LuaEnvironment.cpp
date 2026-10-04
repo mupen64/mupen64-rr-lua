@@ -27,10 +27,16 @@ static const std::string &sandbox_lua_code()
     return code;
 }
 
-LuaEnvironment::LuaEnvironment(const std::filesystem::path &path, LuaDestroyFn destroying, LuaPrintFn print)
-    : m_l(luaL_newstate()), m_path(path), destroying(std::move(destroying)), print(std::move(print))
+LuaEnvironment::LuaEnvironment(const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print)
+    : m_l(luaL_newstate()), m_path(path), stopping(std::move(stopping)), print(std::move(print))
 {
     need(is_on_gui_thread(), "LuaEnvironment constructor must be called on the GUI thread");
+}
+
+std::shared_ptr<LuaEnvironment> LuaEnvironment::create(
+    const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print)
+{
+    return std::shared_ptr<LuaEnvironment>(new LuaEnvironment(path, std::move(stopping), std::move(print)));
 }
 
 LuaEnvironment::~LuaEnvironment()
@@ -111,7 +117,7 @@ void LuaEnvironment::stop()
 
     LuaHost::instance().call_by_key(env.get(), LuaHost::REG_ATSTOP);
 
-    env->destroying(env.get());
+    env->stopping(env.get());
 
     env->renderer.pre_shutdown();
 

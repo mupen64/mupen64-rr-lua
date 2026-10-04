@@ -47,12 +47,10 @@ void LuaHost::remove_environment(const LuaEnvironment *env)
     rebuild_environment_map();
 }
 
-std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaHost::create(
-    const std::filesystem::path &path, const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback)
+void LuaHost::add(const std::shared_ptr<LuaEnvironment> &env)
 {
     need(is_on_gui_thread(), "not on GUI thread");
-
-    auto env = std::make_shared<LuaEnvironment>(path, destroying_callback, print_callback);
+    need(env != nullptr, "cannot add a null Lua environment");
 
     lua_atpanic(env->l(), [](lua_State *L) {
         const char *raw_msg = lua_tostring(L, -1);
@@ -62,6 +60,4 @@ std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaHost::create(
     });
     LuaHost::instance().register_functions(env->l());
     env->renderer.initialize();
-
-    return env;
 }

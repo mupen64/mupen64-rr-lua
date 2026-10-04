@@ -69,15 +69,10 @@ class LuaHost
     size_t input_count = 0;
 
     /**
-     * \brief Tries to create a new Lua environment from the specified Lua script path and add it to the active
-     * environment list.
-     * \param path The path to the Lua script file.
-     * \param destroying_callback The callback to invoke when the environment is destroyed.
-     * \param print_callback The callback to invoke for printing messages.
-     * \return A shared pointer to the new Lua environment, or an error message if creation fails.
+     * \brief Prepares an existing Lua environment for use by the host.
+     * \param env The environment to prepare.
      */
-    std::expected<std::shared_ptr<LuaEnvironment>, std::string> create(
-        const std::filesystem::path &path, const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback);
+    void add(const std::shared_ptr<LuaEnvironment> &env);
 
     /**
      * \return All active Lua environments.

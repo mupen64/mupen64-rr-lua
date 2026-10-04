@@ -8,11 +8,7 @@
 
 #include <Common.Views/ActionManager.hpp>
 #include <SDL3/SDL_keycode.h>
-
 #include <lua/presenters/Presenter.hpp>
-#include <memory>
-
-class LuaEnvironment;
 
 struct ActionParamMeta
 {
