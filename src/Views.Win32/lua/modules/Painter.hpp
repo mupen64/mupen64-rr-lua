@@ -252,6 +252,7 @@ inline D2D1::Matrix3x2F to_matrix(const D2D1_MATRIX_3X2_F &matrix)
 struct StateSnapshot
 {
     D2D1::Matrix3x2F transform = D2D1::Matrix3x2F::Identity();
+    float alpha{1.0f};
     size_t clip_depth{};
 };
 
@@ -262,6 +263,7 @@ struct Painter
     bool active{};
 
     D2D1::Matrix3x2F transform = D2D1::Matrix3x2F::Identity();
+    float alpha{1.0f};
     std::vector<StateSnapshot> states;
 
     std::vector<D2D1_RECT_F> clips;
@@ -1339,8 +1341,10 @@ inline void emit_path_command(Painter *painter, CommandType type, const D2D1_COL
     command.type = type;
     command.path.transform = {painter->transform._11, painter->transform._12, painter->transform._21,
         painter->transform._22, painter->transform._31, painter->transform._32};
-    command.path.color = color;
-    command.path.brush = intern_brush(painter, color);
+    auto draw_color = color;
+    draw_color.a *= painter->alpha;
+    command.path.color = draw_color;
+    command.path.brush = intern_brush(painter, draw_color);
     command.path.stroke = stroke;
     command.path.path = static_cast<UINT32>(painter->paths.size());
     painter->paths.push_back({painter->path_ops, painter->path_texts});
@@ -1584,10 +1588,25 @@ inline int painter_set_transform(lua_State *L)
     return 0;
 }
 
+inline int painter_get_alpha(lua_State *L)
+{
+    const auto *painter = check_painter(L, 1);
+    lua_pushnumber(L, painter->alpha);
+    return 1;
+}
+
+inline int painter_set_alpha(lua_State *L)
+{
+    auto *painter = check_painter(L, 1);
+    const float alpha = check_painter_number(L, 2, "alpha");
+    painter->alpha = std::isfinite(alpha) ? std::clamp(alpha, 0.0f, 1.0f) : 1.0f;
+    return 0;
+}
+
 inline int painter_save(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    painter->states.push_back({painter->transform, painter->clips.size()});
+    painter->states.push_back({painter->transform, painter->alpha, painter->clips.size()});
     return 0;
 }
 
@@ -1605,6 +1624,7 @@ inline int painter_restore(lua_State *L)
         painter->commands.push_back(std::move(command));
     }
     painter->transform = state.transform;
+    painter->alpha = state.alpha;
     return 0;
 }
 
@@ -1825,7 +1845,7 @@ inline int painter_image(lua_State *L)
 
     ImagePayload image_payload{};
     image_payload.tint = tint;
-    image_payload.opacity = opacity;
+    image_payload.opacity = opacity * painter->alpha;
     image_payload.interpolation = interpolation;
     image_payload.tinted = tinted;
     const auto add_slice = [&](const ImageSlice &slice) { image_payload.slices[image_payload.slice_count++] = slice; };
@@ -2632,7 +2652,8 @@ inline void register_types(lua_State *L)
         {"line_to", Detail::painter_line_to}, {"cubic_to", Detail::painter_cubic_to},
         {"quadratic_to", Detail::painter_quadratic_to}, {"arc", Detail::painter_arc},
         {"close_path", Detail::painter_close_path}, {"get_transform", Detail::painter_get_transform},
-        {"set_transform", Detail::painter_set_transform}, {"save", Detail::painter_save},
+        {"set_transform", Detail::painter_set_transform}, {"get_alpha", Detail::painter_get_alpha},
+        {"set_alpha", Detail::painter_set_alpha}, {"save", Detail::painter_save},
         {"restore", Detail::painter_restore}, {"clip", Detail::painter_clip}, {"translate", Detail::painter_translate},
         {"rotate", Detail::painter_rotate}, {"scale", Detail::painter_scale}, {"stroke", Detail::painter_stroke},
         {"fill", Detail::painter_fill}, {"text", Detail::painter_text}, {"rect", Detail::painter_rect},

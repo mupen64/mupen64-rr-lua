@@ -397,6 +397,67 @@ custom_row("image", "image(image, destination, options)", {
     },
 })
 
+custom_row("global alpha", "get_alpha() / set_alpha(alpha)", {
+    {
+        caption = "filled + stroked primitives",
+        draw = function(q, x, y)
+            local time = os.clock()
+            local alpha = 0.15 + 0.85 * (0.5 + 0.5 * math.sin(time * 1.5))
+            q:save()
+            q:set_alpha(alpha)
+            q:begin_path()
+            q:rect(rect(x + 32, y + 24, 54, 48))
+            q:fill(colors.orange)
+            q:begin_path()
+            q:circle(rect(x + 73, y + 34, 50, 50))
+            q:fill(colors.green)
+            q:begin_path()
+            q:round_rect(rect(x + 48, y + 20, 92, 66), 10)
+            q:stroke(colors.blue, { width = 4 })
+            local current_alpha = q:get_alpha()
+            q:restore()
+            draw_text(q, string.format("alpha %.2f", current_alpha),
+                rect(x + 14, y + 91, 157, 14), label_style, colors.muted)
+        end,
+    },
+    {
+        caption = "text",
+        draw = function(q, x, y)
+            local time = os.clock()
+            local alpha = 0.15 + 0.85 * (0.5 + 0.5 * math.sin(time * 1.5))
+            q:begin_path()
+            q:round_rect(rect(x + 24, y + 21, 137, 61), 8)
+            q:fill(color(0.22, 0.25, 0.29))
+            q:save()
+            q:set_alpha(alpha)
+            draw_text(q, "Painter alpha", rect(x + 31, y + 31, 125, 24),
+                { size = 16, weight = 700, align_x = "center" }, colors.text)
+            draw_text(q, "text fades over the panel", rect(x + 30, y + 57, 127, 16),
+                { size = 9, align_x = "center" }, colors.blue)
+            local current_alpha = q:get_alpha()
+            q:restore()
+            draw_text(q, string.format("alpha %.2f", current_alpha),
+                rect(x + 14, y + 91, 157, 14), label_style, colors.muted)
+        end,
+    },
+    {
+        caption = "image",
+        draw = function(q, x, y)
+            local time = os.clock()
+            local alpha = 0.15 + 0.85 * (0.5 + 0.5 * math.sin(time * 1.5))
+            q:image(generated, rect(x + 17, y + 27, 64, 42))
+            q:save()
+            q:set_alpha(alpha)
+            q:image(generated, rect(x + 103, y + 27, 64, 42))
+            local current_alpha = q:get_alpha()
+            q:restore()
+            draw_text(q, "opaque", rect(x + 17, y + 74, 64, 14), label_style, colors.muted)
+            draw_text(q, string.format("alpha %.2f", current_alpha),
+                rect(x + 91, y + 74, 88, 14), label_style, colors.muted)
+        end,
+    },
+})
+
 custom_row("render target", "PainterImage:paint(callback)", {
     {
         caption = "nine-sliced image",
