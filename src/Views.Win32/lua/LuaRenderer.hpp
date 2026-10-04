@@ -17,7 +17,7 @@ class TextFactoryCache;
 } // namespace LuaCore::Painter::Detail
 
 /**
- * \brief Holds the rendering state for a Lua environment.
+ * \brief Holds the rendering state for a Lua realm.
  */
 class LuaRenderer
 {

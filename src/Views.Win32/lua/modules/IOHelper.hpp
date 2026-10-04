@@ -15,7 +15,7 @@ namespace LuaCore::IOHelper
 // IO
 static int LuaFileDialog(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     BetterEmulationLock lock;
     WindowDisabler disabler(LuaDialog::hwnd());

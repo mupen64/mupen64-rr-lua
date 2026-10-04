@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <lua/LuaEnvironmentManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 
 /**
  * \brief A module responsible for implementing the Lua manager dialog and related functionality.
@@ -50,11 +50,11 @@ void store_running_scripts();
 void load_running_scripts();
 
 /**
- * \brief Prints text to the console associated with a Lua environment.
- * \param ctx The Lua environment to print to.
+ * \brief Prints text to the console associated with a Lua realm.
+ * \param ctx The Lua realm to print to.
  * \param text The text to print.
  */
-void print(const LuaEnvironment &ctx, const std::string &text);
+void print(const LuaRealm &ctx, const std::string &text);
 
 /**
  * \brief Gets the handle of the Lua manager dialog window, or nullptr if the dialog is not open.

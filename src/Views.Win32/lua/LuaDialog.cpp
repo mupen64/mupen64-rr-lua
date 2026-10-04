@@ -8,7 +8,7 @@
 #include <Common.Views/Messages.hpp>
 #include <components/FilePicker.hpp>
 #include <components/ReorderableListView.hpp>
-#include <lua/LuaEnvironmentManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 #include <lua/LuaDialog.hpp>
 
 // wParam: either nullptr, or a pointer to a InstanceContext whose running state has changed
@@ -21,7 +21,7 @@ struct InstanceContext
     HWND hwnd{};
     std::filesystem::path typed_path{};
     std::string logs{};
-    std::shared_ptr<LuaEnvironment> env{};
+    std::shared_ptr<LuaRealm> env{};
 
     [[nodiscard]] bool trusted() const { return g_config.trusted_lua_paths.contains(typed_path.string()); }
 };
@@ -39,7 +39,7 @@ struct DialogState
 static DialogState g_dlg{};
 static std::vector<std::shared_ptr<InstanceContext>> g_lua_instance_wnd_ctxs{};
 
-static InstanceContext *get_instance_context(const LuaEnvironment *env)
+static InstanceContext *get_instance_context(const LuaRealm *env)
 {
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
     {
@@ -116,7 +116,7 @@ static void print(InstanceContext &ctx, const std::string &text)
 }
 
 /**
- * \brief Stops the Lua environment associated with the given context if it exists.
+ * \brief Stops the Lua realm associated with the given context if it exists.
  */
 static void stop(InstanceContext &ctx)
 {
@@ -130,14 +130,14 @@ static void stop(InstanceContext &ctx)
 }
 
 /**
- * \brief Starts a Lua environment for the given context using the specified script path.
+ * \brief Starts a Lua realm for the given context using the specified script path.
  */
 static void start(InstanceContext &ctx, const std::filesystem::path &path)
 {
     stop(ctx);
 
-    ctx.env = LuaEnvironment::create(path,
-        [](const LuaEnvironment *env) {
+    ctx.env = LuaRealm::create(path,
+        [](const LuaRealm *env) {
             const auto ctx = get_instance_context(env);
 
             if (ctx)
@@ -148,7 +148,7 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 
             PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
         },
-        [](const LuaEnvironment *env, const std::string &text) {
+        [](const LuaRealm *env, const std::string &text) {
             const auto ctx = get_instance_context(env);
             if (!ctx)
             {
@@ -157,7 +157,7 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 
             print(*ctx, text);
         });
-    LuaEnvironmentManager::instance().add(ctx.env);
+    LuaRealmManager::instance().add(ctx.env);
 
     const auto start_result = ctx.env->start(ctx.trusted());
 
@@ -735,9 +735,9 @@ void LuaDialog::load_running_scripts()
     g_dlg.stored_contexts.clear();
 }
 
-void LuaDialog::print(const LuaEnvironment &ctx, const std::string &text)
+void LuaDialog::print(const LuaRealm &ctx, const std::string &text)
 {
-    // Find the context for the given Lua environment
+    // Find the context for the given Lua realm
     for (const auto &wnd_ctx : g_lua_instance_wnd_ctxs)
     {
         if (!wnd_ctx->env || wnd_ctx->env.get() != &ctx)

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <lua/LuaEnvironmentManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 #include <lua/LuaRenderer.hpp>
 
 namespace LuaCore::Wgui
@@ -175,7 +175,7 @@ static std::optional<CLSID> get_encoder_clsid_for_extension(const std::string_vi
 
 static int GetGUIInfo(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     RECT rect;
     GetClientRect(g_main_ctx.hwnd, &rect);
@@ -192,7 +192,7 @@ static int ResizeWindow(lua_State *L)
 {
     need(is_on_gui_thread(), "ResizeWindow must be called on the GUI thread");
 
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     RECT clientRect, wndRect;
     GetWindowRect(g_main_ctx.hwnd, &wndRect);
@@ -244,7 +244,7 @@ static COLORREF StrToColor(const std::string &s, bool alpha = false, COLORREF de
 
 static int set_brush(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     if (lua->renderer.brush)
     {
@@ -262,7 +262,7 @@ static int set_brush(lua_State *L)
 
 static int set_pen(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     if (lua->renderer.pen)
     {
@@ -282,14 +282,14 @@ static int set_pen(lua_State *L)
 
 static int set_text_color(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.col = StrToColor(lua_tostring(L, 1));
     return 0;
 }
 
 static int SetBackgroundColor(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     auto s = std::string(lua_tostring(L, 1));
 
@@ -308,7 +308,7 @@ static int SetBackgroundColor(lua_State *L)
 
 static int SetFont(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     LOGFONT font = {0};
 
     if (lua->renderer.font)
@@ -355,7 +355,7 @@ static int SetFont(lua_State *L)
 
 static int LuaTextOut(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     SetBkMode(lua->renderer.gdi_back_dc, lua->renderer.bkmode);
@@ -413,7 +413,7 @@ static bool GetRectLua(lua_State *L, int idx, RECT *rect)
 
 static int GetTextExtent(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     auto string = std::string(luaL_checkstring(L, 1));
 
     SelectObject(lua->renderer.gdi_back_dc, lua->renderer.font);
@@ -431,7 +431,7 @@ static int GetTextExtent(lua_State *L)
 
 static int LuaDrawText(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     SetBkMode(lua->renderer.gdi_back_dc, lua->renderer.bkmode);
@@ -490,7 +490,7 @@ static int LuaDrawText(lua_State *L)
 
 static int LuaDrawTextAlt(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     SetBkMode(lua->renderer.gdi_back_dc, lua->renderer.bkmode);
@@ -512,7 +512,7 @@ static int LuaDrawTextAlt(lua_State *L)
 
 static int DrawRect(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     int left = luaL_checknumber(L, 1);
@@ -530,7 +530,7 @@ static int DrawRect(lua_State *L)
 
 static int LuaLoadImage(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     const std::string path = luaL_checkstring(L, 1);
     const auto wpath = IOUtils::to_wide_string(path);
 
@@ -550,7 +550,7 @@ static int LuaLoadImage(lua_State *L)
 
 static int DeleteImage(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     size_t key = luaL_checkinteger(L, 1);
 
     if (key == 0)
@@ -579,7 +579,7 @@ static int DeleteImage(lua_State *L)
 
 static int save_image(lua_State *L)
 {
-    const auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    const auto lua = LuaRealmManager::instance().get_by_state(L);
     const auto key = luaL_checkinteger(L, 1);
     const std::filesystem::path path = luaL_checkstlstring(L, 2);
 
@@ -605,7 +605,7 @@ static int save_image(lua_State *L)
 
 static int DrawImage(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     size_t key = luaL_checkinteger(L, 1);
@@ -700,7 +700,7 @@ static int DrawImage(lua_State *L)
 
 static int LoadScreen(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     // Copy screen into the loadscreen dc
     auto dc = GetDC(g_main_ctx.hwnd);
@@ -718,14 +718,14 @@ static int LoadScreen(lua_State *L)
 
 static int LoadScreenReset(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.loadscreen_reset();
     return 0;
 }
 
 static int GetImageInfo(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     size_t key = luaL_checkinteger(L, 1);
 
     if (!lua->renderer.image_pool.contains(key))
@@ -750,7 +750,7 @@ static int GetImageInfo(lua_State *L)
 static int FillPolygonAlpha(lua_State *L)
 {
     // Get lua instance stored in script class
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     // stack should look like
@@ -810,7 +810,7 @@ static int FillPolygonAlpha(lua_State *L)
 
 static int FillEllipseAlpha(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     int x = luaL_checknumber(L, 1);
     int y = luaL_checknumber(L, 2);
@@ -828,7 +828,7 @@ static int FillEllipseAlpha(lua_State *L)
 
 static int FillRectAlpha(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     int x = luaL_checknumber(L, 1);
@@ -847,7 +847,7 @@ static int FillRectAlpha(lua_State *L)
 
 static int FillRect(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     COLORREF color = RGB(luaL_checknumber(L, 5), luaL_checknumber(L, 6), luaL_checknumber(L, 7));
@@ -864,7 +864,7 @@ static int FillRect(lua_State *L)
 
 static int DrawEllipse(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     SelectObject(lua->renderer.gdi_back_dc, lua->renderer.brush);
@@ -881,7 +881,7 @@ static int DrawEllipse(lua_State *L)
 
 static int DrawPolygon(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     POINT p[0x100];
@@ -914,7 +914,7 @@ static int DrawPolygon(lua_State *L)
 
 static int DrawLine(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua->renderer.mark_gdi_content_present();
 
     SelectObject(lua->renderer.gdi_back_dc, lua->renderer.pen);
@@ -925,7 +925,7 @@ static int DrawLine(lua_State *L)
 
 static int SetClip(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     auto rgn = CreateRectRgn(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2),
         luaL_checkinteger(L, 1) + luaL_checkinteger(L, 3), luaL_checkinteger(L, 2) + luaL_checkinteger(L, 4));
@@ -936,7 +936,7 @@ static int SetClip(lua_State *L)
 
 static int ResetClip(lua_State *L)
 {
-    auto lua = LuaEnvironmentManager::instance().get_by_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     SelectClipRgn(lua->renderer.gdi_back_dc, NULL);
     return 0;

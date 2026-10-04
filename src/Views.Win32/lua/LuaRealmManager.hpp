@@ -7,24 +7,24 @@
 #pragma once
 
 #include <Core/Types.hpp>
-#include <lua/LuaEnvironment.hpp>
+#include <lua/LuaRealm.hpp>
 
-class LuaEnvironmentManager
+class LuaRealmManager
 {
   private:
-    LuaEnvironmentManager();
+    LuaRealmManager();
 
-    std::vector<std::shared_ptr<LuaEnvironment>> m_environments;
-    std::unordered_map<lua_State *, LuaEnvironment *> m_environment_by_state;
+    std::vector<std::shared_ptr<LuaRealm>> m_realms;
+    std::unordered_map<lua_State *, LuaRealm *> m_realm_by_state;
 
     std::unordered_map<uint8_t, std::atomic<size_t>> m_callback_count_map;
 
-    void rebuild_environment_map();
-    void add_environment(std::shared_ptr<LuaEnvironment> env);
-    void remove_environment(const LuaEnvironment *env);
+    void rebuild_realm_map();
+    void add_realm(std::shared_ptr<LuaRealm> env);
+    void remove_realm(const LuaRealm *env);
     void register_functions(lua_State *L);
 
-    friend class LuaEnvironment;
+    friend class LuaRealm;
 
   public:
     enum callback_key : uint8_t
@@ -52,12 +52,12 @@ class LuaEnvironmentManager
         _COUNT,
     };
 
-    LuaEnvironmentManager(const LuaEnvironmentManager &) = delete;
-    LuaEnvironmentManager &operator=(const LuaEnvironmentManager &) = delete;
-    LuaEnvironmentManager(LuaEnvironmentManager &&) = delete;
-    LuaEnvironmentManager &operator=(LuaEnvironmentManager &&) = delete;
+    LuaRealmManager(const LuaRealmManager &) = delete;
+    LuaRealmManager &operator=(const LuaRealmManager &) = delete;
+    LuaRealmManager(LuaRealmManager &&) = delete;
+    LuaRealmManager &operator=(LuaRealmManager &&) = delete;
 
-    static LuaEnvironmentManager &instance();
+    static LuaRealmManager &instance();
 
     // The modified control data to be pushed the next frame.
     CoreButtons new_controller_data[4];
@@ -69,34 +69,34 @@ class LuaEnvironmentManager
     size_t input_count = 0;
 
     /**
-     * \brief Prepares an existing Lua environment for use by the host.
-     * \param env The environment to prepare.
+     * \brief Prepares an existing Lua realm for use by the manager.
+     * \param env The realm to prepare.
      */
-    void add(const std::shared_ptr<LuaEnvironment> &env);
+    void add(const std::shared_ptr<LuaRealm> &env);
 
     /**
-     * \return All active Lua environments.
+     * \return All active Lua realms.
      */
-    const std::vector<std::shared_ptr<LuaEnvironment>> &envs() const;
+    const std::vector<std::shared_ptr<LuaRealm>> &realms() const;
 
     /**
-     * \return The Lua environment associated with the specified Lua state, or nullptr if none is found.
+     * \return The Lua realm associated with the specified Lua state, or nullptr if none is found.
      */
-    LuaEnvironment *get_by_state(lua_State *lua_state) const;
+    LuaRealm *get_by_state(lua_State *lua_state) const;
 
     /**
-     * \brief Calls the specified callback key on the given Lua environment.
-     * \param env The Lua environment to call the callback on.
+     * \brief Calls the specified callback key on the given Lua realm.
+     * \param env The Lua realm to call the callback on.
      * \param key The callback key to invoke.
      * \param function Invokes the Lua function on the stack, supplying any event arguments.
      * \return True if the callback was successfully invoked, false otherwise.
      */
     bool call_by_key(
-        const LuaEnvironment *env, callback_key key,
+        const LuaRealm *env, callback_key key,
         const std::function<int(lua_State *)> &function = [](lua_State *l) { return lua_pcall(l, 0, 0, 0); });
 
     /**
-     * \brief Calls the specified callback key on all active Lua environments.
+     * \brief Calls the specified callback key on all active Lua realms.
      * \param key The callback key to invoke.
      * \param function Invokes the Lua function on the stack, supplying any event arguments.
      */

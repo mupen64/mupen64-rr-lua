@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <Common.Views/IDialogService.hpp>
 #include <components/Statusbar.hpp>
-#include <lua/LuaEnvironmentManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaRendererManager.hpp>
 #include <lua/modules/Painter.hpp>
@@ -19,7 +19,7 @@ void LuaRendererManager::set_overlay_visibility(bool visible)
 {
     if (!m_detached_overlays) return;
 
-    for (const auto &lua : LuaEnvironmentManager::instance().envs())
+    for (const auto &lua : LuaRealmManager::instance().realms())
     {
         const auto set_window_visibility = [&](HWND hwnd) {
             if (!IsWindow(hwnd)) return;
@@ -64,8 +64,8 @@ void LuaRendererManager::draw(bool force)
 {
     const auto now = std::chrono::steady_clock::now();
 
-    std::vector<std::shared_ptr<LuaEnvironment>> to_destroy;
-    for (const auto &lua : LuaEnvironmentManager::instance().envs())
+    std::vector<std::shared_ptr<LuaRealm>> to_destroy;
+    for (const auto &lua : LuaRealmManager::instance().realms())
     {
         const auto time_since_last_render =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - lua->renderer.last_render_time).count();
@@ -78,11 +78,11 @@ void LuaRendererManager::draw(bool force)
         bool success = true;
 
         success &=
-            LuaEnvironmentManager::instance().call_by_key(lua.get(), LuaEnvironmentManager::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback);
+            LuaRealmManager::instance().call_by_key(lua.get(), LuaRealmManager::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback);
         if (lua->renderer.presenter) lua->renderer.presenter->present();
 
         // GDI Graphics. Ugh.
-        success &= LuaEnvironmentManager::instance().call_by_key(lua.get(), LuaEnvironmentManager::REG_ATUPDATESCREEN);
+        success &= LuaRealmManager::instance().call_by_key(lua.get(), LuaRealmManager::REG_ATUPDATESCREEN);
 
         if (lua->renderer.has_gdi_content())
         {
@@ -144,7 +144,7 @@ void LuaRendererManager::resize(uint32_t width, uint32_t height)
     width = std::max(width, 1u);
     height = std::max(height, 1u);
 
-    for (const auto &lua : LuaEnvironmentManager::instance().envs())
+    for (const auto &lua : LuaRealmManager::instance().realms())
     {
         if (lua->renderer.dc_size.width == width && lua->renderer.dc_size.height == height) continue;
 
@@ -180,7 +180,7 @@ LRESULT CALLBACK LuaRendererManager::overlay_wndproc(HWND hwnd, UINT msg, WPARAM
 }
 
 // Moves and orders the specified overlay windows to be on top of the main window.
-// If no hwnds are provided, all overlay windows from all Lua environments are updated.
+// If no hwnds are provided, all overlay windows from all Lua realms are updated.
 void LuaRendererManager::move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds)
 {
     if (!m_detached_overlays) return;
@@ -190,7 +190,7 @@ void LuaRendererManager::move_and_order_overlays(const std::optional<std::vector
         wnds = *hwnds;
     else
     {
-        for (const auto &lua : LuaEnvironmentManager::instance().envs())
+        for (const auto &lua : LuaRealmManager::instance().realms())
         {
             wnds.push_back(lua->renderer.gdi_overlay_hwnd());
             wnds.push_back(lua->renderer.d2d_overlay_hwnd());
@@ -344,7 +344,7 @@ void LuaRenderer::initialize()
     m_d2d_overlay_hwnd = CreateWindowEx(ex_style, LuaRendererManager::overlay_class(), "", style, 0, 0, dc_size.width,
         dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
-    // This renderer's environment isn't in LuaEnvironmentManager::instance().envs() yet, so provide its hwnds manually.
+    // This renderer's realm isn't in LuaRealmManager::instance().realms() yet, so provide its hwnds manually.
     LuaRendererManager::instance().move_and_order_overlays(std::vector<HWND>{m_gdi_overlay_hwnd, m_d2d_overlay_hwnd});
 
     // Put these over the MGE compositor.
@@ -458,7 +458,7 @@ void LuaRenderer::set_target_fps(std::optional<float> fps)
 
 void LuaRendererManager::blit_all(HDC hdc)
 {
-    for (const auto &lua : LuaEnvironmentManager::instance().envs())
+    for (const auto &lua : LuaRealmManager::instance().realms())
     {
         if (!lua->renderer.presenter) continue;
 
@@ -466,7 +466,7 @@ void LuaRendererManager::blit_all(HDC hdc)
         lua->renderer.presenter->blit(hdc, {0, 0, (LONG)presenter_size.width, (LONG)presenter_size.height});
     }
 
-    for (const auto &lua : LuaEnvironmentManager::instance().envs())
+    for (const auto &lua : LuaRealmManager::instance().realms())
     {
         if (!lua->renderer.has_gdi_content()) continue;
 

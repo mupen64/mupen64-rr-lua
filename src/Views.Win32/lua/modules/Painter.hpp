@@ -10,7 +10,7 @@
 #include <Common.Win32/WinUtils.hpp>
 #include <Common/Assert.hpp>
 #include <Common/LRUCache.hpp>
-#include <lua/LuaEnvironmentManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 #include <lua/LuaRenderer.hpp>
 
 #include <algorithm>
@@ -391,8 +391,8 @@ inline D2D1_RECT_F check_rect(lua_State *L, int index)
 
 inline LuaRenderer *check_context(lua_State *L)
 {
-    auto *environment = LuaEnvironmentManager::instance().get_by_state(L);
-    if (!environment) luaL_error(L, "painter is unavailable outside a Lua environment");
+    auto *environment = LuaRealmManager::instance().get_by_state(L);
+    if (!environment) luaL_error(L, "painter is unavailable outside a Lua realm");
     environment->renderer.ensure_d2d_renderer_created();
     auto *context = &environment->renderer;
     if (!context->presenter || context->d2d_render_target_stack.empty() || !context->d2d_render_target_stack.top())
@@ -1107,7 +1107,7 @@ class TextFactoryCache
 
 inline TextFactoryCache *get_text_factory_cache(lua_State *L)
 {
-    auto *environment = LuaEnvironmentManager::instance().get_by_state(L);
+    auto *environment = LuaRealmManager::instance().get_by_state(L);
     if (!environment) return nullptr;
     auto &cache = environment->renderer.painter_text_factory;
     if (!cache) cache = std::make_shared<TextFactoryCache>();
@@ -2254,8 +2254,8 @@ inline int current(lua_State *L)
 
 inline int get_target_fps(lua_State *L)
 {
-    auto *environment = LuaEnvironmentManager::instance().get_by_state(L);
-    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua environment");
+    auto *environment = LuaRealmManager::instance().get_by_state(L);
+    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua realm");
     if (environment->renderer.target_fps().has_value())
         lua_pushnumber(L, environment->renderer.target_fps().value());
     else
@@ -2265,8 +2265,8 @@ inline int get_target_fps(lua_State *L)
 
 inline int set_target_fps(lua_State *L)
 {
-    auto *environment = LuaEnvironmentManager::instance().get_by_state(L);
-    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua environment");
+    auto *environment = LuaRealmManager::instance().get_by_state(L);
+    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua realm");
     std::optional<float> fps;
     if (!lua_isnoneornil(L, 1)) fps = static_cast<float>(luaL_checknumber(L, 1));
     environment->renderer.set_target_fps(fps);
@@ -2383,7 +2383,7 @@ inline int measure_text(lua_State *L)
 
     const DWRITE_WORD_WRAPPING wrapping = Detail::parse_wrap(L, wrap);
     Detail::TextMeasurementCache *measurement_cache = nullptr;
-    if (auto *environment = LuaEnvironmentManager::instance().get_by_state(L))
+    if (auto *environment = LuaRealmManager::instance().get_by_state(L))
     {
         auto &cache = environment->renderer.painter_text_measurements;
         if (!cache) cache = std::make_shared<Detail::TextMeasurementCache>();

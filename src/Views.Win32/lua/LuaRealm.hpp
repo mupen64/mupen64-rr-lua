@@ -10,47 +10,47 @@
 #include <lua/LuaRenderer.hpp>
 #include <lua.h>
 
-class LuaEnvironment;
+class LuaRealm;
 
-using LuaStoppingFn = std::function<void(const LuaEnvironment *env)>;
-using LuaPrintFn = std::function<void(const LuaEnvironment *env, const std::string &text)>;
+using LuaStoppingFn = std::function<void(const LuaRealm *env)>;
+using LuaPrintFn = std::function<void(const LuaRealm *env, const std::string &text)>;
 
 /**
  * \brief Describes a Lua instance.
  */
-class LuaEnvironment : public std::enable_shared_from_this<LuaEnvironment>
+class LuaRealm : public std::enable_shared_from_this<LuaRealm>
 {
   private:
     lua_State *m_l;
     std::filesystem::path m_path;
     bool m_started{};
 
-    LuaEnvironment(const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print);
+    LuaRealm(const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print);
 
   public:
-    static std::shared_ptr<LuaEnvironment> create(
+    static std::shared_ptr<LuaRealm> create(
         const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print);
-    ~LuaEnvironment();
+    ~LuaRealm();
 
-    LuaEnvironment(const LuaEnvironment &) = delete;
-    LuaEnvironment &operator=(const LuaEnvironment &) = delete;
-    LuaEnvironment(LuaEnvironment &&) = delete;
-    LuaEnvironment &operator=(LuaEnvironment &&) = delete;
+    LuaRealm(const LuaRealm &) = delete;
+    LuaRealm &operator=(const LuaRealm &) = delete;
+    LuaRealm(LuaRealm &&) = delete;
+    LuaRealm &operator=(LuaRealm &&) = delete;
 
     /**
-     * \brief Starts the Lua environment.
-     * \param trusted Whether the environment is exempt from the Lua sandbox.
-     * \return An error message if the environment could not be started, otherwise nothing.
+     * \brief Starts the Lua realm.
+     * \param trusted Whether the realm is exempt from the Lua sandbox.
+     * \return An error message if the realm could not be started, otherwise nothing.
      */
     std::expected<void, std::string> start(bool trusted);
 
     /**
-     * \brief Stops the Lua environment.
+     * \brief Stops the Lua realm.
      */
     void stop();
 
     /**
-     * \brief Registers or unregisters a function in the Lua environment.
+     * \brief Registers or unregisters a function in the Lua realm.
      * The Lua stack must contain the function at the top and the registration bool below it.
      * \param key The key of the function to register or unregister.
      */

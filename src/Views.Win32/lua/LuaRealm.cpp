@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <Common.Views/ActionManager.hpp>
-#include <lua/LuaEnvironmentManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 #include <lua/LuaRendererManager.hpp>
 
 static const std::string &mupen_api_lua_code()
@@ -27,19 +27,19 @@ static const std::string &sandbox_lua_code()
     return code;
 }
 
-LuaEnvironment::LuaEnvironment(const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print)
+LuaRealm::LuaRealm(const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print)
     : m_l(luaL_newstate()), m_path(path), stopping(std::move(stopping)), print(std::move(print))
 {
-    need(is_on_gui_thread(), "LuaEnvironment constructor must be called on the GUI thread");
+    need(is_on_gui_thread(), "LuaRealm constructor must be called on the GUI thread");
 }
 
-std::shared_ptr<LuaEnvironment> LuaEnvironment::create(
+std::shared_ptr<LuaRealm> LuaRealm::create(
     const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print)
 {
-    return std::shared_ptr<LuaEnvironment>(new LuaEnvironment(path, std::move(stopping), std::move(print)));
+    return std::shared_ptr<LuaRealm>(new LuaRealm(path, std::move(stopping), std::move(print)));
 }
 
-LuaEnvironment::~LuaEnvironment()
+LuaRealm::~LuaRealm()
 {
     if (m_l)
     {
@@ -49,17 +49,17 @@ LuaEnvironment::~LuaEnvironment()
     }
 }
 
-std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
+std::expected<void, std::string> LuaRealm::start(const bool trusted)
 {
     const auto env = shared_from_this();
 
     if (env->m_started)
     {
-        return std::unexpected("Lua environment already started");
+        return std::unexpected("Lua realm already started");
     }
 
-    // Register before executing user code so API calls can find this environment.
-    LuaEnvironmentManager::instance().add_environment(env);
+    // Register before executing user code so API calls can find this realm.
+    LuaRealmManager::instance().add_realm(env);
 
     bool has_error = false;
 
@@ -69,7 +69,7 @@ std::expected<void, std::string> LuaEnvironment::start(const bool trusted)
         goto fail;
     }
 
-    LuaEnvironmentManager::instance().register_functions(env->l());
+    LuaRealmManager::instance().register_functions(env->l());
 
     if (luaL_dostring(env->l(), inspect_lua_code().c_str()))
     {
@@ -110,12 +110,12 @@ fail:
     return {};
 }
 
-void LuaEnvironment::stop()
+void LuaRealm::stop()
 {
     const auto env = shared_from_this();
-    need(env->l(), "LuaEnvironment::stop: Lua environment is already stopped");
+    need(env->l(), "LuaRealm::stop: Lua realm is already stopped");
 
-    LuaEnvironmentManager::instance().call_by_key(env.get(), LuaEnvironmentManager::REG_ATSTOP);
+    LuaRealmManager::instance().call_by_key(env.get(), LuaRealmManager::REG_ATSTOP);
 
     env->stopping(env.get());
 
@@ -139,7 +139,7 @@ void LuaEnvironment::stop()
         lua_freecallback(env->l(), callback);
     }
 
-    for (auto &[key, count] : LuaEnvironmentManager::instance().m_callback_count_map)
+    for (auto &[key, count] : LuaRealmManager::instance().m_callback_count_map)
     {
         lua_rawgeti(env->l(), LUA_REGISTRYINDEX, key);
         if (lua_isnil(env->l(), -1))
@@ -151,7 +151,7 @@ void LuaEnvironment::stop()
         const int n = luaL_len(env->l(), -1);
         g_view_logger->trace(L"Unsubscribing {} functions of key {}...", n, static_cast<int>(key));
 
-        LuaEnvironmentManager::instance().m_callback_count_map[key] -= n;
+        LuaRealmManager::instance().m_callback_count_map[key] -= n;
 
         lua_newtable(env->l());
         lua_rawseti(env->l(), LUA_REGISTRYINDEX, key);
@@ -159,7 +159,7 @@ void LuaEnvironment::stop()
         lua_pop(env->l(), 0);
     }
 
-    LuaEnvironmentManager::instance().remove_environment(env.get());
+    LuaRealmManager::instance().remove_realm(env.get());
     env->renderer.shutdown();
 
     g_view_logger->info("Lua destroyed");
