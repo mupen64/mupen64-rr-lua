@@ -37,6 +37,7 @@ LuaEnvironment::~LuaEnvironment()
 {
     if (m_l)
     {
+        lua_freecallbacks(m_l);
         lua_close(m_l);
         m_l = nullptr;
     }
