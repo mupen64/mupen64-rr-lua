@@ -1651,10 +1651,19 @@ function Painter:arc(x, y, radius, start_angle, end_angle, ccw) end
 ---Does nothing if the subpath is empty or already closed. This closes the subpath only. Later primitives start a new subpath.
 function Painter:close_path() end
 
----Saves the current transform.
+---Returns the current global drawing alpha. Defaults to 1.
+---@nodiscard
+---@return number alpha
+function Painter:get_alpha() end
+
+---Sets the global drawing alpha, which multiplies the alpha of subsequent drawing operations.
+---@param alpha number The global alpha. Finite values are clamped to [0, 1]; non-finite values are treated as 1.
+function Painter:set_alpha(alpha) end
+
+---Saves the current transform, alpha, and clip state.
 function Painter:save() end
 
----Restores the last transform.
+---Restores the last saved transform, alpha, and clip state.
 function Painter:restore() end
 
 ---Merges `rect` with the current clip.
