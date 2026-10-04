@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <Common.Views/ActionManager.hpp>
 #include <lua/LuaHost.hpp>
-#include <lua/LuaRenderer.hpp>
+#include <lua/LuaRendererManager.hpp>
 
 static const std::string &mupen_api_lua_code()
 {

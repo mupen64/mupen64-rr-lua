@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <Common.Views/IDialogService.hpp>
 #include <lua/LuaHost.hpp>
-#include <lua/LuaRenderer.hpp>
+#include <lua/LuaRendererManager.hpp>
 
 LuaHost &LuaHost::instance()
 {
@@ -47,8 +47,8 @@ void LuaHost::remove_environment(const LuaEnvironment *env)
     rebuild_environment_map();
 }
 
-std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaHost::create(const std::filesystem::path &path,
-    const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback)
+std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaHost::create(
+    const std::filesystem::path &path, const LuaDestroyFn &destroying_callback, const LuaPrintFn &print_callback)
 {
     need(is_on_gui_thread(), "not on GUI thread");
 

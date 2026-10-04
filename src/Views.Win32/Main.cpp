@@ -32,7 +32,7 @@
 #include <components/Statusbar.hpp>
 #include <lua/LuaHost.hpp>
 
-#include <lua/LuaRenderer.hpp>
+#include <lua/LuaRendererManager.hpp>
 #include <lua/LuaDialog.hpp>
 #include <HotkeyUtils.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -729,7 +729,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         MGECompositor::create(hwnd);
         PianoRoll::init();
         LuaDialog::init();
-        LuaRenderer::init();
+        LuaRendererManager::instance().init();
         SetTimer(hwnd, sdl_timer_id, 1000 / 60, sdl_timer_proc);
         return TRUE;
     case WM_DESTROY:
@@ -738,7 +738,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         return 0;
     case WM_PREDESTROY:
         // This needs the UI thread to still be responsive.
-        LuaRenderer::stop();
+        LuaRendererManager::instance().stop();
         DestroyWindow(hwnd);
         break;
     case WM_CLOSE:
@@ -1225,7 +1225,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     need(SUCCEEDED(hr), "Failed to initialize COM.");
 
     WinDarkMode::init();
-
 
     CrashManager::init();
     MGECompositor::init();

@@ -43,6 +43,7 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "lua/LuaHost.hpp"
 
     "lua/LuaRenderer.hpp"
+    "lua/LuaRendererManager.hpp"
     "lua/LuaDialog.hpp"
     "lua/modules/AVI.hpp"
     "lua/modules/Painter.hpp"

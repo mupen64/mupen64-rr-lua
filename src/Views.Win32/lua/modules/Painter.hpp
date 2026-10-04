@@ -393,7 +393,7 @@ inline LuaRenderer *check_context(lua_State *L)
 {
     auto *environment = LuaHost::instance().get_by_state(L);
     if (!environment) luaL_error(L, "painter is unavailable outside a Lua environment");
-    environment->renderer.mark_d2d_content_present();
+    environment->renderer.ensure_d2d_renderer_created();
     auto *context = &environment->renderer;
     if (!context->presenter || context->d2d_render_target_stack.empty() || !context->d2d_render_target_stack.top())
         luaL_error(L, "Direct2D renderer is unavailable");
