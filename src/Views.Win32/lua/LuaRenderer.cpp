@@ -12,8 +12,6 @@
 #include <lua/modules/Painter.hpp>
 #include <lua/presenters/DCompPresenter.hpp>
 #include <lua/presenters/GDIPresenter.hpp>
-#include <lua/presenters/Presenter.hpp>
-#include "LuaRenderer.hpp"
 #include <Common.Views/Messages.hpp>
 
 const auto OVERLAY_CLASS = "lua_overlay";
@@ -126,14 +124,13 @@ static void draw_lua(bool force)
 
 static UINT get_screen_refresh_rate()
 {
-    static HMONITOR cached_monitor{};
+
     static UINT cached_refresh_rate = 60;
 
     if (!s_refresh_rate_invalidated.exchange(false)) return cached_refresh_rate;
 
     const HMONITOR monitor = MonitorFromWindow(g_main_ctx.hwnd, MONITOR_DEFAULTTONEAREST);
 
-    cached_monitor = monitor;
     cached_refresh_rate = 60;
     MONITORINFOEX monitor_info{};
     monitor_info.cbSize = sizeof(monitor_info);
@@ -228,11 +225,6 @@ static void resize(uint32_t width, uint32_t height)
 
 static LRESULT CALLBACK overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    switch (msg)
-    {
-    default:
-        break;
-    }
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
