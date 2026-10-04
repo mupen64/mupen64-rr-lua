@@ -69,19 +69,6 @@ static LRESULT CALLBACK main_window_subclass_proc(
     return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
-void LuaRenderer::present_gdi_content()
-{
-    SIZE size = {(LONG)dc_size.width, (LONG)dc_size.height};
-    POINT src_pt = {0, 0};
-
-    BLENDFUNCTION bf = {};
-    bf.BlendOp = AC_SRC_OVER;
-    bf.SourceConstantAlpha = 255;
-    bf.AlphaFormat = 0;
-    UpdateLayeredWindow(gdi_overlay_hwnd, nullptr, nullptr, &size, gdi_back_dc, &src_pt,
-        LuaRenderer::lua_gdi_color_mask, &bf, ULW_COLORKEY);
-}
-
 static void draw_lua(bool force)
 {
     const auto now = std::chrono::steady_clock::now();
@@ -163,31 +150,6 @@ static void start_draw_clock()
     s_draw_thread = std::jthread(draw_clock_proc);
 }
 
-void LuaRenderer::create_loadscreen()
-{
-    if (loadscreen_dc)
-    {
-        return;
-    }
-    auto gdi_dc = GetDC(g_main_ctx.hwnd);
-    loadscreen_dc = CreateCompatibleDC(gdi_dc);
-    loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, dc_size.width, dc_size.height);
-    SelectObject(loadscreen_dc, loadscreen_bmp);
-    ReleaseDC(g_main_ctx.hwnd, gdi_dc);
-}
-
-void LuaRenderer::destroy_loadscreen()
-{
-    if (!loadscreen_dc)
-    {
-        return;
-    }
-    SelectObject(loadscreen_dc, nullptr);
-    DeleteDC(loadscreen_dc);
-    DeleteObject(loadscreen_bmp);
-    loadscreen_dc = nullptr;
-}
-
 static void resize(uint32_t width, uint32_t height)
 {
     width = std::max(width, 1u);
@@ -258,6 +220,44 @@ static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnd
     {
         SetWindowPos(hwnd, insert_after, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
     }
+}
+
+void LuaRenderer::present_gdi_content()
+{
+    SIZE size = {(LONG)dc_size.width, (LONG)dc_size.height};
+    POINT src_pt = {0, 0};
+
+    BLENDFUNCTION bf = {};
+    bf.BlendOp = AC_SRC_OVER;
+    bf.SourceConstantAlpha = 255;
+    bf.AlphaFormat = 0;
+    UpdateLayeredWindow(gdi_overlay_hwnd, nullptr, nullptr, &size, gdi_back_dc, &src_pt,
+        LuaRenderer::lua_gdi_color_mask, &bf, ULW_COLORKEY);
+}
+
+void LuaRenderer::create_loadscreen()
+{
+    if (loadscreen_dc)
+    {
+        return;
+    }
+    auto gdi_dc = GetDC(g_main_ctx.hwnd);
+    loadscreen_dc = CreateCompatibleDC(gdi_dc);
+    loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, dc_size.width, dc_size.height);
+    SelectObject(loadscreen_dc, loadscreen_bmp);
+    ReleaseDC(g_main_ctx.hwnd, gdi_dc);
+}
+
+void LuaRenderer::destroy_loadscreen()
+{
+    if (!loadscreen_dc)
+    {
+        return;
+    }
+    SelectObject(loadscreen_dc, nullptr);
+    DeleteDC(loadscreen_dc);
+    DeleteObject(loadscreen_bmp);
+    loadscreen_dc = nullptr;
 }
 
 void LuaRenderer::init()

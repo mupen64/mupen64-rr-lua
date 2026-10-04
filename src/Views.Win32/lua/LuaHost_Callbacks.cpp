@@ -15,12 +15,6 @@
         if (LuaHost::instance().m_callback_count_map.at(key).load() == 0) return;                                      \
     } while (false)
 
-LuaHost::LuaHost()
-{
-    for (uint8_t i = LuaHost::callback_key::REG_LUACLASS; i < LuaHost::callback_key::_COUNT; ++i)
-        m_callback_count_map.emplace(i, 0);
-}
-
 static int invoke_key_callback(lua_State *l, const LuaKeyEventArgs &args)
 {
     lua_newtable(l);
@@ -141,6 +135,61 @@ static int invoke_mouse_callback(lua_State *l, const LuaMouseEventArgs &args)
     }
 
     return lua_pcall(l, 1, 0, 0);
+}
+
+static int register_function(lua_State *L, LuaHost::callback_key key)
+{
+    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
+    if (lua_isnil(L, -1))
+    {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_rawseti(L, LUA_REGISTRYINDEX, key);
+        lua_rawgeti(L, LUA_REGISTRYINDEX, key);
+    }
+    int i = luaL_len(L, -1) + 1;
+    lua_pushinteger(L, i);
+    lua_pushvalue(L, -3); //
+    lua_settable(L, -3);
+    lua_pop(L, 1);
+    return i;
+}
+
+static void unregister_function(lua_State *L, LuaHost::callback_key key)
+{
+    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
+    if (lua_isnil(L, -1))
+    {
+        lua_pop(L, 1);
+        lua_newtable(L);
+    }
+    int n = luaL_len(L, -1);
+    for (LUA_INTEGER i = 0; i < n; i++)
+    {
+        lua_pushinteger(L, 1 + i);
+        lua_gettable(L, -2);
+        if (lua_rawequal(L, -1, -3))
+        {
+            lua_pop(L, 1);
+            lua_getglobal(L, "table");
+            lua_getfield(L, -1, "remove");
+            lua_pushvalue(L, -3);
+            lua_pushinteger(L, 1 + i);
+            lua_call(L, 2, 0);
+            lua_pop(L, 2);
+            return;
+        }
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+    lua_pushfstring(L, "unregister_function(%s): not found function", key);
+    lua_error(L);
+}
+
+LuaHost::LuaHost()
+{
+    for (uint8_t i = LuaHost::callback_key::REG_LUACLASS; i < LuaHost::callback_key::_COUNT; ++i)
+        m_callback_count_map.emplace(i, 0);
 }
 
 void LuaHost::call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l)
@@ -313,55 +362,6 @@ void LuaHost::call_by_key(callback_key key, const std::function<int(lua_State *)
         destruction_queue.front()->stop();
         destruction_queue.pop();
     }
-}
-
-static int register_function(lua_State *L, LuaHost::callback_key key)
-{
-    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
-    if (lua_isnil(L, -1))
-    {
-        lua_pop(L, 1);
-        lua_newtable(L);
-        lua_rawseti(L, LUA_REGISTRYINDEX, key);
-        lua_rawgeti(L, LUA_REGISTRYINDEX, key);
-    }
-    int i = luaL_len(L, -1) + 1;
-    lua_pushinteger(L, i);
-    lua_pushvalue(L, -3); //
-    lua_settable(L, -3);
-    lua_pop(L, 1);
-    return i;
-}
-
-static void unregister_function(lua_State *L, LuaHost::callback_key key)
-{
-    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
-    if (lua_isnil(L, -1))
-    {
-        lua_pop(L, 1);
-        lua_newtable(L);
-    }
-    int n = luaL_len(L, -1);
-    for (LUA_INTEGER i = 0; i < n; i++)
-    {
-        lua_pushinteger(L, 1 + i);
-        lua_gettable(L, -2);
-        if (lua_rawequal(L, -1, -3))
-        {
-            lua_pop(L, 1);
-            lua_getglobal(L, "table");
-            lua_getfield(L, -1, "remove");
-            lua_pushvalue(L, -3);
-            lua_pushinteger(L, 1 + i);
-            lua_call(L, 2, 0);
-            lua_pop(L, 2);
-            return;
-        }
-        lua_pop(L, 1);
-    }
-    lua_pop(L, 1);
-    lua_pushfstring(L, "unregister_function(%s): not found function", key);
-    lua_error(L);
 }
 
 void LuaEnvironment::register_or_unregister_function(const uint8_t callback_key)
