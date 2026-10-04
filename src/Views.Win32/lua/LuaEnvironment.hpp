@@ -7,6 +7,7 @@
 #pragma once
 
 #include <lua/LuaTypes.hpp>
+#include <lua/LuaRenderer.hpp>
 #include <lua.h>
 
 using LuaDestroyFn = std::function<void(const LuaEnvironment *env)>;
@@ -38,7 +39,7 @@ class LuaEnvironment : public std::enable_shared_from_this<LuaEnvironment>
     lua_State *l() const { return m_l; }
     std::filesystem::path path() const { return m_path; }
 
-    LuaRenderingContext rctx;
+    LuaRenderer renderer;
     std::vector<ActionManager::action_path> registered_actions;
     std::unordered_map<std::string, std::vector<ActionParamMeta>> param_meta_map;
     std::vector<std::pair<CoreBreakpointId, uintptr_t *>> active_breakpoints;

@@ -36,8 +36,8 @@ static void set_overlay_visibility(bool visible)
             if (!IsWindow(hwnd)) return;
             ShowWindow(hwnd, visible ? SW_SHOWNOACTIVATE : SW_HIDE);
         };
-        set_window_visibility(lua->rctx.gdi_overlay_hwnd);
-        set_window_visibility(lua->rctx.d2d_overlay_hwnd);
+        set_window_visibility(lua->renderer.gdi_overlay_hwnd);
+        set_window_visibility(lua->renderer.d2d_overlay_hwnd);
     }
 }
 
@@ -71,16 +71,16 @@ static LRESULT CALLBACK main_window_subclass_proc(
     return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
-static void present_gdi_content(LuaEnvironment *lua)
+void LuaRenderer::present_gdi_content()
 {
-    SIZE size = {(LONG)lua->rctx.dc_size.width, (LONG)lua->rctx.dc_size.height};
+    SIZE size = {(LONG)dc_size.width, (LONG)dc_size.height};
     POINT src_pt = {0, 0};
 
     BLENDFUNCTION bf = {};
     bf.BlendOp = AC_SRC_OVER;
     bf.SourceConstantAlpha = 255;
     bf.AlphaFormat = 0;
-    UpdateLayeredWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, &size, lua->rctx.gdi_back_dc, &src_pt,
+    UpdateLayeredWindow(gdi_overlay_hwnd, nullptr, nullptr, &size, gdi_back_dc, &src_pt,
         LuaRenderer::lua_gdi_color_mask, &bf, ULW_COLORKEY);
 }
 
@@ -92,9 +92,9 @@ static void draw_lua(bool force)
     for (const auto &lua : LuaHost::instance().envs())
     {
         const auto time_since_last_render =
-            std::chrono::duration_cast<std::chrono::milliseconds>(now - lua->rctx.last_render_time).count();
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - lua->renderer.last_render_time).count();
 
-        const auto fps = lua->rctx.target_fps.value_or(1000.0f);
+        const auto fps = lua->renderer.target_fps.value_or(1000.0f);
         const auto target_frame_time = 1000.0f / fps;
 
         if (time_since_last_render < target_frame_time && !force) continue;
@@ -103,17 +103,17 @@ static void draw_lua(bool force)
 
         success &=
             LuaHost::instance().call_by_key(lua.get(), LuaHost::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback);
-        if (lua->rctx.presenter) lua->rctx.presenter->present();
+        if (lua->renderer.presenter) lua->renderer.presenter->present();
 
         // GDI Graphics. Ugh.
         success &= LuaHost::instance().call_by_key(lua.get(), LuaHost::REG_ATUPDATESCREEN);
 
-        if (lua->rctx.has_gdi_content)
+        if (lua->renderer.has_gdi_content)
         {
-            present_gdi_content(lua.get());
+            lua->renderer.present_gdi_content();
         }
 
-        lua->rctx.last_render_time = now;
+        lua->renderer.last_render_time = now;
 
         if (!success) to_destroy.push_back(lua);
     }
@@ -166,29 +166,29 @@ static void start_draw_clock()
     s_draw_thread = std::jthread(draw_clock_proc);
 }
 
-static void create_loadscreen(LuaRenderingContext *ctx)
+void LuaRenderer::create_loadscreen()
 {
-    if (ctx->loadscreen_dc)
+    if (loadscreen_dc)
     {
         return;
     }
     auto gdi_dc = GetDC(g_main_ctx.hwnd);
-    ctx->loadscreen_dc = CreateCompatibleDC(gdi_dc);
-    ctx->loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, ctx->dc_size.width, ctx->dc_size.height);
-    SelectObject(ctx->loadscreen_dc, ctx->loadscreen_bmp);
+    loadscreen_dc = CreateCompatibleDC(gdi_dc);
+    loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, dc_size.width, dc_size.height);
+    SelectObject(loadscreen_dc, loadscreen_bmp);
     ReleaseDC(g_main_ctx.hwnd, gdi_dc);
 }
 
-static void destroy_loadscreen(LuaRenderingContext *ctx)
+void LuaRenderer::destroy_loadscreen()
 {
-    if (!ctx->loadscreen_dc)
+    if (!loadscreen_dc)
     {
         return;
     }
-    SelectObject(ctx->loadscreen_dc, nullptr);
-    DeleteDC(ctx->loadscreen_dc);
-    DeleteObject(ctx->loadscreen_bmp);
-    ctx->loadscreen_dc = nullptr;
+    SelectObject(loadscreen_dc, nullptr);
+    DeleteDC(loadscreen_dc);
+    DeleteObject(loadscreen_bmp);
+    loadscreen_dc = nullptr;
 }
 
 static void resize(uint32_t width, uint32_t height)
@@ -198,9 +198,9 @@ static void resize(uint32_t width, uint32_t height)
 
     for (const auto &lua : LuaHost::instance().envs())
     {
-        if (lua->rctx.dc_size.width == width && lua->rctx.dc_size.height == height) continue;
+        if (lua->renderer.dc_size.width == width && lua->renderer.dc_size.height == height) continue;
 
-        lua->rctx.dc_size = {width, height};
+        lua->renderer.dc_size = {width, height};
         RECT wnd_rect{0, 0, (LONG)width, (LONG)height};
 
         HDC gdi_dc = GetDC(g_main_ctx.hwnd);
@@ -208,22 +208,21 @@ static void resize(uint32_t width, uint32_t height)
         HBITMAP new_bmp = CreateCompatibleBitmap(gdi_dc, width, height);
         SelectObject(new_back_dc, new_bmp);
         ReleaseDC(g_main_ctx.hwnd, gdi_dc);
-        SelectObject(lua->rctx.gdi_back_dc, nullptr);
-        DeleteObject(lua->rctx.gdi_bmp);
-        DeleteDC(lua->rctx.gdi_back_dc);
-        lua->rctx.gdi_back_dc = new_back_dc;
-        lua->rctx.gdi_bmp = new_bmp;
+        SelectObject(lua->renderer.gdi_back_dc, nullptr);
+        DeleteObject(lua->renderer.gdi_bmp);
+        DeleteDC(lua->renderer.gdi_back_dc);
+        lua->renderer.gdi_back_dc = new_back_dc;
+        lua->renderer.gdi_bmp = new_bmp;
 
-        FillRect(lua->rctx.gdi_back_dc, &wnd_rect, g_alpha_mask_brush);
+        FillRect(lua->renderer.gdi_back_dc, &wnd_rect, g_alpha_mask_brush);
 
-        destroy_loadscreen(&lua->rctx);
-        create_loadscreen(&lua->rctx);
+        lua->renderer.loadscreen_reset();
 
-        if (lua->rctx.presenter) lua->rctx.presenter->resize(lua->rctx.dc_size);
+        if (lua->renderer.presenter) lua->renderer.presenter->resize(lua->renderer.dc_size);
 
         const UINT overlay_swp_flags = SWP_NOACTIVATE | SWP_NOMOVE | (g_detached_overlays ? SWP_NOZORDER : 0);
-        SetWindowPos(lua->rctx.gdi_overlay_hwnd, HWND_TOP, 0, 0, width, height, overlay_swp_flags);
-        SetWindowPos(lua->rctx.d2d_overlay_hwnd, HWND_TOP, 0, 0, width, height, overlay_swp_flags);
+        SetWindowPos(lua->renderer.gdi_overlay_hwnd, HWND_TOP, 0, 0, width, height, overlay_swp_flags);
+        SetWindowPos(lua->renderer.d2d_overlay_hwnd, HWND_TOP, 0, 0, width, height, overlay_swp_flags);
     }
 }
 
@@ -250,8 +249,8 @@ static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnd
     {
         for (const auto &lua : LuaHost::instance().envs())
         {
-            wnds.push_back(lua->rctx.gdi_overlay_hwnd);
-            wnds.push_back(lua->rctx.d2d_overlay_hwnd);
+            wnds.push_back(lua->renderer.gdi_overlay_hwnd);
+            wnds.push_back(lua->renderer.d2d_overlay_hwnd);
         }
     }
 
@@ -302,15 +301,13 @@ void LuaRenderer::stop()
     DeleteObject(g_alpha_mask_brush);
 }
 
-LuaRenderingContext LuaRenderer::default_rendering_context()
+LuaRenderer::LuaRenderer()
 {
-    LuaRenderingContext ctx{};
-    ctx.brush = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
-    ctx.pen = static_cast<HPEN>(GetStockObject(BLACK_PEN));
-    ctx.font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
-    ctx.col = ctx.bkcol = 0;
-    ctx.bkmode = TRANSPARENT;
-    return ctx;
+    brush = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
+    pen = static_cast<HPEN>(GetStockObject(BLACK_PEN));
+    font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
+    col = bkcol = 0;
+    bkmode = TRANSPARENT;
 }
 
 void LuaRenderer::repaint_visuals()
@@ -319,9 +316,9 @@ void LuaRenderer::repaint_visuals()
     draw_lua(true);
 }
 
-void LuaRenderer::create_renderer(LuaRenderingContext *ctx, LuaEnvironment *env)
+void LuaRenderer::create_renderer()
 {
-    if (ctx->gdi_back_dc != nullptr || ctx->ignore_create_renderer)
+    if (gdi_back_dc != nullptr || ignore_create_renderer)
     {
         return;
     }
@@ -339,103 +336,103 @@ void LuaRenderer::create_renderer(LuaRenderingContext *ctx, LuaEnvironment *env)
     }
 
     // NOTE: We don't want negative or zero size on any axis, as that messes up comp surface creation
-    ctx->dc_size = {(UINT32)std::max(1, (int32_t)window_rect.right), (UINT32)std::max(1, (int32_t)window_rect.bottom)};
-    g_view_logger->info("Lua dc size: {} {}", ctx->dc_size.width, ctx->dc_size.height);
+    dc_size = {(UINT32)std::max(1, (int32_t)window_rect.right), (UINT32)std::max(1, (int32_t)window_rect.bottom)};
+    g_view_logger->info("Lua dc size: {} {}", dc_size.width, dc_size.height);
 
     // Key 0 is reserved for clearing the image pool, too late to change it now...
-    ctx->image_pool_index = 1;
+    image_pool_index = 1;
 
     auto gdi_dc = GetDC(g_main_ctx.hwnd);
-    ctx->gdi_back_dc = CreateCompatibleDC(gdi_dc);
-    ctx->gdi_bmp = CreateCompatibleBitmap(gdi_dc, ctx->dc_size.width, ctx->dc_size.height);
-    SelectObject(ctx->gdi_back_dc, ctx->gdi_bmp);
+    gdi_back_dc = CreateCompatibleDC(gdi_dc);
+    gdi_bmp = CreateCompatibleBitmap(gdi_dc, dc_size.width, dc_size.height);
+    SelectObject(gdi_back_dc, gdi_bmp);
     ReleaseDC(g_main_ctx.hwnd, gdi_dc);
 
     // If we don't fill up the DC with the key first, it never becomes "transparent"
-    FillRect(ctx->gdi_back_dc, &window_rect, g_alpha_mask_brush);
+    FillRect(gdi_back_dc, &window_rect, g_alpha_mask_brush);
 
     const auto ex_style =
         g_detached_overlays ? WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW : WS_EX_LAYERED | WS_EX_TRANSPARENT;
     const auto style = g_detached_overlays ? WS_POPUP | WS_VISIBLE : WS_CHILD | WS_VISIBLE;
 
-    ctx->gdi_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, ctx->dc_size.width,
-        ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+    gdi_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, dc_size.width, dc_size.height,
+        g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
-    ctx->d2d_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, ctx->dc_size.width,
-        ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+    d2d_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, dc_size.width, dc_size.height,
+        g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
-    // This env isn't in LuaHost::instance().envs() yet, so we provide these hwnds manually.
-    move_and_order_overlays(std::vector<HWND>{ctx->gdi_overlay_hwnd, ctx->d2d_overlay_hwnd});
+    // This renderer's environment isn't in LuaHost::instance().envs() yet, so provide its hwnds manually.
+    move_and_order_overlays(std::vector<HWND>{gdi_overlay_hwnd, d2d_overlay_hwnd});
 
     // Put these over the MGE compositor.
     if (!g_detached_overlays)
     {
-        SetWindowPos(ctx->gdi_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
-        SetWindowPos(ctx->d2d_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+        SetWindowPos(gdi_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+        SetWindowPos(d2d_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
     }
 
-    present_gdi_content(env);
+    present_gdi_content();
 
     if (!g_config.lazy_renderer_init)
     {
-        ensure_d2d_renderer_created(ctx);
-        mark_gdi_content_present(ctx);
+        ensure_d2d_renderer_created();
+        mark_gdi_content_present();
     }
 
-    create_loadscreen(ctx);
+    create_loadscreen();
 }
 
-void LuaRenderer::pre_destroy_renderer(LuaRenderingContext *ctx)
+void LuaRenderer::pre_destroy_renderer()
 {
     g_view_logger->info("Pre-destroying Lua renderer...");
-    ctx->ignore_create_renderer = true;
+    ignore_create_renderer = true;
 }
 
-void LuaRenderer::destroy_renderer(LuaRenderingContext *ctx)
+void LuaRenderer::destroy_renderer()
 {
     g_view_logger->info("Destroying Lua renderer...");
 
-    SelectObject(ctx->gdi_back_dc, nullptr);
-    DeleteObject(ctx->brush);
-    DeleteObject(ctx->pen);
-    DeleteObject(ctx->font);
+    SelectObject(gdi_back_dc, nullptr);
+    DeleteObject(brush);
+    DeleteObject(pen);
+    DeleteObject(font);
 
-    for (const auto bmp : ctx->image_pool | std::views::values)
+    for (const auto bmp : image_pool | std::views::values)
     {
         delete bmp;
     }
 
-    ctx->painter_text_layouts.reset();
-    ctx->painter_text_measurements.reset();
-    ctx->painter_text_factory.reset();
-    ctx->image_pool.clear();
-    ctx->d2d_render_target_stack = {};
+    painter_text_layouts.reset();
+    painter_text_measurements.reset();
+    painter_text_factory.reset();
+    image_pool.clear();
+    d2d_render_target_stack = {};
 
-    if (IsWindow(ctx->d2d_overlay_hwnd))
+    if (IsWindow(d2d_overlay_hwnd))
     {
-        DestroyWindow(ctx->d2d_overlay_hwnd);
+        DestroyWindow(d2d_overlay_hwnd);
     }
 
-    if (ctx->presenter)
+    if (presenter)
     {
-        delete ctx->presenter;
-        ctx->presenter = nullptr;
+        delete presenter;
+        presenter = nullptr;
     }
 
-    if (ctx->gdi_back_dc)
+    if (gdi_back_dc)
     {
-        DestroyWindow(ctx->gdi_overlay_hwnd);
-        SelectObject(ctx->gdi_back_dc, nullptr);
-        DeleteDC(ctx->gdi_back_dc);
-        DeleteObject(ctx->gdi_bmp);
-        ctx->gdi_back_dc = nullptr;
-        destroy_loadscreen(ctx);
+        DestroyWindow(gdi_overlay_hwnd);
+        SelectObject(gdi_back_dc, nullptr);
+        DeleteDC(gdi_back_dc);
+        DeleteObject(gdi_bmp);
+        gdi_back_dc = nullptr;
+        destroy_loadscreen();
     }
 }
 
-void LuaRenderer::ensure_d2d_renderer_created(LuaRenderingContext *ctx)
+void LuaRenderer::ensure_d2d_renderer_created()
 {
-    if (ctx->presenter || ctx->ignore_create_renderer)
+    if (presenter || ignore_create_renderer)
     {
         return;
     }
@@ -443,11 +440,11 @@ void LuaRenderer::ensure_d2d_renderer_created(LuaRenderingContext *ctx)
     g_view_logger->trace("[Lua] Creating D2D renderer...");
 
     if (g_config.presenter_type != (int32_t)Config::PresenterType::GDI)
-        ctx->presenter = new DCompPresenter();
+        presenter = new DCompPresenter();
     else
-        ctx->presenter = new GDIPresenter(lua_gdi_color_mask);
+        presenter = new GDIPresenter(lua_gdi_color_mask);
 
-    if (!ctx->presenter->init(ctx->d2d_overlay_hwnd))
+    if (!presenter->init(d2d_overlay_hwnd))
     {
         DialogService::show_dialog(
             "Failed to initialize presenter.\r\nVerify that your system supports the selected presenter.", "Lua",
@@ -455,51 +452,46 @@ void LuaRenderer::ensure_d2d_renderer_created(LuaRenderingContext *ctx)
         return;
     }
 
-    ctx->d2d_render_target_stack.push(ctx->presenter->dc());
+    d2d_render_target_stack.push(presenter->dc());
 }
 
-void LuaRenderer::mark_gdi_content_present(LuaRenderingContext *ctx)
+void LuaRenderer::mark_gdi_content_present()
 {
-    ctx->has_gdi_content = true;
+    has_gdi_content = true;
 }
 
-void LuaRenderer::loadscreen_reset(LuaRenderingContext *ctx)
+void LuaRenderer::loadscreen_reset()
 {
-    destroy_loadscreen(ctx);
-    create_loadscreen(ctx);
+    destroy_loadscreen();
+    create_loadscreen();
 }
 
-void LuaRenderer::set_target_fps(LuaRenderingContext *rctx, std::optional<float> fps)
+void LuaRenderer::set_target_fps(std::optional<float> fps)
 {
-    if (rctx->target_fps == fps) return;
+    if (target_fps == fps) return;
     if (fps.has_value())
     {
         if (!std::isfinite(fps.value()) || fps.value() <= 0.0f) return;
     }
 
-    rctx->target_fps = fps;
-}
-
-HBRUSH LuaRenderer::alpha_mask_brush()
-{
-    return g_alpha_mask_brush;
+    target_fps = fps;
 }
 
 void LuaRenderer::blit_all(HDC hdc)
 {
     for (const auto &lua : LuaHost::instance().envs())
     {
-        if (!lua->rctx.presenter) continue;
+        if (!lua->renderer.presenter) continue;
 
-        const auto presenter_size = lua->rctx.presenter->size();
-        lua->rctx.presenter->blit(hdc, {0, 0, (LONG)presenter_size.width, (LONG)presenter_size.height});
+        const auto presenter_size = lua->renderer.presenter->size();
+        lua->renderer.presenter->blit(hdc, {0, 0, (LONG)presenter_size.width, (LONG)presenter_size.height});
     }
 
     for (const auto &lua : LuaHost::instance().envs())
     {
-        if (!lua->rctx.has_gdi_content) continue;
+        if (!lua->renderer.has_gdi_content) continue;
 
-        TransparentBlt(hdc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0,
-            lua->rctx.dc_size.width, lua->rctx.dc_size.height, LuaRenderer::lua_gdi_color_mask);
+        TransparentBlt(hdc, 0, 0, lua->renderer.dc_size.width, lua->renderer.dc_size.height, lua->renderer.gdi_back_dc,
+            0, 0, lua->renderer.dc_size.width, lua->renderer.dc_size.height, LuaRenderer::lua_gdi_color_mask);
     }
 }

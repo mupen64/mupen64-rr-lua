@@ -6,81 +6,145 @@
 
 #pragma once
 
-#include <lua/LuaHost.hpp>
+#include <lua/presenters/Presenter.hpp>
+#include <memory>
 
-/**
- * \brief A module responsible for implementing Lua rendering-related functionality.
- */
-namespace LuaRenderer
+namespace LuaCore::Painter::Detail
 {
-constexpr uint32_t lua_gdi_color_mask = RGB(255, 0, 255);
+class TextLayoutCache;
+class TextMeasurementCache;
+class TextFactoryCache;
+} // namespace LuaCore::Painter::Detail
 
 /**
- * \brief Initializes the subsystem.
+ * \brief Implements rendering-related functionality for a Lua environment.
  */
-void init();
+class LuaRenderer
+{
+  public:
+    LuaRenderer();
 
-/**
- * \brief Stops the subsystem.
- */
-void stop();
+    // The current presenter, or null
+    Presenter *presenter{};
 
-/**
- * \brief Creates a new rendering context with the default values.
- */
-LuaRenderingContext default_rendering_context();
+    // The Direct2D overlay control handle
+    HWND d2d_overlay_hwnd{};
 
-/**
- * \brief Forces an immediate repaint of all visual layers of all running Lua scripts.
- * \remarks Must be called from the UI thread.
- */
-void repaint_visuals();
+    // The GDI/GDI+ overlay control handle
+    HWND gdi_overlay_hwnd{};
 
-/**
- * \brief Initializes a Lua rendering context. Does nothing if the renderer is initialized.
- */
-void create_renderer(LuaRenderingContext *, LuaEnvironment *);
+    bool has_gdi_content{};
 
-/**
- * \brief Prepares a Lua rendering context for deinitialization. Does nothing if the renderer isn't initialized.
- */
-void pre_destroy_renderer(LuaRenderingContext *);
+    // The DC for GDI/GDI+ drawings
+    // This DC is special, since commands can be issued to it anytime and it's never cleared
+    HDC gdi_back_dc{};
 
-/**
- * \brief Deinitializes a Lua rendering context. Does nothing if the renderer isn't initialized.
- */
-void destroy_renderer(LuaRenderingContext *);
+    // The bitmap for GDI/GDI+ drawings
+    HBITMAP gdi_bmp{};
 
-/**
- * \brief Ensures that the D2D renderer is created for a Lua environment. Does nothing if the renderer already exists.
- */
-void ensure_d2d_renderer_created(LuaRenderingContext *);
+    // Dimensions of the drawing surfaces
+    D2D1_SIZE_U dc_size{};
 
-/**
- * \brief Tells the renderer that GDI content is present in the rendering context.
- */
-void mark_gdi_content_present(LuaRenderingContext *);
+    // The LRU cache for painter text layouts
+    std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts{};
 
-/**
- * \brief Resets the loadscreen graphics.
- */
-void loadscreen_reset(LuaRenderingContext *);
+    // The LRU cache for painter text measurements
+    std::shared_ptr<LuaCore::Painter::Detail::TextMeasurementCache> painter_text_measurements{};
 
-/**
- * \brief Sets the target FPS.
- * \param rctx The lua rendering context.
- * \param fps The target FPS. If std::nullopt, an FPS equal to the monitor refresh rate will be used.
- */
-void set_target_fps(LuaRenderingContext *rctx, std::optional<float> fps);
+    // The shared DirectWrite factory
+    std::shared_ptr<LuaCore::Painter::Detail::TextFactoryCache> painter_text_factory{};
 
-/**
- * \brief Gets a brush containing a color that, when drawn to the GDI back dc, will be interpreted as an alpha mask by
- * the renderer.
- */
-HBRUSH alpha_mask_brush();
+    // The stack of render targets. The top is used for D2D calls.
+    std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
 
-/**
- * \brief Blits the graphics contents of all active Lua instances to the given HDC.
- */
-void blit_all(HDC hdc);
-} // namespace LuaRenderer
+    // Pool of GDI+ images
+    std::unordered_map<size_t, Gdiplus::Bitmap *> image_pool{};
+
+    // Amount of generated images, just used to generate uids for image pool
+    size_t image_pool_index{};
+
+    // Whether to ignore create_renderer() and ensure_d2d_renderer_created() calls. Used to avoid tearing down and
+    // re-creating a renderer when stopping a script.
+    bool ignore_create_renderer{};
+
+    std::optional<float> target_fps{};
+    std::chrono::steady_clock::time_point last_render_time{};
+
+    HDC loadscreen_dc{};
+    HBITMAP loadscreen_bmp{};
+
+    HBRUSH brush{};
+    HPEN pen{};
+    HFONT font{};
+    COLORREF col, bkcol{};
+    int bkmode{};
+
+    static constexpr uint32_t lua_gdi_color_mask = RGB(255, 0, 255);
+
+    /**
+     * \brief Initializes the subsystem.
+     */
+    static void init();
+
+    /**
+     * \brief Stops the subsystem.
+     */
+    static void stop();
+
+    /**
+     * \brief Forces an immediate repaint of all visual layers of all running Lua scripts.
+     * \remarks Must be called from the UI thread.
+     */
+    static void repaint_visuals();
+
+    /**
+     * \brief Blits the graphics contents of all active Lua instances to the given HDC.
+     */
+    static void blit_all(HDC hdc);
+
+    /**
+     * \brief Initializes this renderer. Does nothing if the renderer is initialized.
+     */
+    void create_renderer();
+
+    /**
+     * \brief Prepares this renderer for deinitialization. Does nothing if the renderer isn't initialized.
+     */
+    void pre_destroy_renderer();
+
+    /**
+     * \brief Deinitializes this renderer. Does nothing if the renderer isn't initialized.
+     */
+    void destroy_renderer();
+
+    /**
+     * \brief Ensures that the D2D renderer is created for a Lua environment. Does nothing if the renderer already
+     * exists.
+     */
+    void ensure_d2d_renderer_created();
+
+    /**
+     * \brief Tells the renderer that GDI content is present in the rendering context.
+     */
+    void mark_gdi_content_present();
+
+    /**
+     * \brief Resets the loadscreen graphics.
+     */
+    void loadscreen_reset();
+
+    /**
+     * \brief Sets the target FPS.
+     * \param fps The target FPS. If std::nullopt, an FPS equal to the monitor refresh rate will be used.
+     */
+    void set_target_fps(std::optional<float> fps);
+
+    /**
+     * \brief Presents this renderer's GDI content to its overlay window.
+     */
+    void present_gdi_content();
+
+  private:
+    void create_loadscreen();
+    void destroy_loadscreen();
+};

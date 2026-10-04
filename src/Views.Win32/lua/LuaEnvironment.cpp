@@ -112,7 +112,7 @@ void LuaEnvironment::stop()
 
     env->destroying(env.get());
 
-    LuaRenderer::pre_destroy_renderer(&env->rctx);
+    env->renderer.pre_destroy_renderer();
 
     ActionManager::begin_batch_work();
     for (const auto &action : env->registered_actions)
@@ -153,7 +153,7 @@ void LuaEnvironment::stop()
     }
 
     LuaHost::instance().remove_environment(env.get());
-    LuaRenderer::destroy_renderer(&env->rctx);
+    env->renderer.destroy_renderer();
 
     g_view_logger->info("Lua destroyed");
 }

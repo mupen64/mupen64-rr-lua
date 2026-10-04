@@ -53,7 +53,6 @@ std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaHost::create(cons
     need(is_on_gui_thread(), "not on GUI thread");
 
     auto env = std::make_shared<LuaEnvironment>(path, destroying_callback, print_callback);
-    env->rctx = LuaRenderer::default_rendering_context();
 
     lua_atpanic(env->l(), [](lua_State *L) {
         const char *raw_msg = lua_tostring(L, -1);
@@ -62,7 +61,7 @@ std::expected<std::shared_ptr<LuaEnvironment>, std::string> LuaHost::create(cons
         return 0;
     });
     LuaHost::instance().register_functions(env->l());
-    LuaRenderer::create_renderer(&env->rctx, env.get());
+    env->renderer.create_renderer();
 
     return env;
 }
