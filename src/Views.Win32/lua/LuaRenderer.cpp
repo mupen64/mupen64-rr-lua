@@ -402,11 +402,7 @@ void LuaRenderer::shutdown()
         DestroyWindow(m_d2d_overlay_hwnd);
     }
 
-    if (presenter)
-    {
-        delete presenter;
-        presenter = nullptr;
-    }
+    presenter.reset();
 
     if (gdi_back_dc)
     {
@@ -429,9 +425,9 @@ void LuaRenderer::ensure_d2d_renderer_created()
     g_view_logger->trace("[Lua] Creating D2D renderer...");
 
     if (g_config.presenter_type != (int32_t)Config::PresenterType::GDI)
-        presenter = new DCompPresenter();
+        presenter = std::make_unique<DCompPresenter>();
     else
-        presenter = new GDIPresenter(m_lua_gdi_color_mask);
+        presenter = std::make_unique<GDIPresenter>(m_lua_gdi_color_mask);
 
     if (!presenter->init(m_d2d_overlay_hwnd))
     {

@@ -29,7 +29,7 @@ class LuaRenderer
     LuaRenderer(LuaRenderer &&) = delete;
     LuaRenderer &operator=(LuaRenderer &&) = delete;
 
-    Presenter *presenter{};
+    std::unique_ptr<Presenter> presenter;
     D2D1_SIZE_U dc_size{};
 
     HDC gdi_back_dc{};
