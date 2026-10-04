@@ -1427,6 +1427,30 @@ function wgui.resetclip() end
 ---| PainterColorTable
 ---| string
 
+---@class PainterGradientStop
+---@field offset number Position in range `[0, 1]`.
+---@field color PainterColor
+
+---A linear gradient.
+---@class PainterLinearGradient
+---@field type "linear_gradient"
+---@field x0 number Start x coordinate.
+---@field y0 number Start y coordinate.
+---@field x1 number End x coordinate.
+---@field y1 number End y coordinate.
+---@field stops PainterGradientStop[] At least two stops in range `[0, 1]`. Coincident endpoints are separated by 1 pixel. Sorted by offset.
+
+---A centered elliptical radial gradient.
+---@class PainterRadialGradient
+---@field type "radial_gradient"
+---@field center_x number Center x coordinate.
+---@field center_y number Center y coordinate.
+---@field radius_x number Horizontal radius.
+---@field radius_y number Vertical radius.
+---@field stops PainterGradientStop[] At least two stops in range `[0, 1]`. Sorted by offset.
+
+---@alias PainterPaint PainterColor|PainterLinearGradient|PainterRadialGradient
+
 ---A flat list of coordinates in the form `{ x1, y1, x2, y2, ... }`.
 ---A flat representation avoids allocating a table for every point and must contain at least two points.
 ---@alias PainterPoints number[]
@@ -1690,14 +1714,14 @@ function Painter:scale(x, y) end
 
 ---Strokes the current path.
 ---The path is not consumed and can be stroked or filled again until [Painter:begin_path](lua://Painter.begin_path) replaces it.
----@param color PainterColor
+---@param paint PainterPaint
 ---@param style PainterStrokeStyle?
-function Painter:stroke(color, style) end
+function Painter:stroke(paint, style) end
 
 ---Fills the current path.
 ---The path is not consumed and can be stroked or filled again until [Painter:begin_path](lua://Painter.begin_path) replaces it.
----@param color PainterColor
-function Painter:fill(color) end
+---@param paint PainterPaint
+function Painter:fill(paint) end
 
 ---Adds text to the current path.
 ---@param text string

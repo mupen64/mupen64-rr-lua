@@ -100,6 +100,41 @@ inline bool operator==(const Stroke &a, const Stroke &b)
            p.miterLimit == q.miterLimit && p.dashStyle == q.dashStyle && p.dashOffset == q.dashOffset;
 }
 
+enum class GradientType : std::uint8_t
+{
+    Linear,
+    Radial,
+};
+
+struct GradientStop
+{
+    float offset{};
+    D2D1_COLOR_F color{};
+};
+
+struct Gradient
+{
+    GradientType type{};
+    D2D1_POINT_2F point0{};
+    D2D1_POINT_2F point1{};
+    std::vector<GradientStop> stops;
+};
+
+struct Paint
+{
+    bool is_gradient{};
+    Gradient gradient{};
+    D2D1_COLOR_F color{};
+};
+
+struct GradientResource
+{
+    Gradient value;
+    ComPtr<ID2D1GradientStopCollection> stops;
+    ComPtr<ID2D1LinearGradientBrush> linear;
+    ComPtr<ID2D1RadialGradientBrush> radial;
+};
+
 struct BrushResource
 {
     D2D1_COLOR_F color{};
@@ -223,8 +258,11 @@ struct Command
         D2D1_MATRIX_3X2_F transform;
         D2D1_COLOR_F color;
         UINT32 brush;
+        UINT32 gradient;
         UINT32 stroke;
         UINT32 path;
+        float alpha;
+        bool is_gradient;
     };
     struct ImageData
     {
@@ -275,6 +313,7 @@ struct Painter
     std::vector<PathPayload> paths;
     std::vector<ImagePayload> image_payloads;
     std::vector<BrushResource> brushes;
+    std::vector<GradientResource> gradients;
     std::vector<StrokeResource> strokes;
     std::vector<TextFormatResource> text_formats;
     std::vector<ImageResource> images;
@@ -366,6 +405,109 @@ inline D2D1_COLOR_F check_color(lua_State *L, int index)
     return D2D1::ColorF(r, g, b, a);
 }
 
+inline std::vector<GradientStop> check_gradient_stops(lua_State *L, int index)
+{
+    luaL_checktype(L, index, LUA_TTABLE);
+    const int absolute = lua_absindex(L, index);
+    const size_t count = lua_rawlen(L, absolute);
+    if (count < 2) luaL_error(L, "a gradient requires at least two color stops");
+    if (count > UINT32_MAX) luaL_error(L, "a gradient has too many color stops");
+
+    std::vector<GradientStop> stops;
+    stops.reserve(count);
+    for (size_t i = 1; i <= count; ++i)
+    {
+        lua_rawgeti(L, absolute, static_cast<lua_Integer>(i));
+        luaL_checktype(L, -1, LUA_TTABLE);
+        const float value = table_painter_number(L, -1, "offset", 0, true);
+        const float offset = std::isfinite(value) ? std::clamp(value, 0.0f, 1.0f) : 1.0f;
+        lua_getfield(L, -1, "color");
+        const auto color = check_color(L, -1);
+        lua_pop(L, 2);
+        stops.push_back({offset, color});
+    }
+    std::stable_sort(stops.begin(), stops.end(), [](const auto &a, const auto &b) { return a.offset < b.offset; });
+    return stops;
+}
+
+inline bool has_color_channels(lua_State *L, int index)
+{
+    index = lua_absindex(L, index);
+    for (const char *field : {"r", "g", "b"})
+    {
+        lua_getfield(L, index, field);
+        const bool present = !lua_isnil(L, -1);
+        lua_pop(L, 1);
+        if (!present) return false;
+    }
+    return true;
+}
+
+inline Paint check_paint(lua_State *L, int index)
+{
+    if (lua_type(L, index) != LUA_TTABLE) return {false, {}, check_color(L, index)};
+
+    const int absolute = lua_absindex(L, index);
+    lua_getfield(L, absolute, "type");
+    if (lua_type(L, -1) != LUA_TSTRING || has_color_channels(L, absolute))
+    {
+        lua_pop(L, 1);
+        return {false, {}, check_color(L, absolute)};
+    }
+
+    size_t type_length{};
+    const char *type_data = lua_tolstring(L, -1, &type_length);
+    const std::string_view type(type_data, type_length);
+    Gradient gradient{};
+    if (type == "linear_gradient")
+    {
+        gradient.type = GradientType::Linear;
+        const auto coordinate = [&](const char *field) {
+            const float value = table_painter_number(L, absolute, field, 0, true);
+            return std::isfinite(value) ? value : 0.0f;
+        };
+        gradient.point0 = D2D1::Point2F(coordinate("x0"), coordinate("y0"));
+        gradient.point1 = D2D1::Point2F(coordinate("x1"), coordinate("y1"));
+        if (gradient.point0.x == gradient.point1.x && gradient.point0.y == gradient.point1.y)
+        {
+            const float next_x = gradient.point0.x + 1.0f;
+            const float next_y = gradient.point0.y + 1.0f;
+            if (std::isfinite(next_x) && next_x != gradient.point0.x)
+                gradient.point1.x = next_x;
+            else if (std::isfinite(next_y) && next_y != gradient.point0.y)
+                gradient.point1.y = next_y;
+            else
+            {
+                gradient.point0 = D2D1::Point2F(0, 0);
+                gradient.point1 = D2D1::Point2F(1, 0);
+            }
+        }
+    }
+    else if (type == "radial_gradient")
+    {
+        gradient.type = GradientType::Radial;
+        const auto coordinate = [&](const char *field) {
+            const float value = table_painter_number(L, absolute, field, 0, true);
+            return std::isfinite(value) ? value : 0.0f;
+        };
+        gradient.point0 = D2D1::Point2F(coordinate("center_x"), coordinate("center_y"));
+        const auto radius = [&](const char *field) {
+            const float value = table_painter_number(L, absolute, field, 0, true);
+            return std::isfinite(value) ? std::max(value, 0.001f) : 1.0f;
+        };
+        gradient.point1 = D2D1::Point2F(radius("radius_x"), radius("radius_y"));
+    }
+    else
+    {
+        luaL_error(L, "unknown painter gradient type '%.*s'", static_cast<int>(type_length), type_data);
+    }
+
+    lua_getfield(L, absolute, "stops");
+    gradient.stops = check_gradient_stops(L, -1);
+    lua_pop(L, 2);
+    return {true, std::move(gradient), {}};
+}
+
 inline float check_coordinate(lua_State *L, int index, const char *name)
 {
     return check_painter_number(L, index, name);
@@ -448,6 +590,24 @@ inline UINT32 intern_brush(Painter *painter, const D2D1_COLOR_F &color)
     return static_cast<UINT32>(painter->brushes.size() - 1);
 }
 
+inline bool gradient_equal(const Gradient &a, const Gradient &b)
+{
+    if (a.type != b.type || a.point0.x != b.point0.x || a.point0.y != b.point0.y || a.point1.x != b.point1.x ||
+        a.point1.y != b.point1.y || a.stops.size() != b.stops.size())
+        return false;
+    for (size_t i = 0; i < a.stops.size(); ++i)
+        if (a.stops[i].offset != b.stops[i].offset || !(a.stops[i].color == b.stops[i].color)) return false;
+    return true;
+}
+
+inline UINT32 intern_gradient(Painter *painter, Gradient gradient)
+{
+    for (UINT32 i = 0; i < painter->gradients.size(); ++i)
+        if (gradient_equal(painter->gradients[i].value, gradient)) return i;
+    painter->gradients.push_back({std::move(gradient)});
+    return static_cast<UINT32>(painter->gradients.size() - 1);
+}
+
 inline void close_image(Image *image)
 {
     if (image->closed) return;
@@ -474,6 +634,7 @@ inline void discard_commands(Painter *painter)
     painter->paths.clear();
     painter->image_payloads.clear();
     painter->brushes.clear();
+    painter->gradients.clear();
     painter->strokes.clear();
     painter->text_formats.clear();
     painter->images.clear();
@@ -1319,6 +1480,7 @@ inline int painter_gc(lua_State *L)
     return 0;
 }
 
+
 inline int image_index(lua_State *L)
 {
     auto *image = static_cast<Image *>(luaL_checkudata(L, 1, IMAGE_MT));
@@ -1335,18 +1497,28 @@ inline int image_index(lua_State *L)
     return 1;
 }
 
-inline void emit_path_command(Painter *painter, CommandType type, const D2D1_COLOR_F &color, UINT32 stroke)
+inline void emit_path_command(Painter *painter, CommandType type, Paint paint, UINT32 stroke)
 {
     Command command{};
     command.type = type;
     command.path.transform = {painter->transform._11, painter->transform._12, painter->transform._21,
         painter->transform._22, painter->transform._31, painter->transform._32};
-    auto draw_color = color;
-    draw_color.a *= painter->alpha;
-    command.path.color = draw_color;
-    command.path.brush = intern_brush(painter, draw_color);
     command.path.stroke = stroke;
     command.path.path = static_cast<UINT32>(painter->paths.size());
+    command.path.is_gradient = false;
+    if (paint.is_gradient)
+    {
+        command.path.gradient = intern_gradient(painter, std::move(paint.gradient));
+        command.path.alpha = painter->alpha;
+        command.path.is_gradient = true;
+    }
+    else
+    {
+        auto draw_color = paint.color;
+        draw_color.a *= painter->alpha;
+        command.path.color = draw_color;
+        command.path.brush = intern_brush(painter, draw_color);
+    }
     painter->paths.push_back({painter->path_ops, painter->path_texts});
     painter->commands.push_back(std::move(command));
 }
@@ -1667,20 +1839,21 @@ inline int painter_scale(lua_State *L)
     return 0;
 }
 
+
 inline int painter_stroke(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto color = check_color(L, 2);
+    auto paint = check_paint(L, 2);
     const auto stroke = check_stroke(L, 3);
-    emit_path_command(painter, CommandType::StrokePath, color, intern_stroke(painter, stroke));
+    emit_path_command(painter, CommandType::StrokePath, std::move(paint), intern_stroke(painter, stroke));
     return 0;
 }
 
 inline int painter_fill(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto color = check_color(L, 2);
-    emit_path_command(painter, CommandType::FillPath, color, 0);
+    auto paint = check_paint(L, 2);
+    emit_path_command(painter, CommandType::FillPath, std::move(paint), 0);
     return 0;
 }
 
@@ -1949,6 +2122,44 @@ inline void realize_brush(Painter *painter, UINT32 index, ID2D1SolidColorBrush *
     *brush = resource.native.Get();
 }
 
+inline void realize_gradient_brush(Painter *painter, UINT32 index, ID2D1Brush **brush)
+{
+    auto &resource = painter->gradients[index];
+    if (!resource.stops)
+    {
+        std::vector<D2D1_GRADIENT_STOP> stops;
+        stops.reserve(resource.value.stops.size());
+        for (const auto &stop : resource.value.stops) stops.push_back({stop.offset, stop.color});
+        need(painter->target->CreateGradientStopCollection(stops.data(), static_cast<UINT32>(stops.size()),
+                 D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_CLAMP, &resource.stops),
+            "ID2D1RenderTarget::CreateGradientStopCollection");
+        need(resource.stops, "ID2D1RenderTarget::CreateGradientStopCollection returned null");
+    }
+    if (resource.value.type == GradientType::Linear)
+    {
+        if (!resource.linear)
+        {
+            const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES properties{resource.value.point0, resource.value.point1};
+            need(painter->target->CreateLinearGradientBrush(properties, resource.stops.Get(), &resource.linear),
+                "ID2D1RenderTarget::CreateLinearGradientBrush");
+            need(resource.linear, "ID2D1RenderTarget::CreateLinearGradientBrush returned null");
+        }
+        *brush = resource.linear.Get();
+    }
+    else
+    {
+        if (!resource.radial)
+        {
+            const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES properties{
+                resource.value.point0, D2D1::Point2F(0, 0), resource.value.point1.x, resource.value.point1.y};
+            need(painter->target->CreateRadialGradientBrush(properties, resource.stops.Get(), &resource.radial),
+                "ID2D1RenderTarget::CreateRadialGradientBrush");
+            need(resource.radial, "ID2D1RenderTarget::CreateRadialGradientBrush returned null");
+        }
+        *brush = resource.radial.Get();
+    }
+}
+
 inline void realize_stroke(
     Painter *painter, UINT32 index, ComPtr<ID2D1Factory> &factory, ID2D1StrokeStyle **style, float *width)
 {
@@ -1989,7 +2200,7 @@ inline void realize_text_format(
     format = resource.native;
 }
 
-inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, ID2D1SolidColorBrush *brush,
+inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, ID2D1Brush *brush,
     ComPtr<IDWriteFactory> &text_factory, TextLayoutCache &cache, const D2D1::Matrix3x2F &command_transform)
 {
     for (const auto &run : runs)
@@ -2175,8 +2386,18 @@ inline void execute_commands(Painter *painter)
             continue;
         }
 
-        ID2D1SolidColorBrush *brush = nullptr;
-        realize_brush(painter, command.path.brush, &brush);
+        ID2D1Brush *brush = nullptr;
+        if (command.path.is_gradient)
+        {
+            realize_gradient_brush(painter, command.path.gradient, &brush);
+            brush->SetOpacity(command.path.alpha);
+        }
+        else
+        {
+            ID2D1SolidColorBrush *solid = nullptr;
+            realize_brush(painter, command.path.brush, &solid);
+            brush = solid;
+        }
 
         const auto &payload = painter->paths[command.path.path];
         ComPtr<ID2D1PathGeometry> geometry;
@@ -2662,9 +2883,11 @@ inline void register_types(lua_State *L)
         {nullptr, nullptr}};
     static const luaL_Reg matrix_methods[] = {{"dx", Detail::matrix_dx}, {"dy", Detail::matrix_dy},
         {"sx", Detail::matrix_sx}, {"sy", Detail::matrix_sy}, {nullptr, nullptr}};
+
     luaL_create_metatable(L, Detail::IMAGE_MT, image_methods, Detail::image_index, Detail::image_gc);
     luaL_create_metatable(L, Detail::PAINTER_MT, painter_methods, nullptr, Detail::painter_gc);
     luaL_create_metatable(L, Detail::MATRIX_MT, matrix_methods, Detail::matrix_index, Detail::matrix_gc);
+
     luaL_getmetatable(L, Detail::MATRIX_MT);
     lua_pushcfunction(L, Detail::matrix_newindex);
     lua_setfield(L, -2, "__newindex");
