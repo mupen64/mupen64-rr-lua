@@ -51,7 +51,7 @@ class LuaRenderer
     COLORREF col, bkcol{};
     int bkmode{};
 
-    std::optional<float> target_fps;
+
     std::chrono::steady_clock::time_point last_render_time;
 
     void initialize();
@@ -62,6 +62,7 @@ class LuaRenderer
     void ensure_d2d_renderer_created();
     void loadscreen_reset();
     void set_target_fps(std::optional<float> fps);
+    const std::optional<float> &target_fps() const { return m_target_fps; }
 
     HWND d2d_overlay_hwnd() const { return m_d2d_overlay_hwnd; }
     HWND gdi_overlay_hwnd() const { return m_gdi_overlay_hwnd; }
@@ -71,6 +72,7 @@ class LuaRenderer
 
   private:
     static constexpr uint32_t m_lua_gdi_color_mask = RGB(255, 0, 255);
+    std::optional<float> m_target_fps;
 
     HWND m_d2d_overlay_hwnd{};
     HWND m_gdi_overlay_hwnd{};

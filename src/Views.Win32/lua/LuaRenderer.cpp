@@ -70,7 +70,7 @@ void LuaRendererManager::draw_lua(bool force)
         const auto time_since_last_render =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - lua->renderer.last_render_time).count();
 
-        const auto fps = lua->renderer.target_fps.value_or(1000.0f);
+        const auto fps = lua->renderer.target_fps().value_or(1000.0f);
         const auto target_frame_time = 1000.0f / fps;
 
         if (time_since_last_render < target_frame_time && !force) continue;
@@ -453,13 +453,13 @@ void LuaRenderer::loadscreen_reset()
 
 void LuaRenderer::set_target_fps(std::optional<float> fps)
 {
-    if (target_fps == fps) return;
+    if (m_target_fps == fps) return;
     if (fps.has_value())
     {
         if (!std::isfinite(fps.value()) || fps.value() <= 0.0f) return;
     }
 
-    target_fps = fps;
+    m_target_fps = fps;
 }
 
 void LuaRendererManager::blit_all(HDC hdc)

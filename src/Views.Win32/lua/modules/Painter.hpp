@@ -2256,8 +2256,8 @@ inline int get_target_fps(lua_State *L)
 {
     auto *environment = LuaHost::instance().get_by_state(L);
     if (!environment) return luaL_error(L, "painter is unavailable outside a Lua environment");
-    if (environment->renderer.target_fps.has_value())
-        lua_pushnumber(L, environment->renderer.target_fps.value());
+    if (environment->renderer.target_fps().has_value())
+        lua_pushnumber(L, environment->renderer.target_fps().value());
     else
         lua_pushnil(L);
     return 1;
