@@ -30,11 +30,14 @@ class LuaRendererManager
     void stop();
     void draw_all();
     void blit_all(HDC hdc);
+    void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds = std::nullopt);
+
+    bool detached_overlays() const { return m_detached_overlays; }
+    HBRUSH alpha_mask_brush() const { return m_alpha_mask_brush; }
+    static constexpr const char *overlay_class() { return m_overlay_class; }
 
   private:
     LuaRendererManager() = default;
-
-    friend class LuaRenderer;
 
     static constexpr auto m_overlay_class = "lua_overlay";
 
@@ -55,5 +58,4 @@ class LuaRendererManager
     void start_draw_clock();
     void stop_draw_clock();
     void resize(uint32_t width, uint32_t height);
-    void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds = std::nullopt);
 };

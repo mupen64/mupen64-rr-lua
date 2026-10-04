@@ -16,20 +16,14 @@ class TextMeasurementCache;
 class TextFactoryCache;
 } // namespace LuaCore::Painter::Detail
 
-class LuaEnvironment;
-class LuaHost;
-class LuaRendererManager;
-
 /**
  * \brief Holds the rendering state for a Lua environment.
  */
 class LuaRenderer
 {
-    friend class LuaEnvironment;
-    friend class LuaHost;
-    friend class LuaRendererManager;
-
   public:
+    LuaRenderer();
+
     LuaRenderer(const LuaRenderer &) = delete;
     LuaRenderer &operator=(const LuaRenderer &) = delete;
     LuaRenderer(LuaRenderer &&) = delete;
@@ -40,6 +34,7 @@ class LuaRenderer
 
     // The DC for GDI/GDI+ drawings. Commands can be issued to it anytime and it is never cleared.
     HDC gdi_back_dc{};
+    HBITMAP gdi_bmp{};
 
     // Dimensions of the drawing surfaces
     D2D1_SIZE_U dc_size{};
@@ -62,40 +57,32 @@ class LuaRenderer
     int bkmode{};
 
     std::optional<float> target_fps{};
-
-    /**
-     * \brief Tells the renderer that GDI content is present.
-     */
-    void mark_gdi_content_present();
-    void ensure_d2d_renderer_created();
-
-    /**
-     * \brief Resets the loadscreen graphics.
-     */
-    void loadscreen_reset();
-
-    /**
-     * \brief Sets the target FPS. If std::nullopt, an FPS equal to the monitor refresh rate will be used.
-     */
-    void set_target_fps(std::optional<float> fps);
-
-  private:
-    LuaRenderer();
-
-    static constexpr uint32_t m_lua_gdi_color_mask = RGB(255, 0, 255);
-
-    HWND m_d2d_overlay_hwnd{};
-    HWND m_gdi_overlay_hwnd{};
-    bool m_has_gdi_content{};
-    HBITMAP m_gdi_bmp{};
-
-    bool m_ignore_create_renderer{};
-    std::chrono::steady_clock::time_point m_last_render_time{};
+    std::chrono::steady_clock::time_point last_render_time{};
 
     void initialize();
     void pre_shutdown();
     void shutdown();
     void present_gdi_content();
+    void mark_gdi_content_present();
+    void ensure_d2d_renderer_created();
+    void loadscreen_reset();
+    void set_target_fps(std::optional<float> fps);
+
+    HWND d2d_overlay_hwnd() const { return m_d2d_overlay_hwnd; }
+    HWND gdi_overlay_hwnd() const { return m_gdi_overlay_hwnd; }
+    bool has_gdi_content() const { return m_has_gdi_content; }
+    bool ignore_create_renderer() const { return m_ignore_create_renderer; }
+    static constexpr uint32_t lua_gdi_color_mask() { return m_lua_gdi_color_mask; }
+
+  private:
+    static constexpr uint32_t m_lua_gdi_color_mask = RGB(255, 0, 255);
+
+    // Overlay handles and renderer state exposed to the manager through read-only accessors.
+    HWND m_d2d_overlay_hwnd{};
+    HWND m_gdi_overlay_hwnd{};
+    bool m_has_gdi_content{};
+    bool m_ignore_create_renderer{};
+
     void create_loadscreen();
     void destroy_loadscreen();
 };
