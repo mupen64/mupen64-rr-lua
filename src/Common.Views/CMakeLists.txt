@@ -8,6 +8,7 @@ add_library(Mupen64RR_Common_Views STATIC
     "include/Common.Views/App.hpp"
     "include/Common.Views/Config.hpp"
     "include/Common.Views/Hotkey.hpp"
+    "include/Common.Views/LuaHelpers.hpp"
     "include/Common.Views/Messages.hpp"
     "include/Common.Views/Messenger.hpp"
     "include/Common.Views/ActionManager.hpp"
@@ -23,6 +24,7 @@ add_library(Mupen64RR_Common_Views STATIC
     "ActionManager.cpp"
     "Resampler.cpp"
     "OptionItem.cpp"
+    "LuaHelpers.cpp"
 )
 
 if (WIN32)
@@ -40,6 +42,7 @@ target_include_directories(Mupen64RR_Common_Views PUBLIC include)
 
 target_link_libraries(Mupen64RR_Common_Views PUBLIC
     Mupen64RR_Common
+    Lua::Lua
     Mupen64RR_Core_Headers
     vendor::xxhash64
     vendor::mini

@@ -4,10 +4,19 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-
+#include <Common.Views/App.hpp>
+#include <Common.Views/LuaHelpers.hpp>
+#include <Common/IOUtils.hpp>
+#include <cmath>
+#include <format>
 #include <unordered_map>
 #include <unordered_set>
+extern "C"
+{
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
 
 namespace
 {
