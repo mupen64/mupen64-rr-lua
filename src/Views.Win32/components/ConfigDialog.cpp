@@ -1457,7 +1457,7 @@ std::vector<OptionGroup> ConfigDialog::get_option_groups()
     for (auto &group : dynamic_option_groups)
     {
         const auto uname = group.name;
-        const auto actions = ActionManager::get_actions_matching_filter(std::format("{} > *", uname));
+        const auto actions = ActionManager::get_actions_matching_filter(std::format("{}.*", uname));
         group.items.reserve(group.items.size() + actions.size());
 
         for (const auto &action : actions)
