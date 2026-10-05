@@ -22,7 +22,7 @@ action = {}
 clipboard = {}
 
 Mupen = {
-    _VERSION = '1.5.0-3',
+    _VERSION = '1.5.0-5',
     _URL = 'https://github.com/mupen64/mupen64-rr-lua',
     _DESCRIPTION = 'Mupen64 Lua Scripting API',
     _LICENSE = 'GPL-2',
@@ -1427,6 +1427,30 @@ function wgui.resetclip() end
 ---| PainterColorTable
 ---| string
 
+---@class PainterGradientStop
+---@field offset number Position in range `[0, 1]`.
+---@field color PainterColor
+
+---A linear gradient.
+---@class PainterLinearGradient
+---@field type "linear_gradient"
+---@field x0 number Start x coordinate.
+---@field y0 number Start y coordinate.
+---@field x1 number End x coordinate.
+---@field y1 number End y coordinate.
+---@field stops PainterGradientStop[] At least two stops in range `[0, 1]`. Coincident endpoints are separated by 1 pixel. Sorted by offset.
+
+---A centered elliptical radial gradient.
+---@class PainterRadialGradient
+---@field type "radial_gradient"
+---@field center_x number Center x coordinate.
+---@field center_y number Center y coordinate.
+---@field radius_x number Horizontal radius.
+---@field radius_y number Vertical radius.
+---@field stops PainterGradientStop[] At least two stops in range `[0, 1]`. Sorted by offset.
+
+---@alias PainterPaint PainterColor|PainterLinearGradient|PainterRadialGradient
+
 ---A flat list of coordinates in the form `{ x1, y1, x2, y2, ... }`.
 ---A flat representation avoids allocating a table for every point and must contain at least two points.
 ---@alias PainterPoints number[]
@@ -1567,6 +1591,36 @@ function painter.set_target_fps(target_fps) end
 ---@class Painter
 local Painter = {}
 
+---@class PainterMatrix3x2
+---@field m11 number Transform matrix component.
+---@field m12 number Transform matrix component.
+---@field m21 number Transform matrix component.
+---@field m22 number Transform matrix component.
+---@field m31 number X translation component.
+---@field m32 number Y translation component.
+local PainterMatrix3x2 = {}
+
+---@return number X translation.
+function PainterMatrix3x2:dx() end
+
+---@return number Y translation.
+function PainterMatrix3x2:dy() end
+
+---@return number X-axis scale.
+function PainterMatrix3x2:sx() end
+
+---@return number Y-axis scale.
+function PainterMatrix3x2:sy() end
+
+---Returns the current transform.
+---@nodiscard
+---@return PainterMatrix3x2 transform
+function Painter:get_transform() end
+
+---Sets the current transform to `transform`.
+---@param transform PainterMatrix3x2
+function Painter:set_transform(transform) end
+
 ---Clears the entire drawing target to `color`, ignoring the current clip stack.
 ---When called from [PainterImage:paint](lua://PainterImage.paint), this clears the image rather than the screen.
 ---@param color PainterColor
@@ -1621,10 +1675,19 @@ function Painter:arc(x, y, radius, start_angle, end_angle, ccw) end
 ---Does nothing if the subpath is empty or already closed. This closes the subpath only. Later primitives start a new subpath.
 function Painter:close_path() end
 
----Saves the current transform.
+---Returns the current global drawing alpha. Defaults to 1.
+---@nodiscard
+---@return number alpha
+function Painter:get_alpha() end
+
+---Sets the global drawing alpha, which multiplies the alpha of subsequent drawing operations.
+---@param alpha number The global alpha. Finite values are clamped to [0, 1]; non-finite values are treated as 1.
+function Painter:set_alpha(alpha) end
+
+---Saves the current transform, alpha, and clip state.
 function Painter:save() end
 
----Restores the last transform.
+---Restores the last saved transform, alpha, and clip state.
 function Painter:restore() end
 
 ---Merges `rect` with the current clip.
@@ -1651,14 +1714,14 @@ function Painter:scale(x, y) end
 
 ---Strokes the current path.
 ---The path is not consumed and can be stroked or filled again until [Painter:begin_path](lua://Painter.begin_path) replaces it.
----@param color PainterColor
+---@param paint PainterPaint
 ---@param style PainterStrokeStyle?
-function Painter:stroke(color, style) end
+function Painter:stroke(paint, style) end
 
 ---Fills the current path.
 ---The path is not consumed and can be stroked or filled again until [Painter:begin_path](lua://Painter.begin_path) replaces it.
----@param color PainterColor
-function Painter:fill(color) end
+---@param paint PainterPaint
+function Painter:fill(paint) end
 
 ---Adds text to the current path.
 ---@param text string
@@ -1695,7 +1758,8 @@ function Painter:polyline(points) end
 function Painter:polygon(points) end
 
 ---Draws an image into `destination`.
----When `options.center` is provided, the image is drawn in nine slices. Corners remain unscaled, edges scale along one axis, and the center scales along both axes.
+---When `options.center` is provided, the image is drawn in nine slices.
+---When drawing in nine slices, corners retain their original size even under scale transforms and slice boundaries are snapped to pixels.
 ---@param image PainterImage
 ---@param destination PainterRect
 ---@param options PainterImageOptions?

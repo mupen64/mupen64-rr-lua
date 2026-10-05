@@ -19,6 +19,9 @@ struct VcrFixture
 {
     VcrFixture()
     {
+        g_core_params.callbacks = {};
+        vcr_stop_all();
+
         std::filesystem::remove("test.m64");
         std::filesystem::remove("test.st");
         std::filesystem::remove("test.cht");

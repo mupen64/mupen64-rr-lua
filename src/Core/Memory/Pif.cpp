@@ -32,10 +32,14 @@ void print_pif()
 // 16kb eeprom flag
 #define EXTENDED_EEPROM (0)
 
+/**
+ * @brief Checks whether a Joybus packet fits within RAM.
+ */
 static bool pif_packet_fits(const int32_t offset, const size_t minimum_length)
 {
     if (offset < 0 || offset + 2 > 0x40) return false;
 
+    // PIF packet structure: TX RX [TX bytes to send] [RX bytes to receive]
     const size_t length = (size_t)PIF_RAMb[offset] + (PIF_RAMb[offset + 1] & 0x3F) + 2;
     return length >= minimum_length && length <= 0x40 - (size_t)offset;
 }
@@ -183,7 +187,7 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
         else
             Command[1] |= 0x80;
         break;
-    case 0x01:
+    case 0x01: // controller state
         if (!g_core->controls[Control].present) Command[1] |= 0x80;
         break;
     case 0x02: // read controller pack
@@ -290,6 +294,7 @@ void update_pif_write()
     #endif*/
     if (PIF_RAMb[0x3F] > 1)
     {
+        // handle PIF commands with bits set past (1 << 0)
         switch (PIF_RAMb[0x3F])
         {
         case 0x02:
@@ -317,28 +322,33 @@ void update_pif_write()
         }
         return;
     }
+    // parse joybus command list
     while (i < 0x40)
     {
         switch (PIF_RAMb[i])
         {
         case 0x00:
+            // skip this channel
             channel++;
             if (channel > 6) i = 0x40;
             break;
         case 0xFF:
+            // NOP
             break;
         default:
             if (!(PIF_RAMb[i] & 0xC0))
             {
                 if (!pif_packet_fits(i, 3))
                 {
-                    assert(false && "PIF write packet exceeds PIF RAM");
+                    // https://github.com/GenericHeroGuy/pif-sm5-rom/blob/69dfe40baeb806271e55a3bb69733ce08b1390c3/cmodel.c#L825-L830
+                    // if the packet would exceed PIF RAM bounds, fail silently
                     i = 0x40;
                     break;
                 }
 
                 if (channel < 4)
                 {
+                    // send joybus command to controller
                     const uint8_t command = PIF_RAMb[i + 2];
                     const size_t minimum_length = command == 2 || command == 3
                                                       ? 0x26
@@ -357,6 +367,7 @@ void update_pif_write()
                 }
                 else if (channel == 4)
                 {
+                    // send joybus command to cartridge peripherals
                     const uint8_t command = PIF_RAMb[i + 2];
                     if (!pif_packet_fits(i, command == 4 || command == 5 ? 12 : (command == 0 ? 6 : 3)))
                     {
@@ -367,7 +378,7 @@ void update_pif_write()
                     EepromCommand(&PIF_RAMb[i]);
                 }
                 else
-                    g_core->log_info("channel >= 4 in update_pif_write");
+                    g_core->log_info("channel > 4 in update_pif_write");
                 i += PIF_RAMb[i] + (PIF_RAMb[(i + 1)] & 0x3F) + 1;
                 channel++;
             }

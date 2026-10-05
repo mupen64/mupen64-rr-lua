@@ -306,5 +306,25 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <source>Recording (no modifiers)...</source>
         <translation>Recording (no modifiers)...</translation>
     </message>
+    <message id="misc.units.MiB">
+        <location filename="../Core/RomManager.cpp" line="69"/>
+        <source>%1 MB</source>
+        <translation>%1 MB</translation>
+    </message>
+    <message id="romBrowser.headers.romName">
+        <location filename="../Core/RomManager.cpp" line="87"/>
+        <source>ROM Name</source>
+        <translation>ROM Name</translation>
+    </message>
+    <message id="romBrowser.headers.filename">
+        <location filename="../Core/RomManager.cpp" line="90"/>
+        <source>Filename</source>
+        <translation>Filename</translation>
+    </message>
+    <message id="romBrowser.headers.size">
+        <location filename="../Core/RomManager.cpp" line="93"/>
+        <source>Size</source>
+        <translation>Size</translation>
+    </message>
 </context>
 </TS>

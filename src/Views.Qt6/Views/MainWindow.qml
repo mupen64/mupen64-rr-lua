@@ -66,22 +66,12 @@ ApplicationWindow {
 
         currentIndex: (core.launched) ? 1 : 0
 
-        Item {
-            // TODO: replace with ROM browser
+        RomBrowser {
+            context: core
+            romManager: romManager
+
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Button {
-                anchors.centerIn: parent
-                text: "MessageBox test"
-                onClicked: {
-                    dialogService.queueInfoDialog(
-                        null,
-                        "Hello there.",
-                        "General Kenobi! You are a bold one.",
-                        CoreMessageTone.Error
-                    );
-                }
-            }
         }
         Item {
             // All children in the game view will be fixed in size.
@@ -104,6 +94,9 @@ ApplicationWindow {
 
     EmuContext {
         id: core
+
+        // ROM manager
+        romManager: romManager
 
         // Graphics integration
         onGfxRequestSize: (width, height) => coreDisplay.reserveSize(width, height)
@@ -135,10 +128,25 @@ ApplicationWindow {
         options.vcrWriteExtendedFormat: settingsCore.vcrWriteExtendedFormat
 
         // Config paths
-        paths.romDir: settingsPaths.romDir
         paths.saveDir: settingsPaths.saveDir
         paths.screenshotDir: settingsPaths.screenshotDir
         paths.backupDir: settingsPaths.backupDir
+    }
+
+    RomManager {
+        id: romManager
+
+
+        function reloadWithSettings() {
+            reloadRomList(
+                String(settingsPaths.romDir),
+                false
+            );
+        }
+
+        Component.onCompleted: {
+            reloadWithSettings();
+        }
     }
 
     // invalidateVisuals() must be called on each UI frame to

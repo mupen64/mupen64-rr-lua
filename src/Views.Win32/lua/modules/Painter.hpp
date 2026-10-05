@@ -7,6 +7,7 @@
 #pragma once
 
 #include <Common.hpp>
+#include <Common.Win32/WinUtils.hpp>
 #include <Common/Assert.hpp>
 #include <Common/LRUCache.hpp>
 #include <lua/LuaManager.hpp>
@@ -38,11 +39,17 @@ namespace Detail
 {
 constexpr const char *IMAGE_MT = "mupen64.PainterImage";
 constexpr const char *PAINTER_MT = "mupen64.Painter";
+constexpr const char *MATRIX_MT = "mupen64.PainterMatrix3x2";
 inline char current_painter_registry;
 constexpr float UNCONSTRAINED_LAYOUT_SIZE = 10000000.0f;
 constexpr size_t TEXT_LAYOUT_CACHE_CAPACITY = 2048;
 
 constexpr size_t TEXT_MEASUREMENT_CACHE_CAPACITY = 2048;
+
+struct PainterMatrix3x2
+{
+    D2D1::Matrix3x2F transform;
+};
 
 struct Image
 {
@@ -92,6 +99,41 @@ inline bool operator==(const Stroke &a, const Stroke &b)
     return p.startCap == q.startCap && p.endCap == q.endCap && p.dashCap == q.dashCap && p.lineJoin == q.lineJoin &&
            p.miterLimit == q.miterLimit && p.dashStyle == q.dashStyle && p.dashOffset == q.dashOffset;
 }
+
+enum class GradientType : std::uint8_t
+{
+    Linear,
+    Radial,
+};
+
+struct GradientStop
+{
+    float offset{};
+    D2D1_COLOR_F color{};
+};
+
+struct Gradient
+{
+    GradientType type{};
+    D2D1_POINT_2F point0{};
+    D2D1_POINT_2F point1{};
+    std::vector<GradientStop> stops;
+};
+
+struct Paint
+{
+    bool is_gradient{};
+    Gradient gradient{};
+    D2D1_COLOR_F color{};
+};
+
+struct GradientResource
+{
+    Gradient value;
+    ComPtr<ID2D1GradientStopCollection> stops;
+    ComPtr<ID2D1LinearGradientBrush> linear;
+    ComPtr<ID2D1RadialGradientBrush> radial;
+};
 
 struct BrushResource
 {
@@ -216,8 +258,11 @@ struct Command
         D2D1_MATRIX_3X2_F transform;
         D2D1_COLOR_F color;
         UINT32 brush;
+        UINT32 gradient;
         UINT32 stroke;
         UINT32 path;
+        float alpha;
+        bool is_gradient;
     };
     struct ImageData
     {
@@ -245,6 +290,7 @@ inline D2D1::Matrix3x2F to_matrix(const D2D1_MATRIX_3X2_F &matrix)
 struct StateSnapshot
 {
     D2D1::Matrix3x2F transform = D2D1::Matrix3x2F::Identity();
+    float alpha{1.0f};
     size_t clip_depth{};
 };
 
@@ -255,6 +301,7 @@ struct Painter
     bool active{};
 
     D2D1::Matrix3x2F transform = D2D1::Matrix3x2F::Identity();
+    float alpha{1.0f};
     std::vector<StateSnapshot> states;
 
     std::vector<D2D1_RECT_F> clips;
@@ -266,6 +313,7 @@ struct Painter
     std::vector<PathPayload> paths;
     std::vector<ImagePayload> image_payloads;
     std::vector<BrushResource> brushes;
+    std::vector<GradientResource> gradients;
     std::vector<StrokeResource> strokes;
     std::vector<TextFormatResource> text_formats;
     std::vector<ImageResource> images;
@@ -357,6 +405,112 @@ inline D2D1_COLOR_F check_color(lua_State *L, int index)
     return D2D1::ColorF(r, g, b, a);
 }
 
+inline std::vector<GradientStop> check_gradient_stops(lua_State *L, int index)
+{
+    luaL_checktype(L, index, LUA_TTABLE);
+    const int absolute = lua_absindex(L, index);
+    const size_t count = lua_rawlen(L, absolute);
+    if (count < 2) luaL_error(L, "a gradient requires at least two color stops");
+    if (count > UINT32_MAX || count > std::numeric_limits<size_t>::max() / sizeof(GradientStop))
+        luaL_error(L, "a gradient has too many color stops");
+
+    auto *parsed = static_cast<GradientStop *>(lua_newuserdata(L, count * sizeof(GradientStop)));
+    for (size_t i = 0; i < count; ++i)
+    {
+        lua_rawgeti(L, absolute, static_cast<lua_Integer>(i + 1));
+        luaL_checktype(L, -1, LUA_TTABLE);
+        const float value = table_painter_number(L, -1, "offset", 0, true);
+        const float offset = std::isfinite(value) ? std::clamp(value, 0.0f, 1.0f) : 1.0f;
+        lua_getfield(L, -1, "color");
+        const auto color = check_color(L, -1);
+        lua_pop(L, 2);
+        new (&parsed[i]) GradientStop{offset, color};
+    }
+
+    std::vector<GradientStop> stops(parsed, parsed + count);
+    lua_pop(L, 1);
+    std::stable_sort(stops.begin(), stops.end(), [](const auto &a, const auto &b) { return a.offset < b.offset; });
+    return stops;
+}
+
+inline bool has_color_channels(lua_State *L, int index)
+{
+    index = lua_absindex(L, index);
+    for (const char *field : {"r", "g", "b"})
+    {
+        lua_getfield(L, index, field);
+        const bool present = !lua_isnil(L, -1);
+        lua_pop(L, 1);
+        if (!present) return false;
+    }
+    return true;
+}
+
+inline Paint check_paint(lua_State *L, int index)
+{
+    if (lua_type(L, index) != LUA_TTABLE) return {false, {}, check_color(L, index)};
+
+    const int absolute = lua_absindex(L, index);
+    lua_getfield(L, absolute, "type");
+    if (lua_type(L, -1) != LUA_TSTRING || has_color_channels(L, absolute))
+    {
+        lua_pop(L, 1);
+        return {false, {}, check_color(L, absolute)};
+    }
+
+    size_t type_length{};
+    const char *type_data = lua_tolstring(L, -1, &type_length);
+    const std::string_view type(type_data, type_length);
+    Gradient gradient{};
+    if (type == "linear_gradient")
+    {
+        gradient.type = GradientType::Linear;
+        const auto coordinate = [&](const char *field) {
+            const float value = table_painter_number(L, absolute, field, 0, true);
+            return std::isfinite(value) ? value : 0.0f;
+        };
+        gradient.point0 = D2D1::Point2F(coordinate("x0"), coordinate("y0"));
+        gradient.point1 = D2D1::Point2F(coordinate("x1"), coordinate("y1"));
+        if (gradient.point0.x == gradient.point1.x && gradient.point0.y == gradient.point1.y)
+        {
+            const float next_x = gradient.point0.x + 1.0f;
+            const float next_y = gradient.point0.y + 1.0f;
+            if (std::isfinite(next_x) && next_x != gradient.point0.x)
+                gradient.point1.x = next_x;
+            else if (std::isfinite(next_y) && next_y != gradient.point0.y)
+                gradient.point1.y = next_y;
+            else
+            {
+                gradient.point0 = D2D1::Point2F(0, 0);
+                gradient.point1 = D2D1::Point2F(1, 0);
+            }
+        }
+    }
+    else if (type == "radial_gradient")
+    {
+        gradient.type = GradientType::Radial;
+        const auto coordinate = [&](const char *field) {
+            const float value = table_painter_number(L, absolute, field, 0, true);
+            return std::isfinite(value) ? value : 0.0f;
+        };
+        gradient.point0 = D2D1::Point2F(coordinate("center_x"), coordinate("center_y"));
+        const auto radius = [&](const char *field) {
+            const float value = table_painter_number(L, absolute, field, 0, true);
+            return std::isfinite(value) ? std::max(value, 0.001f) : 1.0f;
+        };
+        gradient.point1 = D2D1::Point2F(radius("radius_x"), radius("radius_y"));
+    }
+    else
+    {
+        luaL_error(L, "unknown painter gradient type '%.*s'", static_cast<int>(type_length), type_data);
+    }
+
+    lua_getfield(L, absolute, "stops");
+    gradient.stops = check_gradient_stops(L, -1);
+    lua_pop(L, 2);
+    return {true, std::move(gradient), {}};
+}
+
 inline float check_coordinate(lua_State *L, int index, const char *name)
 {
     return check_painter_number(L, index, name);
@@ -439,6 +593,24 @@ inline UINT32 intern_brush(Painter *painter, const D2D1_COLOR_F &color)
     return static_cast<UINT32>(painter->brushes.size() - 1);
 }
 
+inline bool gradient_equal(const Gradient &a, const Gradient &b)
+{
+    if (a.type != b.type || a.point0.x != b.point0.x || a.point0.y != b.point0.y || a.point1.x != b.point1.x ||
+        a.point1.y != b.point1.y || a.stops.size() != b.stops.size())
+        return false;
+    for (size_t i = 0; i < a.stops.size(); ++i)
+        if (a.stops[i].offset != b.stops[i].offset || !(a.stops[i].color == b.stops[i].color)) return false;
+    return true;
+}
+
+inline UINT32 intern_gradient(Painter *painter, Gradient gradient)
+{
+    for (UINT32 i = 0; i < painter->gradients.size(); ++i)
+        if (gradient_equal(painter->gradients[i].value, gradient)) return i;
+    painter->gradients.push_back({std::move(gradient)});
+    return static_cast<UINT32>(painter->gradients.size() - 1);
+}
+
 inline void close_image(Image *image)
 {
     if (image->closed) return;
@@ -465,6 +637,7 @@ inline void discard_commands(Painter *painter)
     painter->paths.clear();
     painter->image_payloads.clear();
     painter->brushes.clear();
+    painter->gradients.clear();
     painter->strokes.clear();
     painter->text_formats.clear();
     painter->images.clear();
@@ -1310,6 +1483,7 @@ inline int painter_gc(lua_State *L)
     return 0;
 }
 
+
 inline int image_index(lua_State *L)
 {
     auto *image = static_cast<Image *>(luaL_checkudata(L, 1, IMAGE_MT));
@@ -1326,16 +1500,28 @@ inline int image_index(lua_State *L)
     return 1;
 }
 
-inline void emit_path_command(Painter *painter, CommandType type, const D2D1_COLOR_F &color, UINT32 stroke)
+inline void emit_path_command(Painter *painter, CommandType type, Paint paint, UINT32 stroke)
 {
     Command command{};
     command.type = type;
     command.path.transform = {painter->transform._11, painter->transform._12, painter->transform._21,
         painter->transform._22, painter->transform._31, painter->transform._32};
-    command.path.color = color;
-    command.path.brush = intern_brush(painter, color);
     command.path.stroke = stroke;
     command.path.path = static_cast<UINT32>(painter->paths.size());
+    command.path.is_gradient = false;
+    if (paint.is_gradient)
+    {
+        command.path.gradient = intern_gradient(painter, std::move(paint.gradient));
+        command.path.alpha = painter->alpha;
+        command.path.is_gradient = true;
+    }
+    else
+    {
+        auto draw_color = paint.color;
+        draw_color.a *= painter->alpha;
+        command.path.color = draw_color;
+        command.path.brush = intern_brush(painter, draw_color);
+    }
     painter->paths.push_back({painter->path_ops, painter->path_texts});
     painter->commands.push_back(std::move(command));
 }
@@ -1364,6 +1550,48 @@ inline D2D1_RECT_F transform_rect(const D2D1::Matrix3x2F &matrix, const D2D1_REC
         max_y = std::max(max_y, corners[i].y);
     }
     return D2D1::RectF(min_x, min_y, max_x, max_y);
+}
+
+inline float snap_image_coordinate(float coordinate, float scale, float translation, float dpi)
+{
+    if (!std::isfinite(coordinate) || !std::isfinite(scale) || scale == 0 || !std::isfinite(translation) ||
+        !(dpi > 0) || !std::isfinite(dpi))
+        return coordinate;
+    const float device_pixel = (coordinate * scale + translation) * dpi / 96.0f;
+    if (!std::isfinite(device_pixel)) return coordinate;
+    return (std::round(device_pixel) * 96.0f / dpi - translation) / scale;
+}
+
+inline std::array<float, 4> snap_nine_slice_axis(
+    float start, float inner_start, float inner_end, float end, float scale, float translation, float dpi)
+{
+    std::array<float, 4> result{start, inner_start, inner_end, end};
+    if (!std::isfinite(start) || !std::isfinite(inner_start) || !std::isfinite(inner_end) || !std::isfinite(end) ||
+        !std::isfinite(scale) || scale == 0 || !std::isfinite(translation) || !(dpi > 0) || !std::isfinite(dpi))
+        return result;
+
+    const float pixels_per_dip = dpi / 96.0f;
+    const float start_pixel = std::round((start * scale + translation) * pixels_per_dip);
+    const float end_pixel = std::round((end * scale + translation) * pixels_per_dip);
+    float left_width_pixels = std::round((inner_start - start) * scale * pixels_per_dip);
+    float right_width_pixels = std::round((end - inner_end) * scale * pixels_per_dip);
+    const float total_width_pixels = end_pixel - start_pixel;
+    const float total_corner_pixels = std::fabs(left_width_pixels) + std::fabs(right_width_pixels);
+    if (total_corner_pixels > std::fabs(total_width_pixels))
+    {
+        const float direction = std::signbit(total_width_pixels) ? -1.0f : 1.0f;
+        left_width_pixels =
+            std::round(std::fabs(total_width_pixels) * std::fabs(left_width_pixels) / total_corner_pixels) * direction;
+        right_width_pixels = total_width_pixels - left_width_pixels;
+    }
+
+    const auto to_coordinate = [scale, translation, pixels_per_dip](
+                                   float pixel) { return (pixel / pixels_per_dip - translation) / scale; };
+    result[0] = to_coordinate(start_pixel);
+    result[1] = to_coordinate(start_pixel + left_width_pixels);
+    result[2] = to_coordinate(end_pixel - right_width_pixels);
+    result[3] = to_coordinate(end_pixel);
+    return result;
 }
 
 inline int painter_clear(lua_State *L)
@@ -1432,10 +1660,128 @@ inline int painter_close_path(lua_State *L)
     return 0;
 }
 
+inline int matrix_dx(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    lua_pushnumber(L, matrix->transform._31);
+    return 1;
+}
+
+inline int matrix_dy(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    lua_pushnumber(L, matrix->transform._32);
+    return 1;
+}
+
+inline int matrix_sx(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    lua_pushnumber(L, std::hypot(matrix->transform._11, matrix->transform._12));
+    return 1;
+}
+
+inline int matrix_sy(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    lua_pushnumber(L, std::hypot(matrix->transform._21, matrix->transform._22));
+    return 1;
+}
+
+inline int matrix_gc(lua_State *L)
+{
+    static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT))->~PainterMatrix3x2();
+    return 0;
+}
+
+inline int matrix_index(lua_State *L)
+{
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    size_t key_length{};
+    const char *key_data = luaL_checklstring(L, 2, &key_length);
+    const std::string_view key(key_data, key_length);
+    if (key == "m11")
+        lua_pushnumber(L, matrix->transform._11);
+    else if (key == "m12")
+        lua_pushnumber(L, matrix->transform._12);
+    else if (key == "m21")
+        lua_pushnumber(L, matrix->transform._21);
+    else if (key == "m22")
+        lua_pushnumber(L, matrix->transform._22);
+    else if (key == "m31")
+        lua_pushnumber(L, matrix->transform._31);
+    else if (key == "m32")
+        lua_pushnumber(L, matrix->transform._32);
+    else
+    {
+        luaL_getmetatable(L, MATRIX_MT);
+        lua_pushvalue(L, 2);
+        lua_rawget(L, -2);
+        lua_remove(L, -2);
+    }
+    return 1;
+}
+
+inline int matrix_newindex(lua_State *L)
+{
+    auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 1, MATRIX_MT));
+    size_t key_length{};
+    const char *key_data = luaL_checklstring(L, 2, &key_length);
+    const std::string_view key(key_data, key_length);
+    const float value = check_painter_number(L, 3, "matrix component");
+    if (key == "m11")
+        matrix->transform._11 = value;
+    else if (key == "m12")
+        matrix->transform._12 = value;
+    else if (key == "m21")
+        matrix->transform._21 = value;
+    else if (key == "m22")
+        matrix->transform._22 = value;
+    else if (key == "m31")
+        matrix->transform._31 = value;
+    else if (key == "m32")
+        matrix->transform._32 = value;
+    else
+        return luaL_error(L, "unknown PainterMatrix3x2 component '%.*s'", static_cast<int>(key_length), key_data);
+    return 0;
+}
+
+inline int painter_get_transform(lua_State *L)
+{
+    const auto *painter = check_painter(L, 1);
+    new (lua_newuserdata(L, sizeof(PainterMatrix3x2))) PainterMatrix3x2{painter->transform};
+    luaL_getmetatable(L, MATRIX_MT);
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+inline int painter_set_transform(lua_State *L)
+{
+    auto *painter = check_painter(L, 1);
+    const auto *matrix = static_cast<PainterMatrix3x2 *>(luaL_checkudata(L, 2, MATRIX_MT));
+    painter->transform = matrix->transform;
+    return 0;
+}
+
+inline int painter_get_alpha(lua_State *L)
+{
+    const auto *painter = check_painter(L, 1);
+    lua_pushnumber(L, painter->alpha);
+    return 1;
+}
+
+inline int painter_set_alpha(lua_State *L)
+{
+    auto *painter = check_painter(L, 1);
+    const float alpha = check_painter_number(L, 2, "alpha");
+    painter->alpha = std::isfinite(alpha) ? std::clamp(alpha, 0.0f, 1.0f) : 1.0f;
+    return 0;
+}
+
 inline int painter_save(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    painter->states.push_back({painter->transform, painter->clips.size()});
+    painter->states.push_back({painter->transform, painter->alpha, painter->clips.size()});
     return 0;
 }
 
@@ -1453,6 +1799,7 @@ inline int painter_restore(lua_State *L)
         painter->commands.push_back(std::move(command));
     }
     painter->transform = state.transform;
+    painter->alpha = state.alpha;
     return 0;
 }
 
@@ -1495,20 +1842,21 @@ inline int painter_scale(lua_State *L)
     return 0;
 }
 
+
 inline int painter_stroke(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto color = check_color(L, 2);
+    auto paint = check_paint(L, 2);
     const auto stroke = check_stroke(L, 3);
-    emit_path_command(painter, CommandType::StrokePath, color, intern_stroke(painter, stroke));
+    emit_path_command(painter, CommandType::StrokePath, std::move(paint), intern_stroke(painter, stroke));
     return 0;
 }
 
 inline int painter_fill(lua_State *L)
 {
     auto *painter = check_painter(L, 1);
-    const auto color = check_color(L, 2);
-    emit_path_command(painter, CommandType::FillPath, color, 0);
+    auto paint = check_paint(L, 2);
+    emit_path_command(painter, CommandType::FillPath, std::move(paint), 0);
     return 0;
 }
 
@@ -1673,10 +2021,15 @@ inline int painter_image(lua_State *L)
 
     ImagePayload image_payload{};
     image_payload.tint = tint;
-    image_payload.opacity = opacity;
+    image_payload.opacity = opacity * painter->alpha;
     image_payload.interpolation = interpolation;
     image_payload.tinted = tinted;
     const auto add_slice = [&](const ImageSlice &slice) { image_payload.slices[image_payload.slice_count++] = slice; };
+    const auto &transform = painter->transform;
+    const bool axis_aligned = std::fabs(transform._12) <= 1e-6f && std::fabs(transform._21) <= 1e-6f;
+    FLOAT dpi_x = 96.0f;
+    FLOAT dpi_y = 96.0f;
+    if (nine_sliced && axis_aligned) painter->target->GetDpi(&dpi_x, &dpi_y);
     if (nine_sliced)
     {
         const float left_width = center.left - source.left;
@@ -1685,18 +2038,41 @@ inline int painter_image(lua_State *L)
         const float bottom_height = source.bottom - center.bottom;
         const float destination_width = destination.right - destination.left;
         const float destination_height = destination.bottom - destination.top;
-        if (destination_width < left_width + right_width || destination_height < top_height + bottom_height)
+        const float transform_scale_x = std::hypot(transform._11, transform._12);
+        const float transform_scale_y = std::hypot(transform._21, transform._22);
+        const float corner_scale_x = transform_scale_x > 0 && std::isfinite(transform_scale_x) ? transform_scale_x : 1;
+        const float corner_scale_y = transform_scale_y > 0 && std::isfinite(transform_scale_y) ? transform_scale_y : 1;
+        const float destination_left_width = left_width / corner_scale_x;
+        const float destination_right_width = right_width / corner_scale_x;
+        const float destination_top_height = top_height / corner_scale_y;
+        const float destination_bottom_height = bottom_height / corner_scale_y;
+        if (destination_width < destination_left_width + destination_right_width ||
+            destination_height < destination_top_height + destination_bottom_height)
         {
-            add_slice({center, destination});
+            const auto snapped_destination =
+                axis_aligned ? D2D1::RectF(snap_image_coordinate(destination.left, transform._11, transform._31, dpi_x),
+                                   snap_image_coordinate(destination.top, transform._22, transform._32, dpi_y),
+                                   snap_image_coordinate(destination.right, transform._11, transform._31, dpi_x),
+                                   snap_image_coordinate(destination.bottom, transform._22, transform._32, dpi_y))
+                             : destination;
+            add_slice({center, snapped_destination});
         }
         else
         {
             const float source_x[] = {source.left, center.left, center.right, source.right};
             const float source_y[] = {source.top, center.top, center.bottom, source.bottom};
-            const float destination_x[] = {
-                destination.left, destination.left + left_width, destination.right - right_width, destination.right};
-            const float destination_y[] = {
-                destination.top, destination.top + top_height, destination.bottom - bottom_height, destination.bottom};
+            const auto destination_x =
+                axis_aligned ? snap_nine_slice_axis(destination.left, destination.left + destination_left_width,
+                                   destination.right - destination_right_width, destination.right, transform._11,
+                                   transform._31, dpi_x)
+                             : std::array<float, 4>{destination.left, destination.left + destination_left_width,
+                                   destination.right - destination_right_width, destination.right};
+            const auto destination_y =
+                axis_aligned ? snap_nine_slice_axis(destination.top, destination.top + destination_top_height,
+                                   destination.bottom - destination_bottom_height, destination.bottom, transform._22,
+                                   transform._32, dpi_y)
+                             : std::array<float, 4>{destination.top, destination.top + destination_top_height,
+                                   destination.bottom - destination_bottom_height, destination.bottom};
             for (int y = 0; y < 3; ++y)
             {
                 for (int x = 0; x < 3; ++x)
@@ -1749,6 +2125,44 @@ inline void realize_brush(Painter *painter, UINT32 index, ID2D1SolidColorBrush *
     *brush = resource.native.Get();
 }
 
+inline void realize_gradient_brush(Painter *painter, UINT32 index, ID2D1Brush **brush)
+{
+    auto &resource = painter->gradients[index];
+    if (!resource.stops)
+    {
+        std::vector<D2D1_GRADIENT_STOP> stops;
+        stops.reserve(resource.value.stops.size());
+        for (const auto &stop : resource.value.stops) stops.push_back({stop.offset, stop.color});
+        need(painter->target->CreateGradientStopCollection(stops.data(), static_cast<UINT32>(stops.size()),
+                 D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_CLAMP, &resource.stops),
+            "ID2D1RenderTarget::CreateGradientStopCollection");
+        need(resource.stops, "ID2D1RenderTarget::CreateGradientStopCollection returned null");
+    }
+    if (resource.value.type == GradientType::Linear)
+    {
+        if (!resource.linear)
+        {
+            const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES properties{resource.value.point0, resource.value.point1};
+            need(painter->target->CreateLinearGradientBrush(properties, resource.stops.Get(), &resource.linear),
+                "ID2D1RenderTarget::CreateLinearGradientBrush");
+            need(resource.linear, "ID2D1RenderTarget::CreateLinearGradientBrush returned null");
+        }
+        *brush = resource.linear.Get();
+    }
+    else
+    {
+        if (!resource.radial)
+        {
+            const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES properties{
+                resource.value.point0, D2D1::Point2F(0, 0), resource.value.point1.x, resource.value.point1.y};
+            need(painter->target->CreateRadialGradientBrush(properties, resource.stops.Get(), &resource.radial),
+                "ID2D1RenderTarget::CreateRadialGradientBrush");
+            need(resource.radial, "ID2D1RenderTarget::CreateRadialGradientBrush returned null");
+        }
+        *brush = resource.radial.Get();
+    }
+}
+
 inline void realize_stroke(
     Painter *painter, UINT32 index, ComPtr<ID2D1Factory> &factory, ID2D1StrokeStyle **style, float *width)
 {
@@ -1789,7 +2203,7 @@ inline void realize_text_format(
     format = resource.native;
 }
 
-inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, ID2D1SolidColorBrush *brush,
+inline void draw_text_runs(Painter *painter, const std::vector<TextRun> &runs, ID2D1Brush *brush,
     ComPtr<IDWriteFactory> &text_factory, TextLayoutCache &cache, const D2D1::Matrix3x2F &command_transform)
 {
     for (const auto &run : runs)
@@ -1975,8 +2389,18 @@ inline void execute_commands(Painter *painter)
             continue;
         }
 
-        ID2D1SolidColorBrush *brush = nullptr;
-        realize_brush(painter, command.path.brush, &brush);
+        ID2D1Brush *brush = nullptr;
+        if (command.path.is_gradient)
+        {
+            realize_gradient_brush(painter, command.path.gradient, &brush);
+            brush->SetOpacity(command.path.alpha);
+        }
+        else
+        {
+            ID2D1SolidColorBrush *solid = nullptr;
+            realize_brush(painter, command.path.brush, &solid);
+            brush = solid;
+        }
 
         const auto &payload = painter->paths[command.path.path];
         ComPtr<ID2D1PathGeometry> geometry;
@@ -2095,21 +2519,21 @@ inline int set_target_fps(lua_State *L)
 
 inline int new_image(lua_State *L)
 {
-    const lua_Integer width_value = luaL_checkinteger(L, 1);
-    const lua_Integer height_value = luaL_checkinteger(L, 2);
-    if (width_value <= 0 || height_value <= 0 || width_value > UINT_MAX || height_value > UINT_MAX)
+    const double width_value = std::ceil(luaL_checknumber(L, 1));
+    const double height_value = std::ceil(luaL_checknumber(L, 2));
+    if (!std::isfinite(width_value) || !std::isfinite(height_value) || width_value <= 0 || height_value <= 0 ||
+        width_value > UINT_MAX || height_value > UINT_MAX)
         return luaL_error(L, "image dimensions must be positive 32-bit integers");
+    const UINT width = static_cast<UINT>(width_value);
+    const UINT height = static_cast<UINT>(height_value);
     auto *parent = Detail::check_current_target(L);
     const UINT max_bitmap_size = parent->GetMaximumBitmapSize();
-    if (!max_bitmap_size || static_cast<lua_Unsigned>(width_value) > max_bitmap_size ||
-        static_cast<lua_Unsigned>(height_value) > max_bitmap_size)
+    if (!max_bitmap_size || width > max_bitmap_size || height > max_bitmap_size)
         return luaL_error(L, "image dimensions exceed the Direct2D bitmap limit");
     ComPtr<ID2D1BitmapRenderTarget> target;
     ComPtr<ID2D1Bitmap> bitmap;
-    Detail::create_image_target(
-        parent, static_cast<UINT>(width_value), static_cast<UINT>(height_value), true, target, bitmap);
-    Detail::push_image(
-        L, std::move(target), std::move(bitmap), static_cast<UINT>(width_value), static_cast<UINT>(height_value));
+    Detail::create_image_target(parent, width, height, true, target, bitmap);
+    Detail::push_image(L, std::move(target), std::move(bitmap), width, height);
     return 1;
 }
 
@@ -2297,13 +2721,23 @@ inline int hittest_text_position(lua_State *L)
         options.fit ? Detail::get_text_fit_transform(layout.Get(), options) : Detail::TextFitTransform{};
     const float layout_point_x = options.fit ? (point_x - fit_transform.offset_x) / fit_transform.scale : point_x;
     const float layout_point_y = options.fit ? (point_y - fit_transform.offset_y) / fit_transform.scale : point_y;
-    BOOL is_trailing_hit = FALSE;
-    BOOL is_inside = FALSE;
-    DWRITE_HIT_TEST_METRICS hit{};
-    need(layout->HitTestPoint(layout_point_x, layout_point_y, &is_trailing_hit, &is_inside, &hit),
-        "IDWriteTextLayout::HitTestPoint");
+    DWriteTextHitTestResult hit_result{};
+    if (g_main_ctx.wine)
+    {
+        const float layout_width = options.fit ? Detail::UNCONSTRAINED_LAYOUT_SIZE : options.width;
+        const float layout_height = options.fit ? Detail::UNCONSTRAINED_LAYOUT_SIZE : options.height;
+        need(hit_test_text_layout_point(
+                 layout.Get(), length, layout_point_x, layout_point_y, layout_width, layout_height, hit_result),
+            "hit_test_text_layout_point");
+    }
+    else
+    {
+        need(layout->HitTestPoint(layout_point_x, layout_point_y, &hit_result.is_trailing_hit, &hit_result.is_inside,
+                 &hit_result.metrics),
+            "IDWriteTextLayout::HitTestPoint");
+    }
     if (options.clip && (point_x < 0 || point_y < 0 || point_x > options.width || point_y > options.height))
-        is_inside = FALSE;
+        hit_result.is_inside = FALSE;
 
     UINT32 line = 1;
     UINT32 line_count{};
@@ -2315,9 +2749,10 @@ inline int hittest_text_position(lua_State *L)
         need(hr, "IDWriteTextLayout::GetLineMetrics");
     }
 
-    const UINT32 hit_position = std::min(hit.textPosition, length);
-    const UINT32 hit_end = hit.length > length - hit_position ? length : hit_position + hit.length;
-    const UINT32 caret_position = is_trailing_hit ? hit_end : hit_position;
+    const UINT32 hit_position = std::min(hit_result.metrics.textPosition, length);
+    const UINT32 hit_end =
+        hit_result.metrics.length > length - hit_position ? length : hit_position + hit_result.metrics.length;
+    const UINT32 caret_position = hit_result.is_trailing_hit ? hit_end : hit_position;
     if (line_count)
     {
         UINT32 line_start = 0;
@@ -2356,7 +2791,7 @@ inline int hittest_text_position(lua_State *L)
     lua_setfield(L, -2, "index");
     lua_pushinteger(L, static_cast<lua_Integer>(line));
     lua_setfield(L, -2, "line");
-    lua_pushboolean(L, is_inside != FALSE);
+    lua_pushboolean(L, hit_result.is_inside != FALSE);
     lua_setfield(L, -2, "inside");
     return 1;
 }
@@ -2440,15 +2875,26 @@ inline void register_types(lua_State *L)
         {"begin_path", Detail::painter_begin_path}, {"move_to", Detail::painter_move_to},
         {"line_to", Detail::painter_line_to}, {"cubic_to", Detail::painter_cubic_to},
         {"quadratic_to", Detail::painter_quadratic_to}, {"arc", Detail::painter_arc},
-        {"close_path", Detail::painter_close_path}, {"save", Detail::painter_save},
+        {"close_path", Detail::painter_close_path}, {"get_transform", Detail::painter_get_transform},
+        {"set_transform", Detail::painter_set_transform}, {"get_alpha", Detail::painter_get_alpha},
+        {"set_alpha", Detail::painter_set_alpha}, {"save", Detail::painter_save},
         {"restore", Detail::painter_restore}, {"clip", Detail::painter_clip}, {"translate", Detail::painter_translate},
         {"rotate", Detail::painter_rotate}, {"scale", Detail::painter_scale}, {"stroke", Detail::painter_stroke},
         {"fill", Detail::painter_fill}, {"text", Detail::painter_text}, {"rect", Detail::painter_rect},
         {"round_rect", Detail::painter_round_rect}, {"circle", Detail::painter_circle}, {"line", Detail::painter_line},
         {"polyline", Detail::painter_polyline}, {"polygon", Detail::painter_polygon}, {"image", Detail::painter_image},
         {nullptr, nullptr}};
+    static const luaL_Reg matrix_methods[] = {{"dx", Detail::matrix_dx}, {"dy", Detail::matrix_dy},
+        {"sx", Detail::matrix_sx}, {"sy", Detail::matrix_sy}, {nullptr, nullptr}};
+
     luaL_create_metatable(L, Detail::IMAGE_MT, image_methods, Detail::image_index, Detail::image_gc);
     luaL_create_metatable(L, Detail::PAINTER_MT, painter_methods, nullptr, Detail::painter_gc);
+    luaL_create_metatable(L, Detail::MATRIX_MT, matrix_methods, Detail::matrix_index, Detail::matrix_gc);
+
+    luaL_getmetatable(L, Detail::MATRIX_MT);
+    lua_pushcfunction(L, Detail::matrix_newindex);
+    lua_setfield(L, -2, "__newindex");
+    lua_pop(L, 1);
 }
 
 inline int invoke_paint_callback(lua_State *L)

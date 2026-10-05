@@ -19,6 +19,7 @@ ListView {
     rightMargin: 10 + ((scrollBar.visible)? scrollBar.width : 0)
 
     flickableDirection: Flickable.VerticalFlick
+    acceptedButtons: Qt.NoButton
     ScrollBar.vertical: ScrollBar {
         id: scrollBar
         policy: ScrollBar.AsNeeded
