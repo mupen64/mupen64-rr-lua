@@ -13,6 +13,30 @@
 
 namespace LuaCore::Emu
 {
+static int get_hint(lua_State *L)
+{
+    const char *hint = luaL_checkstring(L, 1);
+    auto *env = LuaManager::get_environment_for_state(L);
+
+    if (!LUA_HINTS.contains(hint)) return luaL_error(L, "Unknown hint '%s'", hint);
+
+    const auto value = env->query_hint(hint);
+    lua_pushstring(L, value.c_str());
+    return 1;
+}
+
+static int set_hint(lua_State *L)
+{
+    const char *hint = luaL_checkstring(L, 1);
+    const char *value = luaL_checkstring(L, 2);
+
+    auto *env = LuaManager::get_environment_for_state(L);
+    const auto result = env->try_set_hint(hint, value);
+    if (!result) return luaL_error(L, "%s", result.error().c_str());
+
+    return 0;
+}
+
 static int GetVICount(lua_State *L)
 {
     lua_pushinteger(L, g_main_ctx.CoreCtx->vcr_get_current_vi());
