@@ -345,8 +345,7 @@ void on_task_changed(CoreVCRTask value)
 void on_emu_stopping()
 {
     g_main_ctx.dispatcher->invoke([] {
-        LuaDialog::store_running_scripts();
-        LuaDialog::stop_all();
+        LuaDialog::store_and_stop_all();
     });
 }
 
@@ -384,7 +383,7 @@ void on_emu_launched_changed(bool value)
                     g_config.is_recent_rom_paths_frozen);
             }
 
-            LuaDialog::load_running_scripts();
+            LuaDialog::restore();
         }
 
         if (!value && previous_value)

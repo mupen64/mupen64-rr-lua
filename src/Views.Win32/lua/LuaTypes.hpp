@@ -86,6 +86,11 @@ struct ActionParamMeta
     uintptr_t *get_hints{};
 };
 
+inline const std::string LUA_HINT_RESTART_WITH_EMU = "restart_with_emu";
+inline const std::unordered_map<std::string, std::pair<std::string, std::vector<std::string>>> LUA_HINTS = {
+    {LUA_HINT_RESTART_WITH_EMU, {"1", {"0", "1"}}},
+};
+
 /**
  * \brief Describes a Lua instance.
  */
@@ -98,6 +103,7 @@ struct LuaEnvironment
     lua_State *L;
     LuaRenderingContext rctx;
     bool started{};
+    std::unordered_map<std::string, std::string> hints;
 
     // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<ActionManager::action_path> registered_actions{};
@@ -112,6 +118,26 @@ struct LuaEnvironment
     destroying_func destroying{};
 
     print_func print{};
+
+    std::string query_hint(const std::string &name)
+    {
+        if (hints.contains(name)) return hints.at(name);
+        return LUA_HINTS.at(name).first;
+    }
+
+    std::expected<void, std::string> try_set_hint(const std::string &name, const std::string &value)
+    {
+        if (!LUA_HINTS.contains(name)) return std::unexpected(std::format("Unknown hint '{}'", name));
+
+        const auto &hint = LUA_HINTS.at(name);
+        const auto valid = std::find(hint.second.begin(), hint.second.end(), value) != hint.second.end();
+        if (!valid)
+            return std::unexpected(
+                std::format("Invalid value '{}' for hint '{}'. Allowed values: {}", value, name, hint.second));
+
+        hints[name] = value;
+        return {};
+    }
 };
 
 /**

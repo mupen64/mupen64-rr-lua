@@ -721,20 +721,24 @@ void LuaDialog::close_all()
     set_listview_selection(g_dlg.lv_hwnd, {});
 }
 
-void LuaDialog::store_running_scripts()
+void LuaDialog::store_and_stop_all()
 {
     g_dlg.stored_contexts.clear();
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
     {
-        if (!ctx->env)
-        {
-            continue;
-        }
+        if (!ctx->env) continue;
+        if (ctx->env->query_hint(LUA_HINT_RESTART_WITH_EMU) == "0") continue;
+
         g_dlg.stored_contexts.emplace_back(ctx);
+    }
+
+    for (const auto &ctx : g_dlg.stored_contexts)
+    {
+        stop(*ctx.get());
     }
 }
 
-void LuaDialog::load_running_scripts()
+void LuaDialog::restore()
 {
     for (const auto &ctx : g_dlg.stored_contexts)
     {

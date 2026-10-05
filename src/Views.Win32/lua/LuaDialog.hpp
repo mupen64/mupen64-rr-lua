@@ -38,14 +38,14 @@ void stop_all();
 void close_all();
 
 /**
- * \brief Stores a list of all running Lua scripts to be recalled later using <c>load_running_scripts</c>.
+ * \brief Stores a list of all eligible running Lua scripts to be recalled later using <c>restore</c>.
  */
-void store_running_scripts();
+void store_and_stop_all();
 
 /**
- * \brief Recalls previously running Lua scripts stored via <c>store_running_scripts</c> and starts them.
+ * \brief Recalls previously running Lua scripts stored via <c>store_and_stop_all</c> and starts them.
  */
-void load_running_scripts();
+void restore();
 
 /**
  * \brief Prints text to the console associated with a Lua environment.

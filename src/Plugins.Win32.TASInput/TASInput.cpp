@@ -1239,16 +1239,6 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 
         load_config();
 
-        for (int i = 0; i < 4; ++i)
-        {
-            g_plugin->controllers[i].present = new_config.controller_active[i];
-            g_plugin->controllers[i].raw = false;
-            g_plugin->controllers[i].plugin = CoreControllerExtension::None;
-            if (new_config.controller_mempak[i]) g_plugin->controllers[i].plugin = CoreControllerExtension::Mempak;
-            if (new_config.controller_rumblepak[i])
-                g_plugin->controllers[i].plugin = CoreControllerExtension::Rumblepak;
-        }
-
         icon_font = CreateFont(-20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS,
             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Marlett"));
 
@@ -1264,6 +1254,18 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 
         save_config();
 
+        break;
+    }
+    case M64RRSpec::Event::Type::InitializeControllers: {
+        auto *controllers = event.initialize_controllers.controllers;
+        for (int i = 0; i < 4; ++i)
+        {
+            controllers[i].present = new_config.controller_active[i];
+            controllers[i].raw = false;
+            controllers[i].plugin = CoreControllerExtension::None;
+            if (new_config.controller_mempak[i]) controllers[i].plugin = CoreControllerExtension::Mempak;
+            if (new_config.controller_rumblepak[i]) controllers[i].plugin = CoreControllerExtension::Rumblepak;
+        }
         break;
     }
     case M64RRSpec::Event::Type::Shutdown: {
