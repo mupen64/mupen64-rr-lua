@@ -109,7 +109,7 @@ static void update_can_modify_inputs()
 
         if (prev_can_modify_inputs != piano_roll.readwrite)
         {
-            g_main_ctx.dispatcher->invoke([] { ActionManager::notify_enabled_changed(PianoRoll::BASE); });
+            g_main_ctx.dispatcher->invoke([] { ActionManager::notify_enabled_changed(PianoRoll::BASE + ".*"); });
         }
     });
 }
@@ -1164,7 +1164,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
                 {piano_roll.hist_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
             });
 
-        ActionMenu::add_managed_menu(hwnd, PianoRoll::BASE + "*", std::nullopt, PianoRoll::BASE);
+        ActionMenu::add_managed_menu(hwnd, PianoRoll::BASE + ".*", std::nullopt, PianoRoll::BASE);
         WinDarkMode::attach(hwnd);
         break;
     }

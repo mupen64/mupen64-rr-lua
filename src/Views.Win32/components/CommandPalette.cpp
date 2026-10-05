@@ -434,7 +434,7 @@ static void add_actions(const std::string_view query)
     // 2. For each group, add matching actions
     for (const auto &group : unique_group_names)
     {
-        auto actions = ActionManager::get_actions_matching_filter(std::format("{} > *", group));
+        auto actions = ActionManager::get_actions_matching_filter(std::format("{}.*", group));
 
         auto segments = ActionManager::get_segments(group);
         for (auto &segment : segments)
