@@ -112,8 +112,6 @@ extern "C"
 
         void(CALL *process_dlist)(void);
 
-        CoreController *controllers;
-
         /**
          * \brief Logs the specified message at the trace level.
          */
@@ -188,6 +186,9 @@ extern "C"
             // The plugin is being shut down. There will be no more calls to it after this event.
             Shutdown,
 
+            // The plugin is being asked to provide the controller configuration.
+            InitializeControllers,
+
             // Emulation has started.
             RomOpened,
 
@@ -201,11 +202,21 @@ extern "C"
             PluginInit *init;
         };
 
+        struct InitializeControllersEvent
+        {
+            Type type;
+            // Write into these controllers to configure them.
+            CoreController* controllers; // [4]
+        };
+
         // The type of the event.
         Type type;
 
         // The initiate event details. Only valid when `type` is `Initiate`.
         InitiateEvent initiate;
+
+        // The initialize controllers event details. Only valid when `type` is `InitializeControllers`.
+        InitializeControllersEvent initialize_controllers;
     };
 
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);
