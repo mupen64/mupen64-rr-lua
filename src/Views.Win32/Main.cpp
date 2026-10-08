@@ -644,6 +644,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         LuaCallbacks::call_atkey(args);
         break;
     }
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+        Main::handle_mouse_events(hwnd, Message, wParam, lParam);
+        break;
     case WM_MOUSEWHEEL:
         g_main_ctx.last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
         Main::handle_mouse_events(hwnd, Message, wParam, lParam);
