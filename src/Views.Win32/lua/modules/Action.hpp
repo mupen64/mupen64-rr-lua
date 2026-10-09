@@ -219,7 +219,6 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
 
             lua_pushcallback(L, on_press, false);
             push_action_params(L, params);
-            // These are called from C++, outside any Lua call: leave the stack as it was, error object included.
             if (lua_pcall(L, 1, 0, 0) != LUA_OK) lua_pop(L, 1);
         };
     }
@@ -262,8 +261,6 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
                 return "";
             }
 
-            // Not luaL_checkstring: there is no protected call around us to catch its error. A non-string result
-            // means "no override" (an empty name falls back to the path's name).
             const char *display_name = lua_tostring(L, -1);
             std::string result = display_name ? display_name : "";
             lua_pop(L, 1);
