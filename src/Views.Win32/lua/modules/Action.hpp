@@ -7,7 +7,7 @@
 #pragma once
 
 #include <Common.Views/ActionManager.hpp>
-#include <lua/LuaManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 #include <lua/modules/Hotkey.hpp>
 #include <Common/IOUtils.hpp>
 
@@ -39,7 +39,7 @@ static std::pair<ActionManager::ActionParam, ActionParamMeta> check_action_param
     if (meta.validator)
     {
         param.validator = [=](std::string_view value) -> std::optional<std::string> {
-            if (!LuaManager::get_environment_for_state(L))
+            if (!LuaRealmManager::instance().get_by_state(L))
             {
                 return std::nullopt;
             }
@@ -69,7 +69,7 @@ static std::pair<ActionManager::ActionParam, ActionParamMeta> check_action_param
     if (meta.get_initial_value)
     {
         param.get_initial_value = [=]() -> std::string {
-            if (!LuaManager::get_environment_for_state(L))
+            if (!LuaRealmManager::instance().get_by_state(L))
             {
                 return "";
             }
@@ -93,7 +93,7 @@ static std::pair<ActionManager::ActionParam, ActionParamMeta> check_action_param
     if (meta.get_hints)
     {
         param.get_hints = [=](const std::string_view input) -> std::vector<std::string> {
-            if (!LuaManager::get_environment_for_state(L))
+            if (!LuaRealmManager::instance().get_by_state(L))
             {
                 return {};
             }
@@ -212,7 +212,7 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
     if (on_press)
     {
         params.on_press = [=](const ActionManager::action_argument_map &params) {
-            if (!LuaManager::get_environment_for_state(L))
+            if (!LuaRealmManager::instance().get_by_state(L))
             {
                 return;
             }
@@ -231,7 +231,7 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
     if (on_release)
     {
         params.on_release = [=] {
-            if (!LuaManager::get_environment_for_state(L))
+            if (!LuaRealmManager::instance().get_by_state(L))
             {
                 return;
             }
@@ -249,7 +249,7 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
     if (get_display_name)
     {
         params.get_display_name = [=] -> std::string {
-            if (!LuaManager::get_environment_for_state(L))
+            if (!LuaRealmManager::instance().get_by_state(L))
             {
                 return "";
             }
@@ -276,7 +276,7 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
     if (get_enabled)
     {
         params.get_enabled = [=] -> bool {
-            if (!LuaManager::get_environment_for_state(L))
+            if (!LuaRealmManager::instance().get_by_state(L))
             {
                 return false;
             }
@@ -301,7 +301,7 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
     if (get_active)
     {
         params.get_active = [=] -> bool {
-            if (!LuaManager::get_environment_for_state(L))
+            if (!LuaRealmManager::instance().get_by_state(L))
             {
                 return false;
             }
@@ -340,7 +340,7 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
 
 static int add(lua_State *L)
 {
-    auto lua = LuaManager::get_environment_for_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     const auto [params, meta] = check_action_add_params(L, 1);
 
@@ -359,7 +359,7 @@ static int add(lua_State *L)
 
 static int remove(lua_State *L)
 {
-    auto lua = LuaManager::get_environment_for_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     const auto filter = luaL_checkstring(L, 1);
 
@@ -467,7 +467,7 @@ static int get_activatability(lua_State *L)
 
 static int get_params(lua_State *L)
 {
-    auto lua = LuaManager::get_environment_for_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
 
     const auto path = luaL_checkstring(L, 1);
 
