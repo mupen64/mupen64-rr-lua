@@ -4,14 +4,29 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include <Common.Views/App.hpp>
+#include <Common.Views/LuaHelpers.hpp>
+#include <Common/IOUtils.hpp>
+#include <cmath>
+#include <format>
+#include <unordered_map>
+#include <unordered_set>
+extern "C"
+{
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
 
+namespace
+{
 struct LuaHelperContext
 {
-    std::unordered_map<void *, bool> valid_callback_tokens;
+    std::unordered_map<lua_State *, std::unordered_set<uintptr_t *>> callback_tokens_by_state;
 };
 
-static LuaHelperContext g_ctx;
+LuaHelperContext g_ctx;
+} // namespace
 
 uintptr_t *lua_optcallback(lua_State *L, int i)
 {
@@ -21,7 +36,7 @@ uintptr_t *lua_optcallback(lua_State *L, int i)
     }
 
     const auto key = new uintptr_t();
-    g_ctx.valid_callback_tokens[key] = true;
+    g_ctx.callback_tokens_by_state[L].insert(key);
 
     lua_pushvalue(L, i);
     lua_pushlightuserdata(L, key);
@@ -63,6 +78,13 @@ uintptr_t *lua_tocallback(lua_State *L, const int i)
 
 void lua_pushcallback(lua_State *L, uintptr_t *token, bool free)
 {
+    const auto context = g_ctx.callback_tokens_by_state.find(L);
+    if (context == g_ctx.callback_tokens_by_state.end() || !context->second.contains(token))
+    {
+        lua_pushnil(L);
+        return;
+    }
+
     lua_pushlightuserdata(L, token);
     lua_gettable(L, LUA_REGISTRYINDEX);
     if (free)
@@ -73,7 +95,15 @@ void lua_pushcallback(lua_State *L, uintptr_t *token, bool free)
 
 void lua_freecallback(lua_State *L, uintptr_t *token)
 {
-    if (!g_ctx.valid_callback_tokens.contains(token))
+    const auto context = g_ctx.callback_tokens_by_state.find(L);
+    if (context == g_ctx.callback_tokens_by_state.end())
+    {
+        return;
+    }
+
+    auto &tokens = context->second;
+    const auto token_it = tokens.find(token);
+    if (token_it == tokens.end())
     {
         return;
     }
@@ -82,8 +112,31 @@ void lua_freecallback(lua_State *L, uintptr_t *token)
     lua_pushnil(L);
     lua_settable(L, LUA_REGISTRYINDEX);
 
-    g_ctx.valid_callback_tokens.erase(token);
+    tokens.erase(token_it);
     delete token;
+    if (tokens.empty())
+    {
+        g_ctx.callback_tokens_by_state.erase(context);
+    }
+}
+
+void lua_freecallbacks(lua_State *L)
+{
+    const auto context = g_ctx.callback_tokens_by_state.find(L);
+    if (context == g_ctx.callback_tokens_by_state.end())
+    {
+        return;
+    }
+
+    const auto tokens = std::move(context->second);
+    g_ctx.callback_tokens_by_state.erase(context);
+    for (auto *token : tokens)
+    {
+        lua_pushlightuserdata(L, token);
+        lua_pushnil(L);
+        lua_settable(L, LUA_REGISTRYINDEX);
+        delete token;
+    }
 }
 
 std::string luaL_checkstlstring(lua_State *L, int i)

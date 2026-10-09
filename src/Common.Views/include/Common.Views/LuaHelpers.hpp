@@ -6,6 +6,15 @@
 
 #pragma once
 
+extern "C"
+{
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+#include <cstdint>
+#include <string>
+
 /**
  * \brief Prints the current Lua stack.
  */
@@ -43,6 +52,12 @@ void lua_pushcallback(lua_State *L, uintptr_t *token, bool free = true);
  * \param token A callback token.
  */
 void lua_freecallback(lua_State *L, uintptr_t *token);
+
+/**
+ * \brief Frees any remaining callback tokens owned by a Lua state before it is closed.
+ * \param L The Lua state whose callback tokens should be freed.
+ */
+void lua_freecallbacks(lua_State *L);
 
 /**
  * \brief Gets the string at the given index in the Lua stack. Errors if the value is not a string or not present.
