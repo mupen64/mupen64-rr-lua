@@ -604,17 +604,6 @@ std::vector<OptionGroup> get_static_option_groups()
         .tooltip = "Automatically increment the save slot upon saving a state.",
         GENPROPS(int32_t, increment_slot)});
 
-    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Enum,
-        .group_id = statusbar_group.id,
-        .name = "Layout",
-        .tooltip = "The statusbar layout preset.\nClassic - The legacy layout\nModern - The new layout containing "
-                   "additional information\nModern+ - The new layout, but with a section for read-only status",
-        GENPROPS(int32_t, statusbar_layout),
-        .possible_values = {
-            std::make_pair("Classic", (int32_t)Config::StatusbarLayout::Classic),
-            std::make_pair("Modern", (int32_t)Config::StatusbarLayout::Modern),
-            std::make_pair("Modern+", (int32_t)Config::StatusbarLayout::ModernWithReadOnly),
-        }});
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Zero-index",
