@@ -25,6 +25,7 @@ const luaL_Reg GLOBAL_FUNCS[] = {{"print", LuaCore::Global::print}, {"tostringex
     {"stop", LuaCore::Global::StopScript}, {NULL, NULL}};
 
 const luaL_Reg EMU_FUNCS[] = {{"console", LuaCore::Emu::ConsoleWriteLua}, {"statusbar", LuaCore::Emu::StatusbarWrite},
+    {"get_hint", LuaCore::Emu::get_hint}, {"set_hint", LuaCore::Emu::set_hint},
 
     {"atvi", LuaCore::Emu::subscribe_atvi}, {"atupdatescreen", LuaCore::Emu::subscribe_atupdatescreen},
     {"atpaint", LuaCore::Emu::subscribe_atpaint}, {"atinput", LuaCore::Emu::subscribe_atinput},

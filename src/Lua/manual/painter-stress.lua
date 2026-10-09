@@ -115,6 +115,51 @@ for i = 1, 1000 do
     IMAGE_CELLS[i] = rect(10 + column * 79, 55 + row * 50 + CONTENT_Y_OFFSET, 75, 42)
 end
 
+local GRADIENT_COUNT <const> = 200
+local LINEAR_GRADIENT_CASES <const> = {}
+local RADIAL_GRADIENT_CASES <const> = {}
+for i = 1, GRADIENT_COUNT do
+    local cell = i - 1
+    local column = cell % 10
+    local row = math.floor(cell / 10)
+    local y = 150 + row * 20
+    local linear_bounds = rect(10 + column * 39, y, 35, 18)
+    local radial_bounds = rect(405 + column * 39, y, 35, 18)
+    local color0 = PALETTE[((i - 1) % #PALETTE) + 1]
+    local color1 = PALETTE[(i % #PALETTE) + 1]
+    local color2 = PALETTE[((i + 1) % #PALETTE) + 1]
+    local midpoint = 0.25 + (i % 50) / 100
+
+    LINEAR_GRADIENT_CASES[i] = {
+        bounds = linear_bounds,
+        paint = {
+            type = "linear_gradient",
+            x0 = linear_bounds.x, y0 = linear_bounds.y,
+            x1 = linear_bounds.x + linear_bounds.w, y1 = linear_bounds.y + linear_bounds.h,
+            stops = {
+                { offset = 0, color = color0 },
+                { offset = midpoint, color = color1 },
+                { offset = 1, color = color2 },
+            },
+        },
+    }
+    RADIAL_GRADIENT_CASES[i] = {
+        bounds = radial_bounds,
+        paint = {
+            type = "radial_gradient",
+            center_x = radial_bounds.x + radial_bounds.w * 0.5,
+            center_y = radial_bounds.y + radial_bounds.h * 0.5,
+            radius_x = 5 + (i % 13),
+            radius_y = 4 + ((i * 3) % 11),
+            stops = {
+                { offset = 0, color = color0 },
+                { offset = midpoint, color = color1 },
+                { offset = 1, color = color2 },
+            },
+        },
+    }
+end
+
 local SECTION_TIMING_TITLE_RECT <const> = rect(20, 16, 300, 18)
 local SECTION_TIMING_RECTS <const> = {
     rect(20, 36, 300, 16),
@@ -122,6 +167,8 @@ local SECTION_TIMING_RECTS <const> = {
     rect(20, 68, 300, 16),
     rect(20, 84, 300, 16),
     rect(20, 100, 300, 16),
+    rect(20, 116, 300, 16),
+    rect(20, 132, 300, 16),
 }
 local MEASURE_TITLE_RECT <const> = rect(40, 80 + CONTENT_Y_OFFSET, 720, 35)
 local MEASURE_IDENTICAL_TITLE_RECT <const> = rect(55, 190 + CONTENT_Y_OFFSET, 300, 28)
@@ -161,10 +208,12 @@ end
 
 local SECTION_NAMES <const> = {
     "draw_primitives",
-    "draw_text_cells",
     "draw_ninesliced",
     "draw_images",
-    "draw_measure_text",
+    "draw_linear_gradients",
+    "draw_radial_gradients",
+    "draw_static_text",
+    "measure_text",
 }
 
 local function time_section(p, name, draw)
@@ -262,6 +311,24 @@ local function draw_images(p)
     end
 end
 
+local function draw_linear_gradients(p)
+    for i = 1, GRADIENT_COUNT do
+        local case = LINEAR_GRADIENT_CASES[i]
+        p:begin_path()
+        p:rect(case.bounds)
+        p:fill(case.paint)
+    end
+end
+
+local function draw_radial_gradients(p)
+    for i = 1, GRADIENT_COUNT do
+        local case = RADIAL_GRADIENT_CASES[i]
+        p:begin_path()
+        p:rect(case.bounds)
+        p:fill(case.paint)
+    end
+end
+
 emu.atpaint(function()
     local p = painter.current()
     frame = frame + 1
@@ -270,6 +337,8 @@ emu.atpaint(function()
     time_section(p, "draw_primitives", draw_primitives)
     time_section(p, "draw_ninesliced", draw_ninesliced)
     time_section(p, "draw_images", draw_images)
+    time_section(p, "draw_linear_gradients", draw_linear_gradients)
+    time_section(p, "draw_radial_gradients", draw_radial_gradients)
     time_section(p, "draw_static_text", draw_static_text)
     time_section(p, "measure_text", measure_text)
     draw_section_times(p)

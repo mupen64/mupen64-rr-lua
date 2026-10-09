@@ -345,8 +345,7 @@ void on_task_changed(CoreVCRTask value)
 void on_emu_stopping()
 {
     g_main_ctx.dispatcher->invoke([] {
-        LuaDialog::store_running_scripts();
-        LuaDialog::stop_all();
+        LuaDialog::store_and_stop_all();
     });
 }
 
@@ -384,7 +383,7 @@ void on_emu_launched_changed(bool value)
                     g_config.is_recent_rom_paths_frozen);
             }
 
-            LuaDialog::load_running_scripts();
+            LuaDialog::restore();
         }
 
         if (!value && previous_value)
@@ -645,6 +644,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         LuaRealmManager::instance().call_atkey(args);
         break;
     }
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+        Main::handle_mouse_events(hwnd, Message, wParam, lParam);
+        break;
     case WM_MOUSEWHEEL:
         g_main_ctx.last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
         Main::handle_mouse_events(hwnd, Message, wParam, lParam);

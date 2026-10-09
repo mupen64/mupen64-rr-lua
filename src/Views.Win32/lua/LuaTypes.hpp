@@ -17,6 +17,11 @@ struct ActionParamMeta
     uintptr_t *get_hints{};
 };
 
+inline const std::string LUA_HINT_RESTART_WITH_EMU = "restart_with_emu";
+inline const std::unordered_map<std::string, std::pair<std::string, std::vector<std::string>>> LUA_HINTS = {
+    {LUA_HINT_RESTART_WITH_EMU, {"1", {"0", "1"}}},
+};
+
 /**
  * \brief Represents the arguments for a key event callback. See `KeyEventArgs` in `api.lua`.
  */
