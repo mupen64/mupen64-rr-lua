@@ -1104,6 +1104,35 @@ retest.describe('mupen64', function()
             end)
         end)
 
+        retest.describe('callback_notifications', function()
+            local ACTIONS_FILTER = "Test > Callback Stack > *"
+            local ACTION_PATH_PREFIX = "Test > Callback Stack > Item "
+
+            retest.after(function()
+                action.remove(ACTIONS_FILTER)
+            end)
+
+            retest.it('many_action_notifications_dont_crash', function()
+                action.remove(ACTIONS_FILTER)
+
+                for i = 1, 40 do
+                    local item = i
+                    retest.expect(action.add({
+                        path = ACTION_PATH_PREFIX .. item,
+                        get_display_name = function() return "Item " .. item end,
+                        get_enabled = function() error("intentional get_enabled error") end,
+                        get_active = function() return {} end,
+                    })).to.equal(true)
+                end
+
+                action.notify_display_name_changed(ACTIONS_FILTER)
+                action.notify_enabled_changed(ACTIONS_FILTER)
+                action.notify_active_changed(ACTIONS_FILTER)
+
+                retest.expect(true).to.equal(true)
+            end)
+        end)
+
         retest.describe('notify_enabled_changed', function()
             retest.after(function()
                 action.remove("Test > *")
@@ -1206,6 +1235,14 @@ retest.describe('mupen64', function()
                 })
                 local name = action.get_display_name("Test >    Something")
                 retest.expect(name).to.equal("Hi!")
+            end)
+            retest.it('falls_back_to_the_path_name_for_non_string_display_name', function()
+                action.add({
+                    path = "Test > Bad Display Name",
+                    get_display_name = function() return {} end,
+                })
+                local name = action.get_display_name("Test > Bad Display Name")
+                retest.expect(name).to.equal("Bad Display Name")
             end)
             retest.it('doesnt_use_display_name_when_ignore_override_true', function()
                 action.add({
@@ -1518,6 +1555,18 @@ retest.describe('mupen64', function()
 
                 action.invoke("Test > Something", true)
                 retest.expect(called).to.be.truthy()
+            end)
+            retest.it('doesnt_crash_when_press_and_release_callbacks_error', function()
+                action.add({
+                    path = "Test > Something",
+                    on_press = function() error("intentional on_press error") end,
+                    on_release = function() error("intentional on_release error") end,
+                })
+
+                action.invoke("Test > Something")
+                action.invoke("Test > Something", true)
+
+                retest.expect(true).to.be.truthy()
             end)
             retest.it('calls_on_release_when_pressing_again_while_pressed', function()
                 local down = 0
