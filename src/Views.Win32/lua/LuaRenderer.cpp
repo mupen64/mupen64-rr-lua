@@ -77,8 +77,8 @@ void LuaRendererManager::draw(bool force)
 
         bool success = true;
 
-        success &=
-            LuaRealmManager::instance().call_by_key(lua.get(), LuaRealmManager::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback);
+        success &= LuaRealmManager::instance().call_by_key(
+            lua.get(), LuaRealmManager::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback);
         if (lua->renderer.presenter) lua->renderer.presenter->present();
 
         // GDI Graphics. Ugh.

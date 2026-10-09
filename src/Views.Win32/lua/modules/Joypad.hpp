@@ -63,7 +63,7 @@ static int lua_set_joypad(lua_State *L)
     lua_pushvalue(L, a_2);
 #define A(a, s)                                                                                                        \
     lua_getfield(L, -1, s);                                                                                            \
-    LuaRealmManager::instance().new_controller_data[i].a = lua_toboolean(L, -1);                                               \
+    LuaRealmManager::instance().new_controller_data[i].a = lua_toboolean(L, -1);                                       \
     lua_pop(L, 1)
     A(dr, "right");
     A(dl, "left");

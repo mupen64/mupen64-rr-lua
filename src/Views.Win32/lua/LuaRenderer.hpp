@@ -51,7 +51,6 @@ class LuaRenderer
     COLORREF col, bkcol{};
     int bkmode{};
 
-
     std::chrono::steady_clock::time_point last_render_time;
 
     void initialize();

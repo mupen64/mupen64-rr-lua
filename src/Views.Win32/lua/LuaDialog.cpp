@@ -136,7 +136,8 @@ static void start(InstanceContext &ctx, const std::filesystem::path &path)
 {
     stop(ctx);
 
-    ctx.env = LuaRealm::create(path,
+    ctx.env = LuaRealm::create(
+        path,
         [](const LuaRealm *env) {
             const auto ctx = get_instance_context(env);
 

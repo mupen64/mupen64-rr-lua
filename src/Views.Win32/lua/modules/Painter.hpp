@@ -1483,7 +1483,6 @@ inline int painter_gc(lua_State *L)
     return 0;
 }
 
-
 inline int image_index(lua_State *L)
 {
     auto *image = static_cast<Image *>(luaL_checkudata(L, 1, IMAGE_MT));
@@ -1841,7 +1840,6 @@ inline int painter_scale(lua_State *L)
     painter->transform = D2D1::Matrix3x2F::Scale(x, y) * painter->transform;
     return 0;
 }
-
 
 inline int painter_stroke(lua_State *L)
 {
@@ -2877,13 +2875,12 @@ inline void register_types(lua_State *L)
         {"quadratic_to", Detail::painter_quadratic_to}, {"arc", Detail::painter_arc},
         {"close_path", Detail::painter_close_path}, {"get_transform", Detail::painter_get_transform},
         {"set_transform", Detail::painter_set_transform}, {"get_alpha", Detail::painter_get_alpha},
-        {"set_alpha", Detail::painter_set_alpha}, {"save", Detail::painter_save},
-        {"restore", Detail::painter_restore}, {"clip", Detail::painter_clip}, {"translate", Detail::painter_translate},
-        {"rotate", Detail::painter_rotate}, {"scale", Detail::painter_scale}, {"stroke", Detail::painter_stroke},
-        {"fill", Detail::painter_fill}, {"text", Detail::painter_text}, {"rect", Detail::painter_rect},
-        {"round_rect", Detail::painter_round_rect}, {"circle", Detail::painter_circle}, {"line", Detail::painter_line},
-        {"polyline", Detail::painter_polyline}, {"polygon", Detail::painter_polygon}, {"image", Detail::painter_image},
-        {nullptr, nullptr}};
+        {"set_alpha", Detail::painter_set_alpha}, {"save", Detail::painter_save}, {"restore", Detail::painter_restore},
+        {"clip", Detail::painter_clip}, {"translate", Detail::painter_translate}, {"rotate", Detail::painter_rotate},
+        {"scale", Detail::painter_scale}, {"stroke", Detail::painter_stroke}, {"fill", Detail::painter_fill},
+        {"text", Detail::painter_text}, {"rect", Detail::painter_rect}, {"round_rect", Detail::painter_round_rect},
+        {"circle", Detail::painter_circle}, {"line", Detail::painter_line}, {"polyline", Detail::painter_polyline},
+        {"polygon", Detail::painter_polygon}, {"image", Detail::painter_image}, {nullptr, nullptr}};
     static const luaL_Reg matrix_methods[] = {{"dx", Detail::matrix_dx}, {"dy", Detail::matrix_dy},
         {"sx", Detail::matrix_sx}, {"sy", Detail::matrix_sy}, {nullptr, nullptr}};
 

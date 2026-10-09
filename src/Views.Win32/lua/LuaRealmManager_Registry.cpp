@@ -55,8 +55,7 @@ const luaL_Reg EMU_FUNCS[] = {{"console", LuaCore::Emu::ConsoleWriteLua}, {"stat
 
     {NULL, NULL}};
 
-const luaL_Reg MEMORY_FUNCS[] = {
-    // memory conversion functions
+const luaL_Reg MEMORY_FUNCS[] = {// memory conversion functions
     {"inttofloat", LuaCore::Memory::int_to_float}, {"inttodouble", LuaCore::Memory::int_to_double},
     {"floattoint", LuaCore::Memory::float_to_int}, {"doubletoint", LuaCore::Memory::double_to_int},
     {"qwordtonumber", LuaCore::Memory::qword_to_number},

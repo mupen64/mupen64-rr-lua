@@ -33,8 +33,7 @@ LuaRealm::LuaRealm(const std::filesystem::path &path, LuaStoppingFn stopping, Lu
     need(is_on_gui_thread(), "LuaRealm constructor must be called on the GUI thread");
 }
 
-std::shared_ptr<LuaRealm> LuaRealm::create(
-    const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print)
+std::shared_ptr<LuaRealm> LuaRealm::create(const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print)
 {
     return std::shared_ptr<LuaRealm>(new LuaRealm(path, std::move(stopping), std::move(print)));
 }
