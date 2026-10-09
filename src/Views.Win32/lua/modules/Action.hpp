@@ -75,9 +75,12 @@ static std::pair<ActionManager::ActionParam, ActionParamMeta> check_action_param
             }
 
             lua_pushcallback(L, meta.get_initial_value, false);
-            lua_pcall(L, 0, 1, 0);
-
-            const auto initial_value = luaL_checkstring(L, -1);
+            std::string initial_value;
+            if (lua_pcall(L, 0, 1, 0) == LUA_OK)
+            {
+                const char *value = lua_tostring(L, -1);
+                if (value) initial_value = value;
+            }
             lua_pop(L, 1);
             return initial_value;
         };
@@ -107,8 +110,7 @@ static std::pair<ActionManager::ActionParam, ActionParamMeta> check_action_param
                 for (int i = 1; i <= hints_count; ++i)
                 {
                     lua_geti(L, hints_table_index, i);
-                    const auto hint = luaL_checkstring(L, -1);
-                    hints.push_back(hint);
+                    if (const char *hint = lua_tostring(L, -1)) hints.push_back(hint);
                     lua_pop(L, 1);
                 }
             }
@@ -217,7 +219,8 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
 
             lua_pushcallback(L, on_press, false);
             push_action_params(L, params);
-            lua_pcall(L, 1, 0, 0);
+            // These are called from C++, outside any Lua call: leave the stack as it was, error object included.
+            if (lua_pcall(L, 1, 0, 0) != LUA_OK) lua_pop(L, 1);
         };
     }
 
@@ -235,7 +238,7 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
             }
 
             lua_pushcallback(L, on_release, false);
-            lua_pcall(L, 0, 0, 0);
+            if (lua_pcall(L, 0, 0, 0) != LUA_OK) lua_pop(L, 1);
         };
     }
 
@@ -253,11 +256,18 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
             }
 
             lua_pushcallback(L, get_display_name, false);
-            lua_pcall(L, 0, 1, 0);
+            if (lua_pcall(L, 0, 1, 0) != LUA_OK)
+            {
+                lua_pop(L, 1);
+                return "";
+            }
 
-            const auto display_name = luaL_checkstring(L, -1);
-
-            return display_name;
+            // Not luaL_checkstring: there is no protected call around us to catch its error. A non-string result
+            // means "no override" (an empty name falls back to the path's name).
+            const char *display_name = lua_tostring(L, -1);
+            std::string result = display_name ? display_name : "";
+            lua_pop(L, 1);
+            return result;
         };
     }
 
@@ -275,14 +285,12 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
             }
 
             lua_pushcallback(L, get_enabled, false);
-            lua_pcall(L, 0, 1, 0);
-
             bool enabled = false;
-            if (lua_isboolean(L, -1))
+            if (lua_pcall(L, 0, 1, 0) == LUA_OK)
             {
-                enabled = lua_toboolean(L, -1);
-                lua_pop(L, 1);
+                enabled = lua_isboolean(L, -1) && lua_toboolean(L, -1);
             }
+            lua_pop(L, 1);
 
             return enabled;
         };
@@ -302,14 +310,12 @@ static std::pair<ActionManager::ActionAddParams, std::vector<ActionParamMeta>> c
             }
 
             lua_pushcallback(L, get_active, false);
-            lua_pcall(L, 0, 1, 0);
-
             bool active = false;
-            if (lua_isboolean(L, -1))
+            if (lua_pcall(L, 0, 1, 0) == LUA_OK)
             {
-                active = lua_toboolean(L, -1);
-                lua_pop(L, 1);
+                active = lua_isboolean(L, -1) && lua_toboolean(L, -1);
             }
+            lua_pop(L, 1);
 
             return active;
         };
