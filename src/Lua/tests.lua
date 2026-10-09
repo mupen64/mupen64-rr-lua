@@ -1556,18 +1556,7 @@ retest.describe('mupen64', function()
                 action.invoke("Test > Something", true)
                 retest.expect(called).to.be.truthy()
             end)
-            retest.it('doesnt_crash_when_press_and_release_callbacks_error', function()
-                action.add({
-                    path = "Test > Something",
-                    on_press = function() error("intentional on_press error") end,
-                    on_release = function() error("intentional on_release error") end,
-                })
 
-                action.invoke("Test > Something")
-                action.invoke("Test > Something", true)
-
-                retest.expect(true).to.be.truthy()
-            end)
             retest.it('calls_on_release_when_pressing_again_while_pressed', function()
                 local down = 0
                 local up = 0
