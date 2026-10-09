@@ -24,6 +24,7 @@ class LuaRealm : public std::enable_shared_from_this<LuaRealm>
     lua_State *m_l;
     std::filesystem::path m_path;
     bool m_started{};
+    std::unordered_map<std::string, std::string> m_hints;
 
     LuaRealm(const std::filesystem::path &path, LuaStoppingFn stopping, LuaPrintFn print);
 
@@ -55,6 +56,9 @@ class LuaRealm : public std::enable_shared_from_this<LuaRealm>
      * \param key The key of the function to register or unregister.
      */
     void register_or_unregister_function(uint8_t key);
+
+    std::string query_hint(const std::string &name);
+    std::expected<void, std::string> try_set_hint(const std::string &name, const std::string &value);
 
     lua_State *l() const { return m_l; }
     std::filesystem::path path() const { return m_path; }

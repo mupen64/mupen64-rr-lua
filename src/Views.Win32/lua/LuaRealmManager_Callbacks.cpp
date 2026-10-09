@@ -11,8 +11,8 @@
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
     {                                                                                                                  \
-        if (LuaRealmManager::instance().realms().empty()) return;                                                                \
-        if (LuaRealmManager::instance().m_callback_count_map.at(key).load() == 0) return;                                      \
+        if (LuaRealmManager::instance().realms().empty()) return;                                                      \
+        if (LuaRealmManager::instance().m_callback_count_map.at(key).load() == 0) return;                              \
     } while (false)
 
 static int invoke_key_callback(lua_State *l, const LuaKeyEventArgs &args)
@@ -290,7 +290,8 @@ void LuaRealmManager::call_atkey(const LuaKeyEventArgs &args)
 {
     RET_IF_NOT_REGISTERED(REG_ATKEY);
     g_main_ctx.dispatcher->invoke([args] {
-        LuaRealmManager::instance().call_by_key(REG_ATKEY, [&args](lua_State *l) { return invoke_key_callback(l, args); });
+        LuaRealmManager::instance().call_by_key(
+            REG_ATKEY, [&args](lua_State *l) { return invoke_key_callback(l, args); });
     });
 }
 
@@ -298,7 +299,8 @@ void LuaRealmManager::call_atmouse(const LuaMouseEventArgs &args)
 {
     RET_IF_NOT_REGISTERED(REG_ATMOUSE);
     g_main_ctx.dispatcher->invoke([args] {
-        LuaRealmManager::instance().call_by_key(REG_ATMOUSE, [&args](lua_State *l) { return invoke_mouse_callback(l, args); });
+        LuaRealmManager::instance().call_by_key(
+            REG_ATMOUSE, [&args](lua_State *l) { return invoke_mouse_callback(l, args); });
     });
 }
 
@@ -381,4 +383,24 @@ void LuaRealm::register_or_unregister_function(const uint8_t callback_key)
         register_function(state, key);
         LuaRealmManager::instance().m_callback_count_map[key]++;
     }
+}
+
+std::string LuaRealm::query_hint(const std::string &name)
+{
+    if (m_hints.contains(name)) return m_hints.at(name);
+    return LUA_HINTS.at(name).first;
+}
+
+std::expected<void, std::string> LuaRealm::try_set_hint(const std::string &name, const std::string &value)
+{
+    if (!LUA_HINTS.contains(name)) return std::unexpected(std::format("Unknown hint '{}'", name));
+
+    const auto &hint = LUA_HINTS.at(name);
+    const auto valid = std::find(hint.second.begin(), hint.second.end(), value) != hint.second.end();
+    if (!valid)
+        return std::unexpected(
+            std::format("Invalid value '{}' for hint '{}'. Allowed values: {}", value, name, hint.second));
+
+    m_hints[name] = value;
+    return {};
 }

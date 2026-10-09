@@ -16,7 +16,7 @@ namespace LuaCore::Emu
 static int get_hint(lua_State *L)
 {
     const char *hint = luaL_checkstring(L, 1);
-    auto *env = LuaManager::get_environment_for_state(L);
+    auto *env = LuaRealmManager::instance().get_by_state(L);
 
     if (!LUA_HINTS.contains(hint)) return luaL_error(L, "Unknown hint '%s'", hint);
 
@@ -30,7 +30,7 @@ static int set_hint(lua_State *L)
     const char *hint = luaL_checkstring(L, 1);
     const char *value = luaL_checkstring(L, 2);
 
-    auto *env = LuaManager::get_environment_for_state(L);
+    auto *env = LuaRealmManager::instance().get_by_state(L);
     const auto result = env->try_set_hint(hint, value);
     if (!result) return luaL_error(L, "%s", result.error().c_str());
 
