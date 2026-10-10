@@ -3,6 +3,11 @@
 #include <Core/Types.hpp>
 
 namespace M64RRSpec {
+    enum class GraphicsResult {
+        Ok = 0,
+        MiscError = 1,
+    };
+
     enum class GLContextType : int8_t {
         // Use the default context type.
         Default = -1,
@@ -45,13 +50,17 @@ namespace M64RRSpec {
         /**
          * @brief Creates a new OpenGL context using the provided surface format and makes it current.
          * @note The provided context is offscreen, and thus may not have a default framebuffer.
-         * @return a new OpenGL context, or null if creating the context failed.
+         *
+         * @param format The surface format to use.
+         * @param context_out The context will be returned through this pointer. It cannot be null.
+         * @return
          */
-        GLContext* (*new_gl_context)(GLSurfaceFormat* format);
+        GraphicsResult (*new_gl_context)(GLSurfaceFormat* format, GLContext** context_out);
         /**
          * @brief Frees the provided OpenGL context.
+         * @return Frees OpenGL context.
          */
-        CoreResult (*free_gl_context)(GLContext* context);
+        GraphicsResult (*free_gl_context)(GLContext* context);
         /**
          * @brief Makes the provided OpenGL context current.
          * @note OpenGL is naturally single-threaded.
