@@ -344,9 +344,7 @@ void on_task_changed(CoreVCRTask value)
 
 void on_emu_stopping()
 {
-    g_main_ctx.dispatcher->invoke([] {
-        LuaDialog::store_and_stop_all();
-    });
+    g_main_ctx.dispatcher->invoke([] { LuaDialog::store_and_stop_all(); });
 }
 
 void on_emu_launched_changed(bool value)

@@ -119,36 +119,38 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
     }
     return FALSE;
 
-update_selection: {
-    auto selected_index = ListBox_GetCurSel(GetDlgItem(hwnd, IDC_LIST_CHEATS));
-    if (selected_index == -1)
+update_selection:
     {
-        return FALSE;
+        auto selected_index = ListBox_GetCurSel(GetDlgItem(hwnd, IDC_LIST_CHEATS));
+        if (selected_index == -1)
+        {
+            return FALSE;
+        }
+
+        std::vector<CoreCheat> cheats;
+        g_main_ctx.CoreCtx->cht_get_list(cheats);
+
+        CheckDlgButton(hwnd, IDC_CHECK_CHEAT_ENABLED, cheats[selected_index].active ? BST_CHECKED : BST_UNCHECKED);
+        SetDlgItemText(hwnd, IDC_EDIT_CHEAT, cheats[selected_index].code.c_str());
+        Edit_SetText(GetDlgItem(hwnd, IDC_EDIT_CHEAT_NAME), cheats[selected_index].name.c_str());
     }
-
-    std::vector<CoreCheat> cheats;
-    g_main_ctx.CoreCtx->cht_get_list(cheats);
-
-    CheckDlgButton(hwnd, IDC_CHECK_CHEAT_ENABLED, cheats[selected_index].active ? BST_CHECKED : BST_UNCHECKED);
-    SetDlgItemText(hwnd, IDC_EDIT_CHEAT, cheats[selected_index].code.c_str());
-    Edit_SetText(GetDlgItem(hwnd, IDC_EDIT_CHEAT_NAME), cheats[selected_index].name.c_str());
-}
     return FALSE;
 
-rebuild_list: {
-    auto lb_hwnd = GetDlgItem(hwnd, IDC_LIST_CHEATS);
-    auto prev_index = ListBox_GetCurSel(lb_hwnd);
-    ListBox_ResetContent(lb_hwnd);
-    std::vector<CoreCheat> cheats;
-    g_main_ctx.CoreCtx->cht_get_list(cheats);
-    for (const auto &script : cheats)
+rebuild_list:
     {
-        auto name = !script.active ? script.name + " (Disabled)" : script.name;
-        ListBox_AddString(lb_hwnd, name.c_str());
+        auto lb_hwnd = GetDlgItem(hwnd, IDC_LIST_CHEATS);
+        auto prev_index = ListBox_GetCurSel(lb_hwnd);
+        ListBox_ResetContent(lb_hwnd);
+        std::vector<CoreCheat> cheats;
+        g_main_ctx.CoreCtx->cht_get_list(cheats);
+        for (const auto &script : cheats)
+        {
+            auto name = !script.active ? script.name + " (Disabled)" : script.name;
+            ListBox_AddString(lb_hwnd, name.c_str());
+        }
+        ListBox_SetCurSel(lb_hwnd, prev_index);
+        goto update_selection;
     }
-    ListBox_SetCurSel(lb_hwnd, prev_index);
-    goto update_selection;
-}
 }
 
 void Cheats::show()

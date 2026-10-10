@@ -450,14 +450,15 @@ CoreResult vcr_unfreeze(const vcr_freeze_info &freeze)
         vcr.task = CoreVCRTask::Playback;
     }
 
-finish: {
-    vcr_anti_lock bypass;
-    g_core->callbacks.task_changed(vcr.task);
-    g_core->callbacks.current_sample_changed(vcr.current_sample);
-    g_core->callbacks.rerecords_changed(get_rerecord_count());
-    g_core->callbacks.frame();
-    g_core->callbacks.unfreeze_completed();
-}
+finish:
+    {
+        vcr_anti_lock bypass;
+        g_core->callbacks.task_changed(vcr.task);
+        g_core->callbacks.current_sample_changed(vcr.current_sample);
+        g_core->callbacks.rerecords_changed(get_rerecord_count());
+        g_core->callbacks.frame();
+        g_core->callbacks.unfreeze_completed();
+    }
     return CoreResult::Res_Ok;
 }
 
@@ -1827,18 +1828,19 @@ static CoreResult vcr_begin_seek_impl(std::string str, bool pause_at_end, bool r
         });
     }
 
-finish: {
-    vcr_anti_lock bypass;
-    while (!post_unlock_callbacks.empty())
+finish:
     {
-        post_unlock_callbacks.front()();
-        post_unlock_callbacks.pop();
-    }
+        vcr_anti_lock bypass;
+        while (!post_unlock_callbacks.empty())
+        {
+            post_unlock_callbacks.front()();
+            post_unlock_callbacks.pop();
+        }
 
-    vr_update_effective_speed_mode();
-    g_core->callbacks.readonly_changed((bool)g_core->cfg->vcr_readonly);
-    g_core->callbacks.seek_status_changed();
-}
+        vr_update_effective_speed_mode();
+        g_core->callbacks.readonly_changed((bool)g_core->cfg->vcr_readonly);
+        g_core->callbacks.seek_status_changed();
+    }
     return CoreResult::Res_Ok;
 }
 
