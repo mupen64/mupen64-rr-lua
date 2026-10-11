@@ -317,10 +317,12 @@ static void recreate_mge_context_d3d()
 
 static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    Main::handle_mouse_events(hwnd, msg, wparam, lparam);
-
     switch (msg)
     {
+    case WM_NCHITTEST:
+        return HTTRANSPARENT;
+    case WM_MOUSEACTIVATE:
+        return MA_NOACTIVATE;
     case WM_SIZE:
         return 0;
     case WM_NCDESTROY:
@@ -334,8 +336,8 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void MGECompositor::create(HWND hwnd)
 {
-    mge_context.hwnd = CreateWindow(
-        control_class_name, "", WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr, g_main_ctx.hinst, nullptr);
+    mge_context.hwnd = CreateWindowEx(WS_EX_TRANSPARENT | WS_EX_NOACTIVATE, control_class_name, "",
+        WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr, g_main_ctx.hinst, nullptr);
 }
 
 void MGECompositor::init()
