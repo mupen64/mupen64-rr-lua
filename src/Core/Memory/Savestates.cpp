@@ -185,7 +185,11 @@ static std::vector<uint8_t> generate_savestate(bool pure)
     MiscHelpers::vecwrite(b, &llbit, 4);
     MiscHelpers::vecwrite(b, reg, 32 * 8);
     for (size_t i = 0; i < 32; i++)
-        MiscHelpers::vecwrite(b, reg_cop0 + i, 8); // *8 for compatibility with old versions purpose
+    {
+        // 8 bytes per register for compatibility with old versions
+        const uint64_t value = reg_cop0[i];
+        MiscHelpers::vecwrite(b, &value, 8);
+    }
     MiscHelpers::vecwrite(b, &lo, 8);
     MiscHelpers::vecwrite(b, &hi, 8);
     MiscHelpers::vecwrite(b, reg_cop1_fgr_64, 32 * 8);
