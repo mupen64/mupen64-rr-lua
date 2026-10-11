@@ -901,11 +901,10 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
         }
         case IDC_RESET_JOYSTICK:
-            if (new_config.zero_input) {
-                ctx->current_input.x = 0;
-                ctx->current_input.y = 0;
-                ctx->set_visuals(ctx->current_input);
-            }
+            if (new_config.disallow_joystick_reset) break;
+            ctx->current_input.x = 0;
+            ctx->current_input.y = 0;
+            ctx->set_visuals(ctx->current_input);
             break;
         case IDC_X_DOWN:
         case IDC_X_UP: {
@@ -1120,7 +1119,7 @@ bool Status::show_context_menu(int x, int y)
     ADD_ITEM(hmenu, relative_mode, "Relative");
     ADD_ITEM(hmenu, approach_mode, "Approach");
     ADD_ITEM(hmenu, wrap_joystick, "Wrap joystick");
-    ADD_ITEM(hmenu, zero_input, "Zero Input");
+    ADD_ITEM(hmenu, disallow_joystick_reset, "Disallow joystick reset");
     AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
     ADD_ITEM(hmenu, always_on_top, "Always on top");
     ADD_ITEM(hmenu, float_from_parent, "Float from parent");
