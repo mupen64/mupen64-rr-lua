@@ -24,7 +24,7 @@ struct HotkeyTrackerContext
 
 static std::optional<bool> on_key(bool is_up, int32_t key)
 {
-    if (ActionManager::get_hotkeys_locked())
+    if (ActionManager::get_all_hotkeys_locked())
     {
         return std::nullopt;
     }
@@ -42,6 +42,7 @@ static std::optional<bool> on_key(bool is_up, int32_t key)
         if (trigger == hotkey.trigger && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
         {
             if (!ActionManager::get_enabled(path)) continue;
+            if (ActionManager::is_hotkey_locked(hotkey)) continue;
 
             // HACK: Fast Forward is a special case: we don't want it to be constantly toggled on and off because it
             // messes up flow
@@ -76,7 +77,7 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(
         ctx = nullptr;
         break;
     case WM_SETCURSOR: {
-        if (ActionManager::get_hotkeys_locked())
+        if (ActionManager::get_all_hotkeys_locked())
         {
             break;
         }
@@ -91,6 +92,7 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(
         {
             const auto vk = HotkeyUtils::trigger_to_vk(hotkey.trigger);
             if (!vk) continue;
+            if (ActionManager::is_hotkey_locked(hotkey)) continue;
 
             const auto down = (mmb && !ctx->last_mmb && *vk == VK_MBUTTON) ||
                               (xmb1 && !ctx->last_xmb1 && *vk == VK_XBUTTON1) ||

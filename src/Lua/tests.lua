@@ -1687,11 +1687,41 @@ retest.describe('mupen64', function()
                 end
                 retest.expect(func).to_not.fail()
             end)
+            retest.it('succeeds_when_hotkeys_given', function()
+                local func = function()
+                    action.lock_hotkeys(true, {
+                        { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_1 } },
+                        { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_C }, ctrl = true },
+                    })
+                end
+                retest.expect(func).to_not.fail()
+                action.lock_hotkeys(false)
+            end)
+            retest.it('errors_when_hotkeys_not_table', function()
+                local func = function()
+                    action.lock_hotkeys(true, 5)
+                end
+                retest.expect(func).to.fail()
+                action.lock_hotkeys(false)
+            end)
+            retest.it('errors_when_hotkey_invalid', function()
+                local func = function()
+                    action.lock_hotkeys(true, { {} })
+                end
+                retest.expect(func).to.fail()
+                action.lock_hotkeys(false)
+            end)
         end)
 
         retest.describe('get_hotkeys_locked', function()
             retest.it('returns_locked_state', function()
                 action.lock_hotkeys(true)
+                retest.expect(action.get_hotkeys_locked()).to.equal(true)
+                action.lock_hotkeys(false)
+                retest.expect(action.get_hotkeys_locked()).to.equal(false)
+            end)
+            retest.it('returns_locked_state_when_some_hotkeys_locked', function()
+                action.lock_hotkeys(true, { { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_1 } } })
                 retest.expect(action.get_hotkeys_locked()).to.equal(true)
                 action.lock_hotkeys(false)
                 retest.expect(action.get_hotkeys_locked()).to.equal(false)

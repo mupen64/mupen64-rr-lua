@@ -2310,9 +2310,10 @@ function action.invoke(path, up, release_on_repress, params) end
 
 ---Locks or unlocks action invocations from hotkeys.
 ---@param lock boolean Whether to lock or unlock action invocations from hotkeys.
-function action.lock_hotkeys(lock) end
+---@param hotkeys Hotkey[]? If given and not empty, only these hotkeys are locked (matched by trigger and modifiers), and every other hotkey still invokes its action. Lets a control that only takes some keys, such as a numberbox, lock just those. Ignored when unlocking.
+function action.lock_hotkeys(lock, hotkeys) end
 
----@return boolean # Whether action invocations from hotkeys are currently locked.
+---@return boolean # Whether action invocations from hotkeys are currently locked (all of them, or the ones passed to [action.lock_hotkeys](lua://action.lock_hotkeys)).
 function action.get_hotkeys_locked() end
 
 --#endregion

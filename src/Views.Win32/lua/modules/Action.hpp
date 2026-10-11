@@ -537,7 +537,20 @@ static int lock_hotkeys(lua_State *L)
 {
     const bool lock = luaL_checkboolean(L, 1);
 
-    ActionManager::lock_hotkeys(lock);
+    std::vector<::Hotkey> only{};
+    if (!lua_isnoneornil(L, 2))
+    {
+        luaL_checktype(L, 2, LUA_TTABLE);
+        const auto count = static_cast<lua_Integer>(lua_rawlen(L, 2));
+        for (lua_Integer i = 1; i <= count; ++i)
+        {
+            lua_rawgeti(L, 2, i);
+            only.push_back(Hotkey::check_hotkey(L, lua_gettop(L)));
+            lua_pop(L, 1);
+        }
+    }
+
+    ActionManager::lock_hotkeys(lock, only);
 
     return 0;
 }
