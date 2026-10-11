@@ -317,7 +317,12 @@ static void recreate_mge_context_d3d()
 
 static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    Main::handle_mouse_events(hwnd, msg, wparam, lparam);
+    // DefWindowProc forwards wheel messages to the main window, which passes them to Lua itself: handling them here
+    // too would report every notch over the game view twice
+    if (msg != WM_MOUSEWHEEL && msg != WM_MOUSEHWHEEL)
+    {
+        Main::handle_mouse_events(hwnd, msg, wparam, lparam);
+    }
 
     switch (msg)
     {
