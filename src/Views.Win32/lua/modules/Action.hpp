@@ -562,4 +562,25 @@ static int get_hotkeys_locked(lua_State *L)
     lua_pushboolean(L, any_locked);
     return 1;
 }
+
+static int get_locked_hotkeys(lua_State *L)
+{
+    const auto locked_hotkeys = ActionManager::get_locked_hotkeys();
+
+    if (!locked_hotkeys.has_value())
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    size_t i = 1;
+    for (const auto &hotkey : locked_hotkeys.value())
+    {
+        Hotkey::push_hotkey(L, hotkey);
+        lua_seti(L, -2, i++);
+    }
+
+    return 1;
+}
 } // namespace LuaCore::Action

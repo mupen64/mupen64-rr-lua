@@ -2313,6 +2313,10 @@ function action.invoke(path, up, release_on_repress, params) end
 ---@param hotkeys Hotkey[]? The hotkeys affected by the lock. Ignored when unlocking.
 function action.lock_hotkeys(lock, hotkeys) end
 
+---Gets the hotkeys locked via `action.lock_hotkeys`.
+---@return Hotkey[]? hotkeys The locked hotkeys. An empty table if all hotkeys are locked, or `nil` if no hotkeys are locked.
+function action.get_locked_hotkeys() end
+
 ---@return boolean # Whether action invocations from any hotkeys are currently locked.
 function action.get_hotkeys_locked() end
 
