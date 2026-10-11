@@ -366,7 +366,11 @@ void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
 {
     if (!ready) return;
 
+    if (!needs_processing) current_input = input;
+
     std::lock_guard lock(pending_visuals_mutex);
+    if (needs_processing && pending_set_visuals_request.has_value() && !pending_set_visuals_request->needs_processing)
+        return;
     pending_set_visuals_request = SetVisualsRequest{input, needs_processing};
 }
 
