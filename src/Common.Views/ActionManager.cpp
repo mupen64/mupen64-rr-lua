@@ -333,26 +333,18 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     // some bullshit like calling back into the ActionManager...
     for (const auto &action_to_be_removed : actions)
     {
-        for (const auto &existing_action : g_mgr.actions)
-        {
-            if (existing_action.add_params.path != action_to_be_removed->add_params.path)
-            {
-                continue;
-            }
-
-            if (existing_action.add_params.on_removed)
-            {
-                existing_action.add_params.on_removed();
-            }
-
-            removed_paths.emplace_back(existing_action.add_params.path);
-        }
+        removed_paths.emplace_back(action_to_be_removed->add_params.path);
     }
 
-    for (const auto &action_to_be_removed : actions)
+    for (const auto &path : removed_paths)
     {
-        std::erase_if(
-            g_mgr.actions, [&](const Action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
+        Action *action = get_single_action_ptr_matching_path(path);
+        if (action && action->add_params.on_removed) action->add_params.on_removed();
+    }
+
+    for (const auto &path : removed_paths)
+    {
+        std::erase_if(g_mgr.actions, [&](const Action &a) { return a.add_params.path == path; });
     }
 
     g_mgr.filter_result_cache.clear();
