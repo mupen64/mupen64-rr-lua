@@ -506,6 +506,8 @@ void Status::on_timer()
 
 static void CALLBACK timer_callback(HWND, UINT, UINT_PTR, DWORD)
 {
+    SDL_UpdateGamepads();
+
     for (auto &st : status)
     {
         if (st.ready) st.on_timer();
