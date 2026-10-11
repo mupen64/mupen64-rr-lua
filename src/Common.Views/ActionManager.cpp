@@ -681,9 +681,10 @@ void ActionManager::lock_hotkeys(const bool lock, const std::vector<Hotkey> &onl
     g_mgr.locked_hotkeys = lock ? only : std::vector<Hotkey>{};
 }
 
-bool ActionManager::get_hotkeys_locked()
+std::optional<std::vector<Hotkey>> ActionManager::get_locked_hotkeys()
 {
-    return g_mgr.lock_hotkeys;
+    if (!g_mgr.lock_hotkeys) return std::nullopt;
+    return g_mgr.locked_hotkeys;
 }
 
 bool ActionManager::is_hotkey_locked(const Hotkey &hotkey)
@@ -691,9 +692,4 @@ bool ActionManager::is_hotkey_locked(const Hotkey &hotkey)
     if (!g_mgr.lock_hotkeys) return false;
     if (g_mgr.locked_hotkeys.empty()) return true;
     return std::ranges::find(g_mgr.locked_hotkeys, hotkey) != g_mgr.locked_hotkeys.end();
-}
-
-bool ActionManager::get_all_hotkeys_locked()
-{
-    return g_mgr.lock_hotkeys && g_mgr.locked_hotkeys.empty();
 }

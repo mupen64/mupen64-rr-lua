@@ -270,17 +270,13 @@ void invoke(
 void lock_hotkeys(bool lock, const std::vector<Hotkey> &only = {});
 
 /**
- * \return Whether action invocations from any hotkeys are currently locked.
+ * \return The hotkeys locked by `lock_hotkeys`, or `std::nullopt` if hotkeys are unlocked.
  */
-bool get_hotkeys_locked();
+std::optional<std::vector<Hotkey>> get_locked_hotkeys();
 
 /**
  * \return Whether invocations from this hotkey are currently locked.
  */
 bool is_hotkey_locked(const Hotkey &hotkey);
 
-/**
- * \return Whether invocations from every hotkey are currently locked.
- */
-bool get_all_hotkeys_locked();
 } // namespace ActionManager

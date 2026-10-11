@@ -557,9 +557,9 @@ static int lock_hotkeys(lua_State *L)
 
 static int get_hotkeys_locked(lua_State *L)
 {
-    const bool locked = ActionManager::get_hotkeys_locked();
-
-    lua_pushboolean(L, locked);
+    const auto locked_hotkeys = ActionManager::get_locked_hotkeys();
+    const auto any_locked = locked_hotkeys.has_value();
+    lua_pushboolean(L, any_locked);
     return 1;
 }
 } // namespace LuaCore::Action

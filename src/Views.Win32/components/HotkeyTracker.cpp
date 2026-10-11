@@ -24,11 +24,6 @@ struct HotkeyTrackerContext
 
 static std::optional<bool> on_key(bool is_up, int32_t key)
 {
-    if (ActionManager::get_all_hotkeys_locked())
-    {
-        return std::nullopt;
-    }
-
     const bool shift = GetKeyState(VK_SHIFT) & 0x8000;
     const bool ctrl = GetKeyState(VK_CONTROL) & 0x8000;
     const bool alt = GetKeyState(VK_MENU) & 0x8000;
@@ -77,11 +72,6 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(
         ctx = nullptr;
         break;
     case WM_SETCURSOR: {
-        if (ActionManager::get_all_hotkeys_locked())
-        {
-            break;
-        }
-
         const bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
         const bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
         const bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
