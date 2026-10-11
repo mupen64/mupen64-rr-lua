@@ -6,6 +6,11 @@ namespace M64RRSpec {
     enum class GraphicsResult {
         Ok = 0,
         MiscError = 1,
+
+        InvalidArgument = 2,
+
+        GL_ContextCreationFailed = 100,
+        GL_NoCurrentContext = 101,
     };
 
     enum class GLContextType : int8_t {
@@ -43,8 +48,12 @@ namespace M64RRSpec {
      */
     struct GLContext;
 
+    /**
+     * @brief The windowing API (providing access to various graphics APIs).
+     * @note Graphics calls should be restricted to a single thread for cross-platform compatibility.
+     */
     struct WindowingAPI {
-        // OPENGL
+        // OPENGL (ES)
         // ===============
 
         /**

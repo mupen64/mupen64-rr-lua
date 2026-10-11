@@ -217,7 +217,7 @@ extern "C"
         {
             Type type;
             // A pointer to a function table containing the windowing API functions.
-            WindowingAPI* wsi;
+            const WindowingAPI* wsi;
         };
 
         // The type of the event.
@@ -226,8 +226,11 @@ extern "C"
         // The initiate event details. Only valid when `type` is `Initiate`.
         InitiateEvent initiate;
 
-        // The initialize controllers event details. Only valid when `type` is `InitializeControllers`.
+        // The initialize-controllers event details. Only valid when `type` is `InitializeControllers`.
         InitializeControllersEvent initialize_controllers;
+
+        // The initialize-display event details. Only valid when `type` is `InitializeDisplay`.
+        InitializeDisplayEvent initialize_display;
     };
 
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);

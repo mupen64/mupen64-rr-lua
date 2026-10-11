@@ -8,6 +8,7 @@
 
 #include <decan.hpp>
 
+#include "Windowing.hpp"
 #include "EmuContext.hpp"
 
 template <class T>
@@ -184,6 +185,13 @@ void PluginSet::initiate_plugins(CoreCtx *ctx, CoreParams &params)
             // must be called on GUI thread!
             QMetaObject::invokeMethod(EmuContext::instance(), &EmuContext::gfxRequestSize, width, height);
         };
+    });
+    m_video.send_event(M64RRSpec::Event{
+        .initialize_display =
+            {
+                .type = M64RRSpec::Event::Type::InitializeDisplay,
+                .wsi = &QtWindowAPI::functions(),
+            },
     });
 
     // audio init
