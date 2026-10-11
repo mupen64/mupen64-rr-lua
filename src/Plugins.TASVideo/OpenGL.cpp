@@ -22,6 +22,10 @@ void *gCapturedPixels; // pointer to buffer to fill
 static SDL_Window *g_sdl_window;
 static SDL_GLContext g_sdl_context;
 
+static GLuint g_fbo = 0;
+static GLuint g_color_rbo = 0;
+static GLuint g_aux_rbo = 0;
+
 void OGL_ReadPixels()
 {
     if (!gCapturedPixels) return;
@@ -29,9 +33,7 @@ void OGL_ReadPixels()
     glFlush();
     glFinish();
 
-    // SDL_GL_SwapWindow(s_sdl_window);
-    // SDL_PumpEvents();
-
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glReadPixels(0, 0, OGL.width, OGL.height, GL_RGBA, GL_UNSIGNED_BYTE, gCapturedPixels);
 
     auto pixels = (uint8_t *)gCapturedPixels;
@@ -97,6 +99,12 @@ void OGL_DepthRange(float znear, float zfar)
 
 void OGL_InitStates()
 {
+    // setup rendering FBO/RBOs
+    glGenFramebuffers(1, &g_fbo);
+    glGenRenderbuffers(1, &g_color_rbo);
+    glGenRenderbuffers(1, &g_aux_rbo);
+
+    // configure vertex attributes
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].x);
     glEnableVertexAttribArray(0);
 
@@ -115,8 +123,10 @@ void OGL_InitStates()
     glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].fog);
     glEnableVertexAttribArray(5);
 
+    // ???
     glPolygonOffset(-3.0f, -3.0f);
 
+    // clear main buffer to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -160,6 +170,21 @@ void OGL_ResizeWindow()
     OGL.width = OGL.windowedWidth;
     OGL.height = OGL.windowedHeight;
     g_plugin->request_size(OGL.width, OGL.height);
+
+    glBindRenderbuffer(GL_RENDERBUFFER, g_color_rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, (int)OGL.width, (int)OGL.height);
+    glBindRenderbuffer(GL_RENDERBUFFER, g_aux_rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, (int)OGL.width, (int)OGL.height);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, g_color_rbo);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, g_aux_rbo);
+
+    int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    std::println("framebuffer status: {:04X}", status);
+    if (status == 0) {
+        std::println("glGetError: {:04X}", glGetError());
+    }
 }
 
 bool OGL_InitContext()
@@ -232,8 +257,17 @@ bool OGL_InitContext()
     return TRUE;
 }
 
+void OGL_ClearStates()
+{
+    g_fbo = 0;
+    g_color_rbo = 0;
+    g_aux_rbo = 0;
+}
+
 bool OGL_DestroyContext()
 {
+    OGL_ClearStates();
+
     SDL_GL_MakeCurrent(g_sdl_window, nullptr);
 
     SDL_GL_DestroyContext(g_sdl_context);

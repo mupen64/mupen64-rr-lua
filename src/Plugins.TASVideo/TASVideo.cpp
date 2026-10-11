@@ -74,7 +74,6 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         break;
     case M64RRSpec::Event::Type::RomOpened:
         init_rsp_thread();
-        OGL_ResizeWindow();
         break;
     case M64RRSpec::Event::Type::RomClosed:
         RSP_SendMessage(RSPMSG_BLACKOUT);
