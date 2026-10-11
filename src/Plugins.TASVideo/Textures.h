@@ -7,6 +7,7 @@
 #pragma once
 
 #include "convert.hpp"
+#include <glad/glad.h>
 
 enum class TextureFilter
 {

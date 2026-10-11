@@ -125,12 +125,7 @@ void OGL_InitStates()
     glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].fog);
     glEnableVertexAttribArray(5);
 
-    // ???
     glPolygonOffset(-3.0f, -3.0f);
-
-    // clear main buffer to black
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void OGL_UpdateScale()
@@ -184,70 +179,14 @@ void OGL_ResizeWindow()
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, g_color_rbo);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, g_aux_rbo);
+
+    // clear main buffer to black
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 bool OGL_InitContext()
 {
-    //     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    //     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    //     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    //     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 0);
-    //
-    //     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    //     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    //     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    //
-    //     if (OGL.msaa > 0)
-    //     {
-    //         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    //         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, OGL.msaa);
-    //     }
-    //     else
-    //     {
-    //         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-    //         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-    //     }
-    //
-    //     g_sdl_window =
-    //         SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL |
-    //         SDL_WINDOW_HIDDEN);
-    //     need(g_sdl_window, "Failed to create an SDL window. Verify that your graphics driver supports OpenGL.");
-    //
-    //     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    //     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    //     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    //     SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
-    //     g_sdl_context = SDL_GL_CreateContext(g_sdl_window);
-    //     OGL.isGLES = (g_sdl_context != nullptr);
-    //
-    //     if (!g_sdl_context)
-    //     {
-    //         g_plugin->log_info("OpenGL ES 2.0 context unavailable; falling back to desktop OpenGL.");
-    //         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    //         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    //         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-    //         g_sdl_context = SDL_GL_CreateContext(g_sdl_window);
-    //     }
-    //     need(g_sdl_context, "Failed to create an OpenGL context. Verify that your graphics driver supports OpenGL.");
-    //
-    //     need(SDL_GL_MakeCurrent(g_sdl_window, g_sdl_context),
-    //         "Failed to set an OpenGL context. Verify that your graphics driver supports OpenGL.");
-    //
-    //     int multisample_buffers = 0;
-    //     int multisample_samples = 0;
-    //     SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &multisample_buffers);
-    //     SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &multisample_samples);
-    //
-    //     if (OGL.msaa > 0)
-    //     {
-    //         need(multisample_buffers == 1 && multisample_samples == OGL.msaa,
-    //             std::format("MSAA {}x is required, got {} buffers {} samples. Try updating your graphics driver.",
-    //             OGL.msaa,
-    //                 multisample_buffers, multisample_samples));
-    //     }
-    //
-
-
     M64RRSpec::GLSurfaceFormat request_format{
         .major_version = 4,
         .minor_version = 1,
@@ -264,6 +203,7 @@ bool OGL_InitContext()
         // TODO: handle MSAA
         .msaa_samples = 0,
     };
+    OGL.isGLES = false;
     need(g_wsi->new_gl_context(&request_format, &g_wsi_context) == M64RRSpec::GraphicsResult::Ok,
         "Failed to create an OpenGL context.");
     g_wsi->gl_make_current(g_wsi_context);
@@ -280,11 +220,20 @@ bool OGL_InitContext()
     return TRUE;
 }
 
-void OGL_ClearStates()
+static void OGL_ClearStates()
 {
-    g_fbo = 0;
-    g_color_rbo = 0;
-    g_aux_rbo = 0;
+    if (g_fbo != 0) {
+        glDeleteFramebuffers(1, &g_fbo);
+        g_fbo = 0;
+    }
+    if (g_color_rbo != 0) {
+        glad_glDeleteRenderbuffers(1, &g_color_rbo);
+        g_color_rbo = 0;
+    }
+    if (g_aux_rbo != 0) {
+        glad_glDeleteRenderbuffers(1, &g_aux_rbo);
+        g_aux_rbo = 0;
+    }
 }
 
 bool OGL_DestroyContext()
@@ -322,6 +271,11 @@ void OGL_Stop()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
+}
+
+void OGL_EnsureCurrent() {
+    g_wsi->gl_make_current(g_wsi_context);
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
 }
 
 static void OGL_SetRectViewport()
