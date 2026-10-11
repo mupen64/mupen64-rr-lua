@@ -626,8 +626,12 @@ static bool validate_params(const Action &action, const action_argument_map &par
 }
 
 void ActionManager::invoke(
-    const action_path &path, const bool up, const bool release_on_repress, const action_argument_map &params)
+    const action_path &path_arg, const bool up, const bool release_on_repress, const action_argument_map &params)
 {
+    // An action's callback can add actions (e.g. starting a Lua script that calls action.add), which reallocates
+    // g_mgr.actions: our Action pointer and the callback object would then point into freed memory. So keep our own
+    // copies of the path and of the callback, and look the action up again after calling it.
+    const action_path path = path_arg;
     Action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
@@ -653,21 +657,27 @@ void ActionManager::invoke(
 
         if (action->add_params.on_release)
         {
-            action->add_params.on_release();
+            const auto on_release = action->add_params.on_release;
+            on_release();
         }
     }
     else
     {
         if (release_on_repress && action->add_params.on_release && action->pressed)
         {
-            action->add_params.on_release();
-            action->pressed = false;
+            const auto on_release = action->add_params.on_release;
+            on_release();
+            action = get_single_action_ptr_matching_path(path);
+            if (action) action->pressed = false;
             return;
         }
 
         if (action->add_params.on_press)
         {
-            action->add_params.on_press(params);
+            const auto on_press = action->add_params.on_press;
+            on_press(params);
+            action = get_single_action_ptr_matching_path(path);
+            if (!action) return;
         }
 
         action->pressed = true;
