@@ -34,6 +34,7 @@ struct DialogState
     HWND placeholder_hwnd{};
     RECT initial_rect{};
     std::vector<std::shared_ptr<InstanceContext>> stored_contexts{};
+    bool create_without_focus{};
 };
 
 static DialogState g_dlg{};
@@ -291,12 +292,15 @@ static void add_recent_scripts_to_instance_list()
     }
 }
 
+static void show_without_activating();
+
 /**
- * \brief Adds a new Lua instance and starts it immediately. Shows the Lua dialog if it is not already visible.
+ * \brief Adds a new Lua instance and starts it immediately. Shows the Lua dialog (without activating it) if it is
+ * not already visible.
  */
 static void add_and_start(const std::filesystem::path &path)
 {
-    LuaDialog::show();
+    show_without_activating();
     const auto ctx = add_and_select_instance(path);
     start(*ctx, path);
 }
@@ -460,8 +464,10 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         RECT effective_rc = mgr_rc;
         AdjustWindowRect(&effective_rc, GetWindowLong(hwnd, GWL_STYLE), FALSE);
 
-        SetWindowPos(
-            hwnd, 0, 0, 0, effective_rc.right + dlg_rect.right, effective_rc.bottom, SWP_NOMOVE | SWP_NOZORDER);
+        // SWP_NOACTIVATE: the dialog isn't shown yet, and without it this resize activates it (and DefDlgProc focuses
+        // the instance list), also when the dialog is opened by a script start that mustn't take the focus.
+        SetWindowPos(hwnd, 0, 0, 0, effective_rc.right + dlg_rect.right, effective_rc.bottom,
+            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
         g_dlg.initial_rect = mgr_rc;
 
@@ -474,7 +480,9 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         create_placeholder_dialog(g_dlg);
 
         WinDarkMode::attach(hwnd);
-        return TRUE;
+        // TRUE makes the dialog manager focus the instance list, and focusing a control activates its (still hidden)
+        // dialog, so a script started from outside the dialog must not take the default focus.
+        return !g_dlg.create_without_focus;
     }
     case WM_CLOSE:
         DestroyWindow(hwnd);
@@ -677,6 +685,25 @@ void LuaDialog::show()
     ShowWindow(g_dlg.mgr_hwnd, SW_SHOW);
 }
 
+/**
+ * \brief Shows the Lua dialog for a script started from the menu, a hotkey or the command line, without taking the
+ * keyboard focus from the window the user is in. Otherwise the dialog's instance list gets every key the user presses
+ * (e.g. TASInput's, which still move Mario) and its type-ahead search beeps on each one.
+ */
+static void show_without_activating()
+{
+    if (!g_dlg.mgr_hwnd)
+    {
+        g_dlg.create_without_focus = true;
+        CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_LUA_MANAGER), g_main_ctx.hwnd, lua_manager_dialog_proc);
+        g_dlg.create_without_focus = false;
+    }
+    if (!IsWindowVisible(g_dlg.mgr_hwnd))
+    {
+        ShowWindow(g_dlg.mgr_hwnd, SW_SHOWNOACTIVATE);
+    }
+}
+
 void LuaDialog::start_and_add_if_needed(const std::filesystem::path &path)
 {
     const auto existing_ctx = std::ranges::find_if(
@@ -690,7 +717,7 @@ void LuaDialog::start_and_add_if_needed(const std::filesystem::path &path)
 
     const auto ctx = *existing_ctx;
 
-    LuaDialog::show();
+    show_without_activating();
     select_instance(*ctx);
 
     start(*ctx, path);
