@@ -404,6 +404,11 @@ void Status::on_timer()
 {
     set_visuals_if_needed();
 
+    if (!new_config.input_when_emu_unfocused)
+    {
+        if (GetForegroundWindow() != g_plugin->main_window.hwnd()) return;
+    }
+
     CoreButtons controller_input = GamepadManager::get_input(controller_index);
 
     if (controller_input.value != last_controller_input.value)
@@ -1120,6 +1125,7 @@ bool Status::show_context_menu(int x, int y)
     ADD_ITEM(hmenu, approach_mode, "Approach");
     ADD_ITEM(hmenu, wrap_joystick, "Wrap joystick");
     ADD_ITEM(hmenu, disallow_joystick_reset, "Disallow joystick reset");
+    ADD_ITEM(hmenu, input_when_emu_unfocused, "Input when emulator unfocused");
     AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
     ADD_ITEM(hmenu, always_on_top, "Always on top");
     ADD_ITEM(hmenu, float_from_parent, "Float from parent");
