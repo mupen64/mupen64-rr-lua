@@ -265,11 +265,18 @@ void invoke(
 /**
  * \brief Locks or unlocks action invocations from hotkeys.
  * \param lock Whether to lock or unlock action invocations from hotkeys.
+ * \param only The hotkeys to lock invocations for. If empty, all hotkeys are locked. Ignored when unlocking.
  */
-void lock_hotkeys(bool lock);
+void lock_hotkeys(bool lock, const std::vector<Hotkey> &only = {});
 
 /**
- * \return Whether action invocations from hotkeys are currently locked.
+ * \return The hotkeys locked by `lock_hotkeys`, or `std::nullopt` if hotkeys are unlocked.
  */
-bool get_hotkeys_locked();
+std::optional<std::vector<Hotkey>> get_locked_hotkeys();
+
+/**
+ * \return Whether invocations from this hotkey are currently locked.
+ */
+bool is_hotkey_locked(const Hotkey &hotkey);
+
 } // namespace ActionManager
