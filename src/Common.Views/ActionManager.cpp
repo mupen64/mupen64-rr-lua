@@ -329,8 +329,6 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     std::vector<action_path> removed_paths;
     removed_paths.reserve(actions.size());
 
-    // Call the on_removed callbacks first and before removing anything - we don't want weirdness if the callbacks do
-    // some bullshit like calling back into the ActionManager...
     for (const auto &action_to_be_removed : actions)
     {
         removed_paths.emplace_back(action_to_be_removed->add_params.path);
@@ -618,20 +616,17 @@ static bool validate_params(const Action &action, const action_argument_map &par
 }
 
 void ActionManager::invoke(
-    const action_path &path_arg, const bool up, const bool release_on_repress, const action_argument_map &params)
+    const action_path &path, const bool up, const bool release_on_repress, const action_argument_map &params)
 {
-    // An action's callback can add actions (e.g. starting a Lua script that calls action.add), which reallocates
-    // g_mgr.actions: our Action pointer and the callback object would then point into freed memory. So keep our own
-    // copies of the path and of the callback, and look the action up again after calling it.
-    const action_path path = path_arg;
     Action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
     {
-
         g_view_logger->error("ActionManager::invoke: '{}' didn't resolve to an action", path);
         return;
     }
+
+    const action_path resolved_path = action->add_params.path;
 
     if (!validate_params(*action, params))
     {
@@ -672,7 +667,8 @@ void ActionManager::invoke(
             if (!action) return;
         }
 
-        action->pressed = true;
+        action = get_single_action_ptr_matching_path(resolved_path);
+        if (action) action->pressed = true;
     }
 }
 
