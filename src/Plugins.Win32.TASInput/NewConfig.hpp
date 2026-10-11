@@ -247,7 +247,7 @@ struct ControllerConfig
 
 struct InputConfig
 {
-    int32_t version = 7;
+    int32_t version = 8;
     int32_t always_on_top = false;
     int32_t float_from_parent = true;
     int32_t titlebar = true;
