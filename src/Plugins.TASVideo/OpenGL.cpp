@@ -179,12 +179,6 @@ void OGL_ResizeWindow()
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, g_color_rbo);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, g_aux_rbo);
-
-    int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    std::println("framebuffer status: {:04X}", status);
-    if (status == 0) {
-        std::println("glGetError: {:04X}", glGetError());
-    }
 }
 
 bool OGL_InitContext()

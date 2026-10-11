@@ -8,9 +8,10 @@
 
 #include <print>
 
+#include <QIcon>
 #include <QQmlEngine>
 #include <QThread>
-#include <QIcon>
+#include <QThreadPool>
 #include <QUrl>
 
 #include <QJSInterop.hpp>
@@ -27,8 +28,8 @@ static void set_core_instance(EmuContext *ptr)
         throw std::logic_error("EmuContext should not be created twice!");
 }
 
-EmuContext::EmuContext(QObject *parent)
-    : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
+EmuContext::EmuContext(QQuickItem *parent)
+    : QQuickItem(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
       m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this)), m_paths(new EmuPaths(this)),
       m_rom_manager(nullptr)
 {

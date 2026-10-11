@@ -108,8 +108,7 @@ void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void
     m_init_data->frame_skipped = []() { return EmuContext::rawContext()->vr_get_frame_skipped(); };
     m_init_data->config_path = get_config_path;
 
-    // TODO: handle this!
-    m_init_data->request_size = [](uint32_t, uint32_t) {};
+    m_init_data->request_size = nullptr;
 
     if (post_init) post_init(m_init_data.get());
 
@@ -121,18 +120,6 @@ void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void
             },
     };
     m_process_event(init_event);
-
-    if (m_type == M64RRSpec::PluginType::Input)
-    {
-        M64RRSpec::Event init_controls_event{
-            .initialize_controllers =
-                {
-                    .type = M64RRSpec::Event::Type::Initiate,
-                    .controllers = params.controls,
-                },
-        };
-        m_process_event(init_controls_event);
-    }
 }
 
 void Plugin::bind_functions(CoreParams &params)
@@ -191,16 +178,28 @@ void PluginSet::initiate_plugins(CoreCtx *ctx, CoreParams &params)
 {
     CoreUtil::clear_plugin_funcs(params);
 
+    // video init
     m_video.initiate(ctx, params, [](M64RRSpec::PluginInit *init) {
         init->request_size = [](uint32_t width, uint32_t height) {
             // must be called on GUI thread!
             QMetaObject::invokeMethod(EmuContext::instance(), &EmuContext::gfxRequestSize, width, height);
         };
     });
-    m_audio.initiate(ctx, params);
-    m_input.initiate(ctx, params, [&](M64RRSpec::PluginInit *init) {
 
+    // audio init
+    m_audio.initiate(ctx, params);
+
+    // input init (need to send InitializeControllers afterwards)
+    m_input.initiate(ctx, params);
+    m_input.send_event(M64RRSpec::Event{
+        .initialize_controllers =
+            {
+                .type = M64RRSpec::Event::Type::InitializeControllers,
+                .controllers = params.controls,
+            },
     });
+
+    // RSP init
     m_rsp.initiate(ctx, params, [&](M64RRSpec::PluginInit *init) {
         init->process_dlist = (M64RRSpec::PtrProcessDList)m_video.load_symbol("M64RRProcessDList");
     });

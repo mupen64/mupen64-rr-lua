@@ -53,7 +53,7 @@ namespace M64RRSpec {
          *
          * @param format The surface format to use.
          * @param context_out The context will be returned through this pointer. It cannot be null.
-         * @return
+         * @return A result. If the result is GraphicsResult::Ok, the pointer written to `context_out` will be valid.
          */
         GraphicsResult (*new_gl_context)(GLSurfaceFormat* format, GLContext** context_out);
         /**
@@ -63,9 +63,9 @@ namespace M64RRSpec {
         GraphicsResult (*free_gl_context)(GLContext* context);
         /**
          * @brief Makes the provided OpenGL context current.
-         * @note OpenGL is naturally single-threaded.
+         * @note OpenGL is single threaded. Calls to this function should occur from at most one thread.
          */
-        bool (*gl_make_current)(GLContext* context);
+        GraphicsResult (*gl_make_current)(GLContext* context);
         /**
          * @brief Gets a pointer to an OpenGL function.
          * @note This must be called *after* a context is made current.

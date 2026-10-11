@@ -6,7 +6,7 @@
 #pragma once
 
 #include <QObject>
-#include <QThreadPool>
+#include <QQuickItem>
 #include <QUrl>
 #include <qqmlintegration.h>
 
@@ -23,7 +23,7 @@ class EmuPaths;
  * @brief QML-owned singleton holding the core and related objects.
  * Implemented as a non-singleton, but will throw a tantrum if instantiated more than once.
  */
-class EmuContext : public QObject
+class EmuContext : public QQuickItem
 {
     Q_OBJECT
     QML_ELEMENT
@@ -49,7 +49,7 @@ class EmuContext : public QObject
   public:
     static constexpr size_t num_save_slots = 10;
 
-    EmuContext(QObject *parent = nullptr);
+    EmuContext(QQuickItem *parent = nullptr);
     virtual ~EmuContext();
 
     static EmuContext *instance();
@@ -434,7 +434,7 @@ class EmuOptions : public QObject
 };
 
 /**
- *
+ * @brief Qt bindings for various paths that must be exposed to the core.
  */
 class EmuPaths : public QObject
 {
@@ -485,6 +485,8 @@ class EmuPaths : public QObject
     std::filesystem::path m_screenshot_dir;
     std::filesystem::path m_backup_dir;
 };
+
+
 
 namespace CoreUtil
 {
