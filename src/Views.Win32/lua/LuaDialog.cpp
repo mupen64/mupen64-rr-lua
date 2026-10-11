@@ -350,6 +350,12 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
         const auto stop_hwnd = GetDlgItem(hwnd, IDC_STOP);
 
         Button_SetText(start_hwnd, running ? "Restart" : "Start");
+        // Disabling the focused Stop button (it was just clicked) would leave the dialog without a keyboard focus,
+        // and then every key pressed beeps (e.g. TASInput's, which still move Mario), so give the focus to Start
+        if (!running && GetFocus() == stop_hwnd)
+        {
+            SendMessage(g_dlg.mgr_hwnd, WM_NEXTDLGCTL, (WPARAM)start_hwnd, TRUE);
+        }
         Button_Enable(stop_hwnd, running);
 
         break;
@@ -592,6 +598,12 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
     case WM_NOTIFY: {
         switch (((LPNMHDR)lparam)->code)
         {
+        case LVN_INCREMENTALSEARCHA:
+        case LVN_INCREMENTALSEARCHW:
+            // No type-ahead search in the instance list: every key that matches no script would beep, and keys
+            // reach this list whenever the dialog is active (e.g. TASInput's, which still move Mario)
+            reinterpret_cast<NMLVFINDITEMW *>(lparam)->lvfi.lParam = LVNSCH_IGNORE;
+            break;
         case LVN_GETDISPINFOA:
         case LVN_GETDISPINFOW: {
             auto fill = [&](auto *plvdi) {
