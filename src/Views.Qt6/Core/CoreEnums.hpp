@@ -6,8 +6,8 @@
 #pragma once
 
 #include <QObject>
-#include <QJSEngine>
 #include <QJSValue>
+#include <QQmlEngine>
 #include <qqmlintegration.h>
 
 #include <Core/Types.hpp>
@@ -127,7 +127,19 @@ class QmlCoreResult : public QObject
     static Value from_core(::CoreResult result) { return (Value)(int)result; }
     static ::CoreResult to_core(Value value) { return (::CoreResult)(int)value; }
 
-    Q_INVOKABLE QJSValue message(Value value);
+    static std::optional<std::pair<QAnyStringView, QAnyStringView>> messageCpp(Value value);
+
+    Q_INVOKABLE QJSValue message(Value value) {
+        auto result = messageCpp(value);
+        if (!result.has_value())
+            return QJSValue::NullValue;
+
+        auto obj = qmlEngine(this)->newObject();
+        auto [module, error] = result.value();
+        obj.setProperty("module", module.toString());
+        obj.setProperty("error", error.toString());
+        return obj;
+    }
 };
 
 class QmlCoreMessageTone : public QObject

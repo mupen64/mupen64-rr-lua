@@ -46,6 +46,7 @@ M64RRSpec::GraphicsResult new_gl_context(M64RRSpec::GLSurfaceFormat *format, M64
     std::promise<std::expected<M64RRSpec::GLContext *, M64RRSpec::GraphicsResult>> promise;
     auto future = promise.get_future();
 
+    std::println("calling into main thread ({}) from {}", (void*) qGuiApp->thread(), (void*) dst_thread);
     QMetaObject::invokeMethod(
         qGuiApp, [format, context_out, dst_thread, promise = std::move(promise)]() mutable -> void {
             QSurfaceFormat qt_format;
@@ -80,11 +81,13 @@ M64RRSpec::GraphicsResult new_gl_context(M64RRSpec::GLSurfaceFormat *format, M64
 
             if (format->msaa_samples >= 0) qt_format.setSamples(format->msaa_samples);
 
+            std::println("creating surface");
             // create surface and OpenGL context
             std::unique_ptr<QOffscreenSurface> surface{new QOffscreenSurface};
             surface->setFormat(qt_format);
             surface->create();
 
+            std::println("creating context");
             std::unique_ptr<QOpenGLContext> gl_context{new QOpenGLContext};
             gl_context->setShareContext(QOpenGLContext::globalShareContext());
             gl_context->setFormat(qt_format);
@@ -95,10 +98,12 @@ M64RRSpec::GraphicsResult new_gl_context(M64RRSpec::GLSurfaceFormat *format, M64
             }
 
             // move to destination thread
+            std::println("shifting context to output thread");
             gl_context->doneCurrent();
             surface->moveToThread(dst_thread);
             gl_context->moveToThread(dst_thread);
 
+            std::println("returning context");
             promise.set_value(new M64RRSpec::GLContext{std::move(surface), std::move(gl_context)});
         });
 

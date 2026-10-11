@@ -7,7 +7,7 @@
 
 #include <QQmlEngine>
 
-QJSValue QmlCoreResult::message(Value value)
+std::optional<std::pair<QAnyStringView, QAnyStringView>> QmlCoreResult::messageCpp(Value value)
 {
     using namespace std::literals;
     using namespace Qt::Literals;
@@ -20,7 +20,7 @@ QJSValue QmlCoreResult::message(Value value)
     case Res_Ok:
     case Res_Cancelled:
     case VCR_InvalidControllers:
-        return QJSValue::NullValue;
+        return std::nullopt;
     case VCR_InvalidFormat:
         module = "VCR"_L1;
         error = "The provided data has an invalid format."_L1;
@@ -120,8 +120,5 @@ QJSValue QmlCoreResult::message(Value value)
         break;
     }
 
-    QJSValue result = qmlEngine(this)->newObject();
-    result.setProperty(u"module"_s, QJSValue(module));
-    result.setProperty(u"error"_s, QJSValue(error));
-    return result;
+    return std::pair {module, error};
 }

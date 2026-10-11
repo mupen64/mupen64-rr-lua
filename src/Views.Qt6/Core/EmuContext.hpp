@@ -5,10 +5,13 @@
  */
 #pragma once
 
+#include <future>
+
 #include <QObject>
 #include <QQuickItem>
 #include <QUrl>
 #include <qqmlintegration.h>
+
 
 #include <Core/API.hpp>
 #include "plugin/Plugin.hpp"
@@ -64,13 +67,13 @@ class EmuContext : public QQuickItem
     // ==========================
 
     // -> vr_start_rom
-    Q_INVOKABLE QmlCoreResult::Value startROM(const QString &path);
+    Q_INVOKABLE void startROM(const QString &path);
 
     // -> vr_close_rom
-    Q_INVOKABLE QmlCoreResult::Value closeROM(bool resetVCR = true);
+    Q_INVOKABLE void closeROM(bool resetVCR = true);
 
     // -> vr_reset_rom
-    Q_INVOKABLE QmlCoreResult::Value resetROM(bool resetSaveData, bool stopVCR);
+    Q_INVOKABLE void resetROM(bool resetSaveData, bool stopVCR);
 
     // -> vr_invalidate_visuals
     Q_INVOKABLE void invalidateVisuals();
@@ -146,6 +149,15 @@ class EmuContext : public QQuickItem
      * @param image The image to read to.
      */
     void readVideoOutput(QImage &image);
+
+    // Dialog service
+    // ============================================
+
+    std::future<size_t> startMultiDialog(QAnyStringView title, QAnyStringView content, const QList<QString> &choices,
+        QmlCoreMessageTone::Value type);
+
+    std::future<bool> startAskDialog(QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
+    std::future<void> startInfoDialog(QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
 
     // Misc. properties
     // ==========================
@@ -236,6 +248,10 @@ class EmuContext : public QQuickItem
     void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
 
   private:
+
+
+    void startDialogForCoreResult(CoreResult result);
+
     CoreCfg *m_core_cfg;
     CoreParams *m_core_params;
     CoreCtx *m_core_ctx;

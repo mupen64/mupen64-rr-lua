@@ -18,6 +18,7 @@ static void log_shim(const wchar_t *str)
 }
 
 M64RRSpec::PluginInit *g_plugin;
+const M64RRSpec::WindowingAPI *g_wsi;
 
 bool init_rsp_thread()
 {
@@ -61,6 +62,9 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         g_plugin = event.initiate.init;
 
         Config_LoadConfig();
+        break;
+    case M64RRSpec::Event::Type::InitializeDisplay:
+        g_wsi = event.initialize_display.wsi;
         break;
     case M64RRSpec::Event::Type::Shutdown:
         init_count--;
