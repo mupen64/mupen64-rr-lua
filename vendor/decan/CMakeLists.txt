@@ -6,8 +6,8 @@ add_library(decan-hpp STATIC
 # platform-specific stuffs
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     target_sources(decan-hpp PRIVATE "src/decan_win32.cpp")
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-    target_sources(decan-hpp PRIVATE "src/decan_linux.cpp")
+elseif(UNIX)
+    target_sources(decan-hpp PRIVATE "src/decan_posix.cpp")
 endif()
 
 target_compile_features(decan-hpp PUBLIC cxx_std_20)

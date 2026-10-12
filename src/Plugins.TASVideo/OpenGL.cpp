@@ -7,6 +7,10 @@
 #include "Common.hpp"
 #include "TASVideo.hpp"
 #include "OpenGL.hpp"
+
+#if defined(__APPLE__)
+#include <dispatch/dispatch.h>
+#endif
 #include "Types.hpp"
 #include "N64.hpp"
 #include "gSP.hpp"
@@ -162,6 +166,24 @@ void OGL_ResizeWindow()
     g_plugin->request_size(OGL.width, OGL.height);
 }
 
+static void create_window_now(void *)
+{
+    g_sdl_window =
+        SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+}
+
+static void create_window_on_main_thread()
+{
+#if defined(__APPLE__)
+    if (!SDL_IsMainThread())
+    {
+        dispatch_sync_f(dispatch_get_main_queue(), nullptr, create_window_now);
+        return;
+    }
+#endif
+    create_window_now(nullptr);
+}
+
 bool OGL_InitContext()
 {
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -184,8 +206,8 @@ bool OGL_InitContext()
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
     }
 
-    g_sdl_window =
-        SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+    create_window_on_main_thread();
+    if (!g_sdl_window) g_plugin->log_error(SDL_GetError());
     need(g_sdl_window, "Failed to create an SDL window. Verify that your graphics driver supports OpenGL.");
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
