@@ -125,6 +125,9 @@ M64RRSpec::GraphicsResult free_gl_context(M64RRSpec::GLContext *context)
 {
     if (context == nullptr) return M64RRSpec::GraphicsResult::InvalidArgument;
 
+    if (context == g_last_context)
+        g_last_context = nullptr;
+
     context->context->doneCurrent();
     context->context->moveToThread(qGuiApp->thread());
     context->surface->moveToThread(qGuiApp->thread());
