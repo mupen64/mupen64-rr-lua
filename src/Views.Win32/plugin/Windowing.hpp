@@ -8,7 +8,8 @@
 
 #include <Core/Graphics.hpp>
 
-namespace SDLWindowAPI {
+namespace SDLWindowAPI
+{
 const M64RRSpec::WindowingAPI &functions();
 
 /**
@@ -35,4 +36,4 @@ M64RRSpec::GraphicsResult gl_make_current(M64RRSpec::GLContext *context);
  * @note This must be called *after* a context is made current.
  */
 void *gl_get_proc_address(const char *symbol);
-}
+} // namespace SDLWindowAPI

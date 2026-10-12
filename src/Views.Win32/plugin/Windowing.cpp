@@ -82,17 +82,19 @@ M64RRSpec::GraphicsResult new_gl_context(M64RRSpec::GLSurfaceFormat *format, M64
     // SDL requires a hidden window for OpenGL, but raw WGL requires us to do this anyways
     // on Windows, it should be okay to call this off the main thread
     SDL_Window *window = SDL_CreateWindow("", 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-    if (window == nullptr) {
+    if (window == nullptr)
+    {
         return M64RRSpec::GraphicsResult::MiscError;
     }
 
     SDL_GLContext context = SDL_GL_CreateContext(window);
-    if (context == nullptr) {
+    if (context == nullptr)
+    {
         SDL_DestroyWindow(window);
         return M64RRSpec::GraphicsResult::GL_ContextCreationFailed;
     }
 
-    *context_out = new M64RRSpec::GLContext {window, context};
+    *context_out = new M64RRSpec::GLContext{window, context};
     return M64RRSpec::GraphicsResult::Ok;
 }
 /**
@@ -120,6 +122,6 @@ M64RRSpec::GraphicsResult gl_make_current(M64RRSpec::GLContext *context)
  */
 void *gl_get_proc_address(const char *symbol)
 {
-    return (void*) SDL_GL_GetProcAddress(symbol);
+    return (void *)SDL_GL_GetProcAddress(symbol);
 }
 } // namespace SDLWindowAPI

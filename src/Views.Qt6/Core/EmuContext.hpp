@@ -12,7 +12,6 @@
 #include <QUrl>
 #include <qqmlintegration.h>
 
-
 #include <Core/API.hpp>
 #include "plugin/Plugin.hpp"
 
@@ -153,8 +152,8 @@ class EmuContext : public QQuickItem
     // Dialog service
     // ============================================
 
-    std::future<size_t> startMultiDialog(QAnyStringView title, QAnyStringView content, const QList<QString> &choices,
-        QmlCoreMessageTone::Value type);
+    std::future<size_t> startMultiDialog(
+        QAnyStringView title, QAnyStringView content, const QList<QString> &choices, QmlCoreMessageTone::Value type);
 
     std::future<bool> startAskDialog(QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
     std::future<void> startInfoDialog(QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
@@ -248,8 +247,6 @@ class EmuContext : public QQuickItem
     void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
 
   private:
-
-
     void startDialogForCoreResult(CoreResult result);
 
     CoreCfg *m_core_cfg;
@@ -501,8 +498,6 @@ class EmuPaths : public QObject
     std::filesystem::path m_screenshot_dir;
     std::filesystem::path m_backup_dir;
 };
-
-
 
 namespace CoreUtil
 {

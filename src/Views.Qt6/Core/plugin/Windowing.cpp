@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #include "Windowing.hpp"
 
 #include <future>
@@ -15,7 +21,7 @@ struct M64RRSpec::GLContext
     std::unique_ptr<QOpenGLContext> context;
 };
 
-static thread_local M64RRSpec::GLContext* g_last_context;
+static thread_local M64RRSpec::GLContext *g_last_context;
 
 namespace QtWindowAPI
 {
@@ -46,7 +52,7 @@ M64RRSpec::GraphicsResult new_gl_context(M64RRSpec::GLSurfaceFormat *format, M64
     std::promise<std::expected<M64RRSpec::GLContext *, M64RRSpec::GraphicsResult>> promise;
     auto future = promise.get_future();
 
-    std::println("calling into main thread ({}) from {}", (void*) qGuiApp->thread(), (void*) dst_thread);
+    std::println("calling into main thread ({}) from {}", (void *)qGuiApp->thread(), (void *)dst_thread);
     QMetaObject::invokeMethod(
         qGuiApp, [format, context_out, dst_thread, promise = std::move(promise)]() mutable -> void {
             QSurfaceFormat qt_format;
@@ -110,7 +116,7 @@ M64RRSpec::GraphicsResult new_gl_context(M64RRSpec::GLSurfaceFormat *format, M64
     auto result = future.get();
     if (!result.has_value()) return result.error();
 
-    auto* new_context = result.value();
+    auto *new_context = result.value();
     new_context->context->makeCurrent(new_context->surface.get());
 
     *context_out = g_last_context = new_context;
@@ -125,8 +131,7 @@ M64RRSpec::GraphicsResult free_gl_context(M64RRSpec::GLContext *context)
 {
     if (context == nullptr) return M64RRSpec::GraphicsResult::InvalidArgument;
 
-    if (context == g_last_context)
-        g_last_context = nullptr;
+    if (context == g_last_context) g_last_context = nullptr;
 
     context->context->doneCurrent();
     context->context->moveToThread(qGuiApp->thread());
@@ -150,8 +155,7 @@ M64RRSpec::GraphicsResult gl_make_current(M64RRSpec::GLContext *context)
 {
     if (context == nullptr) return M64RRSpec::GraphicsResult::InvalidArgument;
     g_last_context = context;
-    if (!context->context->makeCurrent(context->surface.get()))
-        return M64RRSpec::GraphicsResult::MiscError;
+    if (!context->context->makeCurrent(context->surface.get())) return M64RRSpec::GraphicsResult::MiscError;
     return M64RRSpec::GraphicsResult::Ok;
 }
 /**
@@ -161,6 +165,6 @@ M64RRSpec::GraphicsResult gl_make_current(M64RRSpec::GLContext *context)
 void *gl_get_proc_address(const char *symbol)
 {
     if (!g_last_context) return nullptr;
-    return (void*) g_last_context->context->getProcAddress(symbol);
+    return (void *)g_last_context->context->getProcAddress(symbol);
 }
 } // namespace QtWindowAPI

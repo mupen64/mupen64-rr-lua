@@ -120,5 +120,5 @@ std::optional<std::pair<QAnyStringView, QAnyStringView>> QmlCoreResult::messageC
         break;
     }
 
-    return std::pair {module, error};
+    return std::pair{module, error};
 }

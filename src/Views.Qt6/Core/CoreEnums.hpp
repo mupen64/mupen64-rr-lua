@@ -129,10 +129,10 @@ class QmlCoreResult : public QObject
 
     static std::optional<std::pair<QAnyStringView, QAnyStringView>> messageCpp(Value value);
 
-    Q_INVOKABLE QJSValue message(Value value) {
+    Q_INVOKABLE QJSValue message(Value value)
+    {
         auto result = messageCpp(value);
-        if (!result.has_value())
-            return QJSValue::NullValue;
+        if (!result.has_value()) return QJSValue::NullValue;
 
         auto obj = qmlEngine(this)->newObject();
         auto [module, error] = result.value();

@@ -190,7 +190,6 @@ extern "C"
             // The plugin is being asked to provide the controller configuration.
             InitializeControllers,
 
-
             InitializeDisplay,
 
             // Emulation has started.
@@ -217,7 +216,7 @@ extern "C"
         {
             Type type;
             // A pointer to a function table containing the windowing API functions.
-            const WindowingAPI* wsi;
+            const WindowingAPI *wsi;
         };
 
         // The type of the event.
