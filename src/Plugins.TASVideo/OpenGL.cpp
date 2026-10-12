@@ -188,9 +188,10 @@ void OGL_ResizeWindow()
 bool OGL_InitContext()
 {
     M64RRSpec::GLSurfaceFormat request_format{
-        .major_version = 4,
-        .minor_version = 1,
-        .context_type = M64RRSpec::GLContextType::OpenGLCompat,
+        // Try OpenGL ES 2.0 first
+        .major_version = 2,
+        .minor_version = 0,
+        .context_type = M64RRSpec::GLContextType::OpenGLES,
 
         .red_bits = 8,
         .green_bits = 8,
@@ -203,17 +204,29 @@ bool OGL_InitContext()
         // TODO: handle MSAA
         .msaa_samples = 0,
     };
-    OGL.isGLES = false;
-    need(g_wsi->new_gl_context(&request_format, &g_wsi_context) == M64RRSpec::GraphicsResult::Ok,
-        "Failed to create an OpenGL context.");
-    g_wsi->gl_make_current(g_wsi_context);
+    if (g_wsi->new_gl_context(&request_format, &g_wsi_context) == M64RRSpec::GraphicsResult::Ok)
+    {
+        OGL.isGLES = true;
+    }
+    else
+    {
+        g_plugin->log_info("OpenGL ES 2.0 context unavailable; falling back to desktop OpenGL.");
+        // Fall back to OpenGL 2.1
+        request_format.major_version = 2;
+        request_format.minor_version = 1;
+        request_format.context_type = M64RRSpec::GLContextType::OpenGLCompat;
+
+        need(g_wsi->new_gl_context(&request_format, &g_wsi_context) == M64RRSpec::GraphicsResult::Ok,
+            "Creating fallback desktop OpenGL context failed.");
+        OGL.isGLES = false;
+    }
 
     OGL_InitExtensions();
     OGL_InitStates();
     glDisable(GL_FRAMEBUFFER_SRGB);
 
     g_plugin->log_info(OGL.isGLES ? "TASVideo: running on an OpenGL ES 2.0 context."
-                                    : "TASVideo: running on a desktop OpenGL compatibility context.");
+                                  : "TASVideo: running on a desktop OpenGL compatibility context.");
 
     OGL.context_initialized = TRUE;
 
@@ -222,16 +235,19 @@ bool OGL_InitContext()
 
 static void OGL_ClearStates()
 {
-    if (g_fbo != 0) {
+    if (g_fbo != 0)
+    {
         glDeleteFramebuffers(1, &g_fbo);
         g_fbo = 0;
     }
-    if (g_color_rbo != 0) {
-        glad_glDeleteRenderbuffers(1, &g_color_rbo);
+    if (g_color_rbo != 0)
+    {
+        glDeleteRenderbuffers(1, &g_color_rbo);
         g_color_rbo = 0;
     }
-    if (g_aux_rbo != 0) {
-        glad_glDeleteRenderbuffers(1, &g_aux_rbo);
+    if (g_aux_rbo != 0)
+    {
+        glDeleteRenderbuffers(1, &g_aux_rbo);
         g_aux_rbo = 0;
     }
 }
@@ -273,7 +289,8 @@ void OGL_Stop()
     glFinish();
 }
 
-void OGL_EnsureCurrent() {
+void OGL_EnsureCurrent()
+{
     g_wsi->gl_make_current(g_wsi_context);
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
 }
@@ -621,6 +638,7 @@ void OGL_DrawTriangles()
     if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) && !(gDP.otherMode.alphaCvgSel))
         Combiner_UpdateDither(gDP.envColor.a);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glDrawArrays(GL_TRIANGLES, 0, OGL.numVertices);
     OGL.numTriangles = OGL.numVertices = 0;
 }
@@ -695,6 +713,7 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
         OGL.vertices[i].fog = 0.0f;
     }
 
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     OGL_SetIdentityProjection();
@@ -863,6 +882,7 @@ void OGL_DrawTexturedRect(
         OGL.vertices[i].secondaryColor = rect[0].secondaryColor;
     }
 
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     OGL_SetIdentityProjection();
