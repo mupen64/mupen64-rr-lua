@@ -97,9 +97,12 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 
 EXPORT void CALL M64RRProcessEvent(Event event)
 {
+    static int8_t init_count = 0;
+
     switch (event.type)
     {
     case M64RRSpec::Event::Type::Initiate:
+        init_count++;
         g_plugin = event.initiate.init;
         break;
     case M64RRSpec::Event::Type::RomOpened: {
@@ -115,6 +118,10 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         break;
     }
     case M64RRSpec::Event::Type::Shutdown:
+        init_count--;
+        if (init_count > 0) break;
+        if (g_backend.has_value()) g_backend.reset();
+        break;
     case M64RRSpec::Event::Type::RomClosed:
         if (g_backend.has_value()) g_backend.reset();
         break;
