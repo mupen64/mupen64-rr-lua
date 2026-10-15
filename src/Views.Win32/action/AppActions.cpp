@@ -994,29 +994,37 @@ static void generate_path_recent_menu(const std::string &base_path, const Hotkey
 
 void AppActions::init()
 {
+    // These messages are also broadcast from the emulation thread (e.g. TaskChanged on every savestate load during a
+    // movie) and from ThreadPool tasks. ActionManager isn't thread-safe: its LRU caches get corrupted when two threads
+    // use them at once, after which an action path can resolve to another action. Run the handlers on the UI thread.
+    const auto on_ui = [](const std::function<void()> &func) { g_main_ctx.dispatcher->invoke(func); };
+
     Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(
-        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{} *", APP)); });
+        [=](const auto &) { on_ui([] { ActionManager::notify_enabled_changed(std::format("{} *", APP)); }); });
     Messenger::subscribe<Messenger::Message::EmuPausedChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(PAUSE); });
+        [=](const auto &) { on_ui([] { ActionManager::notify_active_changed(PAUSE); }); });
     Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>(
-        [] { ActionManager::notify_active_changed(FAST_FORWARD); });
-    Messenger::subscribe<Messenger::Message::CapturingChanged>(
-        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{} *", VIDEO_CAPTURE)); });
+        [=] { on_ui([] { ActionManager::notify_active_changed(FAST_FORWARD); }); });
+    Messenger::subscribe<Messenger::Message::CapturingChanged>([=](const auto &) {
+        on_ui([] { ActionManager::notify_enabled_changed(std::format("{} *", VIDEO_CAPTURE)); });
+    });
     Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(STATUSBAR); });
+        [=](const auto &) { on_ui([] { ActionManager::notify_active_changed(STATUSBAR); }); });
     Messenger::subscribe<Messenger::Message::MovieLoopChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(LOOP_MOVIE_PLAYBACK); });
+        [=](const auto &) { on_ui([] { ActionManager::notify_active_changed(LOOP_MOVIE_PLAYBACK); }); });
     Messenger::subscribe<Messenger::Message::ReadonlyChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(READONLY); });
-    Messenger::subscribe<Messenger::Message::TaskChanged>([](const auto &) {
-        ActionManager::notify_enabled_changed(STOP_MOVIE);
-        ActionManager::notify_enabled_changed(CONTINUE_MOVIE_RECORDING);
-        ActionManager::notify_enabled_changed(CREATE_MOVIE_BACKUP);
-        ActionManager::notify_enabled_changed(SEEK_TO_DIRECT);
-        ActionManager::notify_enabled_changed(SEEK_TO);
+        [=](const auto &) { on_ui([] { ActionManager::notify_active_changed(READONLY); }); });
+    Messenger::subscribe<Messenger::Message::TaskChanged>([=](const auto &) {
+        on_ui([] {
+            ActionManager::notify_enabled_changed(STOP_MOVIE);
+            ActionManager::notify_enabled_changed(CONTINUE_MOVIE_RECORDING);
+            ActionManager::notify_enabled_changed(CREATE_MOVIE_BACKUP);
+            ActionManager::notify_enabled_changed(SEEK_TO_DIRECT);
+            ActionManager::notify_enabled_changed(SEEK_TO);
+        });
     });
     Messenger::subscribe<Messenger::Message::SlotChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(std::format("{} *", SELECT_SLOT)); });
+        [=](const auto &) { on_ui([] { ActionManager::notify_active_changed(std::format("{} *", SELECT_SLOT)); }); });
 }
 
 void AppActions::add()
