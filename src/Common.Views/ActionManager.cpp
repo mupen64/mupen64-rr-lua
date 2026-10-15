@@ -330,30 +330,20 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     std::vector<action_path> removed_paths;
     removed_paths.reserve(actions.size());
 
-    // Call the on_removed callbacks first and before removing anything - we don't want weirdness if the callbacks do
-    // some bullshit like calling back into the ActionManager...
     for (const auto &action_to_be_removed : actions)
     {
-        for (const auto &existing_action : g_mgr.actions)
-        {
-            if (existing_action.add_params.path != action_to_be_removed->add_params.path)
-            {
-                continue;
-            }
-
-            if (existing_action.add_params.on_removed)
-            {
-                existing_action.add_params.on_removed();
-            }
-
-            removed_paths.emplace_back(existing_action.add_params.path);
-        }
+        removed_paths.emplace_back(action_to_be_removed->add_params.path);
     }
 
-    for (const auto &action_to_be_removed : actions)
+    for (const auto &path : removed_paths)
     {
-        std::erase_if(
-            g_mgr.actions, [&](const Action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
+        Action *action = get_single_action_ptr_matching_path(path);
+        if (action && action->add_params.on_removed) action->add_params.on_removed();
+    }
+
+    for (const auto &path : removed_paths)
+    {
+        std::erase_if(g_mgr.actions, [&](const Action &a) { return a.add_params.path == path; });
     }
 
     g_mgr.filter_result_cache.clear();
@@ -633,10 +623,11 @@ void ActionManager::invoke(
 
     if (!action)
     {
-
         g_view_logger->error("ActionManager::invoke: '{}' didn't resolve to an action", path);
         return;
     }
+
+    const action_path resolved_path = action->add_params.path;
 
     if (!validate_params(*action, params))
     {
@@ -654,24 +645,31 @@ void ActionManager::invoke(
 
         if (action->add_params.on_release)
         {
-            action->add_params.on_release();
+            const auto on_release = action->add_params.on_release;
+            on_release();
         }
     }
     else
     {
         if (release_on_repress && action->add_params.on_release && action->pressed)
         {
-            action->add_params.on_release();
-            action->pressed = false;
+            const auto on_release = action->add_params.on_release;
+            on_release();
+            action = get_single_action_ptr_matching_path(path);
+            if (action) action->pressed = false;
             return;
         }
 
         if (action->add_params.on_press)
         {
-            action->add_params.on_press(params);
+            const auto on_press = action->add_params.on_press;
+            on_press(params);
+            action = get_single_action_ptr_matching_path(path);
+            if (!action) return;
         }
 
-        action->pressed = true;
+        action = get_single_action_ptr_matching_path(resolved_path);
+        if (action) action->pressed = true;
     }
 }
 
