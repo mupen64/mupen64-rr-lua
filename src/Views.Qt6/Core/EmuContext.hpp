@@ -5,8 +5,10 @@
  */
 #pragma once
 
+#include <future>
+
 #include <QObject>
-#include <QThreadPool>
+#include <QQuickItem>
 #include <QUrl>
 #include <qqmlintegration.h>
 
@@ -23,7 +25,7 @@ class EmuPaths;
  * @brief QML-owned singleton holding the core and related objects.
  * Implemented as a non-singleton, but will throw a tantrum if instantiated more than once.
  */
-class EmuContext : public QObject
+class EmuContext : public QQuickItem
 {
     Q_OBJECT
     QML_ELEMENT
@@ -49,7 +51,7 @@ class EmuContext : public QObject
   public:
     static constexpr size_t num_save_slots = 10;
 
-    EmuContext(QObject *parent = nullptr);
+    EmuContext(QQuickItem *parent = nullptr);
     virtual ~EmuContext();
 
     static EmuContext *instance();
@@ -64,13 +66,13 @@ class EmuContext : public QObject
     // ==========================
 
     // -> vr_start_rom
-    Q_INVOKABLE QmlCoreResult::Value startROM(const QString &path);
+    Q_INVOKABLE void startROM(const QString &path);
 
     // -> vr_close_rom
-    Q_INVOKABLE QmlCoreResult::Value closeROM(bool resetVCR = true);
+    Q_INVOKABLE void closeROM(bool resetVCR = true);
 
     // -> vr_reset_rom
-    Q_INVOKABLE QmlCoreResult::Value resetROM(bool resetSaveData, bool stopVCR);
+    Q_INVOKABLE void resetROM(bool resetSaveData, bool stopVCR);
 
     // -> vr_invalidate_visuals
     Q_INVOKABLE void invalidateVisuals();
@@ -146,6 +148,15 @@ class EmuContext : public QObject
      * @param image The image to read to.
      */
     void readVideoOutput(QImage &image);
+
+    // Dialog service
+    // ============================================
+
+    std::future<size_t> startMultiDialog(
+        QAnyStringView title, QAnyStringView content, const QList<QString> &choices, QmlCoreMessageTone::Value type);
+
+    std::future<bool> startAskDialog(QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
+    std::future<void> startInfoDialog(QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
 
     // Misc. properties
     // ==========================
@@ -236,6 +247,8 @@ class EmuContext : public QObject
     void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
 
   private:
+    void startDialogForCoreResult(CoreResult result);
+
     CoreCfg *m_core_cfg;
     CoreParams *m_core_params;
     CoreCtx *m_core_ctx;
@@ -434,7 +447,7 @@ class EmuOptions : public QObject
 };
 
 /**
- *
+ * @brief Qt bindings for various paths that must be exposed to the core.
  */
 class EmuPaths : public QObject
 {

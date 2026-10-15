@@ -8,9 +8,10 @@
 
 #include <print>
 
+#include <QIcon>
 #include <QQmlEngine>
 #include <QThread>
-#include <QIcon>
+#include <QThreadPool>
 #include <QUrl>
 
 #include <QJSInterop.hpp>
@@ -27,8 +28,8 @@ static void set_core_instance(EmuContext *ptr)
         throw std::logic_error("EmuContext should not be created twice!");
 }
 
-EmuContext::EmuContext(QObject *parent)
-    : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
+EmuContext::EmuContext(QQuickItem *parent)
+    : QQuickItem(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
       m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this)), m_paths(new EmuPaths(this)),
       m_rom_manager(nullptr)
 {
@@ -113,51 +114,15 @@ EmuContext::EmuContext(QObject *parent)
     m_core_params->show_multiple_choice_dialog = [&](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title,
                                                      CoreMessageTone type) -> size_t {
-        std::promise<size_t> promise;
-        auto future = promise.get_future();
-
-        QMetaObject::invokeMethod(
-            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
-                // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
-                    [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
-                auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
-
-                openMultiDialog(done_callback, title, str, qt_choices, QmlCoreMessageTone::from_core(type));
-            });
-
-        return future.get();
+        auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
+        return this->startMultiDialog(title, str, qt_choices, QmlCoreMessageTone::from_core(type)).get();
     };
     m_core_params->show_ask_dialog = [&](std::string_view id, const char *str, const char *title,
                                          bool warning) -> bool {
-        std::promise<bool> promise;
-        auto future = promise.get_future();
-
-        QMetaObject::invokeMethod(
-            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
-                // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
-                    [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
-
-                openAskDialog(done_callback, title, str, warning ? QmlCoreMessageTone::Warn : QmlCoreMessageTone::Info);
-            });
-
-        return future.get();
+        return this->startAskDialog(title, str, warning ? QmlCoreMessageTone::Warn : QmlCoreMessageTone::Info).get();
     };
     m_core_params->show_dialog = [&](const char *str, const char *title, CoreMessageTone type) {
-        std::promise<void> promise;
-        auto future = promise.get_future();
-
-        QMetaObject::invokeMethod(
-            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
-                // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::toJSFunction(
-                    qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
-
-                openAskDialog(done_callback, title, str, QmlCoreMessageTone::from_core(type));
-            });
-
-        future.get();
+        this->startInfoDialog(title, str, QmlCoreMessageTone::from_core(type)).get();
     };
 #pragma endregion
 
@@ -196,20 +161,29 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-QmlCoreResult::Value EmuContext::startROM(const QString &pathIn)
+void EmuContext::startROM(const QString &pathIn)
 {
     std::filesystem::path path = std::u16string_view{pathIn};
-    return QmlCoreResult::from_core(m_core_ctx->vr_start_rom(path));
+    QThreadPool::globalInstance()->start([=, this] {
+        auto result = m_core_ctx->vr_start_rom(path);
+        // this->startDialogForCoreResult(result);
+    });
 }
 
-QmlCoreResult::Value EmuContext::closeROM(bool resetVCR)
+void EmuContext::closeROM(bool resetVCR)
 {
-    return QmlCoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
+    QThreadPool::globalInstance()->start([=, this] {
+        auto result = m_core_ctx->vr_close_rom(resetVCR);
+        // this->startDialogForCoreResult(result);
+    });
 }
 
-QmlCoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
+void EmuContext::resetROM(bool resetSaveData, bool stopVCR)
 {
-    return QmlCoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
+    QThreadPool::globalInstance()->start([=, this] {
+        auto result = m_core_ctx->vr_reset_rom(resetSaveData, stopVCR);
+        // this->startDialogForCoreResult(result);
+    });
 }
 
 void EmuContext::invalidateVisuals()
@@ -334,6 +308,59 @@ void EmuContext::setSpeedModifier(int32_t valueIn)
     }
 }
 
+std::future<size_t> EmuContext::startMultiDialog(
+    QAnyStringView title, QAnyStringView content, const QList<QString> &choices, QmlCoreMessageTone::Value type)
+{
+    std::promise<size_t> promise;
+    auto future = promise.get_future();
+
+    QMetaObject::invokeMethod(this, [=, this, promise = std::move(promise), title = title.toString(),
+                                        content = content.toString(), choices = choices] mutable {
+        // JS objects should be instantiated on the event thread
+        auto done_callback = QJSFunctions::toJSFunction(
+            qmlEngine(this), [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
+
+        openMultiDialog(done_callback, title, content, choices, type);
+    });
+
+    return future;
+}
+
+std::future<bool> EmuContext::startAskDialog(
+    QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type)
+{
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    QMetaObject::invokeMethod(
+        this, [=, this, promise = std::move(promise), title = title.toString(), content = content.toString()] mutable {
+            // JS objects should be instantiated on the event thread
+            auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
+                [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
+
+            openAskDialog(done_callback, title, content, type);
+        });
+
+    return future;
+}
+std::future<void> EmuContext::startInfoDialog(
+    QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type)
+{
+    std::promise<void> promise;
+    auto future = promise.get_future();
+
+    QMetaObject::invokeMethod(
+        this, [=, this, promise = std::move(promise), title = title.toString(), content = content.toString()] mutable {
+            // JS objects should be instantiated on the event thread
+            auto done_callback = QJSFunctions::toJSFunction(
+                qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
+
+            openInfoDialog(done_callback, title, content, type);
+        });
+
+    return future;
+}
+
 // Misc. functions
 // ==========================
 EmuOptions *EmuContext::options()
@@ -380,6 +407,21 @@ void EmuContext::setRomManager(RomManager *value)
 
 // Internal utilities
 // ==========================
+
+void EmuContext::startDialogForCoreResult(CoreResult result)
+{
+    using namespace Qt::Literals;
+
+    if (result == CoreResult::Res_Ok) return;
+
+    auto message = QmlCoreResult::messageCpp(QmlCoreResult::from_core(result));
+    if (!message.has_value()) return;
+
+    auto [module, error] = message.value();
+
+    auto title = u"%1 Error %2"_s.arg(module, static_cast<int32_t>(result));
+    this->startInfoDialog(title, error, QmlCoreMessageTone::Error);
+}
 
 void CoreUtil::clear_plugin_funcs(CoreParams &params)
 {

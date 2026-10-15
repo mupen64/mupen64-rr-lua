@@ -19,8 +19,14 @@ GLInfo OGL{};
 
 void *gCapturedPixels; // pointer to buffer to fill
 
-static SDL_Window *g_sdl_window;
-static SDL_GLContext g_sdl_context;
+// static SDL_Window *g_sdl_window;
+// static SDL_GLContext g_sdl_context;
+
+static M64RRSpec::GLContext *g_wsi_context;
+
+static GLuint g_fbo = 0;
+static GLuint g_color_rbo = 0;
+static GLuint g_aux_rbo = 0;
 
 void OGL_ReadPixels()
 {
@@ -29,9 +35,7 @@ void OGL_ReadPixels()
     glFlush();
     glFinish();
 
-    // SDL_GL_SwapWindow(s_sdl_window);
-    // SDL_PumpEvents();
-
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glReadPixels(0, 0, OGL.width, OGL.height, GL_RGBA, GL_UNSIGNED_BYTE, gCapturedPixels);
 
     auto pixels = (uint8_t *)gCapturedPixels;
@@ -48,7 +52,7 @@ void OGL_InitExtensions()
 {
     if (OGL.isGLES)
     {
-        if (!gladLoadGLES2Loader((GLADloadproc)SDL_GL_GetProcAddress))
+        if (!gladLoadGLES2Loader((GLADloadproc)g_wsi->gl_get_proc_address))
         {
             g_plugin->log_error("Error initializing GLAD (OpenGL ES 2.0+)");
             return;
@@ -56,7 +60,7 @@ void OGL_InitExtensions()
     }
     else
     {
-        if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
+        if (!gladLoadGLLoader((GLADloadproc)g_wsi->gl_get_proc_address))
         {
             g_plugin->log_error("Error initializing GLAD (OpenGL)");
             return;
@@ -97,6 +101,12 @@ void OGL_DepthRange(float znear, float zfar)
 
 void OGL_InitStates()
 {
+    // setup rendering FBO/RBOs
+    glGenFramebuffers(1, &g_fbo);
+    glGenRenderbuffers(1, &g_color_rbo);
+    glGenRenderbuffers(1, &g_aux_rbo);
+
+    // configure vertex attributes
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].x);
     glEnableVertexAttribArray(0);
 
@@ -116,9 +126,6 @@ void OGL_InitStates()
     glEnableVertexAttribArray(5);
 
     glPolygonOffset(-3.0f, -3.0f);
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void OGL_UpdateScale()
@@ -160,64 +167,58 @@ void OGL_ResizeWindow()
     OGL.width = OGL.windowedWidth;
     OGL.height = OGL.windowedHeight;
     g_plugin->request_size(OGL.width, OGL.height);
+
+    // Bind and setup RBOs
+    glBindRenderbuffer(GL_RENDERBUFFER, g_color_rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, (int)OGL.width, (int)OGL.height);
+    glBindRenderbuffer(GL_RENDERBUFFER, g_aux_rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, (int)OGL.width, (int)OGL.height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // Bind FBO and link to RBOs
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, g_color_rbo);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, g_aux_rbo);
+
+    // clear main buffer to black
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 bool OGL_InitContext()
 {
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 0);
+    M64RRSpec::GLSurfaceFormat request_format{
+        // Try OpenGL ES 2.0 first
+        .major_version = 2,
+        .minor_version = 0,
+        .context_type = M64RRSpec::GLContextType::OpenGLES,
 
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        .red_bits = 8,
+        .green_bits = 8,
+        .blue_bits = 8,
+        .alpha_bits = 0,
 
-    if (OGL.msaa > 0)
+        .depth_bits = 24,
+        .stencil_bits = 8,
+
+        // TODO: handle MSAA
+        .msaa_samples = 0,
+    };
+    if (g_wsi->new_gl_context(&request_format, &g_wsi_context) == M64RRSpec::GraphicsResult::Ok)
     {
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, OGL.msaa);
+        OGL.isGLES = true;
     }
     else
     {
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-    }
-
-    g_sdl_window =
-        SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-    need(g_sdl_window, "Failed to create an SDL window. Verify that your graphics driver supports OpenGL.");
-
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
-    g_sdl_context = SDL_GL_CreateContext(g_sdl_window);
-    OGL.isGLES = (g_sdl_context != nullptr);
-
-    if (!g_sdl_context)
-    {
         g_plugin->log_info("OpenGL ES 2.0 context unavailable; falling back to desktop OpenGL.");
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-        g_sdl_context = SDL_GL_CreateContext(g_sdl_window);
-    }
-    need(g_sdl_context, "Failed to create an OpenGL context. Verify that your graphics driver supports OpenGL.");
+        // Fall back to OpenGL 2.1
+        request_format.major_version = 2;
+        request_format.minor_version = 1;
+        request_format.context_type = M64RRSpec::GLContextType::OpenGLCompat;
 
-    need(SDL_GL_MakeCurrent(g_sdl_window, g_sdl_context),
-        "Failed to set an OpenGL context. Verify that your graphics driver supports OpenGL.");
-
-    int multisample_buffers = 0;
-    int multisample_samples = 0;
-    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &multisample_buffers);
-    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &multisample_samples);
-
-    if (OGL.msaa > 0)
-    {
-        need(multisample_buffers == 1 && multisample_samples == OGL.msaa,
-            std::format("MSAA {}x is required, got {} buffers {} samples. Try updating your graphics driver.", OGL.msaa,
-                multisample_buffers, multisample_samples));
+        need(g_wsi->new_gl_context(&request_format, &g_wsi_context) == M64RRSpec::GraphicsResult::Ok,
+            "Creating fallback desktop OpenGL context failed.");
+        OGL.isGLES = false;
     }
 
     OGL_InitExtensions();
@@ -232,15 +233,31 @@ bool OGL_InitContext()
     return TRUE;
 }
 
+static void OGL_ClearStates()
+{
+    if (g_fbo != 0)
+    {
+        glDeleteFramebuffers(1, &g_fbo);
+        g_fbo = 0;
+    }
+    if (g_color_rbo != 0)
+    {
+        glDeleteRenderbuffers(1, &g_color_rbo);
+        g_color_rbo = 0;
+    }
+    if (g_aux_rbo != 0)
+    {
+        glDeleteRenderbuffers(1, &g_aux_rbo);
+        g_aux_rbo = 0;
+    }
+}
+
 bool OGL_DestroyContext()
 {
-    SDL_GL_MakeCurrent(g_sdl_window, nullptr);
+    OGL_ClearStates();
 
-    SDL_GL_DestroyContext(g_sdl_context);
-    g_sdl_context = nullptr;
-
-    SDL_DestroyWindow(g_sdl_window);
-    g_sdl_window = nullptr;
+    g_wsi->free_gl_context(g_wsi_context);
+    g_wsi_context = nullptr;
 
     OGL.context_initialized = FALSE;
 
@@ -270,6 +287,12 @@ void OGL_Stop()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
+}
+
+void OGL_EnsureCurrent()
+{
+    g_wsi->gl_make_current(g_wsi_context);
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
 }
 
 static void OGL_SetRectViewport()
@@ -615,6 +638,7 @@ void OGL_DrawTriangles()
     if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) && !(gDP.otherMode.alphaCvgSel))
         Combiner_UpdateDither(gDP.envColor.a);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glDrawArrays(GL_TRIANGLES, 0, OGL.numVertices);
     OGL.numTriangles = OGL.numVertices = 0;
 }
@@ -689,6 +713,7 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
         OGL.vertices[i].fog = 0.0f;
     }
 
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     OGL_SetIdentityProjection();
@@ -857,6 +882,7 @@ void OGL_DrawTexturedRect(
         OGL.vertices[i].secondaryColor = rect[0].secondaryColor;
     }
 
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     OGL_SetIdentityProjection();
