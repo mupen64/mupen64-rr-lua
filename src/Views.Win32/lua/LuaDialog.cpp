@@ -690,6 +690,7 @@ void LuaDialog::show()
 {
     if (g_dlg.mgr_hwnd)
     {
+        ShowWindow(g_dlg.mgr_hwnd, SW_RESTORE);
         BringWindowToTop(g_dlg.mgr_hwnd);
         return;
     }
