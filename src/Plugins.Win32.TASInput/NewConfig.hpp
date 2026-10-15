@@ -311,8 +311,10 @@ struct InputConfig
             TASINPUT_FIELD(relative_mode);
             TASINPUT_FIELD(approach_mode);
             TASINPUT_FIELD(wrap_joystick);
-            TASINPUT_FIELD(disallow_joystick_reset);
-            TASINPUT_FIELD(input_when_emu_unfocused);
+            // Added in version 8: older configs don't have them, so keep the defaults instead of failing the whole
+            // load (which would reset every setting, bindings included)
+            self.disallow_joystick_reset = j.value("disallow_joystick_reset", self.disallow_joystick_reset);
+            self.input_when_emu_unfocused = j.value("input_when_emu_unfocused", self.input_when_emu_unfocused);
             TASINPUT_FIELD(dialog_expanded);
             TASINPUT_FIELD(controller_active);
             TASINPUT_FIELD(controller_mempak);
