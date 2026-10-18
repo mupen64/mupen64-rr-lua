@@ -777,14 +777,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_FOCUS_MAIN_WINDOW:
         SetFocus(g_main_ctx.hwnd);
         break;
-    case WM_EXECUTE_DISPATCHER:
-        g_main_ctx.dispatcher->execute();
-        break;
+    case Dispatcher::message_id:
+        g_main_ctx.dispatcher->execute(lParam);
+        return 0;
     case WM_NCCREATE:
         g_main_ctx.hwnd = hwnd;
         g_main_hwnd = hwnd;
         break;
     case WM_CREATE:
+        g_ui_thread_id = GetCurrentThreadId();
+        g_main_ctx.dispatcher = std::make_shared<Dispatcher>(hwnd);
+
         JoystickControl::register_class(g_main_ctx.hinst, JOYSTICK_CLASS);
         ActionMenu::init();
 
@@ -1050,13 +1053,6 @@ static CoreResult init_core()
     return result;
 }
 
-static void main_dispatcher_init()
-{
-    g_ui_thread_id = GetCurrentThreadId();
-    g_main_ctx.dispatcher =
-        std::make_unique<Dispatcher>(g_ui_thread_id, [] { SendMessage(g_main_ctx.hwnd, WM_EXECUTE_DISPATCHER, 0, 0); });
-}
-
 void set_cwd()
 {
     if (!g_config.keep_default_working_directory)
@@ -1211,7 +1207,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     AppConfig::init();
     AppConfig::load();
-    main_dispatcher_init();
 
     std::filesystem::create_directories(AppConfig::rom_directory());
     std::filesystem::create_directories(AppConfig::save_directory());
