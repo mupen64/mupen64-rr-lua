@@ -437,6 +437,7 @@ static void show_plugin_settings_dialog(const std::unique_ptr<Plugin> &plugin)
 
     if (plugin != nullptr)
     {
+        Main::init_sdl();
         plugin->config(g_main_ctx.hwnd);
     }
 }

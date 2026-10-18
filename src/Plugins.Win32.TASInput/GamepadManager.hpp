@@ -78,7 +78,9 @@ void shutdown();
 
 /**
  * \brief Gets the device registry.
+ * \param force_refresh Whether to force re-scanning connected devices.
  */
-DeviceRegistry &device_registry();
+DeviceRegistry &device_registry(bool force_refresh = false);
 
 } // namespace GamepadManager
+

@@ -428,7 +428,7 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(
 
 static void refresh_device_list()
 {
-    const auto &reg = GamepadManager::device_registry();
+    const auto &reg = GamepadManager::device_registry(true);
     ListBox_ResetContent(g_ctx.devices_hwnd);
     for (const auto &device : reg.devices)
     {
@@ -480,6 +480,8 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ComboBox_SetCurSel(cb_hwnd, g_ctx.selected_controller);
 
         refresh_device_list();
+
+        SetTimer(hwnd, 1, 16, nullptr);
 
         WinDarkMode::attach(hwnd, {.is_dialog = true});
         break;
@@ -617,7 +619,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             break;
         }
         break;
+    case WM_TIMER:
+        if (wparam == 1)
+        {
+            SDL_PumpEvents();
+        }
+        break;
     case WM_DESTROY:
+        KillTimer(hwnd, 1);
         g_ctx.hwnd = nullptr;
         break;
     case WM_NOTIFY:
@@ -640,10 +649,23 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
                 switch (clicked)
                 {
-                case 1:
+                case 1: {
                     new_config.controller_config[g_ctx.selected_controller] = ControllerConfig::gamepad_config();
+                    const auto &reg = GamepadManager::device_registry();
+                    if (!new_config.preferred_device_guid.has_value() && reg.devices.size() > 1)
+                    {
+                        const auto &device = reg.devices[1];
+                        new_config.preferred_device_guid = device.guid;
+                        new_config.preferred_device_path = device.path;
+                        if (device.instance_id.has_value())
+                            GamepadManager::select_gamepad(*device.instance_id);
+                        else
+                            GamepadManager::update_current_gamepad();
+                        ListBox_SetCurSel(g_ctx.devices_hwnd, 1);
+                    }
                     update_visuals();
                     break;
+                }
                 case 2:
                     new_config.controller_config[g_ctx.selected_controller] = ControllerConfig::keyboard_config();
                     update_visuals();

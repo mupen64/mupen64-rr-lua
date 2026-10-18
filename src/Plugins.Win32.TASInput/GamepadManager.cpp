@@ -24,6 +24,12 @@ static gamepad_manager_context g_ctx;
 
 static void refresh_registry()
 {
+    if (!SDL_WasInit(SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD))
+    {
+        SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD);
+    }
+    SDL_PumpEvents();
+
     g_ctx.reg.devices.clear();
 
     g_ctx.reg.devices.emplace_back(GamepadManager::InputDevice{
@@ -348,8 +354,9 @@ void GamepadManager::shutdown()
     close_gamepad();
 }
 
-GamepadManager::DeviceRegistry &GamepadManager::device_registry()
+GamepadManager::DeviceRegistry &GamepadManager::device_registry(bool force_refresh)
 {
-    if (g_ctx.reg.devices.empty()) refresh_registry_and_update_gamepad();
+    if (force_refresh || g_ctx.reg.devices.empty()) refresh_registry_and_update_gamepad();
     return g_ctx.reg;
 }
+
