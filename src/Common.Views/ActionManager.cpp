@@ -663,8 +663,6 @@ void ActionManager::invoke(
         {
             const auto on_press = action->add_params.on_press;
             on_press(params);
-            action = get_single_action_ptr_matching_path(path);
-            if (!action) return;
         }
 
         action = get_single_action_ptr_matching_path(resolved_path);
