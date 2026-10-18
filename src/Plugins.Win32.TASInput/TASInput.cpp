@@ -160,6 +160,8 @@ struct Status
 
     void set_visuals_if_needed();
 
+    void apply_current_inputs();
+
     /**
      * \brief Processes the input with steps such as autofire or combo overrides
      * \param input The input to process
@@ -178,6 +180,9 @@ struct Status
     void on_timer();
 
     void get_input(CoreButtons *keys);
+
+  private:
+    CoreButtons last_applied_inputs;
 };
 
 static std::atomic<int64_t> frame_counter{};
@@ -387,6 +392,13 @@ void Status::set_visuals_if_needed()
     if (request.has_value()) set_visuals(request->input, request->needs_processing);
 }
 
+void Status::apply_current_inputs()
+{
+    if (current_input == last_applied_inputs) return;
+    last_applied_inputs = current_input;
+    g_plugin->apply_input(controller_index, current_input);
+}
+
 static int get_joystick_increment(const bool up)
 {
     int increment = up ? 1 : -1;
@@ -480,6 +492,7 @@ void Status::on_timer()
 #undef JOY
 #undef BTN
         set_visuals(current_input);
+        apply_current_inputs();
     }
 
     if (new_config.approach_mode)
@@ -500,6 +513,7 @@ void Status::on_timer()
         current_input.x = std::clamp(x, -128, 127);
         current_input.y = std::clamp(y, -128, 127);
         set_visuals(current_input);
+        apply_current_inputs();
     }
     last_controller_input = controller_input;
 }
@@ -715,7 +729,10 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         if (!wparam)
         {
             ctx->set_visuals(ctx->current_input);
+            ctx->apply_current_inputs();
+
         }
+
         break;
     }
     case JoystickControl::wm_joystick_drag_begin:
@@ -877,6 +894,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             if (ctx->current_input.x != last_input.x)
             {
                 ctx->set_visuals(ctx->current_input);
+                ctx->apply_current_inputs();
             }
         }
         break;
@@ -901,6 +919,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             if (ctx->current_input.y != last_input.y)
             {
                 ctx->set_visuals(ctx->current_input);
+                ctx->apply_current_inputs();
             }
         }
         break;
@@ -909,6 +928,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             ctx->autofire_input_a = {0};
             ctx->autofire_input_b = {0};
             ctx->set_visuals(ctx->current_input);
+            ctx->apply_current_inputs();
             break;
         }
         case IDC_RESET_JOYSTICK:
@@ -916,6 +936,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             ctx->current_input.x = 0;
             ctx->current_input.y = 0;
             ctx->set_visuals(ctx->current_input);
+            ctx->apply_current_inputs();
             break;
         case IDC_X_DOWN:
         case IDC_X_UP: {
@@ -929,6 +950,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 ctx->current_input.x = std::clamp(ctx->current_input.x + increment, -128, 127);
             }
             ctx->set_visuals(ctx->current_input);
+            ctx->apply_current_inputs();
         }
         break;
         case IDC_Y_DOWN:
@@ -943,6 +965,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 ctx->current_input.y = std::clamp(ctx->current_input.y + increment, -128, 127);
             }
             ctx->set_visuals(ctx->current_input);
+            ctx->apply_current_inputs();
         }
         break;
         case IDC_EXPAND:
@@ -956,49 +979,22 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         ctx->current_input.field = was_autofiring || IsDlgButtonChecked(ctx->hwnd, LOWORD(wparam)) == BST_CHECKED;     \
         ctx->autofire_input_a.field = ctx->autofire_input_b.field = 0;                                                 \
         ctx->set_visuals(ctx->current_input);                                                                          \
+        ctx->apply_current_inputs();                                                                                   \
     }
-        case IDC_CHECK_A:
-            TOGGLE(a)
-            break;
-        case IDC_CHECK_B:
-            TOGGLE(b)
-            break;
-        case IDC_CHECK_START:
-            TOGGLE(start)
-            break;
-        case IDC_CHECK_Z:
-            TOGGLE(z)
-            break;
-        case IDC_CHECK_L:
-            TOGGLE(l)
-            break;
-        case IDC_CHECK_R:
-            TOGGLE(r)
-            break;
-        case IDC_CHECK_CLEFT:
-            TOGGLE(cl)
-            break;
-        case IDC_CHECK_CUP:
-            TOGGLE(cu)
-            break;
-        case IDC_CHECK_CRIGHT:
-            TOGGLE(cr)
-            break;
-        case IDC_CHECK_CDOWN:
-            TOGGLE(cd)
-            break;
-        case IDC_CHECK_DLEFT:
-            TOGGLE(dl)
-            break;
-        case IDC_CHECK_DUP:
-            TOGGLE(du)
-            break;
-        case IDC_CHECK_DRIGHT:
-            TOGGLE(dr)
-            break;
-        case IDC_CHECK_DDOWN:
-            TOGGLE(dd)
-            break;
+            TOGGLE(IDC_CHECK_A, a)
+            TOGGLE(IDC_CHECK_B, b)
+            TOGGLE(IDC_CHECK_START, start)
+            TOGGLE(IDC_CHECK_Z, z)
+            TOGGLE(IDC_CHECK_L, l)
+            TOGGLE(IDC_CHECK_R, r)
+            TOGGLE(IDC_CHECK_CLEFT, cl)
+            TOGGLE(IDC_CHECK_CUP, cu)
+            TOGGLE(IDC_CHECK_CRIGHT, cr)
+            TOGGLE(IDC_CHECK_CDOWN, cd)
+            TOGGLE(IDC_CHECK_DLEFT, dl)
+            TOGGLE(IDC_CHECK_DUP, du)
+            TOGGLE(IDC_CHECK_DRIGHT, dr)
+            TOGGLE(IDC_CHECK_DDOWN, dd)
 #undef TOGGLE
         default:
             break;

@@ -594,6 +594,14 @@ extern "C"
         std::function<std::vector<CoreButtons>()> vcr_get_inputs;
 
         /**
+         * Gets the controller index associated with a sample in the current movie's input buffer.
+         * The sample index can be outside the range of the input buffer.
+         * This function assumes temporally consistent, sequential and ascending-order controller polling and therefore only works for certain games (e.g. SM64).
+         * Returns -1 if idle or no controllers are attached.
+         */
+        std::function<int32_t(size_t sample)> vcr_controller_index_for_sample;
+
+        /**
          * Begins a warp modification operation. A "warp modification operation" is the changing of sample data which is
          * temporally behind the current sample.
          *

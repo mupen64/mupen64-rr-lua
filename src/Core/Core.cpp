@@ -127,6 +127,7 @@ CoreResult core_create(CoreParams *params, CoreCtx **ctx)
     g_ctx.vcr_get_length_vis = vcr_get_length_vis;
     g_ctx.vcr_get_current_vi = vcr_get_current_vi;
     g_ctx.vcr_get_inputs = vcr_get_inputs;
+    g_ctx.vcr_controller_index_for_sample = vcr_controller_index_for_sample;
     g_ctx.vcr_begin_warp_modify = vcr_begin_warp_modify;
     g_ctx.vcr_get_warp_modify_status = vcr_get_warp_modify_status;
     g_ctx.vcr_get_warp_modify_first_difference_frame = vcr_get_warp_modify_first_difference_frame;
