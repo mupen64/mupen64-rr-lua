@@ -17,6 +17,8 @@
 #include <R4300/x86_64/RegCache.hpp>
 #elif defined(_M_IX86) || defined(__i386__)
 #include <R4300/x86/RegCache.hpp>
+#elif defined(_M_ARM64) || defined(__aarch64__)
+#include <R4300/arm64/RegCache.hpp>
 #elif defined(MUPEN64RR_ENABLE_DYNAREC)
 #error "No dynarec backend exists for this architecture; build with MUPEN64RR_ENABLE_DYNAREC=OFF."
 #endif
@@ -2824,7 +2826,12 @@ void init_block(int32_t *source, precomp_block *block)
 
     if (!block->block)
     {
-        block->block = (precomp_instr *)malloc_exec(((length + 1) + (length >> 2)) * sizeof(precomp_instr));
+        const size_t block_size = ((length + 1) + (length >> 2)) * sizeof(precomp_instr);
+#if MUPEN64RR_PRECOMP_NEEDS_EXEC
+        block->block = (precomp_instr *)malloc_exec(block_size);
+#else
+        block->block = (precomp_instr *)calloc(1, block_size);
+#endif
         already_exist = 0;
     }
 #ifdef MUPEN64RR_ENABLE_DYNAREC
@@ -2856,7 +2863,7 @@ void init_block(int32_t *source, precomp_block *block)
         {
             dst = block->block + i;
             dst->addr = block->start + i * 4;
-            dst->reg_cache_infos.need_map = 0;
+            reset_reg_cache_infos(dst);
             dst->local_addr = code_length;
             RNOTCOMPILED();
         }
@@ -2868,7 +2875,7 @@ void init_block(int32_t *source, precomp_block *block)
         for (i = 0; i < length; i++)
         {
             dst = block->block + i;
-            dst->reg_cache_infos.need_map = 0;
+            reset_reg_cache_infos(dst);
             dst->local_addr = i * (code_length / length);
             dst->ops = NOTCOMPILED;
         }
@@ -3025,7 +3032,7 @@ void recompile_block(int32_t *source, precomp_block *block, uint32_t func)
             check_nop = 0;
         dst = block->block + i;
         dst->addr = block->start + i * 4;
-        dst->reg_cache_infos.need_map = 0;
+        reset_reg_cache_infos(dst);
         dst->local_addr = code_length;
         recomp_ops[((src >> 26) & 0x3F)]();
         if (g_ctx.tl_active())
@@ -3064,7 +3071,7 @@ if (dynacore) genlink_subblock();
     {
         dst = block->block + i;
         dst->addr = block->start + i * 4;
-        dst->reg_cache_infos.need_map = 0;
+        reset_reg_cache_infos(dst);
         dst->local_addr = code_length;
         RFIN_BLOCK();
         i++;
@@ -3072,7 +3079,7 @@ if (dynacore) genlink_subblock();
         {
             dst = block->block + i;
             dst->addr = block->start + i * 4;
-            dst->reg_cache_infos.need_map = 0;
+            reset_reg_cache_infos(dst);
             dst->local_addr = code_length;
             RFIN_BLOCK();
             i++;
@@ -3131,7 +3138,7 @@ void recompile_opcode()
     src = *SRC;
     dst++;
     dst->addr = (dst - 1)->addr + 4;
-    dst->reg_cache_infos.need_map = 0;
+    reset_reg_cache_infos(dst);
     if (!is_jump())
         recomp_ops[((src >> 26) & 0x3F)]();
     else
