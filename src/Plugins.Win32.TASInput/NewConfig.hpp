@@ -247,7 +247,7 @@ struct ControllerConfig
 
 struct InputConfig
 {
-    int32_t version = 8;
+
     int32_t always_on_top = false;
     int32_t float_from_parent = true;
     int32_t titlebar = true;
@@ -272,7 +272,7 @@ struct InputConfig
 #define TASINPUT_FIELD(field) {#field, self.field}
 #define TASINPUT_ARRAY_FIELD(field) nlohmann::to_json(j[#field], self.field)
         j = nlohmann::json::object({
-            TASINPUT_FIELD(version),
+
             TASINPUT_FIELD(always_on_top),
             TASINPUT_FIELD(float_from_parent),
             TASINPUT_FIELD(titlebar),
