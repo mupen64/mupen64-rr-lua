@@ -337,7 +337,11 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     for (const auto &path : removed_paths)
     {
         Action *action = get_single_action_ptr_matching_path(path);
-        if (action && action->add_params.on_removed) action->add_params.on_removed();
+        if (action && action->add_params.on_removed)
+        {
+            const auto on_removed = action->add_params.on_removed;
+            on_removed();
+        }
     }
 
     for (const auto &path : removed_paths)
