@@ -637,7 +637,7 @@ static void show_ram_start()
 {
     BetterEmulationLock lock;
 
-    const auto ram_start_str = std::format("{:p}", static_cast<void *>(g_main_ctx.CoreCtx->rdram));
+    const auto ram_start_str = std::format("{:#018x}", reinterpret_cast<std::uintptr_t>(g_main_ctx.CoreCtx->rdram));
 
     char proc_name[MAX_PATH] = {0};
     GetModuleFileName(NULL, proc_name, MAX_PATH);
@@ -994,29 +994,35 @@ static void generate_path_recent_menu(const std::string &base_path, const Hotkey
 
 void AppActions::init()
 {
-    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(
-        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{} *", APP)); });
-    Messenger::subscribe<Messenger::Message::EmuPausedChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(PAUSE); });
-    Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>(
-        [] { ActionManager::notify_active_changed(FAST_FORWARD); });
-    Messenger::subscribe<Messenger::Message::CapturingChanged>(
-        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{} *", VIDEO_CAPTURE)); });
-    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(STATUSBAR); });
-    Messenger::subscribe<Messenger::Message::MovieLoopChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(LOOP_MOVIE_PLAYBACK); });
-    Messenger::subscribe<Messenger::Message::ReadonlyChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(READONLY); });
-    Messenger::subscribe<Messenger::Message::TaskChanged>([](const auto &) {
-        ActionManager::notify_enabled_changed(STOP_MOVIE);
-        ActionManager::notify_enabled_changed(CONTINUE_MOVIE_RECORDING);
-        ActionManager::notify_enabled_changed(CREATE_MOVIE_BACKUP);
-        ActionManager::notify_enabled_changed(SEEK_TO_DIRECT);
-        ActionManager::notify_enabled_changed(SEEK_TO);
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>([=](const auto &) {
+        g_main_ctx.dispatcher->post([] { ActionManager::notify_enabled_changed(std::format("{} *", APP)); });
     });
-    Messenger::subscribe<Messenger::Message::SlotChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(std::format("{} *", SELECT_SLOT)); });
+    Messenger::subscribe<Messenger::Message::EmuPausedChanged>(
+        [=](const auto &) { g_main_ctx.dispatcher->post([] { ActionManager::notify_active_changed(PAUSE); }); });
+    Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>(
+        [=] { g_main_ctx.dispatcher->post([] { ActionManager::notify_active_changed(FAST_FORWARD); }); });
+    Messenger::subscribe<Messenger::Message::CapturingChanged>([=](const auto &) {
+        g_main_ctx.dispatcher->post([] { ActionManager::notify_enabled_changed(std::format("{} *", VIDEO_CAPTURE)); });
+    });
+    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(
+        [=](const auto &) { g_main_ctx.dispatcher->post([] { ActionManager::notify_active_changed(STATUSBAR); }); });
+    Messenger::subscribe<Messenger::Message::MovieLoopChanged>([=](const auto &) {
+        g_main_ctx.dispatcher->post([] { ActionManager::notify_active_changed(LOOP_MOVIE_PLAYBACK); });
+    });
+    Messenger::subscribe<Messenger::Message::ReadonlyChanged>(
+        [=](const auto &) { g_main_ctx.dispatcher->post([] { ActionManager::notify_active_changed(READONLY); }); });
+    Messenger::subscribe<Messenger::Message::TaskChanged>([=](const auto &) {
+        g_main_ctx.dispatcher->post([] {
+            ActionManager::notify_enabled_changed(STOP_MOVIE);
+            ActionManager::notify_enabled_changed(CONTINUE_MOVIE_RECORDING);
+            ActionManager::notify_enabled_changed(CREATE_MOVIE_BACKUP);
+            ActionManager::notify_enabled_changed(SEEK_TO_DIRECT);
+            ActionManager::notify_enabled_changed(SEEK_TO);
+        });
+    });
+    Messenger::subscribe<Messenger::Message::SlotChanged>([=](const auto &) {
+        g_main_ctx.dispatcher->post([] { ActionManager::notify_active_changed(std::format("{} *", SELECT_SLOT)); });
+    });
 }
 
 void AppActions::add()

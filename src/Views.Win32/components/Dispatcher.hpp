@@ -6,42 +6,55 @@
 
 #pragma once
 
+#include <windows.h>
+#include <deque>
+#include <exception>
+#include <functional>
+#include <mutex>
+
 /**
- * Represents a dispatcher that can execute functions on a specific thread.
+ * Represents a dispatcher that can execute functions on a window's UI thread.
  */
 class Dispatcher
 {
-  public:
-    /**
-     * Creates a new dispatcher.
-     * \param thread_id The dispatcher's target thread id.
-     * \param execute_callback The callback responsible for marshalling execution of a function to the target thread.
-     */
-    explicit Dispatcher(const DWORD thread_id, const std::function<void()> &execute_callback)
-        : m_execute_callback(execute_callback), m_thread_id(thread_id)
+    struct Invocation
     {
-    }
+        const std::function<void()> &func;
+        std::exception_ptr exception;
+        bool completed{};
+    };
+
+    HWND m_hwnd;
+    DWORD m_thread_id;
+    std::mutex m_mutex;
+    std::deque<std::function<void()>> m_pending;
+
+  public:
+    static constexpr UINT message_id = WM_USER + 18;
 
     /**
-     * \brief Executes a function on the dispatcher's thread synchronously.
+     * Creates a new dispatcher with a window as its target.
+     * \param hwnd The window.
+     */
+    explicit Dispatcher(HWND hwnd);
+
+    /**
+     * \brief Executes a function on the window's UI thread synchronously.
      * \param func The function to be executed.
+     * \remarks Callback exceptions are rethrown on the calling thread.
      */
     void invoke(const std::function<void()> &func);
 
     /**
-     * \brief Executes the pending functions on the current thread. This should be called from the dispatcher's target
-     * thread.
+     * \brief Executes a function on the window's UI thread asynchronously.
+     * \param func The function to be executed.
      */
-    void execute();
+    void post(const std::function<void()> &func);
 
-  private:
-    std::mutex m_mutex;
-    std::function<void()> m_execute_callback;
-    std::function<void()> m_func;
-    DWORD m_thread_id{};
-
-    uint64_t m_overhead_times[60]{};
-    double m_overhead_percentages[60]{};
-    size_t m_overhead_index{};
-    std::chrono::time_point<std::chrono::steady_clock> m_call_start;
+    /**
+     * \brief Handles dispatched work. The target window must call this when it receives message_id.
+     * \param lparam The message's lParam, or zero to drain asynchronously posted work.
+     * \remarks Must be called on the window's UI thread. The window must remain alive while dispatching work.
+     */
+    void execute(LPARAM lparam = 0);
 };

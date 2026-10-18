@@ -481,6 +481,49 @@ void PluginUtil::screenshot(const std::filesystem::path &path)
     const auto dir = std::filesystem::is_directory(path) ? path : path.parent_path();
     if (!std::filesystem::exists(dir)) std::filesystem::create_directories(dir);
 
+    if (mge_available())
+    {
+        int32_t width{};
+        int32_t height{};
+        MGECompositor::get_video_size(&width, &height);
+
+        std::vector<std::uint8_t> video(width * height * 4);
+        MGECompositor::copy_video(video.data());
+
+        BITMAPINFOHEADER ihdr;
+        ihdr.biSize = sizeof(BITMAPINFOHEADER);
+        ihdr.biWidth = width;
+        ihdr.biHeight = height;
+        ihdr.biPlanes = 1;
+        ihdr.biBitCount = 32;
+        ihdr.biCompression = BI_RGB;
+        ihdr.biSizeImage = width * height * 4;
+        ihdr.biXPelsPerMeter = 0;
+        ihdr.biYPelsPerMeter = 0;
+        ihdr.biClrUsed = 0;
+        ihdr.biClrImportant = 0;
+
+        BITMAPFILEHEADER bhdr;
+        bhdr.bfType = 19778;
+        bhdr.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + ihdr.biSizeImage;
+        bhdr.bfReserved1 = bhdr.bfReserved2 = 0;
+        bhdr.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+        const auto path = AppConfig::screenshot_directory() / std::format("screen{}.bmp", time(nullptr));
+
+        HANDLE hfile;
+        hfile = CreateFile(path.string().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+
+        DWORD written;
+
+        WriteFile(hfile, &bhdr, sizeof(BITMAPFILEHEADER), &written, NULL);
+        WriteFile(hfile, &ihdr, sizeof(BITMAPINFOHEADER), &written, NULL);
+        WriteFile(hfile, video.data(), ihdr.biSizeImage, &written, NULL);
+
+        CloseHandle(hfile);
+        return;
+    }
+
     // Ensure trailing separator because some plugins are crap
     std::string dir_str = dir.string();
     if (!dir_str.empty() && dir_str.back() != std::filesystem::path::preferred_separator)

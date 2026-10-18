@@ -37,6 +37,7 @@ struct ActionManagerContext
     bool batched_work{};
     bool work_happened{};
     bool lock_hotkeys{};
+    std::vector<Hotkey> locked_hotkeys{};
     LRU::Cache<action_filter, std::vector<std::string>> segment_cache{256, [](const std::vector<std::string> &) {}};
     LRU::Cache<action_filter, std::vector<Action *>> filter_result_cache{256, [](const std::vector<Action *> &) {}};
 };
@@ -674,12 +675,21 @@ void ActionManager::invoke(
     }
 }
 
-void ActionManager::lock_hotkeys(const bool lock)
+void ActionManager::lock_hotkeys(const bool lock, const std::vector<Hotkey> &only)
 {
     g_mgr.lock_hotkeys = lock;
+    g_mgr.locked_hotkeys = lock ? only : std::vector<Hotkey>{};
 }
 
-bool ActionManager::get_hotkeys_locked()
+std::optional<std::vector<Hotkey>> ActionManager::get_locked_hotkeys()
 {
-    return g_mgr.lock_hotkeys;
+    if (!g_mgr.lock_hotkeys) return std::nullopt;
+    return g_mgr.locked_hotkeys;
+}
+
+bool ActionManager::is_hotkey_locked(const Hotkey &hotkey)
+{
+    if (!g_mgr.lock_hotkeys) return false;
+    if (g_mgr.locked_hotkeys.empty()) return true;
+    return std::ranges::find(g_mgr.locked_hotkeys, hotkey) != g_mgr.locked_hotkeys.end();
 }

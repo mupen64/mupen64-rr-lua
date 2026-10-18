@@ -13,7 +13,6 @@
 #include <QIcon>
 #include <QUrl>
 
-// #include <QtUtils.hpp>
 #include <QJSInterop.hpp>
 
 static std::atomic<EmuContext *> g_core_instance = nullptr;
@@ -30,18 +29,42 @@ static void set_core_instance(EmuContext *ptr)
 
 EmuContext::EmuContext(QObject *parent)
     : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
-      m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this)), m_paths(new EmuPaths(this))
+      m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this)), m_paths(new EmuPaths(this)),
+      m_rom_manager(nullptr)
 {
     set_core_instance(this);
 
     m_core_params->cfg = m_core_cfg;
 
-    // use the QThreadPool available
-    m_core_params->submit_task = [&](const std::function<void()> &cb) { m_task_pool.start(cb); };
+#pragma region General integration
+    m_core_params->submit_task = [&](const std::function<void()> &cb) { QThreadPool::globalInstance()->start(cb); };
+    m_core_params->find_available_rom =
+        [&](const std::function<bool(const CoreROMHeader &)> &predicate) -> std::filesystem::path {
+        // fetch ROM list from UI. If the UI is loading the ROM list, this will wait for that loading to finish.
+        std::promise<RomManager::RomList> rom_list_promise;
+        auto rom_list_future = rom_list_promise.get_future();
+        QMetaObject::invokeMethod(this, [this, rom_list_promise = std::move(rom_list_promise)] mutable {
+            auto func = [rom_list_promise = std::move(rom_list_promise)](
+                            const RomManager::RomList &list) mutable { rom_list_promise.set_value(list); };
+            m_rom_manager->requestRomData(std::move(func));
+        });
+
+        // Filter according to the core-provided predicate.
+        auto rom_list = rom_list_future.get();
+        auto candidate = std::ranges::find_if(
+            rom_list, [&predicate](const auto &rom_data) { return predicate(rom_data->rawHeader()); });
+        if (candidate == rom_list.end()) return {};
+
+        // Convert from QString to std::filesystem::path
+        auto qstr_path = (*candidate)->path();
+        return std::filesystem::path{std::u16string_view{qstr_path}};
+    };
+#pragma endregion
 
 #pragma region Directories
     m_core_params->get_saves_directory = [this] { return m_paths->saveDirStdPath(); };
     m_core_params->get_backups_directory = [this] { return m_paths->backupDirStdPath(); };
+    m_core_params->get_summercart_directory = [this] { return m_paths->saveDirStdPath(); };
     m_core_params->get_summercart_path = [this]() { return m_paths->saveDirStdPath() / "cart.vhd"; };
 #pragma endregion
 
@@ -155,6 +178,7 @@ EmuContext::EmuContext(QObject *parent)
     connect(
         this, &EmuContext::speedModifierChanged, this, [&](int32_t) { m_core_ctx->vr_on_speed_modifier_changed(); });
 #pragma endregion
+
     core_create(m_core_params, &m_core_ctx);
 }
 
@@ -172,9 +196,9 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-QmlCoreResult::Value EmuContext::startROM(const QUrl &url)
+QmlCoreResult::Value EmuContext::startROM(const QString &pathIn)
 {
-    std::filesystem::path path = url.toLocalFile().toStdU16String();
+    std::filesystem::path path = std::u16string_view{pathIn};
     return QmlCoreResult::from_core(m_core_ctx->vr_start_rom(path));
 }
 
@@ -196,6 +220,51 @@ void EmuContext::invalidateVisuals()
 void EmuContext::frameAdvance(size_t frames)
 {
     m_core_ctx->vr_frame_advance(frames);
+}
+
+// st_* functions
+// ==========================
+
+// -> st_do_memory (to save slot)
+void EmuContext::saveSlot(uint32_t index)
+{
+    if (index >= num_save_slots) return;
+    // TODO implement based on config directories
+}
+
+// -> st_do_file
+void EmuContext::saveFile(const QString &pathIn)
+{
+    std::filesystem::path path = std::u16string_view{pathIn};
+    std::println("saving to {}", path.string());
+
+    // Save operations must be issued asynchronously as they lock a mutex.
+    // To keep operations from running on the wrong frame, we also block the core from
+    // advancing until the operation is queued.
+    m_core_ctx->vr_wait_increment();
+    QThreadPool::globalInstance()->start([=, this] {
+        m_core_ctx->vr_wait_decrement();
+        m_core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
+    });
+}
+
+// -> st_do_memory (to save slot)
+void EmuContext::loadSlot(uint32_t index)
+{
+    if (index >= num_save_slots) return;
+    // TODO implement based on config directories
+}
+
+// -> st_do_file
+void EmuContext::loadFile(const QString &pathIn)
+{
+    std::filesystem::path path = std::u16string_view{pathIn};
+    // see saveFile()
+    m_core_ctx->vr_wait_increment();
+    QThreadPool::globalInstance()->start([=, this] {
+        m_core_ctx->vr_wait_decrement();
+        m_core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
+    });
 }
 
 // vr_* properties
@@ -236,12 +305,10 @@ void EmuContext::setGSButton(bool pressed)
     }
 }
 
-// -> vr_get_speed_mode
 QmlCoreSpeedMode::Value EmuContext::speedMode() const
 {
     return QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode());
 }
-// -> vr_set_speed_mode
 void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode)
 {
     if (speedMode != QmlCoreSpeedMode::from_core(m_core_ctx->vr_get_speed_mode()))
@@ -249,51 +316,6 @@ void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode)
         m_core_ctx->vr_set_speed_mode(QmlCoreSpeedMode::to_core(speedMode));
         speedModeChanged(speedMode);
     }
-}
-
-// st_* functions
-// ==========================
-
-// -> st_do_memory (to save slot)
-void EmuContext::saveSlot(uint32_t index)
-{
-    if (index >= num_save_slots) return;
-    // TODO implement based on config directories
-}
-
-// -> st_do_file
-void EmuContext::saveFile(const QUrl &url)
-{
-    std::filesystem::path path = url.toLocalFile().toStdU16String();
-    std::println("saving to {}", path.string());
-
-    // Save operations must be issued asynchronously as they lock a mutex.
-    // To keep operations from running on the wrong frame, we also block the core from
-    // advancing until the operation is queued.
-    m_core_ctx->vr_wait_increment();
-    m_task_pool.start([=, this] {
-        m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
-    });
-}
-
-// -> st_do_memory (to save slot)
-void EmuContext::loadSlot(uint32_t index)
-{
-    if (index >= num_save_slots) return;
-    // TODO implement based on config directories
-}
-
-// -> st_do_file
-void EmuContext::loadFile(const QUrl &url)
-{
-    std::filesystem::path path = url.toLocalFile().toStdU16String();
-    // see saveFile()
-    m_core_ctx->vr_wait_increment();
-    m_task_pool.start([=, this] {
-        m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
-    });
 }
 
 // CoreCfg properties
@@ -340,6 +362,20 @@ void EmuContext::readVideoOutput(QImage &image)
 
     m_fn_read_video(image.bits(), nullptr, nullptr);
     // std::println("pixel: {:08X}", image.pixel(320, 240));
+}
+
+// Misc. properties
+// ==========================
+
+RomManager *EmuContext::romManager()
+{
+    return m_rom_manager;
+}
+void EmuContext::setRomManager(RomManager *value)
+{
+    if (value == m_rom_manager) return;
+    m_rom_manager = value;
+    romManagerChanged();
 }
 
 // Internal utilities

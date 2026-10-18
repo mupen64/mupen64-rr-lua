@@ -8,6 +8,7 @@
 #include <Common.Views/App.hpp>
 
 #include <QApplication>
+#include <QDirIterator>
 #include <QQmlApplicationEngine>
 #include <QSettings>
 #include <QTranslator>
@@ -34,6 +35,9 @@ constexpr QLatin1StringView DISPLAY_NAME = "Mupen64"_L1;
 static int qt_main(int argc, char *argv[])
 {
     using namespace Qt::Literals;
+
+    // Force QtQuick.Controls MenuBar to use the native menu bar.
+    QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar);
 
     // NOTE: QApplication is used here specifically to ensure KDE's desktop styles are loaded.
     // When a QGuiApplication is used, KDE switches to its fallback Breeze theme, which
@@ -73,6 +77,15 @@ static int qt_main(int argc, char *argv[])
 #if defined(_WIN32)
     // Windows: default to Fusion, as the system theme isn't exactly nice.
     QQuickStyle::setStyle("Fusion");
+#else
+    if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE"))
+    {
+        const auto desktop = qEnvironmentVariable("XDG_CURRENT_DESKTOP");
+        if (!desktop.contains("KDE", Qt::CaseInsensitive))
+        {
+            QQuickStyle::setStyle("Fusion");
+        }
+    }
 #endif
 
     // provider for system icons

@@ -73,6 +73,13 @@ retest.describe('mupen64', function()
         end)
     end)
     retest.describe('emu', function()
+        retest.describe('callbacks', function()
+            retest.it('unregistering_nonregistered_callback_doesnt_crash', function()
+                local success = pcall(emu.atinput, function() end, true)
+                retest.expect(success).to.equal(false)
+            end)
+        end)
+
         retest.describe('debugview', function()
             retest.it('forwarded_to_print', function()
                 retest.expect(emu.debugview).to.equal(print)
@@ -1104,6 +1111,35 @@ retest.describe('mupen64', function()
             end)
         end)
 
+        retest.describe('callback_notifications', function()
+            local ACTIONS_FILTER = "Test > Callback Stack > *"
+            local ACTION_PATH_PREFIX = "Test > Callback Stack > Item "
+
+            retest.after(function()
+                action.remove(ACTIONS_FILTER)
+            end)
+
+            retest.it('many_action_notifications_dont_crash', function()
+                action.remove(ACTIONS_FILTER)
+
+                for i = 1, 40 do
+                    local item = i
+                    retest.expect(action.add({
+                        path = ACTION_PATH_PREFIX .. item,
+                        get_display_name = function() return "Item " .. item end,
+                        get_enabled = function() error("intentional get_enabled error") end,
+                        get_active = function() return {} end,
+                    })).to.equal(true)
+                end
+
+                action.notify_display_name_changed(ACTIONS_FILTER)
+                action.notify_enabled_changed(ACTIONS_FILTER)
+                action.notify_active_changed(ACTIONS_FILTER)
+
+                retest.expect(true).to.equal(true)
+            end)
+        end)
+
         retest.describe('notify_enabled_changed', function()
             retest.after(function()
                 action.remove("Test > *")
@@ -1206,6 +1242,14 @@ retest.describe('mupen64', function()
                 })
                 local name = action.get_display_name("Test >    Something")
                 retest.expect(name).to.equal("Hi!")
+            end)
+            retest.it('falls_back_to_the_path_name_for_non_string_display_name', function()
+                action.add({
+                    path = "Test > Bad Display Name",
+                    get_display_name = function() return {} end,
+                })
+                local name = action.get_display_name("Test > Bad Display Name")
+                retest.expect(name).to.equal("Bad Display Name")
             end)
             retest.it('doesnt_use_display_name_when_ignore_override_true', function()
                 action.add({
@@ -1519,6 +1563,7 @@ retest.describe('mupen64', function()
                 action.invoke("Test > Something", true)
                 retest.expect(called).to.be.truthy()
             end)
+
             retest.it('calls_on_release_when_pressing_again_while_pressed', function()
                 local down = 0
                 local up = 0
@@ -1649,11 +1694,41 @@ retest.describe('mupen64', function()
                 end
                 retest.expect(func).to_not.fail()
             end)
+            retest.it('succeeds_when_hotkeys_given', function()
+                local func = function()
+                    action.lock_hotkeys(true, {
+                        { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_1 } },
+                        { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_C }, ctrl = true },
+                    })
+                end
+                retest.expect(func).to_not.fail()
+                action.lock_hotkeys(false)
+            end)
+            retest.it('errors_when_hotkeys_not_table', function()
+                local func = function()
+                    action.lock_hotkeys(true, 5)
+                end
+                retest.expect(func).to.fail()
+                action.lock_hotkeys(false)
+            end)
+            retest.it('errors_when_hotkey_invalid', function()
+                local func = function()
+                    action.lock_hotkeys(true, { {} })
+                end
+                retest.expect(func).to.fail()
+                action.lock_hotkeys(false)
+            end)
         end)
 
         retest.describe('get_hotkeys_locked', function()
             retest.it('returns_locked_state', function()
                 action.lock_hotkeys(true)
+                retest.expect(action.get_hotkeys_locked()).to.equal(true)
+                action.lock_hotkeys(false)
+                retest.expect(action.get_hotkeys_locked()).to.equal(false)
+            end)
+            retest.it('returns_locked_state_when_some_hotkeys_locked', function()
+                action.lock_hotkeys(true, { { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_1 } } })
                 retest.expect(action.get_hotkeys_locked()).to.equal(true)
                 action.lock_hotkeys(false)
                 retest.expect(action.get_hotkeys_locked()).to.equal(false)
