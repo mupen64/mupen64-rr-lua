@@ -100,7 +100,9 @@ std::expected<void, std::string> LuaRealm::start(const bool trusted)
 fail:
     if (has_error)
     {
-        const std::string error = lua_tostring(env->l(), -1);
+        size_t message_len = 0;
+        const char *message = lua_tolstring(env->l(), -1, &message_len);
+        const std::string error = message ? std::string(message, message_len) : "(unknown error in script's global scope, not of type string or number)";
         env->stop();
         return std::unexpected(error);
     }

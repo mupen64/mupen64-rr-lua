@@ -346,6 +346,7 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
         const auto stop_hwnd = GetDlgItem(hwnd, IDC_STOP);
 
         Button_SetText(start_hwnd, running ? "Restart" : "Start");
+        if (GetFocus() == stop_hwnd && !running) SendMessage(hwnd, WM_NEXTDLGCTL, 0, FALSE);
         Button_Enable(stop_hwnd, running);
 
         break;
@@ -670,6 +671,7 @@ void LuaDialog::show()
 {
     if (g_dlg.mgr_hwnd)
     {
+        ShowWindow(g_dlg.mgr_hwnd, SW_RESTORE);
         BringWindowToTop(g_dlg.mgr_hwnd);
         return;
     }

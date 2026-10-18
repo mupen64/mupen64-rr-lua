@@ -9,7 +9,6 @@
 #include <components/Dispatcher.hpp>
 
 #define WM_FOCUS_MAIN_WINDOW (WM_USER + 17)
-#define WM_EXECUTE_DISPATCHER (WM_USER + 18)
 #define WM_PREDESTROY (WM_USER + 26)
 
 #define JOYSTICK_CLASS "MupenJoystick"
@@ -120,11 +119,6 @@ namespace Main
  * \brief Initializes SDL on the GUI thread if necessary.
  */
 void init_sdl();
-
-/**
- * \brief Forwards mouse events to the Lua callbacks.
- */
-void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
 void request_size(uint32_t width, uint32_t height);
 } // namespace Main

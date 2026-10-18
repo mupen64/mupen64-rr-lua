@@ -58,7 +58,7 @@ MenuBar {
                     Label {
                         id: nameLabel
                         // display either action or menu title
-                        text: menuItem.action?.text ?? menuItem.subMenu.title
+                        text: menuItem.action?.text ?? menuItem.subMenu?.title ?? ""
 
                         anchors.left: cntRoot.left
                         anchors.verticalCenter: cntRoot.verticalCenter

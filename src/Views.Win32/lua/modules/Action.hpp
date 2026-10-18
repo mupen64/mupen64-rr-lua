@@ -537,16 +537,50 @@ static int lock_hotkeys(lua_State *L)
 {
     const bool lock = luaL_checkboolean(L, 1);
 
-    ActionManager::lock_hotkeys(lock);
+    std::vector<::Hotkey> only{};
+    if (!lua_isnoneornil(L, 2))
+    {
+        luaL_checktype(L, 2, LUA_TTABLE);
+        const auto count = static_cast<lua_Integer>(lua_rawlen(L, 2));
+        for (lua_Integer i = 1; i <= count; ++i)
+        {
+            lua_rawgeti(L, 2, i);
+            only.push_back(Hotkey::check_hotkey(L, lua_gettop(L)));
+            lua_pop(L, 1);
+        }
+    }
+
+    ActionManager::lock_hotkeys(lock, only);
 
     return 0;
 }
 
 static int get_hotkeys_locked(lua_State *L)
 {
-    const bool locked = ActionManager::get_hotkeys_locked();
+    const auto locked_hotkeys = ActionManager::get_locked_hotkeys();
+    const auto any_locked = locked_hotkeys.has_value();
+    lua_pushboolean(L, any_locked);
+    return 1;
+}
 
-    lua_pushboolean(L, locked);
+static int get_locked_hotkeys(lua_State *L)
+{
+    const auto locked_hotkeys = ActionManager::get_locked_hotkeys();
+
+    if (!locked_hotkeys.has_value())
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    size_t i = 1;
+    for (const auto &hotkey : locked_hotkeys.value())
+    {
+        Hotkey::push_hotkey(L, hotkey);
+        lua_seti(L, -2, i++);
+    }
+
     return 1;
 }
 } // namespace LuaCore::Action

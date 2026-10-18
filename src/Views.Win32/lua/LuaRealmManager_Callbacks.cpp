@@ -182,7 +182,7 @@ static void unregister_function(lua_State *L, LuaRealmManager::callback_key key)
         lua_pop(L, 1);
     }
     lua_pop(L, 1);
-    lua_pushfstring(L, "unregister_function(%s): not found function", key);
+    lua_pushfstring(L, "unregister_function(%d): not found function", static_cast<int>(key));
     lua_error(L);
 }
 

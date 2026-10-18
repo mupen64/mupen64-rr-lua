@@ -22,7 +22,7 @@ action = {}
 clipboard = {}
 
 Mupen = {
-    _VERSION = '1.5.0-6',
+    _VERSION = '1.5.0-7',
     _URL = 'https://github.com/mupen64/mupen64-rr-lua',
     _DESCRIPTION = 'Mupen64 Lua Scripting API',
     _LICENSE = 'GPL-2',
@@ -2309,10 +2309,15 @@ function action.get_actions_matching_filter(filter) end
 function action.invoke(path, up, release_on_repress, params) end
 
 ---Locks or unlocks action invocations from hotkeys.
----@param lock boolean Whether to lock or unlock action invocations from hotkeys.
-function action.lock_hotkeys(lock) end
+---@param lock boolean Whether to lock or unlock action invocations from hotkeys. All hotkeys are affected on unlock.
+---@param hotkeys Hotkey[]? The hotkeys affected by the lock. Ignored when unlocking.
+function action.lock_hotkeys(lock, hotkeys) end
 
----@return boolean # Whether action invocations from hotkeys are currently locked.
+---Gets the hotkeys locked via `action.lock_hotkeys`.
+---@return Hotkey[]? hotkeys The locked hotkeys. An empty table if all hotkeys are locked, or `nil` if no hotkeys are locked.
+function action.get_locked_hotkeys() end
+
+---@return boolean # Whether action invocations from any hotkeys are currently locked.
 function action.get_hotkeys_locked() end
 
 --#endregion

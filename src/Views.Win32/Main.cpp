@@ -344,9 +344,7 @@ void on_task_changed(CoreVCRTask value)
 
 void on_emu_stopping()
 {
-    g_main_ctx.dispatcher->invoke([] {
-        LuaDialog::store_and_stop_all();
-    });
+    g_main_ctx.dispatcher->invoke([] { LuaDialog::store_and_stop_all(); });
 }
 
 void on_emu_launched_changed(bool value)
@@ -562,6 +560,64 @@ static void CALLBACK sdl_timer_proc(HWND, UINT, UINT_PTR, DWORD)
     while (SDL_PollEvent(&e));
 }
 
+static void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+    case WM_MOUSEWHEEL:
+    case WM_MOUSEHWHEEL: {
+        POINT cursor_pos{};
+        GetCursorPos(&cursor_pos);
+        ScreenToClient(hwnd, &cursor_pos);
+
+        LuaMouseEventArgs args{};
+        args.x = cursor_pos.x;
+        args.y = cursor_pos.y;
+        if (msg == WM_MOUSEHWHEEL)
+            args.x_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
+        if (msg == WM_MOUSEWHEEL)
+            args.y_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
+        if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP || msg == WM_LBUTTONDBLCLK) args.button = 0;
+        if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP || msg == WM_RBUTTONDBLCLK) args.button = 1;
+        if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP || msg == WM_MBUTTONDBLCLK) args.button = 2;
+        if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN) args.pressed = true;
+        if (msg == WM_LBUTTONUP || msg == WM_RBUTTONUP || msg == WM_MBUTTONUP) args.pressed = false;
+        if (msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDBLCLK)
+        {
+            args.double_click = true;
+            const auto button = *args.button;
+            const auto timer_id = triple_click_timer_base + button;
+            KillTimer(hwnd, timer_id);
+            awaiting_triple_click[button] =
+                SetTimer(hwnd, timer_id, GetDoubleClickTime(), clear_triple_click_timer) != 0;
+        }
+        else if (args.pressed.value_or(false) && args.button && awaiting_triple_click[*args.button])
+        {
+            const auto button = *args.button;
+            KillTimer(hwnd, triple_click_timer_base + button);
+            awaiting_triple_click[button] = false;
+            args.triple_click = true;
+        }
+        args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+        args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
+        args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+        args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
+
+        LuaRealmManager::instance().call_atmouse(args);
+        break;
+    }
+    }
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message)
@@ -653,17 +709,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
     case WM_MBUTTONDBLCLK:
-        Main::handle_mouse_events(hwnd, Message, wParam, lParam);
+        handle_mouse_events(hwnd, Message, wParam, lParam);
         break;
     case WM_MOUSEWHEEL:
         g_main_ctx.last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
-        Main::handle_mouse_events(hwnd, Message, wParam, lParam);
+        handle_mouse_events(hwnd, Message, wParam, lParam);
 
         // https://github.com/mupen64/mupen64-rr-lua/issues/190
         LuaRealmManager::instance().call_window_message(hwnd, Message, wParam, lParam);
         break;
     case WM_MOUSEHWHEEL:
-        Main::handle_mouse_events(hwnd, Message, wParam, lParam);
+        handle_mouse_events(hwnd, Message, wParam, lParam);
         break;
     case WM_NOTIFY: {
         if (wParam == IDC_ROMLIST)
@@ -721,14 +777,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_FOCUS_MAIN_WINDOW:
         SetFocus(g_main_ctx.hwnd);
         break;
-    case WM_EXECUTE_DISPATCHER:
-        g_main_ctx.dispatcher->execute();
-        break;
+    case Dispatcher::message_id:
+        g_main_ctx.dispatcher->execute(lParam);
+        return 0;
     case WM_NCCREATE:
         g_main_ctx.hwnd = hwnd;
         g_main_hwnd = hwnd;
         break;
     case WM_CREATE:
+        g_ui_thread_id = GetCurrentThreadId();
+        g_main_ctx.dispatcher = std::make_shared<Dispatcher>(hwnd);
+
         JoystickControl::register_class(g_main_ctx.hinst, JOYSTICK_CLASS);
         ActionMenu::init();
 
@@ -994,13 +1053,6 @@ static CoreResult init_core()
     return result;
 }
 
-static void main_dispatcher_init()
-{
-    g_ui_thread_id = GetCurrentThreadId();
-    g_main_ctx.dispatcher =
-        std::make_unique<Dispatcher>(g_ui_thread_id, [] { SendMessage(g_main_ctx.hwnd, WM_EXECUTE_DISPATCHER, 0, 0); });
-}
-
 void set_cwd()
 {
     if (!g_config.keep_default_working_directory)
@@ -1112,64 +1164,6 @@ void Main::init_sdl()
     }
 }
 
-void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg)
-    {
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
-    case WM_LBUTTONDBLCLK:
-    case WM_RBUTTONDOWN:
-    case WM_RBUTTONUP:
-    case WM_RBUTTONDBLCLK:
-    case WM_MBUTTONDOWN:
-    case WM_MBUTTONUP:
-    case WM_MBUTTONDBLCLK:
-    case WM_MOUSEWHEEL:
-    case WM_MOUSEHWHEEL: {
-        POINT cursor_pos{};
-        GetCursorPos(&cursor_pos);
-        ScreenToClient(hwnd, &cursor_pos);
-
-        LuaMouseEventArgs args{};
-        args.x = cursor_pos.x;
-        args.y = cursor_pos.y;
-        if (msg == WM_MOUSEHWHEEL)
-            args.x_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
-        if (msg == WM_MOUSEWHEEL)
-            args.y_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
-        if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP || msg == WM_LBUTTONDBLCLK) args.button = 0;
-        if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP || msg == WM_RBUTTONDBLCLK) args.button = 1;
-        if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP || msg == WM_MBUTTONDBLCLK) args.button = 2;
-        if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN) args.pressed = true;
-        if (msg == WM_LBUTTONUP || msg == WM_RBUTTONUP || msg == WM_MBUTTONUP) args.pressed = false;
-        if (msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDBLCLK)
-        {
-            args.double_click = true;
-            const auto button = *args.button;
-            const auto timer_id = triple_click_timer_base + button;
-            KillTimer(hwnd, timer_id);
-            awaiting_triple_click[button] =
-                SetTimer(hwnd, timer_id, GetDoubleClickTime(), clear_triple_click_timer) != 0;
-        }
-        else if (args.pressed.value_or(false) && args.button && awaiting_triple_click[*args.button])
-        {
-            const auto button = *args.button;
-            KillTimer(hwnd, triple_click_timer_base + button);
-            awaiting_triple_click[button] = false;
-            args.triple_click = true;
-        }
-        args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
-        args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
-        args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
-        args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
-
-        LuaRealmManager::instance().call_atmouse(args);
-        break;
-    }
-    }
-}
-
 void Main::request_size(uint32_t width, uint32_t height)
 {
     const auto statusbar_hwnd = Statusbar::hwnd();
@@ -1213,7 +1207,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     AppConfig::init();
     AppConfig::load();
-    main_dispatcher_init();
 
     std::filesystem::create_directories(AppConfig::rom_directory());
     std::filesystem::create_directories(AppConfig::save_directory());
