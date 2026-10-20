@@ -57,12 +57,11 @@ struct AxisMapping
 
     friend void from_json(const nlohmann::json &j, AxisMapping &self)
     {
-#define TASINPUT_FIELD(field) .field = j[#field]
-        self = {
-            TASINPUT_FIELD(axis),
-            TASINPUT_FIELD(key_negative),
-            TASINPUT_FIELD(key_positive),
-        };
+        if (!j.is_object()) throw std::domain_error("AxisMapping expected JSON object");
+#define TASINPUT_FIELD(field) if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
+        TASINPUT_FIELD(axis);
+        TASINPUT_FIELD(key_negative);
+        TASINPUT_FIELD(key_positive);
 #undef TASINPUT_FIELD
     }
 };
@@ -92,15 +91,14 @@ struct ButtonMapping
 
     friend void from_json(const nlohmann::json &j, ButtonMapping &self)
     {
-#define TASINPUT_FIELD(field) .field = j[#field]
-        self = {
-            .button = j.at("button"),
-            .axis = j.at("axis"),
-            .axis_direction = j.value("axis_direction", 0),
-            .hat = j.value("hat", -1),
-            .hat_mask = j.value("hat_mask", static_cast<int32_t>(SDL_HAT_CENTERED)),
-            .key = j.at("key"),
-        };
+        if (!j.is_object()) throw std::domain_error("ButtonMapping expected JSON object");
+#define TASINPUT_FIELD(field) if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
+        TASINPUT_FIELD(button);
+        TASINPUT_FIELD(axis);
+        TASINPUT_FIELD(axis_direction);
+        TASINPUT_FIELD(hat);
+        TASINPUT_FIELD(hat_mask);
+        TASINPUT_FIELD(key);
 #undef TASINPUT_FIELD
     }
 };
@@ -216,38 +214,36 @@ struct ControllerConfig
 
     friend void from_json(const nlohmann::json &j, ControllerConfig &self)
     {
-#define TASINPUT_FIELD(field) .field = j[#field]
-        self = {
-            TASINPUT_FIELD(dpad_right),
-            TASINPUT_FIELD(dpad_left),
-            TASINPUT_FIELD(dpad_down),
-            TASINPUT_FIELD(dpad_up),
-            TASINPUT_FIELD(c_right),
-            TASINPUT_FIELD(c_left),
-            TASINPUT_FIELD(c_down),
-            TASINPUT_FIELD(c_up),
-            TASINPUT_FIELD(a),
-            TASINPUT_FIELD(b),
-            TASINPUT_FIELD(z),
-            TASINPUT_FIELD(start),
-            TASINPUT_FIELD(l),
-            TASINPUT_FIELD(r),
-            TASINPUT_FIELD(x),
-            TASINPUT_FIELD(y),
-            TASINPUT_FIELD(x_scale),
-            TASINPUT_FIELD(y_scale),
-            TASINPUT_FIELD(mag1),
-            TASINPUT_FIELD(mag2),
-            TASINPUT_FIELD(mag1_val),
-            TASINPUT_FIELD(mag2_val),
-        };
+        if (!j.is_object()) throw std::domain_error("ControllerConfig expected JSON object");
+#define TASINPUT_FIELD(field) if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
+        TASINPUT_FIELD(dpad_right);
+        TASINPUT_FIELD(dpad_left);
+        TASINPUT_FIELD(dpad_down);
+        TASINPUT_FIELD(dpad_up);
+        TASINPUT_FIELD(c_right);
+        TASINPUT_FIELD(c_left);
+        TASINPUT_FIELD(c_down);
+        TASINPUT_FIELD(c_up);
+        TASINPUT_FIELD(a);
+        TASINPUT_FIELD(b);
+        TASINPUT_FIELD(z);
+        TASINPUT_FIELD(start);
+        TASINPUT_FIELD(l);
+        TASINPUT_FIELD(r);
+        TASINPUT_FIELD(x);
+        TASINPUT_FIELD(y);
+        TASINPUT_FIELD(x_scale);
+        TASINPUT_FIELD(y_scale);
+        TASINPUT_FIELD(mag1);
+        TASINPUT_FIELD(mag2);
+        TASINPUT_FIELD(mag1_val);
+        TASINPUT_FIELD(mag2_val);
 #undef TASINPUT_FIELD
     }
 };
 
 struct InputConfig
 {
-    int32_t version = 8;
     int32_t always_on_top = false;
     int32_t float_from_parent = true;
     int32_t titlebar = true;
@@ -272,7 +268,6 @@ struct InputConfig
 #define TASINPUT_FIELD(field) {#field, self.field}
 #define TASINPUT_ARRAY_FIELD(field) nlohmann::to_json(j[#field], self.field)
         j = nlohmann::json::object({
-            TASINPUT_FIELD(version),
             TASINPUT_FIELD(always_on_top),
             TASINPUT_FIELD(float_from_parent),
             TASINPUT_FIELD(titlebar),
@@ -298,29 +293,25 @@ struct InputConfig
     friend void from_json(const nlohmann::json &j, InputConfig &self)
     {
         if (!j.is_object()) throw std::domain_error("InputConfig expected JSON object");
-#define TASINPUT_FIELD(field) nlohmann::from_json(j.at(#field), self.field)
+#define TASINPUT_FIELD(field) if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
         self = {};
-        TASINPUT_FIELD(version);
-        if (self.version >= 6)
-        {
-            TASINPUT_FIELD(always_on_top);
-            TASINPUT_FIELD(float_from_parent);
-            TASINPUT_FIELD(titlebar);
-            TASINPUT_FIELD(client_drag);
-            TASINPUT_FIELD(loop_combo);
-            TASINPUT_FIELD(relative_mode);
-            TASINPUT_FIELD(approach_mode);
-            TASINPUT_FIELD(wrap_joystick);
-            TASINPUT_FIELD(disallow_joystick_reset);
-            TASINPUT_FIELD(input_when_emu_unfocused);
-            TASINPUT_FIELD(dialog_expanded);
-            TASINPUT_FIELD(controller_active);
-            TASINPUT_FIELD(controller_mempak);
-            TASINPUT_FIELD(controller_rumblepak);
-            TASINPUT_FIELD(controller_config);
-            TASINPUT_FIELD(preferred_device_guid);
-            self.preferred_device_path = j.value("preferred_device_path", std::optional<std::string>{});
-        }
+        TASINPUT_FIELD(always_on_top);
+        TASINPUT_FIELD(float_from_parent);
+        TASINPUT_FIELD(titlebar);
+        TASINPUT_FIELD(client_drag);
+        TASINPUT_FIELD(loop_combo);
+        TASINPUT_FIELD(relative_mode);
+        TASINPUT_FIELD(approach_mode);
+        TASINPUT_FIELD(wrap_joystick);
+        TASINPUT_FIELD(disallow_joystick_reset);
+        TASINPUT_FIELD(input_when_emu_unfocused);
+        TASINPUT_FIELD(dialog_expanded);
+        TASINPUT_FIELD(controller_active);
+        TASINPUT_FIELD(controller_mempak);
+        TASINPUT_FIELD(controller_rumblepak);
+        TASINPUT_FIELD(controller_config);
+        TASINPUT_FIELD(preferred_device_guid);
+        TASINPUT_FIELD(preferred_device_path);
 #undef TASINPUT_FIELD
     }
 };
