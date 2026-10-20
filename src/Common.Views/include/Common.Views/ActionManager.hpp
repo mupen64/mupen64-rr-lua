@@ -156,6 +156,7 @@ struct ActionAddParams
  * If adding the action causes another action to gain a child (e.g. there's an action `a.b`, and we're adding
  * `a.b.c.d`), the operation will fail. To add the action, delete the original action (`a.b`) first. \param params The
  * action parameters. \return Whether the operation succeeded.
+ * \threadsafety This function is not thread-safe.
  */
 bool add(const ActionAddParams &params);
 
@@ -163,6 +164,7 @@ bool add(const ActionAddParams &params);
  * \brief Removes actions matching the specified filter.
  * \param filter A filter.
  * \return A collection containing the paths of the actions that were removed.
+ * \threadsafety This function is not thread-safe.
  */
 std::vector<action_path> remove(const action_filter &filter);
 
@@ -171,35 +173,41 @@ std::vector<action_path> remove(const action_filter &filter);
  * action. \param path A path. \param hotkey The hotkey to associate with the action. \param overwrite_existing Whether
  * the any existing hotkey association will be overwritten. If false, the hotkey will only be associated if the action
  * has no hotkey associated with it already. \return Whether the operation succeeded.
+ * \threadsafety This function is not thread-safe.
  */
 bool associate_hotkey(const action_path &path, const Hotkey &hotkey, bool overwrite_existing = true);
 
 /**
  * \brief Begins a batch operation. Batches all updates caused by `add`, `remove`, and `associate_hotkey` into one at
  * the succeeding call to `end_batch_work`.
+ * \threadsafety This function is not thread-safe.
  */
 void begin_batch_work();
 
 /**
  * \brief Ends a batch operation.
+ * \threadsafety This function is not thread-safe.
  */
 void end_batch_work();
 
 /**
  * \brief Notifies about the display name of actions matching a filter changing.
  * \param filter A filter.
+ * \threadsafety This function is not thread-safe.
  */
 void notify_display_name_changed(const action_filter &filter);
 
 /**
  * \brief Notifies about the enabled state of actions matching a filter changing.
  * \param filter A filter.
+ * \threadsafety This function is not thread-safe.
  */
 void notify_enabled_changed(const action_filter &filter);
 
 /**
  * \brief Notifies about the active state of actions matching a filter changing.
  * \param filter A filter.
+ * \threadsafety This function is not thread-safe.
  */
 void notify_active_changed(const action_filter &filter);
 
@@ -208,6 +216,7 @@ void notify_active_changed(const action_filter &filter);
  * \param filter A filter.
  * \param ignore_override Whether to ignore the display name override.
  * \return The action's display name or an empty string if the display name couldn't be resolved.
+ * \threadsafety This function is not thread-safe.
  */
 std::string get_display_name(const action_filter &filter, bool ignore_override = false);
 
@@ -215,6 +224,7 @@ std::string get_display_name(const action_filter &filter, bool ignore_override =
  * \brief Gets whether an action is enabled.
  * \param path A path.
  * \return The action's enabled state.
+ * \threadsafety This function is not thread-safe.
  */
 bool get_enabled(const action_path &path);
 
@@ -222,6 +232,7 @@ bool get_enabled(const action_path &path);
  * \brief Gets whether an action is active.
  * \param path A path.
  * \return The action's active state.
+ * \threadsafety This function is not thread-safe.
  */
 bool get_active(const action_path &path);
 
@@ -243,6 +254,7 @@ bool get_menu_hidden(const action_path &path);
  * \brief Gets whether an action has been registered with an active state callback.
  * \param path A path.
  * \return The action's activatability.
+ * \threadsafety This function is not thread-safe.
  */
 bool get_activatability(const action_path &path);
 
@@ -250,6 +262,7 @@ bool get_activatability(const action_path &path);
  * \brief Gets the parameters associated with an action.
  * \param path A path.
  * \return The action's parameters.
+ * \threadsafety This function is not thread-safe.
  */
 std::vector<ActionParam> get_params(const action_path &path);
 
@@ -257,6 +270,7 @@ std::vector<ActionParam> get_params(const action_path &path);
  * \brief Gets all action paths that match the specified filter.
  * \param filter A filter.
  * \return A collection of action paths that match the filter.
+ * \threadsafety This function is not thread-safe.
  */
 std::vector<action_path> get_actions_matching_filter(const action_filter &filter);
 
@@ -264,6 +278,7 @@ std::vector<action_path> get_actions_matching_filter(const action_filter &filter
  * \brief Gets the segments of a filter.
  * \param filter A filter.
  * \return A collection of the filter's segments.
+ * \threadsafety This function is not thread-safe.
  */
 std::vector<action_filter> get_segments(const action_filter &filter);
 
@@ -271,6 +286,7 @@ std::vector<action_filter> get_segments(const action_filter &filter);
  * \brief Normalizes a filter to dot-separated, lowercase kebab-case segments.
  * \param filter A filter.
  * \return The normalized filter.
+ * \threadsafety This function is not thread-safe.
  */
 action_filter normalize_filter(const action_filter &filter);
 
@@ -282,6 +298,7 @@ action_filter normalize_filter(const action_filter &filter);
  * \param release_on_repress If true, if the action is already pressed down and `up` is false, the action will first be
  * released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
  * \param params The action parameters.
+ * \threadsafety This function is not thread-safe.
  */
 void invoke(
     const action_path &path, bool up = false, bool release_on_repress = true, const action_argument_map &params = {});
@@ -289,11 +306,21 @@ void invoke(
 /**
  * \brief Locks or unlocks action invocations from hotkeys.
  * \param lock Whether to lock or unlock action invocations from hotkeys.
+ * \param only The hotkeys to lock invocations for. If empty, all hotkeys are locked. Ignored when unlocking.
+ * \threadsafety This function is not thread-safe.
  */
-void lock_hotkeys(bool lock);
+void lock_hotkeys(bool lock, const std::vector<Hotkey> &only = {});
 
 /**
- * \return Whether action invocations from hotkeys are currently locked.
+ * \return The hotkeys locked by `lock_hotkeys`, or `std::nullopt` if hotkeys are unlocked.
+ * \threadsafety This function is not thread-safe.
  */
-bool get_hotkeys_locked();
+std::optional<std::vector<Hotkey>> get_locked_hotkeys();
+
+/**
+ * \return Whether invocations from this hotkey are currently locked.
+ * \threadsafety This function is not thread-safe.
+ */
+bool is_hotkey_locked(const Hotkey &hotkey);
+
 } // namespace ActionManager

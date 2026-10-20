@@ -16,8 +16,7 @@
 #include <Common.Views/WinFFmpegEncoder.hpp>
 #include <components/Dispatcher.hpp>
 #include <components/MGECompositor.hpp>
-#include <lua/LuaRenderer.hpp>
-#include <lua/LuaManager.hpp>
+#include <lua/LuaRendererManager.hpp>
 
 namespace CaptureManager
 {
@@ -133,7 +132,7 @@ void readscreen_hybrid()
         // Since atupdatescreen might not have occured for a long time, we force it now.
         // This avoids "outdated" visuals, which are otherwise acceptable during normal gameplay, being blitted to the
         // video stream.
-        LuaRenderer::repaint_visuals();
+        LuaRendererManager::instance().draw(true);
 
         GdiFlush();
 
@@ -160,7 +159,7 @@ void readscreen_hybrid()
                 m_video_buf, &bmp_info, DIB_RGB_COLORS, SRCCOPY);
         }
 
-        LuaRenderer::blit_all(hy_dc);
+        LuaRendererManager::instance().blit_all(hy_dc);
 
         BITMAPINFO bmp_info{};
         bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);

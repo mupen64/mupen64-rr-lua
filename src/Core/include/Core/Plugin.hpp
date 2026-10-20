@@ -206,7 +206,7 @@ extern "C"
         {
             Type type;
             // Write into these controllers to configure them.
-            CoreController* controllers; // [4]
+            CoreController *controllers; // [4]
         };
 
         // The type of the event.

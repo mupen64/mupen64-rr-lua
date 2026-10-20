@@ -9,75 +9,6 @@
 #include <Common.Views/ActionManager.hpp>
 #include <SDL3/SDL_keycode.h>
 #include <lua/presenters/Presenter.hpp>
-#include <memory>
-
-namespace LuaCore::Painter::Detail
-{
-class TextLayoutCache;
-class TextMeasurementCache;
-class TextFactoryCache;
-} // namespace LuaCore::Painter::Detail
-
-/**
- * \brief Represents a Lua rendering context.
- */
-struct LuaRenderingContext
-{
-    // The current presenter, or null
-    Presenter *presenter{};
-
-    // The Direct2D overlay control handle
-    HWND d2d_overlay_hwnd{};
-
-    // The GDI/GDI+ overlay control handle
-    HWND gdi_overlay_hwnd{};
-
-    bool has_gdi_content{};
-
-    // The DC for GDI/GDI+ drawings
-    // This DC is special, since commands can be issued to it anytime and it's never cleared
-    HDC gdi_back_dc{};
-
-    // The bitmap for GDI/GDI+ drawings
-    HBITMAP gdi_bmp{};
-
-    // Dimensions of the drawing surfaces
-    D2D1_SIZE_U dc_size{};
-
-    // The LRU cache for painter text layouts
-    std::shared_ptr<LuaCore::Painter::Detail::TextLayoutCache> painter_text_layouts{};
-
-    // The LRU cache for painter text measurements
-    std::shared_ptr<LuaCore::Painter::Detail::TextMeasurementCache> painter_text_measurements{};
-
-    // The shared DirectWrite factory
-    std::shared_ptr<LuaCore::Painter::Detail::TextFactoryCache> painter_text_factory{};
-
-    // The stack of render targets. The top is used for D2D calls.
-    std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
-
-    // Pool of GDI+ images
-    std::unordered_map<size_t, Gdiplus::Bitmap *> image_pool{};
-
-    // Amount of generated images, just used to generate uids for image pool
-    size_t image_pool_index{};
-
-    // Whether to ignore create_renderer() and ensure_d2d_renderer_created() calls. Used to avoid tearing down and
-    // re-creating a renderer when stopping a script.
-    bool ignore_create_renderer{};
-
-    std::optional<float> target_fps{};
-    std::chrono::steady_clock::time_point last_render_time{};
-
-    HDC loadscreen_dc{};
-    HBITMAP loadscreen_bmp{};
-
-    HBRUSH brush{};
-    HPEN pen{};
-    HFONT font{};
-    COLORREF col, bkcol{};
-    int bkmode{};
-};
 
 struct ActionParamMeta
 {
@@ -89,55 +20,6 @@ struct ActionParamMeta
 inline const std::string LUA_HINT_RESTART_WITH_EMU = "restart_with_emu";
 inline const std::unordered_map<std::string, std::pair<std::string, std::vector<std::string>>> LUA_HINTS = {
     {LUA_HINT_RESTART_WITH_EMU, {"1", {"0", "1"}}},
-};
-
-/**
- * \brief Describes a Lua instance.
- */
-struct LuaEnvironment
-{
-    using destroying_func = std::function<void(const LuaEnvironment *env)>;
-    using print_func = std::function<void(const LuaEnvironment *env, const std::string &text)>;
-
-    std::filesystem::path path;
-    lua_State *L;
-    LuaRenderingContext rctx;
-    bool started{};
-    std::unordered_map<std::string, std::string> hints;
-
-    // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
-    std::vector<ActionManager::action_path> registered_actions{};
-
-    std::unordered_map<std::string, std::vector<ActionParamMeta>> param_meta_map;
-
-    // All the breakpoints registered by the script. Stored so we can remove them when the script is destroyed.
-    std::vector<std::pair<CoreBreakpointId, uintptr_t *>> active_breakpoints;
-
-    std::vector<uintptr_t *> step_callbacks;
-
-    destroying_func destroying{};
-
-    print_func print{};
-
-    std::string query_hint(const std::string &name)
-    {
-        if (hints.contains(name)) return hints.at(name);
-        return LUA_HINTS.at(name).first;
-    }
-
-    std::expected<void, std::string> try_set_hint(const std::string &name, const std::string &value)
-    {
-        if (!LUA_HINTS.contains(name)) return std::unexpected(std::format("Unknown hint '{}'", name));
-
-        const auto &hint = LUA_HINTS.at(name);
-        const auto valid = std::find(hint.second.begin(), hint.second.end(), value) != hint.second.end();
-        if (!valid)
-            return std::unexpected(
-                std::format("Invalid value '{}' for hint '{}'. Allowed values: {}", value, name, hint.second));
-
-        hints[name] = value;
-        return {};
-    }
 };
 
 /**

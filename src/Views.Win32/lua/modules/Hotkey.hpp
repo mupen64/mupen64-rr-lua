@@ -7,7 +7,7 @@
 #pragma once
 
 #include <lua/LuaDialog.hpp>
-#include <lua/LuaManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 #include <Common.Views/Hotkey.hpp>
 #include <HotkeyUtils.hpp>
 
@@ -25,13 +25,13 @@ static void push_trigger(lua_State *L, const ::Hotkey::Trigger &trigger)
     {
         lua_pushstring(L, "keycode");
         lua_pushinteger(L, std::get<::Hotkey::KeyCode>(trigger).get());
-        lua_setfield(L, -2, "value");
+        lua_setfield(L, -3, "value");
     }
     else
     {
         lua_pushstring(L, "mousebutton");
         lua_pushinteger(L, std::get<::Hotkey::MouseButton>(trigger).get());
-        lua_setfield(L, -2, "value");
+        lua_setfield(L, -3, "value");
     }
 
     lua_setfield(L, -2, "type");

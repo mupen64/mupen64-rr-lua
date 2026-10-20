@@ -9,14 +9,14 @@
 #include <Common.Views/Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <components/Statusbar.hpp>
-#include <lua/LuaCallbacks.hpp>
+#include <lua/LuaRealmManager.hpp>
 
 namespace LuaCore::Emu
 {
 static int get_hint(lua_State *L)
 {
     const char *hint = luaL_checkstring(L, 1);
-    auto *env = LuaManager::get_environment_for_state(L);
+    auto *env = LuaRealmManager::instance().get_by_state(L);
 
     if (!LUA_HINTS.contains(hint)) return luaL_error(L, "Unknown hint '%s'", hint);
 
@@ -30,11 +30,51 @@ static int set_hint(lua_State *L)
     const char *hint = luaL_checkstring(L, 1);
     const char *value = luaL_checkstring(L, 2);
 
-    auto *env = LuaManager::get_environment_for_state(L);
+    auto *env = LuaRealmManager::instance().get_by_state(L);
     const auto result = env->try_set_hint(hint, value);
     if (!result) return luaL_error(L, "%s", result.error().c_str());
 
     return 0;
+}
+
+static int get_pref(lua_State *L)
+{
+    const char *pref = luaL_checkstring(L, 1);
+
+    if (!strcmp(pref, "theme"))
+    {
+        lua_pushstring(L, g_config.theme == 0 ? "light" : g_config.theme == 1 ? "dark" : "system");
+    }
+    else if (!strcmp(pref, "accent_color"))
+    {
+        DWORD color{};
+        BOOL opaque{};
+        COLORREF rgb;
+        if (SUCCEEDED(DwmGetColorizationColor(&color, &opaque)))
+            rgb = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+        else
+            rgb = GetSysColor(COLOR_HIGHLIGHT);
+
+        lua_createtable(L, 0, 4);
+        lua_pushnumber(L, GetRValue(rgb) / 255.0);
+        lua_setfield(L, -2, "r");
+        lua_pushnumber(L, GetGValue(rgb) / 255.0);
+        lua_setfield(L, -2, "g");
+        lua_pushnumber(L, GetBValue(rgb) / 255.0);
+        lua_setfield(L, -2, "b");
+        lua_pushnumber(L, 1.0);
+        lua_setfield(L, -2, "a");
+    }
+    else if (!strcmp(pref, "lang"))
+    {
+        lua_pushstring(L, "en_US"); // we only support en_US for now
+    }
+    else
+    {
+        return luaL_error(L, "Unknown preference '%s'", pref);
+    }
+
+    return 1;
 }
 
 static int GetVICount(lua_State *L)
@@ -52,104 +92,95 @@ static int GetSampleCount(lua_State *L)
 
 static int GetInputCount(lua_State *L)
 {
-    lua_pushinteger(L, g_input_count);
+    lua_pushinteger(L, LuaRealmManager::instance().input_count);
     return 1;
+}
+
+static int register_callback(lua_State *L, const LuaRealmManager::callback_key key)
+{
+    auto *env = LuaRealmManager::instance().get_by_state(L);
+    env->register_or_unregister_function(static_cast<uint8_t>(key));
+    return 0;
 }
 
 static int subscribe_atupdatescreen(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATUPDATESCREEN);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATUPDATESCREEN);
 }
 
 static int subscribe_atpaint(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATPAINT);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATPAINT);
 }
 
 static int subscribe_atvi(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATVI);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATVI);
 }
 
 static int subscribe_atinput(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATINPUT);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATINPUT);
 }
 
 static int subscribe_atstop(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSTOP);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATSTOP);
 }
 
 static int subscribe_atwindowmessage(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_WINDOWMESSAGE);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_WINDOWMESSAGE);
 }
 
 static int subscribe_atinterval(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATINTERVAL);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATINTERVAL);
 }
 
 static int subscribe_atplaymovie(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATPLAYMOVIE);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATPLAYMOVIE);
 }
 
 static int subscribe_atstopmovie(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSTOPMOVIE);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATSTOPMOVIE);
 }
 
 static int subscribe_atloadstate(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATLOADSTATE);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATLOADSTATE);
 }
 
 static int subscribe_atsavestate(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSAVESTATE);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATSAVESTATE);
 }
 
 static int subscribe_atreset(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATRESET);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATRESET);
 }
 
 static int subscribe_atseekcompleted(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSEEKCOMPLETED);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATSEEKCOMPLETED);
 }
 
 static int subscribe_atwarpmodifystatuschanged(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATWARPMODIFYSTATUSCHANGED);
 }
 
 static int subscribe_atkey(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATKEY);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATKEY);
 }
 
 static int subscribe_atmouse(lua_State *L)
 {
-    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATMOUSE);
-    return 0;
+    return register_callback(L, LuaRealmManager::REG_ATMOUSE);
 }
 
 static int Screenshot(lua_State *L)
@@ -161,7 +192,7 @@ static int Screenshot(lua_State *L)
 
 static int IsMainWindowInForeground(lua_State *L)
 {
-    auto lua = LuaManager::get_environment_for_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     lua_pushboolean(L, GetForegroundWindow() == g_main_ctx.hwnd || GetActiveWindow() == g_main_ctx.hwnd);
     return 1;
 }
@@ -290,7 +321,7 @@ static int GetMupenVersion(lua_State *L)
 // emu
 static int ConsoleWriteLua(lua_State *L)
 {
-    auto lua = LuaManager::get_environment_for_state(L);
+    auto lua = LuaRealmManager::instance().get_by_state(L);
     const auto str = luaL_checkstring(L, 1);
 
     lua->print(lua, std::string(str) + "\r\n");

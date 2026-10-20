@@ -77,6 +77,15 @@ static int qt_main(int argc, char *argv[])
 #if defined(_WIN32)
     // Windows: default to Fusion, as the system theme isn't exactly nice.
     QQuickStyle::setStyle("Fusion");
+#else
+    if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE"))
+    {
+        const auto desktop = qEnvironmentVariable("XDG_CURRENT_DESKTOP");
+        if (!desktop.contains("KDE", Qt::CaseInsensitive))
+        {
+            QQuickStyle::setStyle("Fusion");
+        }
+    }
 #endif
 
     // provider for system icons

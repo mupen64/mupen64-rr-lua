@@ -399,10 +399,11 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     case Plugin::Type::Input: {
         g_view_logger->trace("Initiating input plugin (MupenRR)...");
 
-        process_event_on_gui_thread(event_fn, M64RRSpec::Event{.initialize_controllers = {
-                                                                   .type = M64RRSpec::Event::Type::InitializeControllers,
-                                                                   .controllers = g_main_ctx.core.controls,
-                                                               }});
+        process_event_on_gui_thread(
+            event_fn, M64RRSpec::Event{.initialize_controllers = {
+                                           .type = M64RRSpec::Event::Type::InitializeControllers,
+                                           .controllers = g_main_ctx.core.controls,
+                                       }});
 
         LOOKUP_MUPENRR_FN(g_mupenrr_input_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
         LOOKUP_MUPENRR_FN(g_mupenrr_input_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");

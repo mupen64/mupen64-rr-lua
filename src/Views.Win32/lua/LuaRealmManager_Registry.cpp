@@ -5,7 +5,6 @@
  */
 
 #include "Common.hpp"
-#include <lua/LuaRegistry.hpp>
 #include <lua/modules/AVI.hpp>
 #include <lua/modules/Action.hpp>
 #include <lua/modules/Clipboard.hpp>
@@ -22,15 +21,12 @@
 #include <lua/modules/Savestate.hpp>
 #include <lua/modules/WGUI.hpp>
 
-// these begin and end comments help to generate documentation
-// please don't remove them
-
-// begin lua funcs
 const luaL_Reg GLOBAL_FUNCS[] = {{"print", LuaCore::Global::print}, {"tostringex", LuaCore::Global::tostringexs},
     {"stop", LuaCore::Global::StopScript}, {NULL, NULL}};
 
 const luaL_Reg EMU_FUNCS[] = {{"console", LuaCore::Emu::ConsoleWriteLua}, {"statusbar", LuaCore::Emu::StatusbarWrite},
     {"get_hint", LuaCore::Emu::get_hint}, {"set_hint", LuaCore::Emu::set_hint},
+    {"get_pref", LuaCore::Emu::get_pref},
 
     {"atvi", LuaCore::Emu::subscribe_atvi}, {"atupdatescreen", LuaCore::Emu::subscribe_atupdatescreen},
     {"atpaint", LuaCore::Emu::subscribe_atpaint}, {"atinput", LuaCore::Emu::subscribe_atinput},
@@ -60,8 +56,7 @@ const luaL_Reg EMU_FUNCS[] = {{"console", LuaCore::Emu::ConsoleWriteLua}, {"stat
 
     {NULL, NULL}};
 
-const luaL_Reg MEMORY_FUNCS[] = {
-    // memory conversion functions
+const luaL_Reg MEMORY_FUNCS[] = { // memory conversion functions
     {"inttofloat", LuaCore::Memory::int_to_float}, {"inttodouble", LuaCore::Memory::int_to_double},
     {"floattoint", LuaCore::Memory::float_to_int}, {"doubletoint", LuaCore::Memory::double_to_int},
     {"qwordtonumber", LuaCore::Memory::qword_to_number},
@@ -146,17 +141,15 @@ const luaL_Reg ACTION_FUNCS[] = {{"add", LuaCore::Action::add}, {"remove", LuaCo
     {"get_params", LuaCore::Action::get_params},
     {"get_actions_matching_filter", LuaCore::Action::get_actions_matching_filter}, {"invoke", LuaCore::Action::invoke},
     {"lock_hotkeys", LuaCore::Action::lock_hotkeys}, {"get_hotkeys_locked", LuaCore::Action::get_hotkeys_locked},
-    {NULL, NULL}};
+    {"get_locked_hotkeys", LuaCore::Action::get_locked_hotkeys}, {NULL, NULL}};
 
 const luaL_Reg CLIPBOARD_FUNCS[] = {{"get", LuaCore::Clipboard::get},
     {"get_content_type", LuaCore::Clipboard::get_content_type}, {"set", LuaCore::Clipboard::set},
     {"clear", LuaCore::Clipboard::clear}, {NULL, NULL}};
 
-// end lua funcs
-
 const std::pair<std::string, lua_CFunction> OVERRIDE_FUNCS[] = {{"os.exit", LuaCore::Global::Exit}};
 
-void register_as_package(lua_State *lua_state, const char *name, const luaL_Reg *regs)
+static void register_as_package(lua_State *lua_state, const char *name, const luaL_Reg *regs)
 {
     if (name == nullptr)
     {
@@ -189,7 +182,7 @@ static void register_function(lua_State *L, const std::string &name, const lua_C
     lua_pop(L, 1);
 }
 
-void LuaRegistry::register_functions(lua_State *L)
+void LuaRealmManager::register_functions(lua_State *L)
 {
     luaL_openlibs(L);
 

@@ -10,7 +10,7 @@
 #include <Common.Win32/WinUtils.hpp>
 #include <Common/Assert.hpp>
 #include <Common/LRUCache.hpp>
-#include <lua/LuaManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 #include <lua/LuaRenderer.hpp>
 
 #include <algorithm>
@@ -297,7 +297,7 @@ struct StateSnapshot
 struct Painter
 {
     ID2D1RenderTarget *target{};
-    LuaRenderingContext *context{};
+    LuaRenderer *context{};
     bool active{};
 
     D2D1::Matrix3x2F transform = D2D1::Matrix3x2F::Identity();
@@ -536,12 +536,12 @@ inline D2D1_RECT_F check_rect(lua_State *L, int index)
     return D2D1::RectF(x, y, x + width, y + height);
 }
 
-inline LuaRenderingContext *check_context(lua_State *L)
+inline LuaRenderer *check_context(lua_State *L)
 {
-    auto *environment = LuaManager::get_environment_for_state(L);
-    if (!environment) luaL_error(L, "painter is unavailable outside a Lua environment");
-    LuaRenderer::ensure_d2d_renderer_created(&environment->rctx);
-    auto *context = &environment->rctx;
+    auto *environment = LuaRealmManager::instance().get_by_state(L);
+    if (!environment) luaL_error(L, "painter is unavailable outside a Lua realm");
+    environment->renderer.ensure_d2d_renderer_created();
+    auto *context = &environment->renderer;
     if (!context->presenter || context->d2d_render_target_stack.empty() || !context->d2d_render_target_stack.top())
         luaL_error(L, "Direct2D renderer is unavailable");
     return context;
@@ -619,7 +619,7 @@ inline void close_image(Image *image)
     image->closed = true;
 }
 
-inline Painter *push_painter(lua_State *L, LuaRenderingContext *context, ID2D1RenderTarget *target)
+inline Painter *push_painter(lua_State *L, LuaRenderer *context, ID2D1RenderTarget *target)
 {
     auto *painter = new (lua_newuserdata(L, sizeof(Painter))) Painter{};
     painter->target = target;
@@ -1273,9 +1273,9 @@ class TextFactoryCache
 
 inline TextFactoryCache *get_text_factory_cache(lua_State *L)
 {
-    auto *environment = LuaManager::get_environment_for_state(L);
+    auto *environment = LuaRealmManager::instance().get_by_state(L);
     if (!environment) return nullptr;
-    auto &cache = environment->rctx.painter_text_factory;
+    auto &cache = environment->renderer.painter_text_factory;
     if (!cache) cache = std::make_shared<TextFactoryCache>();
     return cache.get();
 }
@@ -1482,7 +1482,6 @@ inline int painter_gc(lua_State *L)
     painter->~Painter();
     return 0;
 }
-
 
 inline int image_index(lua_State *L)
 {
@@ -1841,7 +1840,6 @@ inline int painter_scale(lua_State *L)
     painter->transform = D2D1::Matrix3x2F::Scale(x, y) * painter->transform;
     return 0;
 }
-
 
 inline int painter_stroke(lua_State *L)
 {
@@ -2498,10 +2496,10 @@ inline int current(lua_State *L)
 
 inline int get_target_fps(lua_State *L)
 {
-    auto *environment = LuaManager::get_environment_for_state(L);
-    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua environment");
-    if (environment->rctx.target_fps.has_value())
-        lua_pushnumber(L, environment->rctx.target_fps.value());
+    auto *environment = LuaRealmManager::instance().get_by_state(L);
+    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua realm");
+    if (environment->renderer.target_fps().has_value())
+        lua_pushnumber(L, environment->renderer.target_fps().value());
     else
         lua_pushnil(L);
     return 1;
@@ -2509,11 +2507,11 @@ inline int get_target_fps(lua_State *L)
 
 inline int set_target_fps(lua_State *L)
 {
-    auto *environment = LuaManager::get_environment_for_state(L);
-    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua environment");
+    auto *environment = LuaRealmManager::instance().get_by_state(L);
+    if (!environment) return luaL_error(L, "painter is unavailable outside a Lua realm");
     std::optional<float> fps;
     if (!lua_isnoneornil(L, 1)) fps = static_cast<float>(luaL_checknumber(L, 1));
-    LuaRenderer::set_target_fps(&environment->rctx, fps);
+    environment->renderer.set_target_fps(fps);
     return 0;
 }
 
@@ -2627,9 +2625,9 @@ inline int measure_text(lua_State *L)
 
     const DWRITE_WORD_WRAPPING wrapping = Detail::parse_wrap(L, wrap);
     Detail::TextMeasurementCache *measurement_cache = nullptr;
-    if (auto *environment = LuaManager::get_environment_for_state(L))
+    if (auto *environment = LuaRealmManager::instance().get_by_state(L))
     {
-        auto &cache = environment->rctx.painter_text_measurements;
+        auto &cache = environment->renderer.painter_text_measurements;
         if (!cache) cache = std::make_shared<Detail::TextMeasurementCache>();
         measurement_cache = cache.get();
     }
@@ -2877,13 +2875,12 @@ inline void register_types(lua_State *L)
         {"quadratic_to", Detail::painter_quadratic_to}, {"arc", Detail::painter_arc},
         {"close_path", Detail::painter_close_path}, {"get_transform", Detail::painter_get_transform},
         {"set_transform", Detail::painter_set_transform}, {"get_alpha", Detail::painter_get_alpha},
-        {"set_alpha", Detail::painter_set_alpha}, {"save", Detail::painter_save},
-        {"restore", Detail::painter_restore}, {"clip", Detail::painter_clip}, {"translate", Detail::painter_translate},
-        {"rotate", Detail::painter_rotate}, {"scale", Detail::painter_scale}, {"stroke", Detail::painter_stroke},
-        {"fill", Detail::painter_fill}, {"text", Detail::painter_text}, {"rect", Detail::painter_rect},
-        {"round_rect", Detail::painter_round_rect}, {"circle", Detail::painter_circle}, {"line", Detail::painter_line},
-        {"polyline", Detail::painter_polyline}, {"polygon", Detail::painter_polygon}, {"image", Detail::painter_image},
-        {nullptr, nullptr}};
+        {"set_alpha", Detail::painter_set_alpha}, {"save", Detail::painter_save}, {"restore", Detail::painter_restore},
+        {"clip", Detail::painter_clip}, {"translate", Detail::painter_translate}, {"rotate", Detail::painter_rotate},
+        {"scale", Detail::painter_scale}, {"stroke", Detail::painter_stroke}, {"fill", Detail::painter_fill},
+        {"text", Detail::painter_text}, {"rect", Detail::painter_rect}, {"round_rect", Detail::painter_round_rect},
+        {"circle", Detail::painter_circle}, {"line", Detail::painter_line}, {"polyline", Detail::painter_polyline},
+        {"polygon", Detail::painter_polygon}, {"image", Detail::painter_image}, {nullptr, nullptr}};
     static const luaL_Reg matrix_methods[] = {{"dx", Detail::matrix_dx}, {"dy", Detail::matrix_dy},
         {"sx", Detail::matrix_sx}, {"sy", Detail::matrix_sy}, {nullptr, nullptr}};
 

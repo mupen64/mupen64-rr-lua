@@ -22,7 +22,7 @@ action = {}
 clipboard = {}
 
 Mupen = {
-    _VERSION = '1.5.0-5',
+    _VERSION = '1.5.0-7',
     _URL = 'https://github.com/mupen64/mupen64-rr-lua',
     _DESCRIPTION = 'Mupen64 Lua Scripting API',
     _LICENSE = 'GPL-2',
@@ -756,6 +756,21 @@ function emu.get_hint(hint) end
 ---@param hint MupenHint
 ---@param value string
 function emu.set_hint(hint, value) end
+
+---Gets the value of a user preference.
+---@param pref "theme"
+---@return "system"|"light"|"dark"
+function emu.get_pref(pref) end
+
+---Gets the value of a user preference.
+---@param pref "accent_color"
+---@return PainterColorTable
+function emu.get_pref(pref) end
+
+---Gets the value of a user preference.
+---@param pref "lang"
+---@return "en_US"|string
+function emu.get_pref(pref) end
 
 ---Displays the text `message` in the console. Similar to `print`, but only accepts strings or numbers.
 ---Also, `emu.console` does not insert a newline character.
@@ -2309,10 +2324,15 @@ function action.get_actions_matching_filter(filter) end
 function action.invoke(path, up, release_on_repress, params) end
 
 ---Locks or unlocks action invocations from hotkeys.
----@param lock boolean Whether to lock or unlock action invocations from hotkeys.
-function action.lock_hotkeys(lock) end
+---@param lock boolean Whether to lock or unlock action invocations from hotkeys. All hotkeys are affected on unlock.
+---@param hotkeys Hotkey[]? The hotkeys affected by the lock. Ignored when unlocking.
+function action.lock_hotkeys(lock, hotkeys) end
 
----@return boolean # Whether action invocations from hotkeys are currently locked.
+---Gets the hotkeys locked via `action.lock_hotkeys`.
+---@return Hotkey[]? hotkeys The locked hotkeys. An empty table if all hotkeys are locked, or `nil` if no hotkeys are locked.
+function action.get_locked_hotkeys() end
+
+---@return boolean # Whether action invocations from any hotkeys are currently locked.
 function action.get_hotkeys_locked() end
 
 --#endregion
