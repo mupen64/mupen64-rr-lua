@@ -77,7 +77,6 @@ struct GLcolor
 void OGL_ReadPixels();
 bool OGL_Start();
 void OGL_Stop();
-void OGL_EnsureCurrent();
 void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2);
 void OGL_DrawTriangles();
 void OGL_DrawLine(SPVertex *vertices, int v0, int v1, float width);

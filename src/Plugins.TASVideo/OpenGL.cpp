@@ -188,8 +188,7 @@ void OGL_ResizeWindow()
 bool OGL_InitContext()
 {
     M64RRSpec::GLSurfaceFormat request_format{
-        // Try OpenGL ES 2.0 first
-        .major_version = 2,
+        .major_version = 3,
         .minor_version = 0,
         .context_type = M64RRSpec::GLContextType::OpenGLES,
 
@@ -210,7 +209,7 @@ bool OGL_InitContext()
     }
     else
     {
-        g_plugin->log_info("OpenGL ES 2.0 context unavailable; falling back to desktop OpenGL.");
+        g_plugin->log_info("OpenGL ES 3.0 context unavailable; falling back to desktop OpenGL.");
         // Fall back to OpenGL 2.1
         request_format.major_version = 2;
         request_format.minor_version = 1;
@@ -220,6 +219,7 @@ bool OGL_InitContext()
             "Creating fallback desktop OpenGL context failed.");
         OGL.isGLES = false;
     }
+    if (OGL.msaa > 0) g_plugin->log_warn("MSAA is not supported with FBO rendering yet; ignoring it.");
 
     OGL_InitExtensions();
     OGL_InitStates();
@@ -289,11 +289,6 @@ void OGL_Stop()
     glFinish();
 }
 
-void OGL_EnsureCurrent()
-{
-    g_wsi->gl_make_current(g_wsi_context);
-    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
-}
 
 static void OGL_SetRectViewport()
 {
