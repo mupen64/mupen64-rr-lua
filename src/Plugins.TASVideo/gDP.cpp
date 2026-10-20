@@ -5,6 +5,7 @@
  */
 
 #include "Common.hpp"
+#include <algorithm>
 #include "TASVideo.hpp"
 #include "N64.hpp"
 #include "GBI.hpp"
@@ -539,18 +540,26 @@ void gDPLoadTLUT(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 {
     gDPSetTileSize(tile, uls, ult, lrs, lrt);
 
-    u16 count = (gDP.tiles[tile].lrs - gDP.tiles[tile].uls + 1) * (gDP.tiles[tile].lrt - gDP.tiles[tile].ult + 1);
+    u32 count = (gDP.tiles[tile].lrs - gDP.tiles[tile].uls + 1) * (gDP.tiles[tile].lrt - gDP.tiles[tile].ult + 1);
     u32 address = gDP.textureImage.address + gDP.tiles[tile].ult * gDP.textureImage.bpl +
                   (gDP.tiles[tile].uls << gDP.textureImage.size >> 1);
+    const u32 tmem = gDP.tiles[tile].tmem;
 
-    auto dest = (u16 *)&TMEM[gDP.tiles[tile].tmem];
+    // Keep the load inside TMEM and RDRAM. A TLUT loaded below the palette half of TMEM (tmem < 256) used to wrap the
+    // palette number, so paletteCRC16 and TMEM were indexed far out of bounds and CRC_CalculatePalette crashed
+    // (B3313 v0.7 does this).
+    const u32 tmem_words = sizeof(TMEM) / sizeof(TMEM[0]);
+    if (tmem >= tmem_words || address + 4 > RDRAMSize) return;
+    count = std::min(count, tmem_words - tmem);
+    count = std::min(count, (RDRAMSize - address - 2) / 2);
+
+    auto dest = (u16 *)&TMEM[tmem];
     auto src = (u16 *)&RDRAM[address];
 
-    u16 pal = (gDP.tiles[tile].tmem - 256) >> 4;
-
-    int i = 0;
+    u32 i = 0;
     while (i < count)
     {
+        const u32 group = tmem + i;
         for (u16 j = 0; (j < 16) && (i < count); j++, i++)
         {
             u16 color = swapword(src[i ^ 1]);
@@ -563,8 +572,12 @@ void gDPLoadTLUT(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
             dest += 4;
         }
 
-        gDP.paletteCRC16[pal] = CRC_CalculatePalette(0xFFFFFFFF, &TMEM[256 + (pal << 4)], 16);
-        pal++;
+        // Only the upper half of TMEM holds palettes.
+        if (group >= 256)
+        {
+            const u32 pal = (group - 256) >> 4;
+            gDP.paletteCRC16[pal] = CRC_CalculatePalette(0xFFFFFFFF, &TMEM[256 + (pal << 4)], 16);
+        }
     }
 
     gDP.paletteCRC256 = CRC_Calculate(0xFFFFFFFF, gDP.paletteCRC16, 64);
