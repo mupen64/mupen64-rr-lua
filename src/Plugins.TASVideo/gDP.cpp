@@ -545,9 +545,7 @@ void gDPLoadTLUT(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
                   (gDP.tiles[tile].uls << gDP.textureImage.size >> 1);
     const u32 tmem = gDP.tiles[tile].tmem;
 
-    // Keep the load inside TMEM and RDRAM. A TLUT loaded below the palette half of TMEM (tmem < 256) used to wrap the
-    // palette number, so paletteCRC16 and TMEM were indexed far out of bounds and CRC_CalculatePalette crashed
-    // (B3313 v0.7 does this).
+    // Limit because it would crash otherwise on some romhacks (e.g. B3313 v0.7)
     const u32 tmem_words = sizeof(TMEM) / sizeof(TMEM[0]);
     if (tmem >= tmem_words || address + 4 > RDRAMSize) return;
     count = std::min(count, tmem_words - tmem);
