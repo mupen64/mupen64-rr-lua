@@ -359,4 +359,3 @@ GamepadManager::DeviceRegistry &GamepadManager::device_registry(bool force_refre
     if (force_refresh || g_ctx.reg.devices.empty()) refresh_registry_and_update_gamepad();
     return g_ctx.reg;
 }
-

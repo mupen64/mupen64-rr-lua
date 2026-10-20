@@ -83,4 +83,3 @@ void shutdown();
 DeviceRegistry &device_registry(bool force_refresh = false);
 
 } // namespace GamepadManager
-
