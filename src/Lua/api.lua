@@ -759,7 +759,7 @@ function emu.set_hint(hint, value) end
 
 ---Gets the value of a user preference.
 ---@param pref "theme"
----@return "system"|"light"|"dark"
+---@return "light"|"dark"
 function emu.get_pref(pref) end
 
 ---Gets the value of a user preference.

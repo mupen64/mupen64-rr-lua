@@ -43,7 +43,8 @@ static int get_pref(lua_State *L)
 
     if (!strcmp(pref, "theme"))
     {
-        lua_pushstring(L, g_config.theme == 0 ? "light" : g_config.theme == 1 ? "dark" : "system");
+        lua_pushstring(
+                    L, WinDarkMode::theme_data.bg_color == WinDarkMode::dark_theme_data.bg_color ? "dark" : "light");
     }
     else if (!strcmp(pref, "accent_color"))
     {
