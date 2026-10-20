@@ -5,7 +5,6 @@
  */
 
 #include "Common.hpp"
-#include <algorithm>
 #include "TASVideo.hpp"
 #include "N64.hpp"
 #include "GBI.hpp"
