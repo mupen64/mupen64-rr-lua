@@ -16,6 +16,7 @@
 #endif
 
 #include <Core/Types.hpp>
+#include <Core/Graphics.hpp>
 
 #if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
@@ -189,6 +190,8 @@ extern "C"
             // The plugin is being asked to provide the controller configuration.
             InitializeControllers,
 
+            InitializeDisplay,
+
             // Emulation has started.
             RomOpened,
 
@@ -209,14 +212,24 @@ extern "C"
             CoreController *controllers; // [4]
         };
 
+        struct InitializeDisplayEvent
+        {
+            Type type;
+            // A pointer to a function table containing the windowing API functions.
+            const WindowingAPI *wsi;
+        };
+
         // The type of the event.
         Type type;
 
         // The initiate event details. Only valid when `type` is `Initiate`.
         InitiateEvent initiate;
 
-        // The initialize controllers event details. Only valid when `type` is `InitializeControllers`.
+        // The initialize-controllers event details. Only valid when `type` is `InitializeControllers`.
         InitializeControllersEvent initialize_controllers;
+
+        // The initialize-display event details. Only valid when `type` is `InitializeDisplay`.
+        InitializeDisplayEvent initialize_display;
     };
 
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);

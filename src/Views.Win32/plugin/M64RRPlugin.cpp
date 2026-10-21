@@ -11,6 +11,7 @@
 #include <components/Statusbar.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
+#include <plugin/Windowing.hpp>
 
 static M64RRSpec::PtrProcessEvent g_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows g_mupenrr_video_get_windows_fn = nullptr;
@@ -318,6 +319,11 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     {
     case Plugin::Type::Video: {
         g_view_logger->trace("Initiating video plugin (MupenRR)...");
+
+        process_event_on_gui_thread(event_fn, M64RRSpec::Event{.initialize_display = {
+                                                                   .type = M64RRSpec::Event::Type::InitializeDisplay,
+                                                                   .wsi = &SDLWindowAPI::functions(),
+                                                               }});
 
         LOOKUP_MUPENRR_FN(g_mupenrr_video_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
         LOOKUP_MUPENRR_FN(g_mupenrr_video_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
