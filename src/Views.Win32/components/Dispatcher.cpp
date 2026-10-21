@@ -4,69 +4,85 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include "Dispatcher.hpp"
 
-// #define DISPATCHER_OVERHEAD_LOGGING
+#include <stdexcept>
+#include <system_error>
+#include <utility>
+
+Dispatcher::Dispatcher(HWND hwnd) : m_hwnd(hwnd), m_thread_id(GetWindowThreadProcessId(hwnd, nullptr))
+{
+    if (!m_thread_id)
+    {
+        throw std::system_error(
+            static_cast<int>(GetLastError()), std::system_category(), "Failed to get dispatcher window thread");
+    }
+}
 
 void Dispatcher::invoke(const std::function<void()> &func)
 {
-#ifdef DISPATCHER_OVERHEAD_LOGGING
-    m_call_start = std::chrono::high_resolution_clock::now();
-#endif
-
-    // If the thread id matches the dispatcher's thread id, we don't need to do anything special and can just execute on
-    // this thread.
     if (GetCurrentThreadId() == m_thread_id)
     {
         func();
         return;
     }
 
-    std::lock_guard lock(m_mutex);
-    m_func = func;
-    m_execute_callback();
+    // SendMessage keeps this stack request alive until the UI thread finishes handling it.
+    Invocation invocation{func, {}};
+    SetLastError(ERROR_SUCCESS);
+    SendMessage(m_hwnd, message_id, 0, reinterpret_cast<LPARAM>(&invocation));
+    if (!invocation.completed)
+    {
+        const auto error = GetLastError();
+        throw std::system_error(static_cast<int>(error ? error : ERROR_GEN_FAILURE), std::system_category(),
+            "Failed to invoke dispatcher callback");
+    }
+    if (invocation.exception) std::rethrow_exception(invocation.exception);
 }
 
-void Dispatcher::execute()
+void Dispatcher::post(const std::function<void()> &func)
 {
-    if (m_func == nullptr) return;
-
-    need(GetCurrentThreadId() == m_thread_id, "Dispatcher::execute() called from incorrect thread");
-
-#ifdef DISPATCHER_OVERHEAD_LOGGING
-    const auto execute_start = std::chrono::high_resolution_clock::now();
-#endif
-
-    m_func();
-    m_func = nullptr;
-
-#ifdef DISPATCHER_OVERHEAD_LOGGING
-    const auto end = std::chrono::high_resolution_clock::now();
-
-    const auto call_ns = (end - m_call_start).count();
-    const auto execute_ns = (end - execute_start).count();
-    const auto overhead_ns = call_ns - execute_ns;
-    const auto overhead_percent = (double)overhead_ns / (double)call_ns * 100.0;
-    m_overhead_index = (m_overhead_index + 1) % std::size(m_overhead_percentages);
-    m_overhead_times[m_overhead_index] = overhead_ns;
-    m_overhead_percentages[m_overhead_index] = overhead_percent;
-
-    double percentage_sum = 0.0;
-    for (const auto p : m_overhead_percentages)
+    std::lock_guard lock(m_mutex);
+    m_pending.push_back(func);
+    if (!PostMessage(m_hwnd, message_id, 0, 0))
     {
-        percentage_sum += p;
+        const auto error = GetLastError();
+        m_pending.pop_back();
+        throw std::system_error(static_cast<int>(error), std::system_category(), "Failed to post dispatcher message");
     }
-    double avg_overhead_percentage = percentage_sum / (double)std::size(m_overhead_percentages);
+}
 
-    double overhead_sum = 0.0;
-    for (const auto t : m_overhead_times)
+void Dispatcher::execute(LPARAM lparam)
+{
+    if (GetCurrentThreadId() != m_thread_id)
     {
-        overhead_sum += t;
+        throw std::logic_error("Dispatcher::execute() called from incorrect thread");
     }
-    double avg_overhead_time = overhead_sum / (double)std::size(m_overhead_times);
 
-    g_view_logger->trace(
-        "[Dispatcher] id {} overhead avg {:.0f}ns ({:.2f}%)", m_thread_id, avg_overhead_time, avg_overhead_percentage);
-#endif
+    if (lparam)
+    {
+        auto &invocation = *reinterpret_cast<Invocation *>(lparam);
+        try
+        {
+            invocation.func();
+        }
+        catch (...)
+        {
+            invocation.exception = std::current_exception();
+        }
+        invocation.completed = true;
+        return;
+    }
+
+    for (;;)
+    {
+        std::function<void()> func;
+        {
+            std::lock_guard lock(m_mutex);
+            if (m_pending.empty()) return;
+            func = std::move(m_pending.front());
+            m_pending.pop_front();
+        }
+        func();
+    }
 }

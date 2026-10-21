@@ -22,7 +22,7 @@ action = {}
 clipboard = {}
 
 Mupen = {
-    _VERSION = '1.5.0-6',
+    _VERSION = '1.5.0-7',
     _URL = 'https://github.com/mupen64/mupen64-rr-lua',
     _DESCRIPTION = 'Mupen64 Lua Scripting API',
     _LICENSE = 'GPL-2',
@@ -756,6 +756,21 @@ function emu.get_hint(hint) end
 ---@param hint MupenHint
 ---@param value string
 function emu.set_hint(hint, value) end
+
+---Gets the value of a user preference.
+---@param pref "theme"
+---@return "light"|"dark"
+function emu.get_pref(pref) end
+
+---Gets the value of a user preference.
+---@param pref "accent_color"
+---@return PainterColorTable
+function emu.get_pref(pref) end
+
+---Gets the value of a user preference.
+---@param pref "lang"
+---@return "en_US"|string
+function emu.get_pref(pref) end
 
 ---Displays the text `message` in the console. Similar to `print`, but only accepts strings or numbers.
 ---Also, `emu.console` does not insert a newline character.

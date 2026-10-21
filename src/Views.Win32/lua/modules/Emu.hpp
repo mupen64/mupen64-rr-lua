@@ -37,6 +37,47 @@ static int set_hint(lua_State *L)
     return 0;
 }
 
+static int get_pref(lua_State *L)
+{
+    const char *pref = luaL_checkstring(L, 1);
+
+    if (!strcmp(pref, "theme"))
+    {
+        lua_pushstring(
+                    L, WinDarkMode::theme_data.bg_color == WinDarkMode::dark_theme_data.bg_color ? "dark" : "light");
+    }
+    else if (!strcmp(pref, "accent_color"))
+    {
+        DWORD color{};
+        BOOL opaque{};
+        COLORREF rgb;
+        if (SUCCEEDED(DwmGetColorizationColor(&color, &opaque)))
+            rgb = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+        else
+            rgb = GetSysColor(COLOR_HIGHLIGHT);
+
+        lua_createtable(L, 0, 4);
+        lua_pushnumber(L, GetRValue(rgb) / 255.0);
+        lua_setfield(L, -2, "r");
+        lua_pushnumber(L, GetGValue(rgb) / 255.0);
+        lua_setfield(L, -2, "g");
+        lua_pushnumber(L, GetBValue(rgb) / 255.0);
+        lua_setfield(L, -2, "b");
+        lua_pushnumber(L, 1.0);
+        lua_setfield(L, -2, "a");
+    }
+    else if (!strcmp(pref, "lang"))
+    {
+        lua_pushstring(L, "en_US"); // we only support en_US for now
+    }
+    else
+    {
+        return luaL_error(L, "Unknown preference '%s'", pref);
+    }
+
+    return 1;
+}
+
 static int GetVICount(lua_State *L)
 {
     lua_pushinteger(L, g_main_ctx.CoreCtx->vcr_get_current_vi());
