@@ -166,7 +166,7 @@ void EmuContext::startROM(const QString &pathIn)
     std::filesystem::path path = std::u16string_view{pathIn};
     QThreadPool::globalInstance()->start([=, this] {
         auto result = m_core_ctx->vr_start_rom(path);
-        // this->startDialogForCoreResult(result);
+        this->startDialogForCoreResult(result);
     });
 }
 
@@ -174,7 +174,7 @@ void EmuContext::closeROM(bool resetVCR)
 {
     QThreadPool::globalInstance()->start([=, this] {
         auto result = m_core_ctx->vr_close_rom(resetVCR);
-        // this->startDialogForCoreResult(result);
+        this->startDialogForCoreResult(result);
     });
 }
 
@@ -182,7 +182,7 @@ void EmuContext::resetROM(bool resetSaveData, bool stopVCR)
 {
     QThreadPool::globalInstance()->start([=, this] {
         auto result = m_core_ctx->vr_reset_rom(resetSaveData, stopVCR);
-        // this->startDialogForCoreResult(result);
+        this->startDialogForCoreResult(result);
     });
 }
 
