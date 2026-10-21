@@ -102,8 +102,7 @@ fail:
     {
         size_t message_len = 0;
         const char *message = lua_tolstring(env->l(), -1, &message_len);
-        const std::string error = message ? std::string(message, message_len)
-                                          : "(unknown error in script's global scope, not of type string or number)";
+        const std::string error = message ? std::string(message, message_len) : "(unknown error in script's global scope, not of type string or number)";
         env->stop();
         return std::unexpected(error);
     }
