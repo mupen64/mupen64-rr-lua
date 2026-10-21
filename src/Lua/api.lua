@@ -757,6 +757,21 @@ function emu.get_hint(hint) end
 ---@param value string
 function emu.set_hint(hint, value) end
 
+---Gets the value of a user preference.
+---@param pref "theme"
+---@return "light"|"dark"
+function emu.get_pref(pref) end
+
+---Gets the value of a user preference.
+---@param pref "accent_color"
+---@return PainterColorTable
+function emu.get_pref(pref) end
+
+---Gets the value of a user preference.
+---@param pref "lang"
+---@return "en_US"|string
+function emu.get_pref(pref) end
+
 ---Displays the text `message` in the console. Similar to `print`, but only accepts strings or numbers.
 ---Also, `emu.console` does not insert a newline character.
 ---Because of this, `print` should be used instead.

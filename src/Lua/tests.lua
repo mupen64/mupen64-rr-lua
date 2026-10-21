@@ -73,6 +73,36 @@ retest.describe('mupen64', function()
         end)
     end)
     retest.describe('emu', function()
+        retest.describe('get_pref', function()
+            retest.it('returns_resolved_theme', function()
+                local theme = emu.get_pref('theme')
+                retest.expect(theme == 'light' or theme == 'dark').to.equal(true)
+            end)
+
+            retest.it('returns_normalized_accent_color', function()
+                local color = emu.get_pref('accent_color')
+                retest.expect(type(color)).to.equal('table')
+                for _, channel in ipairs({ 'r', 'g', 'b', 'a' }) do
+                    retest.expect(type(color[channel])).to.equal('number')
+                    retest.expect(color[channel] >= 0 and color[channel] <= 1).to.equal(true)
+                end
+                retest.expect(color.a).to.equal(1)
+            end)
+
+            retest.it('returns_frontend_language', function()
+                retest.expect(emu.get_pref('lang')).to.equal('en_US')
+            end)
+
+            retest.it('rejects_unknown_preferences', function()
+                retest.expect(function() emu.get_pref('unknown') end).to.fail()
+            end)
+
+            retest.it('rejects_missing_or_invalid_arguments', function()
+                retest.expect(function() emu.get_pref() end).to.fail()
+                retest.expect(function() emu.get_pref({}) end).to.fail()
+            end)
+        end)
+
         retest.describe('callbacks', function()
             retest.it('unregistering_nonregistered_callback_doesnt_crash', function()
                 local success = pcall(emu.atinput, function() end, true)

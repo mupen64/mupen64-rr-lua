@@ -103,6 +103,7 @@ void RSP_ThreadProc()
         {
         case RSPMSG_START:
             RSP_Init();
+            OGL_ResizeWindow();
             break;
         case RSPMSG_RESTART:
             OGL_Stop();
