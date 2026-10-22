@@ -3170,6 +3170,11 @@ void vr_recompile(uint32_t addr)
         return;
     }
 
+    if (!blocks[addr >> 12])
+    {
+        return;
+    }
+
     if (addr >> 16 == 0xa400)
     {
         recompile_block((int32_t *)SP_DMEM, blocks[0xa4000000 >> 12], addr);

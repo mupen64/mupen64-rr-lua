@@ -123,3 +123,16 @@ TEST_CASE_METHOD(VrFixture, "normal_makes_normal", "vr_update_effective_speed_mo
 
     REQUIRE(g_r4300.effective_speed_mode.load() == CoreSpeedMode::Normal);
 }
+
+TEST_CASE_METHOD(VrFixture, "recompile_unallocated_page_does_not_crash", "vr_recompile")
+{
+    constexpr uint32_t unallocated_addr = 0x80480100;
+    REQUIRE(blocks[unallocated_addr >> 12] == nullptr);
+
+    REQUIRE_NOTHROW(g_core_ctx->vr_recompile(unallocated_addr));
+}
+
+TEST_CASE_METHOD(VrFixture, "recompile_all_blocks_does_not_crash", "vr_recompile")
+{
+    REQUIRE_NOTHROW(g_core_ctx->vr_recompile(UINT32_MAX));
+}
