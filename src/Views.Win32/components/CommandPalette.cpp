@@ -757,7 +757,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         return TRUE;
     }
     case WM_CTLCOLORLISTBOX:
-        return (INT_PTR)WinDarkMode::theme_data.listbox_bg_brush;
+        return (INT_PTR)WinDarkMode::theme_data().listbox_bg_brush;
     case WM_DRAWITEM: {
         const auto pdis = reinterpret_cast<PDRAWITEMSTRUCT>(lparam);
 
@@ -784,8 +784,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             }
             else
             {
-                text_color = WinDarkMode::theme_data.text_1_color;
-                bg_brush = WinDarkMode::theme_data.listbox_bg_brush;
+                text_color = WinDarkMode::theme_data().text_1_color;
+                bg_brush = WinDarkMode::theme_data().listbox_bg_brush;
             }
 
             if (!enabled)
