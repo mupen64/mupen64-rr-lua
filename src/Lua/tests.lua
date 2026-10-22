@@ -93,6 +93,10 @@ retest.describe('mupen64', function()
                 retest.expect(emu.get_pref('lang')).to.equal('en_US')
             end)
 
+            retest.it('returns_reduced_motion_preference', function()
+                retest.expect(type(emu.get_pref('reduced_motion'))).to.equal('boolean')
+            end)
+
             retest.it('rejects_unknown_preferences', function()
                 retest.expect(function() emu.get_pref('unknown') end).to.fail()
             end)

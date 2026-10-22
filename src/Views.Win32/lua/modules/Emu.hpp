@@ -70,6 +70,12 @@ static int get_pref(lua_State *L)
     {
         lua_pushstring(L, "en_US"); // we only support en_US for now
     }
+    else if (!strcmp(pref, "reduced_motion"))
+    {
+        BOOL animations_enabled = TRUE;
+        const auto success = SystemParametersInfo(SPI_GETCLIENTAREAANIMATION, 0, &animations_enabled, 0);
+        lua_pushboolean(L, success && !animations_enabled);
+    }
     else
     {
         return luaL_error(L, "Unknown preference '%s'", pref);
