@@ -20,6 +20,7 @@ avi = {}
 hotkey = {}
 action = {}
 clipboard = {}
+dialogs = {}
 
 Mupen = {
     _VERSION = '1.5.0-8',
@@ -2376,6 +2377,19 @@ function clipboard.set(type, value) end
 ---Clears the clipboard.
 ---@return boolean # Whether the operation succeeded.
 function clipboard.clear() end
+
+--#endregion
+
+-- dialogs functions
+--#region
+
+---@alias DialogMessageTone "error" | "warn" | "info"
+
+---Shows a non-modal notification to the user.
+---@param content string The notification text.
+---@param title string? The notification title. If nil, no title is shown.
+---@param type DialogMessageTone? The notification tone. Defaults to "warn".
+function dialogs.show_notification(content, title, type) end
 
 --#endregion
 

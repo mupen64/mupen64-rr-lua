@@ -30,6 +30,7 @@ retest.attach_coverage(
         { "hotkey",    hotkey },
         { "action",    action },
         { "clipboard", clipboard },
+        { "dialogs",   dialogs },
     }
 )
 
@@ -1796,6 +1797,37 @@ retest.describe('mupen64', function()
                     hotkeys.prompt({})
                 end
                 retest.expect(func).to.fail()
+            end)
+        end)
+    end)
+
+    retest.describe('dialogs', function()
+        retest.describe('show_notification', function()
+            retest.it('accepts_defaults', function()
+                dialogs.show_notification('Lua notification test')
+            end)
+            retest.it('accepts_all_tones', function()
+                for _, tone in ipairs({ 'error', 'warn', 'info' }) do
+                    dialogs.show_notification('Lua notification test', 'Lua API tests', tone)
+                end
+            end)
+            retest.it('accepts_nil_title', function()
+                dialogs.show_notification('Lua notification test', nil, 'info')
+            end)
+            retest.it('errors_if_content_nil', function()
+                retest.expect(function() dialogs.show_notification(nil) end).to.fail()
+            end)
+            retest.it('errors_if_content_not_string', function()
+                retest.expect(function() dialogs.show_notification({}) end).to.fail()
+            end)
+            retest.it('errors_if_title_not_string', function()
+                retest.expect(function() dialogs.show_notification('test', {}) end).to.fail()
+            end)
+            retest.it('errors_if_type_unknown', function()
+                retest.expect(function() dialogs.show_notification('test', nil, 'unknown') end).to.fail()
+            end)
+            retest.it('errors_if_type_not_string', function()
+                retest.expect(function() dialogs.show_notification('test', nil, {}) end).to.fail()
             end)
         end)
     end)
