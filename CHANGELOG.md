@@ -8,5 +8,6 @@ This release fixes some annoying bugs and adds new parameters to a Lua API.
 
 ## 🐞 Bugfixes
 
+- Fixed TASVideo crashing on certain romhacks (e.g. B3313 v0.7)
 - Fixed crash when recompiling not-yet-reached blocks (affected `memory.recompile`)
 - Fixed dark mode issues
