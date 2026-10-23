@@ -1,6 +1,6 @@
 # 1.5.0-8
 
-This release fixes some annoying dark mode issues and adds new parameters to a Lua API.
+This release fixes some annoying bugs and adds new parameters to a Lua API.
 
 ## ✨ Features
 
@@ -8,4 +8,5 @@ This release fixes some annoying dark mode issues and adds new parameters to a L
 
 ## 🐞 Bugfixes
 
+- Fixed crash when recompiling not-yet-reached blocks (affected `memory.recompile`)
 - Fixed dark mode issues
