@@ -76,6 +76,13 @@ static int get_pref(lua_State *L)
         const auto success = SystemParametersInfo(SPI_GETCLIENTAREAANIMATION, 0, &animations_enabled, 0);
         lua_pushboolean(L, success && !animations_enabled);
     }
+    else if (!strcmp(pref, "high_contrast"))
+    {
+        HIGHCONTRAST high_contrast{};
+        high_contrast.cbSize = sizeof(high_contrast);
+        const auto success = SystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, 0);
+        lua_pushboolean(L, success && (high_contrast.dwFlags & HCF_HIGHCONTRASTON));
+    }
     else
     {
         return luaL_error(L, "Unknown preference '%s'", pref);

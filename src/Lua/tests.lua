@@ -97,6 +97,10 @@ retest.describe('mupen64', function()
                 retest.expect(type(emu.get_pref('reduced_motion'))).to.equal('boolean')
             end)
 
+            retest.it('returns_high_contrast_preference', function()
+                retest.expect(type(emu.get_pref('high_contrast'))).to.equal('boolean')
+            end)
+
             retest.it('rejects_unknown_preferences', function()
                 retest.expect(function() emu.get_pref('unknown') end).to.fail()
             end)

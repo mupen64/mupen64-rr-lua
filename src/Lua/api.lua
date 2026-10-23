@@ -777,6 +777,12 @@ function emu.get_pref(pref) end
 ---@return boolean
 function emu.get_pref(pref) end
 
+---Gets the value of a user preference.
+---@param pref "high_contrast"
+---@return boolean
+function emu.get_pref(pref) end
+
+---Gets the value of a user preference.
 ---Displays the text `message` in the console. Similar to `print`, but only accepts strings or numbers.
 ---Also, `emu.console` does not insert a newline character.
 ---Because of this, `print` should be used instead.
