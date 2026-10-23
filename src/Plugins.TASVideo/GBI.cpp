@@ -35,7 +35,8 @@ SpecialMicrocodeInfo specialMicrocodes[] = {{F3DWRUS, FALSE, 0xd17906e2, "RSP SW
     {S2DEX, FALSE, 0x9df31081, "RSP Gfx ucode S2DEX  1.06 Yoshitaka Yasumoto Nintendo."},
 
     {F3DDKR, FALSE, 0x8d91244f, "Diddy Kong Racing"}, {F3DDKR, FALSE, 0x6e6fc893, "Diddy Kong Racing"},
-    {F3DDKR, FALSE, 0xbde9d1fb, "Jet Force Gemini"}, {F3DPD, FALSE, 0x1c4f7869, "Perfect Dark"}};
+    {F3DDKR, FALSE, 0xbde9d1fb, "Jet Force Gemini"}, {F3DPD, FALSE, 0x1c4f7869, "Perfect Dark"},
+    {F3DEX2, FALSE, 0xfe621f3d, "F3DEX3_LVP_BrZ_NOC_B by Sauraen & Yoshitaka Yasumoto/Nintendo"}};
 
 u32 G_RDPHALF_1, G_RDPHALF_2, G_RDPHALF_CONT;
 u32 G_SPNOOP;
@@ -238,6 +239,20 @@ MicrocodeInfo *GBI_DetectMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
             }
 
             break;
+        }
+        else if (strncmp(&uc_data[i], "F3DEX3", 6) == 0)
+        {
+            u32 j = 0;
+            while (uc_data[i + j] > 0x0A && j < sizeof(uc_str) - 1)
+            {
+                uc_str[j] = uc_data[i + j];
+                j++;
+            }
+            uc_str[j] = 0x00;
+
+            current->NoN = (strstr(uc_str, ".NoN") != nullptr || strstr(uc_str, "_NOC") != nullptr);
+            current->type = F3DEX2;
+            return current;
         }
     }
 
