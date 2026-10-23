@@ -783,6 +783,10 @@ function emu.get_pref(pref) end
 function emu.get_pref(pref) end
 
 ---Gets the value of a user preference.
+---@param pref "caret_blink_time"
+---@return integer|false
+function emu.get_pref(pref) end
+
 ---Displays the text `message` in the console. Similar to `print`, but only accepts strings or numbers.
 ---Also, `emu.console` does not insert a newline character.
 ---Because of this, `print` should be used instead.

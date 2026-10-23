@@ -101,6 +101,15 @@ retest.describe('mupen64', function()
                 retest.expect(type(emu.get_pref('high_contrast'))).to.equal('boolean')
             end)
 
+            retest.it('returns_caret_blink_time_preference', function()
+                local blink_time = emu.get_pref('caret_blink_time')
+                if blink_time ~= false then
+                    retest.expect(type(blink_time)).to.equal('number')
+                    retest.expect(blink_time > 0).to.equal(true)
+                    retest.expect(blink_time % 1).to.equal(0)
+                end
+            end)
+
             retest.it('rejects_unknown_preferences', function()
                 retest.expect(function() emu.get_pref('unknown') end).to.fail()
             end)

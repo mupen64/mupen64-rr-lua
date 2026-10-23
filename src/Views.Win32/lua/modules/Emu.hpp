@@ -83,6 +83,14 @@ static int get_pref(lua_State *L)
         const auto success = SystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, 0);
         lua_pushboolean(L, success && (high_contrast.dwFlags & HCF_HIGHCONTRASTON));
     }
+    else if (!strcmp(pref, "caret_blink_time"))
+    {
+        const auto blink_time = GetCaretBlinkTime();
+        if (blink_time == INFINITE || blink_time == 0)
+            lua_pushboolean(L, false);
+        else
+            lua_pushinteger(L, blink_time);
+    }
     else
     {
         return luaL_error(L, "Unknown preference '%s'", pref);
