@@ -815,7 +815,8 @@ void gSP1Quadrangle(s32 v0, s32 v1, s32 v2, s32 v3)
 
 bool gSPCullVertices(u32 v0, u32 vn)
 {
-    if (v0 >= 80 || vn >= 80 || v0 > vn) return FALSE;
+    const u32 vertex_count = sizeof(gSP.vertices) / sizeof(gSP.vertices[0]);
+    if (v0 >= vertex_count || vn >= vertex_count || v0 > vn) return FALSE;
 
     float xClip, yClip, zClip;
 
