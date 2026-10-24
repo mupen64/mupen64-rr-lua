@@ -47,6 +47,7 @@ static inline std::filesystem::path config_path()
     return std::filesystem::path(path) / CONFIG_FILE_NAME;
 }
 
+
 SDLAudio::Config read_config()
 {
     SDLAudio::Config cfg;
@@ -79,6 +80,8 @@ void write_config(const SDLAudio::Config &config)
     config.write_to(fs);
 }
 
+namespace BuiltinTAS::TASAudio
+{
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Audio;
@@ -164,4 +167,5 @@ EXPORT void CALL M64RRAILenChanged()
     {
         g_plugin->log_error(std::format("Exception at AiLenChanged(): {}", e.what()).c_str());
     }
+}
 }

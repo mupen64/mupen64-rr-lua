@@ -34,6 +34,8 @@ bool init_rsp_thread()
     return true;
 }
 
+namespace BuiltinTAS::TASVideo
+{
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Video;
@@ -101,7 +103,6 @@ EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height)
     if (height) *height = OGL.height;
     if (buffer)
     {
-        extern void *gCapturedPixels;
         gCapturedPixels = buffer;
         if (RSP.thread)
         {
@@ -115,3 +116,4 @@ EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle)
 {
 }
 #endif
+}

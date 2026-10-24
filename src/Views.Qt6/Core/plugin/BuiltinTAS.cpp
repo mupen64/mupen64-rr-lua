@@ -23,18 +23,18 @@ static std::array<StrUtils::unordered_string_map<void *>, (size_t)PluginID::NumP
     },
     // TASVideo
     StrUtils::unordered_string_map<void *>{
-        {"M64RRGetMetadata", (void *)M64RRBuiltinTASVideoGetMetadata},
-        {"M64RRProcessEvent", (void *)M64RRBuiltinTASVideoProcessEvent},
-        {"M64RRProcessDList", (void *)M64RRBuiltinTASVideoProcessDList},
-        {"M64RRReadVideo", (void *)M64RRBuiltinTASVideoReadVideo},
-        {"M64RRShowConfig", (void *)M64RRBuiltinTASVideoShowConfig},
+        {"M64RRGetMetadata", (void *)TASVideo::M64RRGetMetadata},
+        {"M64RRProcessEvent", (void *)TASVideo::M64RRProcessEvent},
+        {"M64RRProcessDList", (void *)TASVideo::M64RRProcessDList},
+        {"M64RRReadVideo", (void *)TASVideo::M64RRReadVideo},
+        {"M64RRShowConfig", (void *)TASVideo::M64RRShowConfig},
     },
     // TASAudio
     StrUtils::unordered_string_map<void *>{
-        {"M64RRGetMetadata", (void *)M64RRBuiltinTASAudioGetMetadata},
-        {"M64RRProcessEvent", (void *)M64RRBuiltinTASAudioProcessEvent},
-        {"M64RRAIDacrateChanged", (void *)M64RRBuiltinTASAudioAIDacrateChanged},
-        {"M64RRAILenChanged", (void *)M64RRBuiltinTASAudioAILenChanged},
+        {"M64RRGetMetadata", (void *)TASAudio::M64RRGetMetadata},
+        {"M64RRProcessEvent", (void *)TASAudio::M64RRProcessEvent},
+        {"M64RRAIDacrateChanged", (void *)TASAudio::M64RRAIDacrateChanged},
+        {"M64RRAILenChanged", (void *)TASAudio::M64RRAILenChanged},
     },
     // TASInput
     StrUtils::unordered_string_map<void *>{
@@ -42,9 +42,9 @@ static std::array<StrUtils::unordered_string_map<void *>, (size_t)PluginID::NumP
     },
     // TASRSP
     StrUtils::unordered_string_map<void *>{
-        {"M64RRGetMetadata", (void *)M64RRBuiltinTASRSPGetMetadata},
-        {"M64RRProcessEvent", (void *)M64RRBuiltinTASRSPProcessEvent},
-        {"M64RRDoRSPCycles", (void *)M64RRBuiltinTASRSPDoRSPCycles},
+        {"M64RRGetMetadata", (void *)TASRSP::M64RRGetMetadata},
+        {"M64RRProcessEvent", (void *)TASRSP::M64RRProcessEvent},
+        {"M64RRDoRSPCycles", (void *)TASRSP::M64RRDoRSPCycles},
     },
 };
 

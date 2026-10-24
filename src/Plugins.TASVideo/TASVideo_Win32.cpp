@@ -7,7 +7,10 @@
 #include "Common.hpp"
 #include "ConfigDialog_Win32.hpp"
 
-EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
+namespace BuiltinTAS::TASVideo
 {
-    TASVideo::ConfigDialog::show(parent_window.hwnd());
+EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle parent_window)
+{
+    ::TASVideo::ConfigDialog::show(parent_window.hwnd());
+}
 }

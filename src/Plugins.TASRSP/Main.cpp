@@ -165,6 +165,8 @@ unknown_task:
     return 0;
 }
 
+namespace BuiltinTAS::TASRSP
+{
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::RSP;
@@ -202,4 +204,5 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
 EXPORT uint32_t CALL M64RRDoRSPCycles(uint32_t cycles)
 {
     return do_rsp_cycles(cycles);
+}
 }
