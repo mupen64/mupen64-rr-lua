@@ -10,16 +10,16 @@ namespace BuiltinTAS
 static std::array<StrUtils::unordered_string_map<void *>, (size_t)PluginID::NumPlugins> g_builtin_symbols = {
     // DummyVideo
     StrUtils::unordered_string_map<void *>{
-        {"M64RRGetMetadata", (void *)M64RRBuiltinNoVideoGetMetadata},
+        {"M64RRGetMetadata", (void *)DummyVideo::M64RRGetMetadata},
     },
     // DummyAudio
     StrUtils::unordered_string_map<void *>{
-        {"M64RRGetMetadata", (void *)M64RRBuiltinNoAudioGetMetadata},
+        {"M64RRGetMetadata", (void *)DummyAudio::M64RRGetMetadata},
     },
     // DummyInput
     StrUtils::unordered_string_map<void *>{
-        {"M64RRGetMetadata", (void *)M64RRBuiltinNoInputGetMetadata},
-        {"M64RRProcessEvent", (void *)M64RRBuiltinNoInputProcessEvent},
+        {"M64RRGetMetadata", (void *)DummyInput::M64RRGetMetadata},
+        {"M64RRProcessEvent", (void *)DummyInput::M64RRProcessEvent},
     },
     // TASVideo
     StrUtils::unordered_string_map<void *>{

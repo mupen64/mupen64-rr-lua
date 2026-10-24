@@ -40,6 +40,21 @@ extern "C"
     void M64RRBuiltinNoVideoGetMetadata(M64RRSpec::PluginMetadata *);
 }
 
+namespace DummyVideo
+{
+void M64RRGetMetadata(M64RRSpec::PluginMetadata *);
+}
+
+namespace DummyInput
+{
+void M64RRGetMetadata(M64RRSpec::PluginMetadata *);
+void M64RRProcessEvent(M64RRSpec::Event);
+} // namespace DummyAudio
+
+namespace DummyAudio {
+void M64RRGetMetadata(M64RRSpec::PluginMetadata *);
+}
+
 enum class PluginID : uint8_t
 {
     DummyVideo = 0,

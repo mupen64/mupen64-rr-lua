@@ -50,7 +50,7 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->description[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRProcessEvent(Event event)
+EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
 {
     static int8_t init_count = 0;
 
