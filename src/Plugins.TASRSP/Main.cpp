@@ -8,11 +8,12 @@
 #include "Config.hpp"
 #include "HLE.hpp"
 
+using namespace BuiltinTAS::TASRSP;
+
 #define UCODE_MARIO (1)
 #define UCODE_BANJO (2)
 #define UCODE_ZELDA (3)
 
-M64RRSpec::PluginInit *g_plugin;
 static bool g_rsp_alive = false;
 static void (*ABI[0x20])();
 uint32_t inst1;
@@ -167,6 +168,7 @@ unknown_task:
 
 namespace BuiltinTAS::TASRSP
 {
+M64RRSpec::PluginInit *g_plugin;
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::RSP;
@@ -205,4 +207,4 @@ EXPORT uint32_t CALL M64RRDoRSPCycles(uint32_t cycles)
 {
     return do_rsp_cycles(cycles);
 }
-}
+} // namespace BuiltinTAS::TASRSP

@@ -33,8 +33,5 @@ target_link_libraries(Mupen64RR_Plugins_TASRSP PRIVATE
 
 target_compile_definitions(Mupen64RR_Plugins_TASRSP PRIVATE
     PLUGIN_NAMESPACE=BuiltinTAS::TASRSP
-    # M64RRGetMetadata=M64RRBuiltinTASRSPGetMetadata
-    # M64RRProcessEvent=M64RRBuiltinTASRSPProcessEvent
-    # M64RRDoRSPCycles=M64RRBuiltinTASRSPDoRSPCycles
-    g_plugin=M64RRBuiltinTASRSPPlugin
+    # g_plugin=M64RRBuiltinTASRSPPlugin
 )

@@ -7,6 +7,8 @@
 #include "Main.hpp"
 #include "HLE.hpp"
 
+using namespace BuiltinTAS::TASRSP;
+
 static struct
 {
     uint32_t pic;

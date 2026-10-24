@@ -10,6 +10,9 @@
 #include "RSP.hpp"
 #include "Config.hpp"
 
+namespace BuiltinTAS::TASVideo
+{
+
 TASVideoContext g_tas_ctx{};
 
 static void log_shim(const wchar_t *str)
@@ -20,7 +23,7 @@ static void log_shim(const wchar_t *str)
 M64RRSpec::PluginInit *g_plugin;
 const M64RRSpec::WindowingAPI *g_wsi;
 
-bool init_rsp_thread()
+static bool init_rsp_thread()
 {
     if (RSP.thread)
     {
@@ -34,8 +37,6 @@ bool init_rsp_thread()
     return true;
 }
 
-namespace BuiltinTAS::TASVideo
-{
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Video;
