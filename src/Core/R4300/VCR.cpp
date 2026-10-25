@@ -1311,6 +1311,8 @@ static std::optional<CoreResult> show_rom_warnings(const CoreVCRMovieHeader &hea
             if (result.has_value()) return result.value();
         }
     }
+
+    return std::nullopt;
 }
 
 std::optional<SyncData> vcr_get_sync_data_from_header(const CoreVCRMovieHeader &header)
