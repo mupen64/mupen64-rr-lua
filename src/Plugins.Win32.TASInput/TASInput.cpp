@@ -1223,6 +1223,8 @@ void Status::on_config_changed()
     save_config();
 }
 
+namespace BuiltinTAS::TASInput
+{
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Input;
@@ -1239,7 +1241,7 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->description[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRProcessEvent(Event event)
+EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
 {
     static int8_t init_count = 0;
 
@@ -1335,10 +1337,10 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     }
 }
 
-EXPORT void CALL M64RRGetWindows(WindowHandle *windows, size_t *count)
+EXPORT void CALL M64RRGetWindows(M64RRSpec::WindowHandle *windows, size_t *count)
 {
-    std::vector<WindowHandle> wnds = {status[0].hwnd, status[1].hwnd, status[2].hwnd, status[3].hwnd};
-    if (windows) std::memcpy(windows, wnds.data(), sizeof(WindowHandle) * wnds.size());
+    std::vector<M64RRSpec::WindowHandle> wnds = {status[0].hwnd, status[1].hwnd, status[2].hwnd, status[3].hwnd};
+    if (windows) std::memcpy(windows, wnds.data(), sizeof(M64RRSpec::WindowHandle) * wnds.size());
     if (count) *count = wnds.size();
 }
 
@@ -1350,7 +1352,7 @@ EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command)
     }
 }
 
-EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
+EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle parent_window)
 {
     attach_event_watch();
     ConfigDialog::show(parent_window.hwnd());
@@ -1372,4 +1374,5 @@ EXPORT void CALL M64RRGetKeys(int32_t index, CoreButtons *buttons)
 EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons)
 {
     status[index].set_visuals_lazy(buttons, false);
+}
 }
