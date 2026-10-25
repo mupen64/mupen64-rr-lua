@@ -115,6 +115,7 @@ void gSPDMADisplayList(u32 dl, u32 n);
 void gSPBranchList(u32 dl);
 void gSPBranchLessZ(u32 branchdl, u32 vtx, f32 zval);
 void gSPSprite2DBase(u32 base);
+void gSPTriangle(s32 v0, s32 v1, s32 v2, s32 flag);
 void gSP1Triangle(s32 v0, s32 v1, s32 v2, s32 flag);
 void gSP2Triangles(s32 v00, s32 v01, s32 v02, s32 flag0, s32 v10, s32 v11, s32 v12, s32 flag1);
 void gSP4Triangles(
