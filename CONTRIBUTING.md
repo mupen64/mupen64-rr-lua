@@ -155,10 +155,6 @@ fix(VCR): fix crash when playing a movie while holding B
 feat(ConfigDialog): add plugin config API
 ```
 
-> [!NOTE]
-> For PRs that touch an unreleased feature and thus shouldn't be visible in the changelog, put
-> `changelog: skip` in the PR description's footer.
-
 # Code Style
 
 Code formatting must abide by the [.clang-format](https://github.com/mupen64/mupen64-rr-lua/blob/master/.clang-format) file provided in the repository root.
@@ -179,6 +175,7 @@ Before merging a pull request into main or pushing out a release, verify that:
 4. The manual Lua tests (`src/Lua/manual/*.lua`) pass
 5. The docs (`docs/win`) have been kept up-to-date
 6. There are no regressions in plugin compatibility (test Jabo's plugins)
+7. New stuff is documented in `CHANGELOG.md` (non-user-facing stuff doesnt have to go in there)
 
 # Shipping releases
 

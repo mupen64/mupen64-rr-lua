@@ -287,6 +287,38 @@ TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_cheats", "vcr_get_gene
     REQUIRE(info.cht_path == "test.cht");
 }
 
+TEST_CASE_METHOD(VcrFixture, "writes_zero_extended_header_when_extended_format_is_disabled", "vcr_start_record")
+{
+    g_cfg.vcr_write_extended_format = false;
+    g_cfg.cpu_cf = 1.0;
+    g_core_params.input_get_keys = [](int32_t, CoreButtons *input) { input->value = 1; };
+
+    const auto start_result = vcr_start_record("test.m64", MOVIE_START_FROM_NOTHING, "author", "description");
+    REQUIRE(start_result == CoreResult::Res_Ok);
+
+    vcr.task = CoreVCRTask::Recording;
+    CoreButtons input{};
+    vcr_on_controller_poll(0, &input);
+    REQUIRE(vcr.hdr.length_samples == 1);
+
+    const auto stop_result = vcr_stop_all();
+    REQUIRE(stop_result == CoreResult::Res_Ok);
+
+    const auto bytes = IOUtils::read_entire_file("test.m64");
+    REQUIRE(bytes.size() >= sizeof(CoreVCRMovieHeader));
+
+    CoreVCRMovieHeader written_header{};
+    std::memcpy(&written_header, bytes.data(), sizeof(written_header));
+    REQUIRE(written_header.extended_version == 0);
+    REQUIRE(written_header.extended_flags.data == 0);
+
+    const auto extended_data_offset = offsetof(CoreVCRMovieHeader, extended_data);
+    for (size_t i = 0; i < sizeof(written_header.extended_data); ++i)
+    {
+        REQUIRE(bytes[extended_data_offset + i] == 0);
+    }
+}
+
 TEST_CASE_METHOD(VcrFixture, "stores_zero_rcp_lag_factor_when_emulation_is_disabled", "vcr_start_record")
 {
     g_cfg.rcp_lag_emulation = 0;

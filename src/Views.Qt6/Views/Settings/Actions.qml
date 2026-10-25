@@ -11,6 +11,7 @@ import QtQuick.Dialogs as Dialogs
 
 import Actions
 import Core
+import Utils
 
 ActionManager {
     id: root
@@ -57,20 +58,14 @@ ActionManager {
         key: QT_TRID_NOOP("menu.file.closeROM")
         defaultShortcut: "Ctrl+W"
         enabled: root.core.launched
-        onTriggered: {
-            let result = root.core.closeROM();
-            priv.showDialogForError(result);
-        }
+        onTriggered: root.core.closeROM()
     }
     EmuAction {
         //% "Reset ROM"
         key: QT_TRID_NOOP("menu.file.resetROM")
         defaultShortcut: "Ctrl+R"
         enabled: root.core.launched
-        onTriggered: {
-            let result = root.core.resetROM();
-            priv.showDialogForError(result);
-        }
+        onTriggered: root.core.resetROM()
     }
 
     // EMULATION (PAUSE/SPEED)
@@ -313,10 +308,10 @@ ActionManager {
         title: qsTrId("dialogs.loadROM.title")
         fileMode: Dialogs.FileDialog.OpenFile
         //% "N64 ROMs"
-        nameFilters: [`${qsTrId("formats.rom")} (*.n64 *.z64 *.v64)`]
+        nameFilters: [`${qsTrId("formats.rom")} (*.n64 *.z64 *.v64 *.rom)`]
         onAccepted: {
-            let result = root.core.startROM(selectedFile);
-            priv.showDialogForError(result);
+            let path = Paths.toLocalFile(selectedFile);
+            root.core.startROM(path);
         }
     }
     Dialogs.FileDialog {
@@ -327,7 +322,8 @@ ActionManager {
         //% "Savestates"
         nameFilters: [`${qsTrId("formats.state")} (*.st *.savestate)`]
         onAccepted: {
-            root.core.loadFile(selectedFile);
+            let path = Paths.toLocalFile(selectedFile);
+            root.core.loadFile(path);
         }
     }
     Dialogs.FileDialog {
@@ -337,7 +333,8 @@ ActionManager {
         fileMode: Dialogs.FileDialog.SaveFile
         nameFilters: [`${qsTrId("formats.state")} (*.st *.savestate)`]
         onAccepted: {
-            root.core.saveFile(selectedFile);
+            let path = Paths.toLocalFile(selectedFile);
+            root.core.saveFile(path);
         }
     }
 

@@ -366,7 +366,11 @@ void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
 {
     if (!ready) return;
 
+    if (!needs_processing) current_input = input;
+
     std::lock_guard lock(pending_visuals_mutex);
+    if (needs_processing && pending_set_visuals_request.has_value() && !pending_set_visuals_request->needs_processing)
+        return;
     pending_set_visuals_request = SetVisualsRequest{input, needs_processing};
 }
 
@@ -403,6 +407,11 @@ static int get_joystick_increment(const bool up)
 void Status::on_timer()
 {
     set_visuals_if_needed();
+
+    if (!new_config.input_when_emu_unfocused)
+    {
+        if (GetForegroundWindow() != g_plugin->main_window.hwnd()) return;
+    }
 
     CoreButtons controller_input = GamepadManager::get_input(controller_index);
 
@@ -497,6 +506,8 @@ void Status::on_timer()
 
 static void CALLBACK timer_callback(HWND, UINT, UINT_PTR, DWORD)
 {
+    SDL_UpdateGamepads();
+
     for (auto &st : status)
     {
         if (st.ready) st.on_timer();
@@ -764,7 +775,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             else                                                                                                       \
             {                                                                                                          \
                 ctx->current_input.field = 0;                                                                          \
-                if (frame_counter % 2 != 0)                                                                           \
+                if (frame_counter % 2 != 0)                                                                            \
                     ctx->autofire_input_a.field ^= 1;                                                                  \
                 else                                                                                                   \
                     ctx->autofire_input_b.field ^= 1;                                                                  \
@@ -901,6 +912,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
         }
         case IDC_RESET_JOYSTICK:
+            if (new_config.disallow_joystick_reset) break;
             ctx->current_input.x = 0;
             ctx->current_input.y = 0;
             ctx->set_visuals(ctx->current_input);
@@ -1118,6 +1130,8 @@ bool Status::show_context_menu(int x, int y)
     ADD_ITEM(hmenu, relative_mode, "Relative");
     ADD_ITEM(hmenu, approach_mode, "Approach");
     ADD_ITEM(hmenu, wrap_joystick, "Wrap joystick");
+    ADD_ITEM(hmenu, disallow_joystick_reset, "Disallow joystick reset");
+    ADD_ITEM(hmenu, input_when_emu_unfocused, "Input when emulator unfocused");
     AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
     ADD_ITEM(hmenu, always_on_top, "Always on top");
     ADD_ITEM(hmenu, float_from_parent, "Float from parent");
@@ -1227,23 +1241,17 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 
 EXPORT void CALL M64RRProcessEvent(Event event)
 {
+    static int8_t init_count = 0;
+
     switch (event.type)
     {
     case M64RRSpec::Event::Type::Initiate: {
+        init_count++;
+
         g_inst = GetModuleHandle(nullptr);
         g_plugin = event.initiate.init;
 
         load_config();
-
-        for (int i = 0; i < 4; ++i)
-        {
-            g_plugin->controllers[i].present = new_config.controller_active[i];
-            g_plugin->controllers[i].raw = false;
-            g_plugin->controllers[i].plugin = CoreControllerExtension::None;
-            if (new_config.controller_mempak[i]) g_plugin->controllers[i].plugin = CoreControllerExtension::Mempak;
-            if (new_config.controller_rumblepak[i])
-                g_plugin->controllers[i].plugin = CoreControllerExtension::Rumblepak;
-        }
 
         icon_font = CreateFont(-20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS,
             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Marlett"));
@@ -1262,7 +1270,21 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 
         break;
     }
+    case M64RRSpec::Event::Type::InitializeControllers: {
+        auto *controllers = event.initialize_controllers.controllers;
+        for (int i = 0; i < 4; ++i)
+        {
+            controllers[i].present = new_config.controller_active[i];
+            controllers[i].raw = false;
+            controllers[i].plugin = CoreControllerExtension::None;
+            if (new_config.controller_mempak[i]) controllers[i].plugin = CoreControllerExtension::Mempak;
+            if (new_config.controller_rumblepak[i]) controllers[i].plugin = CoreControllerExtension::Rumblepak;
+        }
+        break;
+    }
     case M64RRSpec::Event::Type::Shutdown: {
+        init_count--;
+        if (init_count > 0) break;
 
         if (icon_font)
         {

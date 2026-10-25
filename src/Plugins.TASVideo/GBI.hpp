@@ -20,12 +20,13 @@
 #define F3DPD 8
 #define F3DDKR 9
 #define F3DWRUS 10
-#define NONE 11
+#define F3DEX3 11
+#define NONE 12
 
 static const char *MicrocodeTypes[] = {"Fast3D", "F3DEX", "F3DEX2", "Line3D", "L3DEX", "L3DEX2", "S2DEX", "S2DEX2",
-    "Perfect Dark", "DKR/JFG", "Waverace US", "None"};
+    "Perfect Dark", "DKR/JFG", "Waverace US", "F3DEX3", "None"};
 
-static const int numMicrocodeTypes = 11;
+static const int numMicrocodeTypes = 12;
 
 // Fixed point conversion factors
 #define FIXED2FLOATRECIP1 0.5f

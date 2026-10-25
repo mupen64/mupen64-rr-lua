@@ -32,7 +32,7 @@ using Microsoft::WRL::ComPtr;
 #include <Loggers.hpp>
 #include <Common.Win32/WinUtils.hpp>
 #include <Main.hpp>
-#include <lua/LuaHelpers.hpp>
+#include <Common.Views/LuaHelpers.hpp>
 #include <lua/LuaTypes.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Win32/ResizeAnchor.hpp>

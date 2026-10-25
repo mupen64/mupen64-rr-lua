@@ -12,17 +12,21 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Core URI "Core"
     SOURCES
         "plugin/BuiltinTAS.hpp"
         "plugin/Plugin.hpp"
+        "plugin/Windowing.hpp"
         "CoreEnums.hpp"
         "DefaultPaths.hpp"
         "EmuContext.hpp"
         "EmuDisplay.hpp"
+        "RomManager.hpp"
 
         "plugin/BuiltinTAS.cpp"
         "plugin/Plugin.cpp"
+        "plugin/Windowing.cpp"
         "CoreEnums.cpp"
         "DefaultPaths.cpp"
         "EmuContext.cpp"
         "EmuDisplay.cpp"
+        "RomManager.cpp"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Core PUBLIC cxx_std_26)
 target_include_directories(Mupen64RR_Views_Qt6_Core PUBLIC ".")

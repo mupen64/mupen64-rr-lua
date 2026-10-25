@@ -328,8 +328,7 @@ static INST Cop0Instruction[1 << 5] = {
     INST_UNDEF,
     INST_UNDEF,
 };
-static INST Bc0Instruction[1 << 2] = {
-    // ‘S•”•s–¾‚¾‚©‚çUNDEF‚É‚µ‚Æ‚­
+static INST Bc0Instruction[1 << 2] = { // ‘S•”•s–¾‚¾‚©‚çUNDEF‚É‚µ‚Æ‚­
     INST_UNDEF, INST_UNDEF, INST_UNDEF, INST_UNDEF};
 static INST TlbInstruction[1 << 6] = {
     INST_UNDEF,

@@ -14,8 +14,8 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 {
     switch (event.type)
     {
-    case M64RRSpec::Event::Type::Initiate: {
-        auto *controllers = event.initiate.init->controllers;
+    case M64RRSpec::Event::Type::InitializeControllers: {
+        auto *controllers = event.initialize_controllers.controllers;
 
         for (int i = 0; i < 4; ++i)
         {
