@@ -1,6 +1,8 @@
 # 1.5.0-9
 
-TBD
+## ✨ Features
+
+- Added F3DEX3 microcode support to TASVideo
 
 # 1.5.0-8
 
