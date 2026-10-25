@@ -20,6 +20,7 @@
 #include "F3DDKR.hpp"
 #include "F3DWRUS.hpp"
 #include "F3DPD.hpp"
+#include "F3DEX3.hpp"
 #include "Types.hpp"
 #include "CRC.hpp"
 #ifdef _WIN32
@@ -35,7 +36,8 @@ SpecialMicrocodeInfo specialMicrocodes[] = {{F3DWRUS, FALSE, 0xd17906e2, "RSP SW
     {S2DEX, FALSE, 0x9df31081, "RSP Gfx ucode S2DEX  1.06 Yoshitaka Yasumoto Nintendo."},
 
     {F3DDKR, FALSE, 0x8d91244f, "Diddy Kong Racing"}, {F3DDKR, FALSE, 0x6e6fc893, "Diddy Kong Racing"},
-    {F3DDKR, FALSE, 0xbde9d1fb, "Jet Force Gemini"}, {F3DPD, FALSE, 0x1c4f7869, "Perfect Dark"}};
+    {F3DDKR, FALSE, 0xbde9d1fb, "Jet Force Gemini"}, {F3DPD, FALSE, 0x1c4f7869, "Perfect Dark"},
+    {F3DEX3, TRUE, 0xfe621f3d, "F3DEX3_LVP_BrZ_NOC_B by Sauraen & Yoshitaka Yasumoto/Nintendo"}};
 
 u32 G_RDPHALF_1, G_RDPHALF_2, G_RDPHALF_CONT;
 u32 G_SPNOOP;
@@ -176,6 +178,7 @@ MicrocodeInfo *GBI_DetectMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
         if (uc_crc == specialMicrocodes[i].crc)
         {
             current->type = specialMicrocodes[i].type;
+            current->NoN = specialMicrocodes[i].NoN;
             return current;
         }
     }
@@ -239,6 +242,20 @@ MicrocodeInfo *GBI_DetectMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
 
             break;
         }
+        else if (i + 6 <= sizeof(uc_data) && strncmp(&uc_data[i], "F3DEX3", 6) == 0)
+        {
+            u32 j = 0;
+            while (i + j < sizeof(uc_data) && uc_data[i + j] > 0x0A && j < sizeof(uc_str) - 1)
+            {
+                uc_str[j] = uc_data[i + j];
+                j++;
+            }
+            uc_str[j] = 0x00;
+
+            current->NoN = TRUE;
+            current->type = F3DEX3;
+            return current;
+        }
     }
 
     for (u32 i = 0; i < sizeof(specialMicrocodes) / sizeof(SpecialMicrocodeInfo); i++)
@@ -246,6 +263,7 @@ MicrocodeInfo *GBI_DetectMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
         if (strcmp(uc_str, specialMicrocodes[i].text) == 0)
         {
             current->type = specialMicrocodes[i].type;
+            current->NoN = specialMicrocodes[i].NoN;
             return current;
         }
     }
@@ -319,6 +337,9 @@ void GBI_MakeCurrent(MicrocodeInfo *current)
             break;
         case F3DPD:
             F3DPD_Init();
+            break;
+        case F3DEX3:
+            F3DEX3_Init();
             break;
         }
 
