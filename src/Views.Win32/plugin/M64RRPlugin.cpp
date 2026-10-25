@@ -144,45 +144,45 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type
     case Plugin::Type::Video:
         if (dummy)
         {
-            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoVideoGetMetadata));
+            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::DummyVideo::M64RRGetMetadata));
             break;
         }
-        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoGetMetadata));
-        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoProcessEvent));
-        add("M64RRProcessDList", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoProcessDList));
-        add("M64RRReadVideo", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoReadVideo));
-        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoShowConfig));
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRProcessEvent));
+        add("M64RRProcessDList", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRProcessDList));
+        add("M64RRReadVideo", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRReadVideo));
+        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRShowConfig));
         break;
     case Plugin::Type::Audio:
         if (dummy)
         {
-            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoAudioGetMetadata));
+            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::DummyAudio::M64RRGetMetadata));
             break;
         }
-        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioGetMetadata));
-        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioProcessEvent));
-        add("M64RRAIDacrateChanged", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioAIDacrateChanged));
-        add("M64RRAILenChanged", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioAILenChanged));
-        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioShowConfig));
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRProcessEvent));
+        add("M64RRAIDacrateChanged", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRAIDacrateChanged));
+        add("M64RRAILenChanged", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRAILenChanged));
+        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRShowConfig));
         break;
     case Plugin::Type::Input:
         if (dummy)
         {
-            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoInputGetMetadata));
-            add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoInputProcessEvent));
+            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::DummyInput::M64RRGetMetadata));
+            add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::DummyInput::M64RRProcessEvent));
             break;
         }
-        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputGetMetadata));
-        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputProcessEvent));
-        add("M64RRReadController", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputReadController));
-        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputShowConfig));
-        add("M64RRGetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputGetKeys));
-        add("M64RRSetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputSetKeys));
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRProcessEvent));
+        add("M64RRReadController", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRReadController));
+        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRShowConfig));
+        add("M64RRGetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRGetKeys));
+        add("M64RRSetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRSetKeys));
         break;
     case Plugin::Type::RSP:
-        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASRSPGetMetadata));
-        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASRSPProcessEvent));
-        add("M64RRDoRSPCycles", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASRSPDoRSPCycles));
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASRSP::M64RRGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASRSP::M64RRProcessEvent));
+        add("M64RRDoRSPCycles", reinterpret_cast<FARPROC>(BuiltinTAS::TASRSP::M64RRDoRSPCycles));
         break;
     }
 

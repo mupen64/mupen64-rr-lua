@@ -12,8 +12,11 @@
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS Audio")
 
+namespace BuiltinTAS::TASAudio
+{
 extern M64RRSpec::PluginInit *g_plugin;
 extern std::optional<SDLAudio::SDLBackend> g_backend;
+} // namespace BuiltinTAS::TASAudio
 
 SDLAudio::Config read_config();
 void write_config(const SDLAudio::Config &config);

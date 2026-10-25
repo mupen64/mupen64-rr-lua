@@ -49,10 +49,5 @@ set_target_properties(Mupen64RR_Plugins_TASAudio PROPERTIES
 add_compile_definitions(NOMINMAX)
 
 target_compile_definitions(Mupen64RR_Plugins_TASAudio PRIVATE
-    M64RRGetMetadata=M64RRBuiltinTASAudioGetMetadata
-    M64RRProcessEvent=M64RRBuiltinTASAudioProcessEvent
-    M64RRAIDacrateChanged=M64RRBuiltinTASAudioAIDacrateChanged
-    M64RRAILenChanged=M64RRBuiltinTASAudioAILenChanged
-    M64RRShowConfig=M64RRBuiltinTASAudioShowConfig
-    g_plugin=M64RRBuiltinTASAudioPlugin
+    PLUGIN_NAMESPACE=BuiltinTAS::TASAudio
 )

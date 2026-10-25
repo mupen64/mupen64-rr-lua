@@ -8,4 +8,7 @@
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("No Video")
 
+namespace BuiltinTAS::DummyVideo
+{
 DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Video)
+}

@@ -12,7 +12,13 @@
 #include <filesystem>
 
 extern HINSTANCE g_inst;
+
+namespace BuiltinTAS::TASInput
+{
 extern M64RRSpec::PluginInit *g_plugin;
+}
+// technically this is bad practice, but we only need it to isolate g_plugin
+using namespace BuiltinTAS::TASInput;
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS Input")
 

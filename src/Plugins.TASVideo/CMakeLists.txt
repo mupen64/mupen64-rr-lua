@@ -116,10 +116,6 @@ target_link_libraries(Mupen64RR_Plugins_TASVideo PRIVATE
 )
 
 target_compile_definitions(Mupen64RR_Plugins_TASVideo PRIVATE
-    M64RRGetMetadata=M64RRBuiltinTASVideoGetMetadata
-    M64RRProcessEvent=M64RRBuiltinTASVideoProcessEvent
-    M64RRProcessDList=M64RRBuiltinTASVideoProcessDList
-    M64RRReadVideo=M64RRBuiltinTASVideoReadVideo
-    M64RRShowConfig=M64RRBuiltinTASVideoShowConfig
-    g_plugin=M64RRBuiltinTASVideoPlugin
+    PLUGIN_NAMESPACE=BuiltinTAS::TASVideo
+    # g_plugin=M64RRBuiltinTASVideoPlugin
 )
