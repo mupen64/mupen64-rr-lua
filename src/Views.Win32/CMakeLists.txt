@@ -59,6 +59,7 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "lua/modules/Action.hpp"
     "lua/modules/Hotkey.hpp"
     "lua/modules/Clipboard.hpp"
+    "lua/modules/Dialogs.hpp"
     "lua/presenters/DCompPresenter.hpp"
     "lua/presenters/GDIPresenter.hpp"
     "lua/presenters/Presenter.hpp"

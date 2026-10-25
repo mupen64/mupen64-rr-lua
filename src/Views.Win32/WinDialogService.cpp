@@ -153,8 +153,9 @@ void show_statusbar(std::string_view str)
     Statusbar::post(std::string(str));
 }
 
-void show_notification(std::string str, std::optional<std::string> title, CoreMessageTone type)
+void show_notification(
+    std::string str, std::optional<std::string> title, CoreMessageTone type, std::optional<std::string> subtitle)
 {
-    Toasts::show({str, title, type});
+    Toasts::show({.content = str, .title = title, .tone = type, .subtitle = subtitle});
 }
 } // namespace DialogService

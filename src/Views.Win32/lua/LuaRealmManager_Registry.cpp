@@ -8,6 +8,7 @@
 #include <lua/modules/AVI.hpp>
 #include <lua/modules/Action.hpp>
 #include <lua/modules/Clipboard.hpp>
+#include <lua/modules/Dialogs.hpp>
 #include <lua/modules/Painter.hpp>
 #include <lua/modules/Emu.hpp>
 #include <lua/modules/Global.hpp>
@@ -147,6 +148,8 @@ const luaL_Reg CLIPBOARD_FUNCS[] = {{"get", LuaCore::Clipboard::get},
     {"get_content_type", LuaCore::Clipboard::get_content_type}, {"set", LuaCore::Clipboard::set},
     {"clear", LuaCore::Clipboard::clear}, {NULL, NULL}};
 
+const luaL_Reg DIALOGS_FUNCS[] = {{"show_notification", LuaCore::Dialogs::show_notification}, {NULL, NULL}};
+
 const std::pair<std::string, lua_CFunction> OVERRIDE_FUNCS[] = {{"os.exit", LuaCore::Global::Exit}};
 
 static void register_as_package(lua_State *lua_state, const char *name, const luaL_Reg *regs)
@@ -202,6 +205,7 @@ void LuaRealmManager::register_functions(lua_State *L)
     register_as_package(L, "hotkey", HOTKEY_FUNCS);
     register_as_package(L, "action", ACTION_FUNCS);
     register_as_package(L, "clipboard", CLIPBOARD_FUNCS);
+    register_as_package(L, "dialogs", DIALOGS_FUNCS);
     for (const auto &[name, func] : OVERRIDE_FUNCS)
     {
         register_function(L, name, func);
