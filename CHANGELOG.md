@@ -2,6 +2,10 @@
 
 TBD
 
+## ⚡ Performance
+
+- Improved Pure Interpreter core performance when breakpoints are present
+
 # 1.5.0-8
 
 This release fixes some annoying bugs and adds new parameters to a Lua API.
