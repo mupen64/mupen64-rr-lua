@@ -14,8 +14,8 @@
 namespace BuiltinTAS::TASInput_Qt6
 {
 
-M64RRSpec::PluginInit *g_plugin;
-static std::atomic<TASInputUIManager*> g_ui_manager;
+M64RRSpec::PluginInit *g_plugin = nullptr;
+static std::atomic<TASInputUIManager *> g_ui_manager = nullptr;
 
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
@@ -41,10 +41,23 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
         g_plugin = event.initiate.init;
         assert(g_plugin->platform == M64RRSpec::Platform::Qt6);
 
-        auto* window = g_plugin->main_window.qt_window();
+        if (g_ui_manager != nullptr)
+            break;
+
+        // create the UI manager
+        auto *window = g_plugin->main_window.qt_window();
         QMetaObject::invokeMethod(window, [window] {
-            auto* ui_manager = new TASInputUIManager(window);
-            g_ui_manager = ui_manager;
+            auto *ui_manager = new TASInputUIManager(window);
+
+            QObject::connect(ui_manager, &TASInputUIManager::readyChanged, ui_manager, [=] {
+                if (!ui_manager->isReady())
+                    return;
+                std::println("ready!");
+                g_ui_manager.store(ui_manager, std::memory_order_release);
+                g_ui_manager.notify_all();
+            }, Qt::SingleShotConnection);
+            ui_manager->loadComponent();
+
         });
         break;
     }
@@ -62,17 +75,23 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
         break;
     }
     case M64RRSpec::Event::Type::RomOpened: {
-        auto* ui_manager = g_ui_manager.load();
+        TASInputUIManager* ui_manager = nullptr;
+        // wait until g_ui_manager is set
+        while ((ui_manager = g_ui_manager.load(std::memory_order_acquire)) == nullptr)
+        {
+            g_ui_manager.wait(nullptr, std::memory_order_relaxed);
+        }
+
         QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::open);
         break;
     }
     case M64RRSpec::Event::Type::RomClosed: {
-        auto* ui_manager = g_ui_manager.load();
+        auto *ui_manager = g_ui_manager.load();
         QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::close);
         break;
     }
     case M64RRSpec::Event::Type::Shutdown: {
-        auto* window = g_plugin->main_window.qt_window();
+        auto *window = g_plugin->main_window.qt_window();
         QMetaObject::invokeMethod(window, [] {
             delete g_ui_manager.load();
             g_ui_manager = nullptr;
@@ -89,7 +108,6 @@ void M64RRReadController(int32_t controller, unsigned char *command)
 }
 void M64RRShowConfig(M64RRSpec::WindowHandle parent_window)
 {
-
 }
 void M64RRGetKeys(int32_t index, CoreButtons *buttons)
 {

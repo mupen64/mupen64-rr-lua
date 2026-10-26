@@ -8,9 +8,11 @@ qt_add_library(Mupen64RR_Plugins_Qt6_TASInput STATIC)
 qt_add_qml_module(Mupen64RR_Plugins_Qt6_TASInput
     URI "TASInput"
     SOURCES
+        "JoystickData.hpp"
         "Main.hpp"
         "UIManager.hpp"
 
+        "JoystickData.cpp"
         "Main.cpp"
         "UIManager.cpp"
     QML_FILES

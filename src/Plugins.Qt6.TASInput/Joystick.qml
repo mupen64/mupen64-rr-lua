@@ -7,11 +7,14 @@ Control {
     implicitWidth: 128
     implicitHeight: 128
 
-    property int posX
-    property int posY
+    JoystickData {
+        id: joyState
+    }
 
-    signal posXModified()
-    signal posYModified()
+    property alias posX: joyState.posX
+    property alias posY: joyState.posY
+
+    signal posModified()
 
     contentItem: Rectangle {
         id: content
@@ -24,8 +27,8 @@ Control {
         readonly property real centerY: height / 2
         readonly property real radiusX: width / 2
         readonly property real radiusY: height / 2
-        readonly property real stickX: centerX + (root.posX / 128.0) * radiusX
-        readonly property real stickY: centerY - (root.posY / 128.0) * radiusY
+        readonly property real stickX: centerX + (joyState.posX / 128.0) * radiusX
+        readonly property real stickY: centerY - (joyState.posY / 128.0) * radiusY
 
         Shape {
             // circle and crosshair
@@ -79,6 +82,25 @@ Control {
 
         PointHandler {
             id: pointHandler
+
+            onPointChanged: {
+                if (!active) return;
+
+                let offsetX = point.position.x / content.radiusX;
+                let offsetY = point.position.y / content.radiusY;
+
+                let posX = Math.round(128 * (offsetX - 1));
+                let posY = Math.round(128 * (1 - offsetY));
+
+                posX = Math.min(Math.max(posX, -128), 127);
+                posY = Math.min(Math.max(posY, -128), 127);
+
+                if (Math.abs(posX) < 8) posX = 0;
+                if (Math.abs(posY) < 8) posY = 0;
+
+                joyState.setPos(posX, posY);
+                root.posModified();
+            }
         }
     }
 }

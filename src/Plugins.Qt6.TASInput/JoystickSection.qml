@@ -39,7 +39,10 @@ GridLayout {
         posX: root.posX
         posY: root.posY
 
-        onPosXModified: root.posX = joystick.posX
+        onPosModified: {
+            root.posX = posX;
+            root.posY = posY;
+        }
     }
     GridLayout {
         Layout.column: 1

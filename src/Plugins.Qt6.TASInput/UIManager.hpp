@@ -5,6 +5,9 @@
  */
 
 #pragma once
+#include <array>
+#include <future>
+
 #include <QObject>
 #include <QQmlEngine>
 #include <QQmlComponent>
@@ -12,14 +15,24 @@
 
 class TASInputUIManager : public QObject {
     Q_OBJECT
+
+    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
 public:
     TASInputUIManager(QQuickWindow* main_window, QObject* parent = nullptr);
 
     virtual ~TASInputUIManager();
 
+    bool isReady();
+
+    void loadComponent();
+
     Q_INVOKABLE void open();
     Q_INVOKABLE void close();
+signals:
+    void readyChanged();
 private:
+    Q_INVOKABLE void onStatusUpdate();
+
     QQuickWindow* m_main_window;
     QQmlComponent* m_component;
     std::array<QQuickWindow*, 4> m_windows;

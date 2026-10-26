@@ -13,7 +13,8 @@ TASInputUIManager::TASInputUIManager(QQuickWindow *main_window, QObject *parent)
     auto *engine = qmlEngine(main_window);
 
     m_component = new QQmlComponent(engine);
-    m_component->loadFromModule("TASInput", "MainWindow");
+    // The component might not be immediately ready. This will set off a signal when it is.
+    QObject::connect(m_component, &QQmlComponent::statusChanged, this, &TASInputUIManager::onStatusUpdate);
 }
 TASInputUIManager::~TASInputUIManager()
 {
@@ -21,21 +22,30 @@ TASInputUIManager::~TASInputUIManager()
     delete m_component;
 }
 
-void TASInputUIManager::open()
+bool TASInputUIManager::isReady()
 {
-    if (m_is_open)
-        return;
-    m_is_open = true;
-
-    QVariantMap properties {
-        {"transientParent", QVariant::fromValue(m_main_window)},
-    };
-    m_windows[0] = (QQuickWindow*) m_component->createWithInitialProperties(properties);
+    return m_component->isReady();
 }
 
-void TASInputUIManager::close() {
-    if (!m_is_open)
-        return;
+void TASInputUIManager::loadComponent()
+{
+    m_component->loadFromModule("TASInput", "MainWindow");
+}
+
+void TASInputUIManager::open()
+{
+    if (m_is_open) return;
+    m_is_open = true;
+
+    QVariantMap properties{
+        {"transientParent", QVariant::fromValue(m_main_window)},
+    };
+    m_windows[0] = (QQuickWindow *)m_component->createWithInitialProperties(properties);
+}
+
+void TASInputUIManager::close()
+{
+    if (!m_is_open) return;
     m_is_open = false;
     for (auto *window : m_windows)
     {
@@ -45,4 +55,13 @@ void TASInputUIManager::close() {
             window = nullptr;
         }
     }
+}
+
+void TASInputUIManager::onStatusUpdate()
+{
+    qInfo() << "status: " << m_component->status();
+    if (m_component->status() == QQmlComponent::Error) {
+        qInfo() << "error: " << m_component->errorString();
+    }
+    readyChanged();
 }
