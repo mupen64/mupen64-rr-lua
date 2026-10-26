@@ -6,12 +6,16 @@
 
 #include "Main.hpp"
 #include <Core/Plugin.hpp>
+#include <QQuickWindow>
+
+#include "UIManager.hpp"
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TASInput (Qt6)")
 namespace BuiltinTAS::TASInput_Qt6
 {
 
 M64RRSpec::PluginInit *g_plugin;
+static std::atomic<TASInputUIManager*> g_ui_manager;
 
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
@@ -36,6 +40,13 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
     case M64RRSpec::Event::Type::Initiate: {
         g_plugin = event.initiate.init;
         assert(g_plugin->platform == M64RRSpec::Platform::Qt6);
+
+        auto* window = g_plugin->main_window.qt_window();
+        QMetaObject::invokeMethod(window, [window] {
+            auto* ui_manager = new TASInputUIManager(window);
+            g_ui_manager = ui_manager;
+        });
+        break;
     }
     case M64RRSpec::Event::Type::InitializeControllers: {
         auto *controllers = event.initialize_controllers.controllers;
@@ -50,6 +61,24 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
         controllers[0].present = 1;
         break;
     }
+    case M64RRSpec::Event::Type::RomOpened: {
+        auto* ui_manager = g_ui_manager.load();
+        QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::open);
+        break;
+    }
+    case M64RRSpec::Event::Type::RomClosed: {
+        auto* ui_manager = g_ui_manager.load();
+        QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::close);
+        break;
+    }
+    case M64RRSpec::Event::Type::Shutdown: {
+        auto* window = g_plugin->main_window.qt_window();
+        QMetaObject::invokeMethod(window, [] {
+            delete g_ui_manager.load();
+            g_ui_manager = nullptr;
+        });
+        break;
+    }
     default:
         break;
     }
@@ -60,6 +89,7 @@ void M64RRReadController(int32_t controller, unsigned char *command)
 }
 void M64RRShowConfig(M64RRSpec::WindowHandle parent_window)
 {
+
 }
 void M64RRGetKeys(int32_t index, CoreButtons *buttons)
 {

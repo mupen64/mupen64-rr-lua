@@ -41,7 +41,6 @@ static std::array<StrUtils::unordered_string_map<void *>, (size_t)PluginID::NumP
         {"M64RRGetMetadata", (void *)TASInput_Qt6::M64RRGetMetadata},
         {"M64RRProcessEvent", (void *)TASInput_Qt6::M64RRProcessEvent},
         {"M64RRReadController", (void *)TASInput_Qt6::M64RRReadController},
-        {"M64RRShowConfig", (void *)TASInput_Qt6::M64RRShowConfig},
         {"M64RRGetKeys", (void *)TASInput_Qt6::M64RRGetKeys},
         {"M64RRSetKeys", (void *)TASInput_Qt6::M64RRSetKeys},
     },

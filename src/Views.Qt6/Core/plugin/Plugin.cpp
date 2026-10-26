@@ -103,11 +103,6 @@ void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void
     auto *video_process_dlist_ptr = (M64RRSpec::PtrProcessDList)load_symbol("M64RRProcessDList");
     m_init_data->process_dlist = video_process_dlist_ptr;
 
-    m_init_data->log_error = [](const char *msg) { std::println(stderr, "[ERROR] {}", msg); };
-    m_init_data->log_warn = [](const char *msg) { std::println(stderr, "[WARN]  {}", msg); };
-    m_init_data->log_info = [](const char *msg) { std::println(stderr, "[INFO]  {}", msg); };
-    m_init_data->log_trace = [](const char *msg) { std::println(stderr, "[TRACE] {}", msg); };
-
     m_init_data->get_effective_speed_mode = []() { return EmuContext::rawContext()->vr_get_effective_speed_mode(); };
     m_init_data->frame_skipped = []() { return EmuContext::rawContext()->vr_get_frame_skipped(); };
     m_init_data->config_path = get_config_path;

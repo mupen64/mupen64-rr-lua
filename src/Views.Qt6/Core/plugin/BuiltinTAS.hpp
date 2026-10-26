@@ -56,7 +56,6 @@ namespace TASInput_Qt6
 void M64RRGetMetadata(M64RRSpec::PluginMetadata *);
 void M64RRProcessEvent(M64RRSpec::Event);
 void M64RRReadController(int32_t, unsigned char *);
-void M64RRShowConfig(M64RRSpec::WindowHandle);
 void M64RRGetKeys(int32_t, CoreButtons *);
 void M64RRSetKeys(int32_t, CoreButtons);
 } // namespace TASInput
