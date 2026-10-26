@@ -14,6 +14,8 @@ qt_add_qml_module(Mupen64RR_Plugins_Qt6_TASInput
         "Main.cpp"
         "UIManager.cpp"
     QML_FILES
+        "Joystick.qml"
+        "JoystickSection.qml"
         "MainWindow.qml"
 )
 target_compile_features(Mupen64RR_Plugins_Qt6_TASInput PRIVATE cxx_std_26)
