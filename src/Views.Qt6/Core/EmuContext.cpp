@@ -90,7 +90,7 @@ EmuContext::EmuContext(QQuickItem *parent)
         {
             auto video_plugin = Plugin(BuiltinTAS::PluginID::TASVideo);
             auto audio_plugin = Plugin(BuiltinTAS::PluginID::TASAudio);
-            auto input_plugin = Plugin(BuiltinTAS::PluginID::DummyInput);
+            auto input_plugin = Plugin(BuiltinTAS::PluginID::TASInput);
             auto rsp_plugin = Plugin(BuiltinTAS::PluginID::TASRSP);
             m_plugins.emplace(
                 std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin), std::move(rsp_plugin));

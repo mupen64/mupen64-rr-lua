@@ -11,6 +11,7 @@
 #include "SDLBackend.hpp"
 #include <Core/Types.hpp>
 #include <Core/Plugin.hpp>
+#include <iostream>
 
 namespace BuiltinTAS::TASAudio
 {
@@ -142,11 +143,10 @@ EXPORT void CALL M64RRAILenChanged()
 SDLAudio::Config read_config()
 {
     SDLAudio::Config cfg;
-    std::fstream fs(IOUtils::config_path(), std::ios_base::in | std::ios_base::out | std::ios_base::app | std::ios_base::ate);
-    fs.exceptions(std::ios_base::badbit);
+    std::fstream fs(IOUtils::config_path() / CONFIG_FILE_NAME, std::ios_base::in | std::ios_base::out | std::ios_base::app);
 
     // if the config file was missing or empty, write the default config
-    if (fs.tellg() == 0)
+    if ((std::streamoff) fs.tellg() == 0)
     {
         cfg.write_to(fs);
         return cfg;

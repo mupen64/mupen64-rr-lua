@@ -51,4 +51,6 @@ target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
     Mupen64RR_Plugins_TASVideo
     Mupen64RR_Plugins_TASAudio
     Mupen64RR_Plugins_TASRSP
+
+    Mupen64RR_Plugins_Qt6_TASInput
 )

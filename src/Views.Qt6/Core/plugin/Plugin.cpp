@@ -74,6 +74,9 @@ void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void
 
     m_init_data.reset(new M64RRSpec::PluginInit);
 
+    m_init_data->main_window = EmuContext::instance()->window();
+    m_init_data->platform = M64RRSpec::Platform::Qt6;
+
     m_init_data->rom = ctx->rom;
     m_init_data->rdram = (uint8_t *)ctx->rdram;
     m_init_data->dmem = (uint8_t *)ctx->sp_dmem;

@@ -154,6 +154,15 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
     )
 endif()
 
+# options for specific frontends (specifically for the plugin API)
+if (MUPEN64RR_BUILD_WIN32)
+    target_compile_definitions(Mupen64RR_Core PUBLIC MUPEN64RR_BUILD_WIN32)
+endif()
+if (MUPEN64RR_BUILD_QT6)
+    target_compile_definitions(Mupen64RR_Core PUBLIC MUPEN64RR_BUILD_QT6)
+    target_link_libraries(Mupen64RR_Core PUBLIC Qt6::Core Qt6::Quick)
+endif()
+
 add_compile_definitions(NOMINMAX)
 
 # FOR TESTING ONLY. DO NOT USE OTHERWISE.

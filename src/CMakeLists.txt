@@ -75,7 +75,8 @@ endif()
 # ============================
 
 if (MUPEN64RR_BUILD_QT6)
-    # add_subdirectory(ViewModels.Qt6)
+    add_subdirectory(Plugins.Qt6.TASInput)
+
     add_subdirectory(Views.Qt6)
 endif()
 
