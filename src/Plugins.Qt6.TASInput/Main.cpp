@@ -19,7 +19,7 @@ static std::atomic<TASInputUIManager *> g_ui_manager = nullptr;
 
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
-    metadata->type = M64RRSpec::PluginType::Audio;
+    metadata->type = M64RRSpec::PluginType::Input;
 
     constexpr auto name = PLUGIN_NAME;
     constexpr auto description = "Built-in plugin for Mupen64."
@@ -52,7 +52,6 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
             QObject::connect(ui_manager, &TASInputUIManager::readyChanged, ui_manager, [=] {
                 if (!ui_manager->isReady())
                     return;
-                std::println("ready!");
                 g_ui_manager.store(ui_manager, std::memory_order_release);
                 g_ui_manager.notify_all();
             }, Qt::SingleShotConnection);
@@ -78,10 +77,9 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
         TASInputUIManager* ui_manager = nullptr;
         // wait until g_ui_manager is set
         while ((ui_manager = g_ui_manager.load(std::memory_order_acquire)) == nullptr)
-        {
             g_ui_manager.wait(nullptr, std::memory_order_relaxed);
-        }
 
+        // open the window
         QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::open);
         break;
     }
@@ -106,12 +104,39 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
 void M64RRReadController(int32_t controller, unsigned char *command)
 {
 }
-void M64RRShowConfig(M64RRSpec::WindowHandle parent_window)
-{
-}
 void M64RRGetKeys(int32_t index, CoreButtons *buttons)
 {
-    buttons->value = 0;
+    auto *ui_manager = g_ui_manager.load();
+    if (!ui_manager->hasPort(index)) return;
+
+    std::promise<CoreButtons> promise;
+    auto future = promise.get_future();
+
+    QObject::connect(ui_manager, &TASInputUIManager::receiveInput, ui_manager, [promise = std::move(promise)](int port, const QVariantMap& map) mutable {
+        promise.set_value(CoreButtons {
+            .dr = map["btnDR"].toBool(),
+            .dl = map["btnDL"].toBool(),
+            .dd = map["btnDD"].toBool(),
+            .du = map["btnDU"].toBool(),
+            .start = map["btnS"].toBool(),
+            .z = map["btnZ"].toBool(),
+            .b = map["btnB"].toBool(),
+            .a = map["btnA"].toBool(),
+            .cr = map["btnCR"].toBool(),
+            .cl = map["btnCL"].toBool(),
+            .cd = map["btnCD"].toBool(),
+            .cu = map["btnCU"].toBool(),
+            .r = map["btnR"].toBool(),
+            .l = map["btnL"].toBool(),
+            .reserved_1 = 0,
+            .reserved_2 = 0,
+            .x = map["x"].toInt(),
+            .y = map["y"].toInt(),
+        });
+    }, Qt::SingleShotConnection);
+    QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::requestInput, index);
+
+    *buttons = future.get();
 }
 void M64RRSetKeys(int32_t index, CoreButtons buttons)
 {

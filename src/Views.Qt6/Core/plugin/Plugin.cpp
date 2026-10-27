@@ -15,7 +15,13 @@ template <class T>
 static inline void load_core_function(Plugin &plugin, const char *symbol, std::function<std::remove_pointer_t<T>> &func)
 {
     auto pointer = (T)plugin.load_symbol(symbol);
-    if (pointer != nullptr) func = pointer;
+    if (pointer != nullptr) {
+        // std::println("found symbol {}", symbol);
+        func = pointer;
+    }
+    else {
+        // std::println("missing symbol {}", symbol);
+    }
 }
 
 static size_t get_config_path(char *data, size_t size)

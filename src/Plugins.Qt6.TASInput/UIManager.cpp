@@ -39,6 +39,8 @@ void TASInputUIManager::open()
 
     QVariantMap properties{
         {"transientParent", QVariant::fromValue(m_main_window)},
+        {"backend", QVariant::fromValue(this)},
+        {"port", 0},
     };
     m_windows[0] = (QQuickWindow *)m_component->createWithInitialProperties(properties);
 }
@@ -55,6 +57,10 @@ void TASInputUIManager::close()
             window = nullptr;
         }
     }
+}
+
+bool TASInputUIManager::hasPort(int port) {
+    return m_windows[port] != nullptr;
 }
 
 void TASInputUIManager::onStatusUpdate()
