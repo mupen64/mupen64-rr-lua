@@ -80,6 +80,7 @@ EmuContext::EmuContext(QQuickItem *parent)
 
     m_core_params->callbacks.emu_starting = [&] { m_plugins.value().emu_started(*m_core_params); };
     m_core_params->callbacks.emu_stopped = [&] {
+        std::lock_guard lock(m_read_video_mutex);
         m_plugins.value().emu_stopped(*m_core_params);
         m_plugins.reset();
         m_fn_read_video = nullptr;
@@ -92,6 +93,7 @@ EmuContext::EmuContext(QQuickItem *parent)
             auto audio_plugin = Plugin(BuiltinTAS::PluginID::TASAudio);
             auto input_plugin = Plugin(BuiltinTAS::PluginID::DummyInput);
             auto rsp_plugin = Plugin(BuiltinTAS::PluginID::TASRSP);
+            std::lock_guard lock(m_read_video_mutex);
             m_plugins.emplace(
                 std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin), std::move(rsp_plugin));
 
@@ -384,6 +386,9 @@ EmuPaths *EmuContext::paths()
 
 void EmuContext::readVideoOutput(QImage &image)
 {
+    std::lock_guard lock(m_read_video_mutex);
+    if (m_fn_read_video == nullptr) return;
+
     int32_t width = 0;
     int32_t height = 0;
     m_fn_read_video(nullptr, &width, &height);

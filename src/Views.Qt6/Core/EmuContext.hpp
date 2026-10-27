@@ -6,6 +6,9 @@
 #pragma once
 
 #include <future>
+#include <functional>
+#include <mutex>
+#include <unordered_map>
 
 #include <QObject>
 #include <QPointer>
@@ -253,6 +256,8 @@ class EmuContext : public QQuickItem
     CoreCfg *m_core_cfg;
     CoreParams *m_core_params;
     CoreCtx *m_core_ctx;
+
+    std::mutex m_read_video_mutex;
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
