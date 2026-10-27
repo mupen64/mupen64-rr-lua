@@ -109,6 +109,8 @@ void M64RRGetKeys(int32_t index, CoreButtons *buttons)
     auto *ui_manager = g_ui_manager.load();
     if (!ui_manager->hasPort(index)) return;
 
+    *buttons = {0};
+
     std::promise<CoreButtons> promise;
     auto future = promise.get_future();
 

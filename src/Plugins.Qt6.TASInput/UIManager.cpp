@@ -12,14 +12,12 @@ TASInputUIManager::TASInputUIManager(QQuickWindow *main_window, QObject *parent)
 {
     auto *engine = qmlEngine(main_window);
 
-    m_component = new QQmlComponent(engine);
+    m_component = new QQmlComponent(engine, this);
     // The component might not be immediately ready. This will set off a signal when it is.
     QObject::connect(m_component, &QQmlComponent::statusChanged, this, &TASInputUIManager::onStatusUpdate);
 }
 TASInputUIManager::~TASInputUIManager()
 {
-    close();
-    delete m_component;
 }
 
 bool TASInputUIManager::isReady()
@@ -49,7 +47,7 @@ void TASInputUIManager::close()
 {
     if (!m_is_open) return;
     m_is_open = false;
-    for (auto *window : m_windows)
+    for (auto *&window : m_windows)
     {
         if (window != nullptr)
         {
