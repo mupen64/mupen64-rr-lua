@@ -151,6 +151,7 @@ EmuContext::~EmuContext()
 {
     // ensure ROM is closed
     m_core_ctx->vr_close_rom(true);
+    g_core_instance.store(nullptr);
 }
 
 EmuContext *EmuContext::instance()
@@ -164,25 +165,31 @@ EmuContext *EmuContext::instance()
 void EmuContext::startROM(const QString &pathIn)
 {
     std::filesystem::path path = std::u16string_view{pathIn};
-    QThreadPool::globalInstance()->start([=, this] {
-        auto result = m_core_ctx->vr_start_rom(path);
-        this->startDialogForCoreResult(result);
+    QPointer<EmuContext> self(this);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([self, coreCtx, path] {
+        auto result = coreCtx->vr_start_rom(path);
+        if (self) self->startDialogForCoreResult(result);
     });
 }
 
 void EmuContext::closeROM(bool resetVCR)
 {
-    QThreadPool::globalInstance()->start([=, this] {
-        auto result = m_core_ctx->vr_close_rom(resetVCR);
-        this->startDialogForCoreResult(result);
+    QPointer<EmuContext> self(this);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([self, coreCtx, resetVCR] {
+        auto result = coreCtx->vr_close_rom(resetVCR);
+        if (self) self->startDialogForCoreResult(result);
     });
 }
 
 void EmuContext::resetROM(bool resetSaveData, bool stopVCR)
 {
-    QThreadPool::globalInstance()->start([=, this] {
-        auto result = m_core_ctx->vr_reset_rom(resetSaveData, stopVCR);
-        this->startDialogForCoreResult(result);
+    QPointer<EmuContext> self(this);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([self, coreCtx, resetSaveData, stopVCR] {
+        auto result = coreCtx->vr_reset_rom(resetSaveData, stopVCR);
+        if (self) self->startDialogForCoreResult(result);
     });
 }
 
@@ -216,9 +223,10 @@ void EmuContext::saveFile(const QString &pathIn)
     // To keep operations from running on the wrong frame, we also block the core from
     // advancing until the operation is queued.
     m_core_ctx->vr_wait_increment();
-    QThreadPool::globalInstance()->start([=, this] {
-        m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([coreCtx, path] {
+        coreCtx->vr_wait_decrement();
+        coreCtx->st_do_file(path, CoreSTJob::Save, nullptr, false);
     });
 }
 
@@ -235,9 +243,10 @@ void EmuContext::loadFile(const QString &pathIn)
     std::filesystem::path path = std::u16string_view{pathIn};
     // see saveFile()
     m_core_ctx->vr_wait_increment();
-    QThreadPool::globalInstance()->start([=, this] {
-        m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([coreCtx, path] {
+        coreCtx->vr_wait_decrement();
+        coreCtx->st_do_file(path, CoreSTJob::Load, nullptr, false);
     });
 }
 

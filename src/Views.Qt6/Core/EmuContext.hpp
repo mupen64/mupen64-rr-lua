@@ -8,6 +8,7 @@
 #include <future>
 
 #include <QObject>
+#include <QPointer>
 #include <QQuickItem>
 #include <QUrl>
 #include <qqmlintegration.h>
@@ -256,7 +257,7 @@ class EmuContext : public QQuickItem
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
 
-    RomManager *m_rom_manager;
+    QPointer<RomManager> m_rom_manager;
 
     EmuOptions *m_options;
     EmuPaths *m_paths;
