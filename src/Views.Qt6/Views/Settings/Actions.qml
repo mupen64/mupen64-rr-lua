@@ -36,7 +36,7 @@ ActionManager {
                 return;
 
             let title = `${message.module} Error ${result}`;
-            root.dialogService.queueInfoDialog(null, title, message.error, CoreMessageTone.Error);
+            root.dialogService.queueInfoDialog(-1, title, message.error, CoreMessageTone.Error);
         }
     }
 

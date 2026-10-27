@@ -14,8 +14,6 @@
 #include <QThreadPool>
 #include <QUrl>
 
-#include <QJSInterop.hpp>
-
 static std::atomic<EmuContext *> g_core_instance = nullptr;
 
 static CoreCfg g_core_cfg{};
@@ -151,6 +149,8 @@ EmuContext::EmuContext(QQuickItem *parent)
 
 EmuContext::~EmuContext()
 {
+    cancelPendingDialogs();
+
     // ensure ROM is closed
     m_core_ctx->vr_close_rom(true);
     g_core_instance.store(nullptr);
@@ -319,6 +319,13 @@ void EmuContext::setSpeedModifier(int32_t valueIn)
     }
 }
 
+int EmuContext::registerDialog(std::move_only_function<void(int)> finish)
+{
+    const int id = m_next_dialog_id++;
+    m_pending_dialogs.emplace(id, PendingDialog{std::move(finish)});
+    return id;
+}
+
 std::future<size_t> EmuContext::startMultiDialog(
     QAnyStringView title, QAnyStringView content, const QList<QString> &choices, QmlCoreMessageTone::Value type)
 {
@@ -327,11 +334,9 @@ std::future<size_t> EmuContext::startMultiDialog(
 
     QMetaObject::invokeMethod(this, [=, this, promise = std::move(promise), title = title.toString(),
                                         content = content.toString(), choices = choices] mutable {
-        // JS objects should be instantiated on the event thread
-        auto done_callback = QJSFunctions::toJSFunction(
-            qmlEngine(this), [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
-
-        openMultiDialog(done_callback, title, content, choices, type);
+        const int id = registerDialog(
+            [promise = std::move(promise)](int result) mutable { promise.set_value(static_cast<size_t>(result)); });
+        openMultiDialog(id, title, content, choices, type);
     });
 
     return future;
@@ -345,11 +350,9 @@ std::future<bool> EmuContext::startAskDialog(
 
     QMetaObject::invokeMethod(
         this, [=, this, promise = std::move(promise), title = title.toString(), content = content.toString()] mutable {
-            // JS objects should be instantiated on the event thread
-            auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
-                [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
-
-            openAskDialog(done_callback, title, content, type);
+            const int id =
+                registerDialog([promise = std::move(promise)](int result) mutable { promise.set_value(result == 1); });
+            openAskDialog(id, title, content, type);
         });
 
     return future;
@@ -362,14 +365,29 @@ std::future<void> EmuContext::startInfoDialog(
 
     QMetaObject::invokeMethod(
         this, [=, this, promise = std::move(promise), title = title.toString(), content = content.toString()] mutable {
-            // JS objects should be instantiated on the event thread
-            auto done_callback = QJSFunctions::toJSFunction(
-                qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
-
-            openInfoDialog(done_callback, title, content, type);
+            const int id = registerDialog([promise = std::move(promise)](int) mutable { promise.set_value(); });
+            openInfoDialog(id, title, content, type);
         });
 
     return future;
+}
+
+void EmuContext::finishDialog(int id, int result)
+{
+    auto it = m_pending_dialogs.find(id);
+    if (it == m_pending_dialogs.end()) return;
+
+    auto finish = std::move(it->second.finish);
+    m_pending_dialogs.erase(it);
+    finish(result);
+}
+
+void EmuContext::cancelPendingDialogs()
+{
+    auto pending = std::move(m_pending_dialogs);
+    m_pending_dialogs.clear();
+
+    for (auto &entry : pending) entry.second.finish(-1);
 }
 
 // Misc. functions
