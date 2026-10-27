@@ -19,6 +19,7 @@ struct DebuggerState
 {
     std::shared_mutex mtx;
     std::atomic<uint32_t> breakpoint_count{0};
+    std::array<std::atomic<uint32_t>, 65536> breakpoint_filter{};
     CoreDbgCPUState cpu_state{};
     std::unordered_map<uintptr_t, std::vector<Breakpoint>> breakpoints;
     CoreBreakpointId next_breakpoint_id{0};
@@ -26,9 +27,16 @@ struct DebuggerState
 
 static DebuggerState g_dbg{};
 
+static constexpr size_t breakpoint_filter_index(uintptr_t address)
+{
+    return (address >> 2) & 0xFFFF;
+}
+
 void dbg_call_breakpoints_and_wait(const CoreDbgCPUState &state)
 {
     if (g_dbg.breakpoint_count == 0) return;
+
+    if (g_dbg.breakpoint_filter[breakpoint_filter_index(state.address)].load(std::memory_order_relaxed) == 0) return;
 
     std::shared_lock lock(g_dbg.mtx);
     const auto it = g_dbg.breakpoints.find(state.address);
@@ -45,6 +53,7 @@ CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallb
     std::unique_lock lock(g_dbg.mtx);
     CoreBreakpointId id = g_dbg.next_breakpoint_id++;
     g_dbg.breakpoints[address].push_back({id, callback});
+    g_dbg.breakpoint_filter[breakpoint_filter_index(address)].fetch_add(1, std::memory_order_relaxed);
     g_dbg.breakpoint_count++;
     return id;
 }
@@ -58,6 +67,7 @@ void dbg_remove_breakpoint(const CoreBreakpointId &id)
         if (it != bps.end())
         {
             bps.erase(it);
+            g_dbg.breakpoint_filter[breakpoint_filter_index(address)].fetch_sub(1, std::memory_order_relaxed);
             g_dbg.breakpoint_count--;
             break;
         }
