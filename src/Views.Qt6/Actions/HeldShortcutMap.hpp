@@ -9,6 +9,7 @@
 #include <QGuiApplication>
 #include <QJSEngine>
 #include <QJSValue>
+#include <QPointer>
 #include <qqmlintegration.h>
 
 /**
@@ -31,7 +32,7 @@ class HeldShortcutMap : public QObject
     bool eventFilter(QObject *watched, QEvent *event) override;
 
   private:
-    std::unordered_map<Qt::Key, QObject *> m_shortcuts;
+    std::unordered_map<Qt::Key, QPointer<QObject>> m_shortcuts;
 };
 
 Q_DECLARE_METATYPE(HeldShortcutMap)
