@@ -41,6 +41,7 @@ void TASInputUIManager::open()
         {"port", 0},
     };
     m_windows[0] = (QQuickWindow *)m_component->createWithInitialProperties(properties);
+    ((QObject*) m_windows[0])->setParent(this);
 }
 
 void TASInputUIManager::close()
@@ -67,5 +68,6 @@ void TASInputUIManager::onStatusUpdate()
     if (m_component->status() == QQmlComponent::Error) {
         qInfo() << "error: " << m_component->errorString();
     }
-    readyChanged();
+    if (m_component->status() == QQmlComponent::Ready)
+        readyChanged();
 }

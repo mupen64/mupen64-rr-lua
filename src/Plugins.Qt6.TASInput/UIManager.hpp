@@ -30,11 +30,13 @@ public:
     Q_INVOKABLE void close();
 
     bool hasPort(int port);
+
 signals:
     void readyChanged();
 
-    // Fired by the plugin to request input state.
+    // Fired by the plugin to request input.
     void requestInput(int port);
+
     // Fired by the UI to respond with input state.
     void receiveInput(int port, const QVariantMap& state);
 

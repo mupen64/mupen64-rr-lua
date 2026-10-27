@@ -15,7 +15,11 @@ namespace BuiltinTAS::TASInput_Qt6
 {
 
 M64RRSpec::PluginInit *g_plugin = nullptr;
-static std::atomic<TASInputUIManager *> g_ui_manager = nullptr;
+
+// managed by the UI thread. DO NOT MODIFY from outside.
+TASInputUIManager *g_ui_manager = nullptr;
+// managed by the plugin. DO NOT MODIFY from outside.
+QPointer<TASInputUIManager> g_ext_ui_manager = nullptr;
 
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
@@ -39,25 +43,6 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
     {
     case M64RRSpec::Event::Type::Initiate: {
         g_plugin = event.initiate.init;
-        assert(g_plugin->platform == M64RRSpec::Platform::Qt6);
-
-        if (g_ui_manager != nullptr)
-            break;
-
-        // create the UI manager
-        auto *window = g_plugin->main_window.qt_window();
-        QMetaObject::invokeMethod(window, [window] {
-            auto *ui_manager = new TASInputUIManager(window);
-
-            QObject::connect(ui_manager, &TASInputUIManager::readyChanged, ui_manager, [=] {
-                if (!ui_manager->isReady())
-                    return;
-                g_ui_manager.store(ui_manager, std::memory_order_release);
-                g_ui_manager.notify_all();
-            }, Qt::SingleShotConnection);
-            ui_manager->loadComponent();
-
-        });
         break;
     }
     case M64RRSpec::Event::Type::InitializeControllers: {
@@ -74,26 +59,51 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
         break;
     }
     case M64RRSpec::Event::Type::RomOpened: {
-        TASInputUIManager* ui_manager = nullptr;
-        // wait until g_ui_manager is set
-        while ((ui_manager = g_ui_manager.load(std::memory_order_acquire)) == nullptr)
-            g_ui_manager.wait(nullptr, std::memory_order_relaxed);
+        auto *window = g_plugin->main_window.qt_window();
 
-        // open the window
-        QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::open);
+        // BlockingQueuedConnection isn't sufficient, as we may have to wait for a second event
+        // for our "coroutine" to complete.
+        std::atomic<bool> done_flag = false;
+        std::atomic<TASInputUIManager *> ui_manager = nullptr;
+
+        // We don't have coroutines, so this looks a bit funky.
+        QMetaObject::invokeMethod(window, [window, &done_flag, &ui_manager] mutable {
+            if (!g_ui_manager) g_ui_manager = new TASInputUIManager(window);
+            ui_manager.store(g_ui_manager);
+
+            auto open_windows = [&done_flag] mutable {
+                g_ui_manager->open();
+                done_flag = true;
+                done_flag.notify_all();
+            };
+
+            // open the windows when the component has loaded (either now or later)
+            if (g_ui_manager->isReady())
+            {
+                open_windows();
+                return;
+            }
+            QObject::connect(
+                g_ui_manager, &TASInputUIManager::readyChanged, g_ui_manager, open_windows, Qt::SingleShotConnection);
+            g_ui_manager->loadComponent();
+        });
+
+        // wait until the windows are open
+        while (!done_flag.load()) done_flag.wait(false);
+
+        // ui_manager should have been previously set by the UI thread
+        g_ext_ui_manager = ui_manager.load();
+
         break;
     }
     case M64RRSpec::Event::Type::RomClosed: {
-        auto *ui_manager = g_ui_manager.load();
-        QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::close);
+        if (g_ext_ui_manager.isNull()) break;
+        QMetaObject::invokeMethod(g_ext_ui_manager.get(), &TASInputUIManager::close);
         break;
     }
     case M64RRSpec::Event::Type::Shutdown: {
-        auto *window = g_plugin->main_window.qt_window();
-        QMetaObject::invokeMethod(window, [] {
-            delete g_ui_manager.load();
-            g_ui_manager = nullptr;
-        });
+        if (g_ext_ui_manager.isNull()) break;
+        g_ext_ui_manager->deleteLater();
         break;
     }
     default:
@@ -106,44 +116,41 @@ void M64RRReadController(int32_t controller, unsigned char *command)
 }
 void M64RRGetKeys(int32_t index, CoreButtons *buttons)
 {
-    auto *ui_manager = g_ui_manager.load();
-    if (!ui_manager->hasPort(index)) return;
+    if (g_ext_ui_manager.isNull()) return;
 
-    *buttons = {0};
+    // Temporary event loop to wait for a signal
+    QEventLoop event_loop;
 
-    std::promise<CoreButtons> promise;
-    auto future = promise.get_future();
-
-    QObject::connect(ui_manager, &TASInputUIManager::receiveInput, ui_manager, [promise = std::move(promise)](int port, const QVariantMap& map) mutable {
-        promise.set_value(CoreButtons {
-            .dr = map["btnDR"].toBool(),
-            .dl = map["btnDL"].toBool(),
-            .dd = map["btnDD"].toBool(),
-            .du = map["btnDU"].toBool(),
-            .start = map["btnS"].toBool(),
-            .z = map["btnZ"].toBool(),
-            .b = map["btnB"].toBool(),
-            .a = map["btnA"].toBool(),
-            .cr = map["btnCR"].toBool(),
-            .cl = map["btnCL"].toBool(),
-            .cd = map["btnCD"].toBool(),
-            .cu = map["btnCU"].toBool(),
-            .r = map["btnR"].toBool(),
-            .l = map["btnL"].toBool(),
-            .reserved_1 = 0,
-            .reserved_2 = 0,
-            .x = map["x"].toInt(),
-            .y = map["y"].toInt(),
+    // once the input arrives, shut down the event loop and set the buttons
+    QObject::connect(g_ext_ui_manager.get(), &TASInputUIManager::receiveInput, &event_loop,
+        [=, &event_loop](int port, const QVariantMap &map) {
+            if (port != index) return;
+            *buttons = {
+                .dr = map["btnDR"].toBool(),
+                .dl = map["btnDL"].toBool(),
+                .dd = map["btnDD"].toBool(),
+                .du = map["btnDU"].toBool(),
+                .start = map["btnS"].toBool(),
+                .z = map["btnZ"].toBool(),
+                .b = map["btnB"].toBool(),
+                .a = map["btnA"].toBool(),
+                .cr = map["btnCR"].toBool(),
+                .cl = map["btnCL"].toBool(),
+                .cd = map["btnCD"].toBool(),
+                .cu = map["btnCU"].toBool(),
+                .r = map["btnR"].toBool(),
+                .l = map["btnL"].toBool(),
+                .reserved_1 = 0,
+                .reserved_2 = 0,
+                .x = map["x"].toInt(),
+                .y = map["y"].toInt(),
+            };
+            event_loop.quit();
         });
-    }, Qt::SingleShotConnection);
-    QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::requestInput, index);
 
-    if (future.wait_for(std::chrono::milliseconds(1)) != std::future_status::ready) {
-        buttons->value = 0;
-        return;
-    }
-
-    *buttons = future.get();
+    // fire the start signal; the event loop will be stopped by the handler
+    QMetaObject::invokeMethod(g_ext_ui_manager.get(), &TASInputUIManager::requestInput, index);
+    event_loop.exec();
 }
 void M64RRSetKeys(int32_t index, CoreButtons buttons)
 {

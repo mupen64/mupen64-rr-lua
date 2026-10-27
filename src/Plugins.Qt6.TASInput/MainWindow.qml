@@ -8,9 +8,6 @@ ApplicationWindow {
     //% "TASInput"
     title: qsTrId("tasinput.appName")
 
-    required property int port
-    required property var backend
-
     // ensure window fits content
     minimumWidth: rootItem.implicitWidth + leftPadding + rightPadding
     minimumHeight: rootItem.implicitHeight + topPadding + bottomPadding
@@ -28,6 +25,9 @@ ApplicationWindow {
     width: 300
     height: 200
 
+    property var backend
+    property int port: 0
+
     ColumnLayout {
         id: rootItem
         JoystickSection {
@@ -39,6 +39,7 @@ ApplicationWindow {
     }
 
     Connections {
+        enabled: root.backend != null
         target: root.backend
         function onRequestInput(port: int) {
             if (port != root.port)

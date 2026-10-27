@@ -15,7 +15,11 @@ Button {
     text: rapidFire? `[${label}]` : label
 
     function doPollUpdate() {
-        if (rapidFire) toggle();
+        if (rapidFire) {
+            // toggle() doesn't trigger the toggled() signal, we trigger it manually
+            toggle();
+            toggled();
+        }
     }
 
     TapHandler {
@@ -25,6 +29,7 @@ Button {
             if (mouseBtn == Qt.RightButton) {
                 button.rapidFire = true;
                 button.toggle();
+                button.toggled();
             } else {
                 button.rapidFire = false;
             }

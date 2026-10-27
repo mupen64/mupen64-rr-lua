@@ -8,8 +8,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 # USEFUL SETTINGS
 # ============================
 
-add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-add_link_options(-fsanitize=address)
+# add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+# add_link_options(-fsanitize=address)
 
 # COMMON LIBRARIES
 # ============================
