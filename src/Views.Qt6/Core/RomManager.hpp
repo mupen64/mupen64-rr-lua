@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QAbstractTableModel>
 #include <QQmlListProperty>
+#include <QThreadPool>
 #include <qqmlintegration.h>
 
 #include "Core/Types.hpp"
@@ -56,6 +57,7 @@ class RomManager : public QAbstractTableModel
     using RomList = std::vector<std::shared_ptr<RomData>>;
 
     RomManager(QObject *parent = nullptr);
+    ~RomManager() override;
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -116,4 +118,5 @@ class RomManager : public QAbstractTableModel
     std::vector<std::shared_ptr<RomData>> m_rom_data;
     std::optional<std::move_only_function<void(const RomList &)>> m_rom_data_request;
     bool m_loading;
+    QThreadPool m_pool;
 };

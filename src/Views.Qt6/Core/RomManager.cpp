@@ -41,6 +41,11 @@ RomManager::RomManager(QObject *parent) : QAbstractTableModel(parent), m_loading
         sendRomData();
     });
 }
+
+RomManager::~RomManager()
+{
+    m_pool.waitForDone();
+}
 int RomManager::rowCount(const QModelIndex &) const
 {
     return (int)m_rom_data.size();
@@ -149,7 +154,7 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
     clearRomList();
 
     // perform load on a separate thread
-    QThreadPool::globalInstance()->start([this, romDir, recursive, vrByteswap = EmuContext::rawContext()->vr_byteswap] {
+    m_pool.start([this, romDir, recursive, vrByteswap = EmuContext::rawContext()->vr_byteswap] {
         // ad-hoc scope guard: clear the setLoading flag on exit
         struct Guard
         {
