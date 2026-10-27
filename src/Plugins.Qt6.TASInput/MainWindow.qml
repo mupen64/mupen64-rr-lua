@@ -44,11 +44,14 @@ ApplicationWindow {
             if (port != root.port)
                 return;
 
-            // Yes, this is comically inefficient.
-            // It'll work though.
+            // buttons need to be updated
+            buttons.doPollUpdate();
+
+            // Yes, this is comically inefficient, but it's the easiest way to send all
+            // this data over the FFI barrier.
             root.backend.receiveInput(port, {
-                x: joystick.x,
-                y: joystick.y,
+                x: joystick.posX,
+                y: joystick.posY,
                 btnL: buttons.stateL,
                 btnZ: buttons.stateZ,
                 btnR: buttons.stateR,

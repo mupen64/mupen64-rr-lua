@@ -27,15 +27,24 @@ GridLayout {
     property bool stateA
 
     function doPollUpdate() {
-        for (const btn in [
-            btnL, btnZ, btnR,
-            btnDU, btnDL, btnDR, btnDD,
-            btnS,
-            btnCU, btnCL, btnCR, btnCD,
-            btnB, btnA
-        ]) {
-            btn.doPollUpdate();
-        }
+        btnL.doPollUpdate();
+        btnZ.doPollUpdate();
+        btnR.doPollUpdate();
+
+        btnDU.doPollUpdate();
+        btnDL.doPollUpdate();
+        btnDR.doPollUpdate();
+        btnDD.doPollUpdate();
+
+        btnS.doPollUpdate();
+
+        btnCU.doPollUpdate();
+        btnCL.doPollUpdate();
+        btnCR.doPollUpdate();
+        btnCD.doPollUpdate();
+
+        btnB.doPollUpdate();
+        btnA.doPollUpdate();
     }
 
     // trigger buttons

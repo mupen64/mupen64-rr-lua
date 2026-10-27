@@ -136,6 +136,11 @@ void M64RRGetKeys(int32_t index, CoreButtons *buttons)
     }, Qt::SingleShotConnection);
     QMetaObject::invokeMethod(ui_manager, &TASInputUIManager::requestInput, index);
 
+    if (future.wait_for(std::chrono::milliseconds(1)) != std::future_status::ready) {
+        buttons->value = 0;
+        return;
+    }
+
     *buttons = future.get();
 }
 void M64RRSetKeys(int32_t index, CoreButtons buttons)
