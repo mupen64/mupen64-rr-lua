@@ -326,5 +326,10 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <source>Size</source>
         <translation>Size</translation>
     </message>
+    <message id="tasinput.appName">
+        <location filename="../../Plugins.Qt6.TASInput/MainWindow.qml" line="9"/>
+        <source>TASInput</source>
+        <translation>TASInput</translation>
+    </message>
 </context>
 </TS>
