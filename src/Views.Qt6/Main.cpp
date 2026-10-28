@@ -20,6 +20,7 @@ Q_IMPORT_QML_PLUGIN(ActionsPlugin)
 Q_IMPORT_QML_PLUGIN(CorePlugin)
 Q_IMPORT_QML_PLUGIN(ComponentsPlugin)
 Q_IMPORT_QML_PLUGIN(ConfigPlugin)
+Q_IMPORT_QML_PLUGIN(LuaPlugin)
 Q_IMPORT_QML_PLUGIN(UtilsPlugin)
 
 namespace

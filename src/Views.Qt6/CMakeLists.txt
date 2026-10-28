@@ -9,6 +9,7 @@ add_subdirectory(Actions)
 add_subdirectory(Components)
 add_subdirectory(Config)
 add_subdirectory(Core)
+add_subdirectory(Lua)
 
 
 # C++ FILES
@@ -34,6 +35,8 @@ target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE
     Mupen64RR_Views_Qt6_Configplugin
     Mupen64RR_Views_Qt6_Core
     Mupen64RR_Views_Qt6_Coreplugin
+    Mupen64RR_Views_Qt6_Lua
+    Mupen64RR_Views_Qt6_Luaplugin
     Mupen64RR_Views_Qt6_Utils
     Mupen64RR_Views_Qt6_Utilsplugin
 
@@ -68,6 +71,7 @@ endif()
 set(qml_sources
     "Views/ConfigWindow.qml"
     "Views/DialogService.qml"
+    "Views/LuaScriptManager.qml"
     "Views/MainWindow.qml"
     "Views/RomBrowser.qml"
     "Views/RomBrowserCell.qml"

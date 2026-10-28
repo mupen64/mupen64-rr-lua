@@ -19,6 +19,7 @@ ActionManager {
     required property EmuContext core
     required property DialogService dialogService
     required property ConfigWindow winConfig
+    property ApplicationWindow winLua: null
 
     property bool menuOpen: false
 
@@ -299,6 +300,19 @@ ActionManager {
         onTriggered: root.winConfig.show()
     }
 
+    EmuMenu {
+        //% "Lua"
+        key: QT_TRID_NOOP("menu.lua")
+    }
+    EmuAction {
+        //% "Script Manager..."
+        key: QT_TRID_NOOP("menu.lua.manageScripts")
+        defaultShortcut: "Ctrl+L"
+        onTriggered: {
+            if (root.winLua) root.winLua.show()
+        }
+    }
+
     // Dialogs
     // ================================
 
@@ -350,7 +364,8 @@ ActionManager {
             diaLoadState.visible,
             diaSaveState.visible,
             // config dialog
-            root.winConfig.visible
+            root.winConfig.visible,
+            root.winLua?.visible ?? false
         ].some(value => value)
 
         // Tie GS button state to the GSButton item
