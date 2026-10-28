@@ -10,6 +10,8 @@
 #include <Common/Assert.hpp>
 
 #include <QDirIterator>
+#include <QPointer>
+#include <QScopeGuard>
 #include <QThreadPool>
 #include <QFileInfo>
 #include <QtTranslation>
@@ -40,11 +42,6 @@ RomManager::RomManager(QObject *parent) : QAbstractTableModel(parent), m_loading
         if (m_loading) return;
         sendRomData();
     });
-}
-
-RomManager::~RomManager()
-{
-    m_pool.waitForDone();
 }
 int RomManager::rowCount(const QModelIndex &) const
 {
@@ -154,13 +151,14 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
     clearRomList();
 
     // perform load on a separate thread
-    m_pool.start([this, romDir, recursive, vrByteswap = EmuContext::rawContext()->vr_byteswap] {
-        // ad-hoc scope guard: clear the setLoading flag on exit
-        struct Guard
-        {
-            RomManager *self;
-            ~Guard() { QMetaObject::invokeMethod(self, &RomManager::setLoading, false); }
-        } scopeGuard{.self = this};
+    QPointer<RomManager> self(this);
+    QThreadPool::globalInstance()->start([self, romDir, recursive, vrByteswap = EmuContext::rawContext()->vr_byteswap] {
+        // scope guard ensures that the loading flag gets cleared on exit
+        auto scopeGuard = qScopeGuard([self] {
+            if (self) QMetaObject::invokeMethod(self.data(), &RomManager::setLoading, false);
+        });
+
+        if (!self) return;
 
         std::filesystem::path romDirPath(std::u16string_view{romDir});
         if (!std::filesystem::is_directory(romDirPath)) return;
@@ -168,13 +166,19 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
         auto romFilter = std::views::filter([](const std::filesystem::directory_entry &entry) {
             return entry.is_regular_file() && is_one_of(entry.path().extension(), {".n64", ".v64", ".z64", ".rom"});
         });
-        auto sendRomData = [this, vrByteswap](const std::filesystem::directory_entry &entry) {
+        auto sendRomData = [self, vrByteswap](const std::filesystem::directory_entry &entry) {
             std::println("adding {}", entry.path().string());
             auto *romData = new RomData(entry.path(), entry.file_size(), vrByteswap);
 
+            if (!self)
+            {
+                delete romData;
+                return;
+            }
+
             // hand off romData back to UI thread
             romData->moveToThread(nullptr);
-            QMetaObject::invokeMethod(this, &RomManager::addRom, romData);
+            QMetaObject::invokeMethod(self.data(), &RomManager::addRom, romData);
         };
 
         if (recursive)
