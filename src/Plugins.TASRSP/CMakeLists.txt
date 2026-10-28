@@ -36,8 +36,6 @@ if (NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$"
 endif()
 
 target_compile_definitions(Mupen64RR_Plugins_TASRSP PRIVATE
-    M64RRGetMetadata=M64RRBuiltinTASRSPGetMetadata
-    M64RRProcessEvent=M64RRBuiltinTASRSPProcessEvent
-    M64RRDoRSPCycles=M64RRBuiltinTASRSPDoRSPCycles
-    g_plugin=M64RRBuiltinTASRSPPlugin
+    PLUGIN_NAMESPACE=BuiltinTAS::TASRSP
+    # g_plugin=M64RRBuiltinTASRSPPlugin
 )

@@ -30,6 +30,7 @@ retest.attach_coverage(
         { "hotkey",    hotkey },
         { "action",    action },
         { "clipboard", clipboard },
+        { "dialogs",   dialogs },
     }
 )
 
@@ -73,6 +74,60 @@ retest.describe('mupen64', function()
         end)
     end)
     retest.describe('emu', function()
+        retest.describe('get_pref', function()
+            retest.it('returns_resolved_theme', function()
+                local theme = emu.get_pref('theme')
+                retest.expect(theme == 'light' or theme == 'dark').to.equal(true)
+            end)
+
+            retest.it('returns_normalized_accent_color', function()
+                local color = emu.get_pref('accent_color')
+                retest.expect(type(color)).to.equal('table')
+                for _, channel in ipairs({ 'r', 'g', 'b', 'a' }) do
+                    retest.expect(type(color[channel])).to.equal('number')
+                    retest.expect(color[channel] >= 0 and color[channel] <= 1).to.equal(true)
+                end
+                retest.expect(color.a).to.equal(1)
+            end)
+
+            retest.it('returns_frontend_language', function()
+                retest.expect(emu.get_pref('lang')).to.equal('en_US')
+            end)
+
+            retest.it('returns_reduced_motion_preference', function()
+                retest.expect(type(emu.get_pref('reduced_motion'))).to.equal('boolean')
+            end)
+
+            retest.it('returns_high_contrast_preference', function()
+                retest.expect(type(emu.get_pref('high_contrast'))).to.equal('boolean')
+            end)
+
+            retest.it('returns_caret_blink_time_preference', function()
+                local blink_time = emu.get_pref('caret_blink_time')
+                if blink_time ~= false then
+                    retest.expect(type(blink_time)).to.equal('number')
+                    retest.expect(blink_time > 0).to.equal(true)
+                    retest.expect(blink_time % 1).to.equal(0)
+                end
+            end)
+
+            retest.it('rejects_unknown_preferences', function()
+                retest.expect(function() emu.get_pref('unknown') end).to.fail()
+            end)
+
+            retest.it('rejects_missing_or_invalid_arguments', function()
+                retest.expect(function() emu.get_pref() end).to.fail()
+                retest.expect(function() emu.get_pref({}) end).to.fail()
+            end)
+        end)
+
+        retest.describe('callbacks', function()
+            retest.it('unregistering_nonregistered_callback_doesnt_crash', function()
+                local success = pcall(emu.atinput, function() end, true)
+                retest.expect(success).to.equal(false)
+            end)
+        end)
+
         retest.describe('debugview', function()
             retest.it('forwarded_to_print', function()
                 retest.expect(emu.debugview).to.equal(print)
@@ -1104,6 +1159,35 @@ retest.describe('mupen64', function()
             end)
         end)
 
+        retest.describe('callback_notifications', function()
+            local ACTIONS_FILTER = "Test > Callback Stack > *"
+            local ACTION_PATH_PREFIX = "Test > Callback Stack > Item "
+
+            retest.after(function()
+                action.remove(ACTIONS_FILTER)
+            end)
+
+            retest.it('many_action_notifications_dont_crash', function()
+                action.remove(ACTIONS_FILTER)
+
+                for i = 1, 40 do
+                    local item = i
+                    retest.expect(action.add({
+                        path = ACTION_PATH_PREFIX .. item,
+                        get_display_name = function() return "Item " .. item end,
+                        get_enabled = function() error("intentional get_enabled error") end,
+                        get_active = function() return {} end,
+                    })).to.equal(true)
+                end
+
+                action.notify_display_name_changed(ACTIONS_FILTER)
+                action.notify_enabled_changed(ACTIONS_FILTER)
+                action.notify_active_changed(ACTIONS_FILTER)
+
+                retest.expect(true).to.equal(true)
+            end)
+        end)
+
         retest.describe('notify_enabled_changed', function()
             retest.after(function()
                 action.remove("Test > *")
@@ -1206,6 +1290,14 @@ retest.describe('mupen64', function()
                 })
                 local name = action.get_display_name("Test >    Something")
                 retest.expect(name).to.equal("Hi!")
+            end)
+            retest.it('falls_back_to_the_path_name_for_non_string_display_name', function()
+                action.add({
+                    path = "Test > Bad Display Name",
+                    get_display_name = function() return {} end,
+                })
+                local name = action.get_display_name("Test > Bad Display Name")
+                retest.expect(name).to.equal("Bad Display Name")
             end)
             retest.it('doesnt_use_display_name_when_ignore_override_true', function()
                 action.add({
@@ -1519,6 +1611,7 @@ retest.describe('mupen64', function()
                 action.invoke("Test > Something", true)
                 retest.expect(called).to.be.truthy()
             end)
+
             retest.it('calls_on_release_when_pressing_again_while_pressed', function()
                 local down = 0
                 local up = 0
@@ -1649,11 +1742,41 @@ retest.describe('mupen64', function()
                 end
                 retest.expect(func).to_not.fail()
             end)
+            retest.it('succeeds_when_hotkeys_given', function()
+                local func = function()
+                    action.lock_hotkeys(true, {
+                        { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_1 } },
+                        { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_C }, ctrl = true },
+                    })
+                end
+                retest.expect(func).to_not.fail()
+                action.lock_hotkeys(false)
+            end)
+            retest.it('errors_when_hotkeys_not_table', function()
+                local func = function()
+                    action.lock_hotkeys(true, 5)
+                end
+                retest.expect(func).to.fail()
+                action.lock_hotkeys(false)
+            end)
+            retest.it('errors_when_hotkey_invalid', function()
+                local func = function()
+                    action.lock_hotkeys(true, { {} })
+                end
+                retest.expect(func).to.fail()
+                action.lock_hotkeys(false)
+            end)
         end)
 
         retest.describe('get_hotkeys_locked', function()
             retest.it('returns_locked_state', function()
                 action.lock_hotkeys(true)
+                retest.expect(action.get_hotkeys_locked()).to.equal(true)
+                action.lock_hotkeys(false)
+                retest.expect(action.get_hotkeys_locked()).to.equal(false)
+            end)
+            retest.it('returns_locked_state_when_some_hotkeys_locked', function()
+                action.lock_hotkeys(true, { { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_1 } } })
                 retest.expect(action.get_hotkeys_locked()).to.equal(true)
                 action.lock_hotkeys(false)
                 retest.expect(action.get_hotkeys_locked()).to.equal(false)
@@ -1674,6 +1797,37 @@ retest.describe('mupen64', function()
                     hotkeys.prompt({})
                 end
                 retest.expect(func).to.fail()
+            end)
+        end)
+    end)
+
+    retest.describe('dialogs', function()
+        retest.describe('show_notification', function()
+            retest.it('accepts_defaults', function()
+                dialogs.show_notification('Lua notification test')
+            end)
+            retest.it('accepts_all_tones', function()
+                for _, tone in ipairs({ 'error', 'warn', 'info' }) do
+                    dialogs.show_notification('Lua notification test', 'Lua API tests', tone)
+                end
+            end)
+            retest.it('accepts_nil_title', function()
+                dialogs.show_notification('Lua notification test', nil, 'info')
+            end)
+            retest.it('errors_if_content_nil', function()
+                retest.expect(function() dialogs.show_notification(nil) end).to.fail()
+            end)
+            retest.it('errors_if_content_not_string', function()
+                retest.expect(function() dialogs.show_notification({}) end).to.fail()
+            end)
+            retest.it('errors_if_title_not_string', function()
+                retest.expect(function() dialogs.show_notification('test', {}) end).to.fail()
+            end)
+            retest.it('errors_if_type_unknown', function()
+                retest.expect(function() dialogs.show_notification('test', nil, 'unknown') end).to.fail()
+            end)
+            retest.it('errors_if_type_not_string', function()
+                retest.expect(function() dialogs.show_notification('test', nil, {}) end).to.fail()
             end)
         end)
     end)

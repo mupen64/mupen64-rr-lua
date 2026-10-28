@@ -163,9 +163,10 @@ struct Status
     /**
      * \brief Processes the input with steps such as autofire or combo overrides
      * \param input The input to process
+     * \param for_next_frame Whether to use the autofire phase for the next frame
      * \return The processed input
      */
-    CoreButtons get_processed_input(CoreButtons input);
+    CoreButtons get_processed_input(CoreButtons input, bool for_next_frame = false);
 
     /**
      * \brief Activates the mupen window, releasing focus capture from the current window
@@ -274,12 +275,13 @@ end:
         set_status(std::format("Recording... ({})", combos[active_combo_index].samples.size()));
     }
 
-    set_visuals_lazy(*keys, false);
+    set_visuals_lazy(current_input, true);
 }
 
-CoreButtons Status::get_processed_input(CoreButtons input)
+CoreButtons Status::get_processed_input(CoreButtons input, bool for_next_frame)
 {
-    input.value |= frame_counter % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
+    const auto frame = frame_counter + for_next_frame;
+    input.value |= frame % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
 
     if (combo_task == ComboTask::Play && !combo_paused)
     {
@@ -310,9 +312,17 @@ void Status::set_visuals(CoreButtons input, bool needs_processing)
 {
     if (!ready) return;
 
+    const auto explicit_input = input;
+    CoreButtons autofire_input{};
     if (needs_processing)
     {
-        input = get_processed_input(input);
+        const auto frame = frame_counter + 1;
+        autofire_input = frame % 2 == 0 ? autofire_input_a : autofire_input_b;
+        if (combo_task == ComboTask::Play && !combo_paused)
+        {
+            autofire_input = {};
+        }
+        input = get_processed_input(input, true);
     }
 
     // We don't want to mess with the user's selection
@@ -326,20 +336,28 @@ void Status::set_visuals(CoreButtons input, bool needs_processing)
         SetDlgItemText(hwnd, IDC_EDITY, std::to_string(input.y).c_str());
     }
 
-    CheckDlgButton(hwnd, IDC_CHECK_A, input.a);
-    CheckDlgButton(hwnd, IDC_CHECK_B, input.b);
-    CheckDlgButton(hwnd, IDC_CHECK_START, input.start);
-    CheckDlgButton(hwnd, IDC_CHECK_L, input.l);
-    CheckDlgButton(hwnd, IDC_CHECK_R, input.r);
-    CheckDlgButton(hwnd, IDC_CHECK_Z, input.z);
-    CheckDlgButton(hwnd, IDC_CHECK_CUP, input.cu);
-    CheckDlgButton(hwnd, IDC_CHECK_CLEFT, input.cl);
-    CheckDlgButton(hwnd, IDC_CHECK_CRIGHT, input.cr);
-    CheckDlgButton(hwnd, IDC_CHECK_CDOWN, input.cd);
-    CheckDlgButton(hwnd, IDC_CHECK_DUP, input.du);
-    CheckDlgButton(hwnd, IDC_CHECK_DLEFT, input.dl);
-    CheckDlgButton(hwnd, IDC_CHECK_DRIGHT, input.dr);
-    CheckDlgButton(hwnd, IDC_CHECK_DDOWN, input.dd);
+    const auto set_button_visual = [this](int id, bool pressed, bool explicitly_pressed, bool autofire_pressed) {
+        auto state = BST_UNCHECKED;
+        if (pressed)
+        {
+            state = autofire_pressed && !explicitly_pressed ? BST_INDETERMINATE : BST_CHECKED;
+        }
+        CheckDlgButton(hwnd, id, state);
+    };
+    set_button_visual(IDC_CHECK_A, input.a, explicit_input.a, autofire_input.a);
+    set_button_visual(IDC_CHECK_B, input.b, explicit_input.b, autofire_input.b);
+    set_button_visual(IDC_CHECK_START, input.start, explicit_input.start, autofire_input.start);
+    set_button_visual(IDC_CHECK_L, input.l, explicit_input.l, autofire_input.l);
+    set_button_visual(IDC_CHECK_R, input.r, explicit_input.r, autofire_input.r);
+    set_button_visual(IDC_CHECK_Z, input.z, explicit_input.z, autofire_input.z);
+    set_button_visual(IDC_CHECK_CUP, input.cu, explicit_input.cu, autofire_input.cu);
+    set_button_visual(IDC_CHECK_CLEFT, input.cl, explicit_input.cl, autofire_input.cl);
+    set_button_visual(IDC_CHECK_CRIGHT, input.cr, explicit_input.cr, autofire_input.cr);
+    set_button_visual(IDC_CHECK_CDOWN, input.cd, explicit_input.cd, autofire_input.cd);
+    set_button_visual(IDC_CHECK_DUP, input.du, explicit_input.du, autofire_input.du);
+    set_button_visual(IDC_CHECK_DLEFT, input.dl, explicit_input.dl, autofire_input.dl);
+    set_button_visual(IDC_CHECK_DRIGHT, input.dr, explicit_input.dr, autofire_input.dr);
+    set_button_visual(IDC_CHECK_DDOWN, input.dd, explicit_input.dd, autofire_input.dd);
 
     JoystickControl::set_position(joy_hwnd, input.x, input.y);
 }
@@ -348,7 +366,11 @@ void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
 {
     if (!ready) return;
 
+    if (!needs_processing) current_input = input;
+
     std::lock_guard lock(pending_visuals_mutex);
+    if (needs_processing && pending_set_visuals_request.has_value() && !pending_set_visuals_request->needs_processing)
+        return;
     pending_set_visuals_request = SetVisualsRequest{input, needs_processing};
 }
 
@@ -385,6 +407,11 @@ static int get_joystick_increment(const bool up)
 void Status::on_timer()
 {
     set_visuals_if_needed();
+
+    if (!new_config.input_when_emu_unfocused)
+    {
+        if (GetForegroundWindow() != g_plugin->main_window.hwnd()) return;
+    }
 
     CoreButtons controller_input = GamepadManager::get_input(controller_index);
 
@@ -479,6 +506,8 @@ void Status::on_timer()
 
 static void CALLBACK timer_callback(HWND, UINT, UINT_PTR, DWORD)
 {
+    SDL_UpdateGamepads();
+
     for (auto &st : status)
     {
         if (st.ready) st.on_timer();
@@ -745,7 +774,8 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             }                                                                                                          \
             else                                                                                                       \
             {                                                                                                          \
-                if (frame_counter % 2 == 0)                                                                            \
+                ctx->current_input.field = 0;                                                                          \
+                if (frame_counter % 2 != 0)                                                                            \
                     ctx->autofire_input_a.field ^= 1;                                                                  \
                 else                                                                                                   \
                     ctx->autofire_input_b.field ^= 1;                                                                  \
@@ -882,6 +912,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
         }
         case IDC_RESET_JOYSTICK:
+            if (new_config.disallow_joystick_reset) break;
             ctx->current_input.x = 0;
             ctx->current_input.y = 0;
             ctx->set_visuals(ctx->current_input);
@@ -921,8 +952,10 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
 #define TOGGLE(field)                                                                                                  \
     {                                                                                                                  \
-        ctx->current_input.field = IsDlgButtonChecked(ctx->hwnd, LOWORD(wparam)) ? 1 : 0;                              \
+        const bool was_autofiring = ctx->autofire_input_a.field || ctx->autofire_input_b.field;                        \
+        ctx->current_input.field = was_autofiring || IsDlgButtonChecked(ctx->hwnd, LOWORD(wparam)) == BST_CHECKED;     \
         ctx->autofire_input_a.field = ctx->autofire_input_b.field = 0;                                                 \
+        ctx->set_visuals(ctx->current_input);                                                                          \
     }
         case IDC_CHECK_A:
             TOGGLE(a)
@@ -1097,6 +1130,8 @@ bool Status::show_context_menu(int x, int y)
     ADD_ITEM(hmenu, relative_mode, "Relative");
     ADD_ITEM(hmenu, approach_mode, "Approach");
     ADD_ITEM(hmenu, wrap_joystick, "Wrap joystick");
+    ADD_ITEM(hmenu, disallow_joystick_reset, "Disallow joystick reset");
+    ADD_ITEM(hmenu, input_when_emu_unfocused, "Input when emulator unfocused");
     AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
     ADD_ITEM(hmenu, always_on_top, "Always on top");
     ADD_ITEM(hmenu, float_from_parent, "Float from parent");
@@ -1188,6 +1223,8 @@ void Status::on_config_changed()
     save_config();
 }
 
+namespace BuiltinTAS::TASInput
+{
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Input;
@@ -1204,25 +1241,19 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->description[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRProcessEvent(Event event)
+EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
 {
+    static int8_t init_count = 0;
+
     switch (event.type)
     {
     case M64RRSpec::Event::Type::Initiate: {
+        init_count++;
+
         g_inst = GetModuleHandle(nullptr);
         g_plugin = event.initiate.init;
 
         load_config();
-
-        for (int i = 0; i < 4; ++i)
-        {
-            g_plugin->controllers[i].present = new_config.controller_active[i];
-            g_plugin->controllers[i].raw = false;
-            g_plugin->controllers[i].plugin = CoreControllerExtension::None;
-            if (new_config.controller_mempak[i]) g_plugin->controllers[i].plugin = CoreControllerExtension::Mempak;
-            if (new_config.controller_rumblepak[i])
-                g_plugin->controllers[i].plugin = CoreControllerExtension::Rumblepak;
-        }
 
         icon_font = CreateFont(-20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS,
             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Marlett"));
@@ -1241,7 +1272,21 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 
         break;
     }
+    case M64RRSpec::Event::Type::InitializeControllers: {
+        auto *controllers = event.initialize_controllers.controllers;
+        for (int i = 0; i < 4; ++i)
+        {
+            controllers[i].present = new_config.controller_active[i];
+            controllers[i].raw = false;
+            controllers[i].plugin = CoreControllerExtension::None;
+            if (new_config.controller_mempak[i]) controllers[i].plugin = CoreControllerExtension::Mempak;
+            if (new_config.controller_rumblepak[i]) controllers[i].plugin = CoreControllerExtension::Rumblepak;
+        }
+        break;
+    }
     case M64RRSpec::Event::Type::Shutdown: {
+        init_count--;
+        if (init_count > 0) break;
 
         if (icon_font)
         {
@@ -1292,10 +1337,10 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     }
 }
 
-EXPORT void CALL M64RRGetWindows(WindowHandle *windows, size_t *count)
+EXPORT void CALL M64RRGetWindows(M64RRSpec::WindowHandle *windows, size_t *count)
 {
-    std::vector<WindowHandle> wnds = {status[0].hwnd, status[1].hwnd, status[2].hwnd, status[3].hwnd};
-    if (windows) std::memcpy(windows, wnds.data(), sizeof(WindowHandle) * wnds.size());
+    std::vector<M64RRSpec::WindowHandle> wnds = {status[0].hwnd, status[1].hwnd, status[2].hwnd, status[3].hwnd};
+    if (windows) std::memcpy(windows, wnds.data(), sizeof(M64RRSpec::WindowHandle) * wnds.size());
     if (count) *count = wnds.size();
 }
 
@@ -1307,7 +1352,7 @@ EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command)
     }
 }
 
-EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
+EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle parent_window)
 {
     attach_event_watch();
     ConfigDialog::show(parent_window.hwnd());
@@ -1329,4 +1374,5 @@ EXPORT void CALL M64RRGetKeys(int32_t index, CoreButtons *buttons)
 EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons)
 {
     status[index].set_visuals_lazy(buttons, false);
+}
 }

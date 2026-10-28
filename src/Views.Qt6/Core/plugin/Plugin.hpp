@@ -28,13 +28,12 @@ class Plugin
     /**
      * @brief Triggers the `Initiate` event and sets up necessary initialization data.
      */
-    void initiate(
-        CoreCtx *CoreCtx, CoreParams &CoreParams, const std::function<void(M64RRSpec::PluginInit *)> &post_init = {});
+    void initiate(CoreCtx *ctx, CoreParams &params, const std::function<void(M64RRSpec::PluginInit *)> &post_init = {});
 
     /**
      * @brief Binds the needed functions from this plugin to the core.
      */
-    void bind_functions(CoreParams &CoreParams);
+    void bind_functions(CoreParams &params);
 
     /**
      * @brief Triggers an arbitrary lifecycle event.
@@ -89,9 +88,9 @@ class PluginSet
     const Plugin &input() const { return m_input; }
     const Plugin &rsp() const { return m_rsp; }
 
-    void initiate_plugins(CoreCtx *CoreCtx, CoreParams &CoreParams);
-    void emu_started(CoreParams &CoreParams);
-    void emu_stopped(CoreParams &CoreParams);
+    void initiate_plugins(CoreCtx *ctx, CoreParams &params);
+    void emu_started(CoreParams &params);
+    void emu_stopped(CoreParams &params);
 
     void get_plugin_names(char *video, char *audio, char *input, char *rsp);
 

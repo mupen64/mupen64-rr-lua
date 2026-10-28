@@ -19,6 +19,7 @@
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
+error({ text = "hi"})
 local display_name = ""
 
 local SAY_HELLO_WORLD_ACTION = "Action API Demo > Print 'Hello World!'"

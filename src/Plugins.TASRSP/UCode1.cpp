@@ -12,6 +12,8 @@
 #include <sse2neon.h>
 #endif
 
+using namespace BuiltinTAS::TASRSP;
+
 /******** DMEM Memory Map for ABI 1 ***************
 Address/Range		Description
 -------------		-------------------------------
@@ -739,8 +741,7 @@ static void MIXER()
 // Command: LOADBUFF - Calls:  58 - Total Time:  29945 - Avg Time:   516.29 - Percent:  2.49%
 // Command: RESAMPLE - Calls:  48 - Total Time: 276354 - Avg Time:  5757.38 - Percent: 22.95%
 
-void (*ABI1[0x20])() = {
-    // TOP Performace Hogs: MIXER, RESAMPLE, ENVMIXER
+void (*ABI1[0x20])() = { // TOP Performace Hogs: MIXER, RESAMPLE, ENVMIXER
     SPNOOP, ADPCM, CLEARBUFF, ENVMIXER, LOADBUFF, RESAMPLE, SAVEBUFF, UNKNOWN, SETBUFF, SETVOL, DMEMMOVE, LOADADPCM,
     MIXER, INTERLEAVE, UNKNOWN, SETLOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP,
     SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP};

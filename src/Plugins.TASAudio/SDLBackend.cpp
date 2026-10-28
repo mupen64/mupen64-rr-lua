@@ -11,6 +11,8 @@
 
 #include <stdexcept>
 
+using namespace BuiltinTAS::TASAudio;
+
 namespace SDLAudio
 {
 SDLBackend::SDLBackend(Config &&config) : m_config(config)

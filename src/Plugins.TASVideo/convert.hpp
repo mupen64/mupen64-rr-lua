@@ -11,6 +11,7 @@
 #else
 #include <sse2neon.h>
 #endif
+#include "Types.hpp"
 
 const unsigned char Five2Eight[32] = {
     0,   // 00000 = 00000000

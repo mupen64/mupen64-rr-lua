@@ -86,9 +86,6 @@ inline void get_cursor_to_joystick_position(const HWND hwnd, int &x, int &y)
     y = (pt.y - height / 2) * 128 / (height / 2);
 
     y = -y;
-
-    x = std::clamp(x, -128, 127);
-    y = std::clamp(y, -128, 127);
 }
 
 inline void update_joystick_position(HWND hwnd, Context *ctx)
@@ -110,6 +107,15 @@ inline void update_joystick_position(HWND hwnd, Context *ctx)
 
     RECT rc{};
     GetClientRect(hwnd, &rc);
+
+    const float ratio_x = x > 0 ? x / 127.0f : -x / 128.0f;
+    const float ratio_y = y > 0 ? y / 127.0f : -y / 128.0f;
+    const float ratio = std::max(ratio_x, ratio_y);
+    if (ratio > 1.0f)
+    {
+        x = static_cast<int32_t>(std::lround(x / ratio));
+        y = static_cast<int32_t>(std::lround(y / ratio));
+    }
 
     if (std::abs(x) < 8) x = 0;
     if (std::abs(y) < 8) y = 0;

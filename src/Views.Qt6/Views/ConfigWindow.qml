@@ -58,6 +58,7 @@ ApplicationWindow {
         if (!visible) {
             settingsCore.sync();
             settingsPaths.sync();
+            settingsActions.sync();
         }
     }
 }

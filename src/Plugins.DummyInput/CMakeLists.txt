@@ -16,6 +16,5 @@ set_target_properties(Mupen64RR_Plugins_DummyInput PROPERTIES
 mupen64rr_reuse_common_pch(Mupen64RR_Plugins_DummyInput)
 target_link_libraries(Mupen64RR_Plugins_DummyInput PRIVATE Mupen64RR_Plugins_Common)
 target_compile_definitions(Mupen64RR_Plugins_DummyInput PRIVATE
-    M64RRGetMetadata=M64RRBuiltinNoInputGetMetadata
-    M64RRProcessEvent=M64RRBuiltinNoInputProcessEvent
+    PLUGIN_NAMESPACE=BuiltinTAS::DummyInput
 )

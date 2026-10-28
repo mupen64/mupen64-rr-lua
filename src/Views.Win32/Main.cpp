@@ -30,9 +30,9 @@
 #include <components/RomBrowser.hpp>
 #include <components/Seeker.hpp>
 #include <components/Statusbar.hpp>
-#include <lua/LuaCallbacks.hpp>
-#include <lua/LuaManager.hpp>
-#include <lua/LuaRenderer.hpp>
+#include <lua/LuaRealmManager.hpp>
+
+#include <lua/LuaRendererManager.hpp>
 #include <lua/LuaDialog.hpp>
 #include <HotkeyUtils.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -344,10 +344,7 @@ void on_task_changed(CoreVCRTask value)
 
 void on_emu_stopping()
 {
-    g_main_ctx.dispatcher->invoke([] {
-        LuaDialog::store_running_scripts();
-        LuaDialog::stop_all();
-    });
+    g_main_ctx.dispatcher->invoke([] { LuaDialog::store_and_stop_all(); });
 }
 
 void on_emu_launched_changed(bool value)
@@ -384,7 +381,7 @@ void on_emu_launched_changed(bool value)
                     g_config.is_recent_rom_paths_frozen);
             }
 
-            LuaDialog::load_running_scripts();
+            LuaDialog::restore();
         }
 
         if (!value && previous_value)
@@ -490,12 +487,12 @@ void on_config_needs_patching(Config &cfg)
 
 void on_seek_completed()
 {
-    LuaCallbacks::call_seek_completed();
+    LuaRealmManager::instance().call_seek_completed();
 }
 
 void on_warp_modify_status_changed(bool value)
 {
-    LuaCallbacks::call_warp_modify_status_changed(value);
+    LuaRealmManager::instance().call_warp_modify_status_changed(value);
 }
 
 void on_emu_starting_changed(bool value)
@@ -563,6 +560,64 @@ static void CALLBACK sdl_timer_proc(HWND, UINT, UINT_PTR, DWORD)
     while (SDL_PollEvent(&e));
 }
 
+static void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+    case WM_MOUSEWHEEL:
+    case WM_MOUSEHWHEEL: {
+        POINT cursor_pos{};
+        GetCursorPos(&cursor_pos);
+        ScreenToClient(hwnd, &cursor_pos);
+
+        LuaMouseEventArgs args{};
+        args.x = cursor_pos.x;
+        args.y = cursor_pos.y;
+        if (msg == WM_MOUSEHWHEEL)
+            args.x_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
+        if (msg == WM_MOUSEWHEEL)
+            args.y_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
+        if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP || msg == WM_LBUTTONDBLCLK) args.button = 0;
+        if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP || msg == WM_RBUTTONDBLCLK) args.button = 1;
+        if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP || msg == WM_MBUTTONDBLCLK) args.button = 2;
+        if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN) args.pressed = true;
+        if (msg == WM_LBUTTONUP || msg == WM_RBUTTONUP || msg == WM_MBUTTONUP) args.pressed = false;
+        if (msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDBLCLK)
+        {
+            args.double_click = true;
+            const auto button = *args.button;
+            const auto timer_id = triple_click_timer_base + button;
+            KillTimer(hwnd, timer_id);
+            awaiting_triple_click[button] =
+                SetTimer(hwnd, timer_id, GetDoubleClickTime(), clear_triple_click_timer) != 0;
+        }
+        else if (args.pressed.value_or(false) && args.button && awaiting_triple_click[*args.button])
+        {
+            const auto button = *args.button;
+            KillTimer(hwnd, triple_click_timer_base + button);
+            awaiting_triple_click[button] = false;
+            args.triple_click = true;
+        }
+        args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+        args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
+        args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+        args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
+
+        LuaRealmManager::instance().call_atmouse(args);
+        break;
+    }
+    }
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message)
@@ -616,7 +671,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         args.pressed = true;
         args.repeat = repeat;
 
-        LuaCallbacks::call_atkey(args);
+        LuaRealmManager::instance().call_atkey(args);
         PluginUtil::key_down(wParam, lParam);
         break;
     }
@@ -629,7 +684,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         args.pressed = false;
         args.repeat = false;
 
-        LuaCallbacks::call_atkey(args);
+        LuaRealmManager::instance().call_atkey(args);
         PluginUtil::key_up(wParam, lParam);
         break;
     }
@@ -642,14 +697,29 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         args.text = std::string(1, chr);
         args.repeat = repeat;
-        LuaCallbacks::call_atkey(args);
+        LuaRealmManager::instance().call_atkey(args);
         break;
     }
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+        handle_mouse_events(hwnd, Message, wParam, lParam);
+        break;
     case WM_MOUSEWHEEL:
         g_main_ctx.last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
+        handle_mouse_events(hwnd, Message, wParam, lParam);
 
         // https://github.com/mupen64/mupen64-rr-lua/issues/190
-        LuaCallbacks::call_window_message(hwnd, Message, wParam, lParam);
+        LuaRealmManager::instance().call_window_message(hwnd, Message, wParam, lParam);
+        break;
+    case WM_MOUSEHWHEEL:
+        handle_mouse_events(hwnd, Message, wParam, lParam);
         break;
     case WM_NOTIFY: {
         if (wParam == IDC_ROMLIST)
@@ -707,25 +777,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_FOCUS_MAIN_WINDOW:
         SetFocus(g_main_ctx.hwnd);
         break;
-    case WM_EXECUTE_DISPATCHER:
-        g_main_ctx.dispatcher->execute();
-        break;
+    case Dispatcher::message_id:
+        g_main_ctx.dispatcher->execute(lParam);
+        return 0;
     case WM_NCCREATE:
         g_main_ctx.hwnd = hwnd;
         g_main_hwnd = hwnd;
         break;
     case WM_CREATE:
+        g_ui_thread_id = GetCurrentThreadId();
+        g_main_ctx.dispatcher = std::make_shared<Dispatcher>(hwnd);
+
         JoystickControl::register_class(g_main_ctx.hinst, JOYSTICK_CLASS);
         ActionMenu::init();
 
-        ActionMenu::add_managed_menu(hwnd);
+        ActionMenu::add_managed_menu(hwnd, std::nullopt, PianoRoll::BASE + "*");
         AppActions::add();
         HotkeyTracker::attach(hwnd);
 
         MGECompositor::create(hwnd);
         PianoRoll::init();
         LuaDialog::init();
-        LuaRenderer::init();
+        LuaRendererManager::instance().init();
         SetTimer(hwnd, sdl_timer_id, 1000 / 60, sdl_timer_proc);
         return TRUE;
     case WM_DESTROY:
@@ -734,7 +807,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         return 0;
     case WM_PREDESTROY:
         // This needs the UI thread to still be responsive.
-        LuaRenderer::stop();
+        LuaRendererManager::instance().stop();
         DestroyWindow(hwnd);
         break;
     case WM_CLOSE:
@@ -863,32 +936,32 @@ static CoreResult init_core()
     // g_main_ctx.core.io_service = &g_main_ctx.io_service;
     g_main_ctx.core.callbacks = {};
     g_main_ctx.core.callbacks.vi = [](const auto &...) {
-        LuaCallbacks::call_interval();
-        LuaCallbacks::call_vi();
+        LuaRealmManager::instance().call_interval();
+        LuaRealmManager::instance().call_vi();
         if (CaptureManager::is_capturing()) CaptureManager::vi();
     };
     g_main_ctx.core.callbacks.input = [](CoreButtons *input, int index) {
         g_main_ctx.last_controller_data[index] = *input;
-        LuaCallbacks::call_input(input, index);
+        LuaRealmManager::instance().call_input(input, index);
         if (CaptureManager::is_capturing()) CaptureManager::input();
     };
     g_main_ctx.core.callbacks.frame = [] { g_frame_changed = true; };
-    g_main_ctx.core.callbacks.interval = LuaCallbacks::call_interval;
+    g_main_ctx.core.callbacks.interval = [] { LuaRealmManager::instance().call_interval(); };
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;
-    g_main_ctx.core.callbacks.play_movie = LuaCallbacks::call_play_movie;
+    g_main_ctx.core.callbacks.play_movie = [] { LuaRealmManager::instance().call_play_movie(); };
     g_main_ctx.core.callbacks.stop_movie = [] {
-        LuaCallbacks::call_stop_movie();
+        LuaRealmManager::instance().call_stop_movie();
         if (g_config.stop_capture_at_movie_end && CaptureManager::is_capturing()) CaptureManager::stop_capture();
     };
     g_main_ctx.core.callbacks.loop_movie = [] {
         if (g_config.stop_capture_at_movie_end && CaptureManager::is_capturing()) CaptureManager::stop_capture();
     };
-    g_main_ctx.core.callbacks.save_state = LuaCallbacks::call_save_state;
-    g_main_ctx.core.callbacks.load_state = LuaCallbacks::call_load_state;
-    g_main_ctx.core.callbacks.reset = LuaCallbacks::call_reset;
+    g_main_ctx.core.callbacks.save_state = [] { LuaRealmManager::instance().call_save_state(); };
+    g_main_ctx.core.callbacks.load_state = [] { LuaRealmManager::instance().call_load_state(); };
+    g_main_ctx.core.callbacks.reset = [] { LuaRealmManager::instance().call_reset(); };
     g_main_ctx.core.callbacks.seek_completed = [] {
         Messenger::broadcast<Messenger::Message::SeekCompleted>();
-        LuaCallbacks::call_seek_completed();
+        LuaRealmManager::instance().call_seek_completed();
     };
     g_main_ctx.core.callbacks.core_executing_changed = [](bool value) {
         Messenger::broadcast<Messenger::Message::CoreExecutingChanged>(value);
@@ -978,13 +1051,6 @@ static CoreResult init_core()
     PluginUtil::init();
 
     return result;
-}
-
-static void main_dispatcher_init()
-{
-    g_ui_thread_id = GetCurrentThreadId();
-    g_main_ctx.dispatcher =
-        std::make_unique<Dispatcher>(g_ui_thread_id, [] { SendMessage(g_main_ctx.hwnd, WM_EXECUTE_DISPATCHER, 0, 0); });
 }
 
 void set_cwd()
@@ -1098,64 +1164,6 @@ void Main::init_sdl()
     }
 }
 
-void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg)
-    {
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
-    case WM_LBUTTONDBLCLK:
-    case WM_RBUTTONDOWN:
-    case WM_RBUTTONUP:
-    case WM_RBUTTONDBLCLK:
-    case WM_MBUTTONDOWN:
-    case WM_MBUTTONUP:
-    case WM_MBUTTONDBLCLK:
-    case WM_MOUSEWHEEL:
-    case WM_MOUSEHWHEEL: {
-        POINT cursor_pos{};
-        GetCursorPos(&cursor_pos);
-        ScreenToClient(hwnd, &cursor_pos);
-
-        LuaMouseEventArgs args{};
-        args.x = cursor_pos.x;
-        args.y = cursor_pos.y;
-        if (msg == WM_MOUSEHWHEEL)
-            args.x_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
-        if (msg == WM_MOUSEWHEEL)
-            args.y_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
-        if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP || msg == WM_LBUTTONDBLCLK) args.button = 0;
-        if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP || msg == WM_RBUTTONDBLCLK) args.button = 1;
-        if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP || msg == WM_MBUTTONDBLCLK) args.button = 2;
-        if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN) args.pressed = true;
-        if (msg == WM_LBUTTONUP || msg == WM_RBUTTONUP || msg == WM_MBUTTONUP) args.pressed = false;
-        if (msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDBLCLK)
-        {
-            args.double_click = true;
-            const auto button = *args.button;
-            const auto timer_id = triple_click_timer_base + button;
-            KillTimer(hwnd, timer_id);
-            awaiting_triple_click[button] =
-                SetTimer(hwnd, timer_id, GetDoubleClickTime(), clear_triple_click_timer) != 0;
-        }
-        else if (args.pressed.value_or(false) && args.button && awaiting_triple_click[*args.button])
-        {
-            const auto button = *args.button;
-            KillTimer(hwnd, triple_click_timer_base + button);
-            awaiting_triple_click[button] = false;
-            args.triple_click = true;
-        }
-        args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
-        args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
-        args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
-        args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
-
-        LuaCallbacks::call_atmouse(args);
-        break;
-    }
-    }
-}
-
 void Main::request_size(uint32_t width, uint32_t height)
 {
     const auto statusbar_hwnd = Statusbar::hwnd();
@@ -1199,7 +1207,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     AppConfig::init();
     AppConfig::load();
-    main_dispatcher_init();
 
     std::filesystem::create_directories(AppConfig::rom_directory());
     std::filesystem::create_directories(AppConfig::save_directory());
@@ -1222,7 +1229,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     WinDarkMode::init();
 
-    LuaManager::init();
     CrashManager::init();
     MGECompositor::init();
     CaptureManager::init();

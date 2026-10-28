@@ -8,6 +8,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
+// QQC2 "software" menu bar implementation.
 MenuBar {
     id: root
     required property ActionManager actions
@@ -57,7 +58,7 @@ MenuBar {
                     Label {
                         id: nameLabel
                         // display either action or menu title
-                        text: menuItem.action?.text ?? menuItem.subMenu.title
+                        text: menuItem.action?.text ?? menuItem.subMenu?.title ?? ""
 
                         anchors.left: cntRoot.left
                         anchors.verticalCenter: cntRoot.verticalCenter
@@ -86,7 +87,7 @@ MenuBar {
                 title: Qt.binding(() => menu.text)
             }) as Menu;
         }
-        function newSeparator(action: EmuAction): MenuSeparator {
+        function newSeparator(): MenuSeparator {
             return separator.createObject(null, {}) as MenuSeparator;
         }
 

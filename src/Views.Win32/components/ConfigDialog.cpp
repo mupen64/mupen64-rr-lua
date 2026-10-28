@@ -15,7 +15,7 @@
 #include <Common.Win32/SettingsListView.hpp>
 #include <components/TextEditDialog.hpp>
 #include <components/ConfigDialog.hpp>
-#include <lua/LuaManager.hpp>
+#include <lua/LuaRealmManager.hpp>
 #include <Common.Views/Hotkey.hpp>
 #include <HotkeyUtils.hpp>
 
@@ -68,7 +68,8 @@ static std::optional<std::string> readonly_when_capturing()
 
 static std::optional<std::string> readonly_when_lua_active()
 {
-    if (!g_lua_environments.empty()) return "All Lua scripts need to be stopped before changing this option";
+    if (!LuaRealmManager::instance().realms().empty())
+        return "All Lua scripts need to be stopped before changing this option";
     return std::nullopt;
 }
 
@@ -304,7 +305,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         if (dis->CtlType == ODT_STATIC && std::ranges::contains(plugin_icon_ids, static_cast<int>(dis->CtlID)))
         {
             draw_bitmap_transparent(dis->hDC, dis->rcItem, g_main_ctx.hinst, static_cast<int>(dis->CtlID),
-                WinDarkMode::theme_data.bg_color == WinDarkMode::dark_theme_data.bg_color);
+                WinDarkMode::effective_theme() == WinDarkMode::EffectiveTheme::Dark);
             return TRUE;
         }
         return FALSE;

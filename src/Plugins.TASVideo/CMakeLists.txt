@@ -25,6 +25,7 @@ add_library(Mupen64RR_Plugins_TASVideo STATIC
     "FrameBuffer.hpp"
     "F3DWRUS.hpp"
     "F3DPD.hpp"
+    "F3DEX3.hpp"
     "F3DEX2.hpp"
     "F3DEX.hpp"
     "F3DDKR.hpp"
@@ -55,6 +56,7 @@ add_library(Mupen64RR_Plugins_TASVideo STATIC
     "FrameBuffer.cpp"
     "F3DWRUS.cpp"
     "F3DPD.cpp"
+    "F3DEX3.cpp"
     "F3DEX2.cpp"
     "F3DEX.cpp"
     "F3DDKR.cpp"
@@ -118,10 +120,6 @@ if (NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$"
 endif()
 
 target_compile_definitions(Mupen64RR_Plugins_TASVideo PRIVATE
-    M64RRGetMetadata=M64RRBuiltinTASVideoGetMetadata
-    M64RRProcessEvent=M64RRBuiltinTASVideoProcessEvent
-    M64RRProcessDList=M64RRBuiltinTASVideoProcessDList
-    M64RRReadVideo=M64RRBuiltinTASVideoReadVideo
-    M64RRShowConfig=M64RRBuiltinTASVideoShowConfig
-    g_plugin=M64RRBuiltinTASVideoPlugin
+    PLUGIN_NAMESPACE=BuiltinTAS::TASVideo
+    # g_plugin=M64RRBuiltinTASVideoPlugin
 )

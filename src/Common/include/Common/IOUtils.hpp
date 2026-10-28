@@ -317,7 +317,7 @@ inline std::string rom_name_to_string(const char str[20])
 
 inline std::string rom_name_to_string(const uint8_t str[20])
 {
-    return std::string(reinterpret_cast<const char *>(str), 20);
+    return rom_name_to_string(reinterpret_cast<const char *>(str));
 }
 
 #elif defined(__linux__) || defined(__APPLE__)

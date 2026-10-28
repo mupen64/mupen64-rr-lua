@@ -16,6 +16,5 @@ set_target_properties(Mupen64RR_Plugins_DummyVideo PROPERTIES
 mupen64rr_reuse_common_pch(Mupen64RR_Plugins_DummyVideo)
 target_link_libraries(Mupen64RR_Plugins_DummyVideo PRIVATE Mupen64RR_Plugins_Common)
 target_compile_definitions(Mupen64RR_Plugins_DummyVideo PRIVATE
-    M64RRGetMetadata=M64RRBuiltinNoVideoGetMetadata
-    M64RRProcessEvent=M64RRBuiltinNoVideoProcessEvent
+    PLUGIN_NAMESPACE=BuiltinTAS::DummyVideo
 )
