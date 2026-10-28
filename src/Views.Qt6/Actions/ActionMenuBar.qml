@@ -19,6 +19,7 @@ MenuBar {
         id: priv
 
         property bool opened
+        // hold references to active menu items so they don't get deleted by the GC
         property var menuObjects: []
 
         readonly property Component blankMenu: Menu {

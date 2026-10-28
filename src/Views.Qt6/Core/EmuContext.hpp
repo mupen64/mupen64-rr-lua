@@ -261,7 +261,7 @@ class EmuContext : public QQuickItem
     CoreParams *m_core_params;
     CoreCtx *m_core_ctx;
 
-    std::mutex m_read_video_mutex;
+    mutable std::mutex m_read_video_mutex;
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
