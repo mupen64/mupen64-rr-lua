@@ -27,6 +27,6 @@ void RecentMenu::add(
     });
     vec.insert(vec.begin(), val);
 
-    ActionManager::notify_display_name_changed(std::format("{} > *", menu_path));
+    ActionManager::notify_display_name_changed(std::format("{}.*", menu_path));
     RomBrowser::build();
 }
