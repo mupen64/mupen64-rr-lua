@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
+  "version": 9,
+  "include": [
+    "common.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "sys-macos",
+      "description": "macOS: build for host architecture",
+
+      "inherits": "common",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "MUPEN64RR_BUILD_QT6": true,
+        "QT_QML_GENERATE_QMLLS_INI": true,
+        "QT_QML_GENERATE_QMLLS_INI_NO_CMAKE_CALLS": true
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "sys-macos-release",
+      "description": "macOS: build for host architecture (release)",
+
+      "inherits": "sys-macos",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ]
+}

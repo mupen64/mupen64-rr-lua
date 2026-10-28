@@ -103,8 +103,9 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
     target_compile_definitions(Mupen64RR_Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
     #[=[
     Select the dynarec backend by target architecture.
-        x86-64 -> R4300/x86_64 (x86-64 recompiler)
-        x86    -> R4300/x86 (original x86-32 recompiler)
+        x86-64  -> R4300/x86_64 (x86-64 recompiler)
+        x86     -> R4300/x86 (original x86-32 recompiler)
+        AArch64 -> R4300/arm64 (AArch64 recompiler)
 
     Note that we detect using the compile triplet when Clang is used; otherwise we use CMAKE_SYSTEM_PROCESSOR.
     ]=]
@@ -115,6 +116,8 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
             set(dynarec_dir "R4300/x86_64")
         elseif("${CMAKE_C_COMPILER_TARGET}" MATCHES "^i[346]86")
             set(dynarec_dir "R4300/x86")
+        elseif("${CMAKE_C_COMPILER_TARGET}" MATCHES "^(aarch64|arm64)")
+            set(dynarec_dir "R4300/arm64")
         endif()
     endif()
 
@@ -123,6 +126,8 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
             set(dynarec_dir "R4300/x86_64")
         elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
             set(dynarec_dir "R4300/x86")
+        elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(aarch64|arm64|ARM64)$")
+            set(dynarec_dir "R4300/arm64")
         endif()
     endif()
 

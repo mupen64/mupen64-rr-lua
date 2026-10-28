@@ -115,6 +115,10 @@ target_link_libraries(Mupen64RR_Plugins_TASVideo PRIVATE
     SDL3::SDL3
 )
 
+if (NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$")
+    target_link_libraries(Mupen64RR_Plugins_TASVideo PRIVATE vendor::sse2neon)
+endif()
+
 target_compile_definitions(Mupen64RR_Plugins_TASVideo PRIVATE
     PLUGIN_NAMESPACE=BuiltinTAS::TASVideo
     # g_plugin=M64RRBuiltinTASVideoPlugin
