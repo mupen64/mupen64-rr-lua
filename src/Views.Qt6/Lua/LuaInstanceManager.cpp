@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "LuaInstanceManager.hpp"
-#include <Core/EmuContext.hpp>
+#include "EmuContext.hpp"
 
 LuaInstanceManager::LuaInstanceManager(QObject *parent) : QAbstractListModel(parent)
 {
@@ -59,7 +59,7 @@ QHash<int, QByteArray> LuaInstanceManager::roleNames() const
         {TrustedRole, "trusted"},
         {LogsRole, "logs"},
         {LastErrorRole, "lastError"},
-        {InstanceRole, "instance"}
+        {InstanceRole, "instance"},
     };
     return roles;
 }

@@ -173,8 +173,7 @@ void LuaCanvas::paint(QPainter *painter)
     {
         std::lock_guard lock(m_mutex);
         cmds.reserve(m_commands.size());
-        for (const auto &c : m_commands)
-            cmds.push_back(c);
+        for (const auto &c : m_commands) cmds.push_back(c);
     }
 
     if (cmds.empty()) return;
@@ -258,14 +257,15 @@ void LuaCanvas::paint(QPainter *painter)
 
 void LuaCanvas::renderToContext(QJSValue ctx)
 {
+    using namespace Qt::Literals;
+
     if (!ctx.isObject()) return;
 
     std::vector<LuaDrawCommand> cmds;
     {
         std::lock_guard lock(m_mutex);
         cmds.reserve(m_commands.size());
-        for (const auto &c : m_commands)
-            cmds.push_back(c);
+        for (const auto &c : m_commands) cmds.push_back(c);
     }
 
     for (const auto &cmd : cmds)
@@ -273,51 +273,53 @@ void LuaCanvas::renderToContext(QJSValue ctx)
         switch (cmd.type)
         {
         case LuaDrawCmdType::Clear:
-            ctx.property(u"clearRect").call({0, 0, width(), height()});
+            ctx.property(u"clearRect"_s).call({0, 0, width(), height()});
             break;
         case LuaDrawCmdType::Line: {
-            ctx.property(u"beginPath").call();
-            ctx.property(u"moveTo").call({cmd.line.x1(), cmd.line.y1()});
-            ctx.property(u"lineTo").call({cmd.line.x2(), cmd.line.y2()});
-            ctx.setProperty(u"strokeStyle", cmd.color.name(QColor::HexArgb));
-            ctx.setProperty(u"lineWidth", cmd.strokeWidth);
-            ctx.property(u"stroke").call();
+            ctx.property(u"beginPath"_s).call();
+            ctx.property(u"moveTo"_s).call({cmd.line.x1(), cmd.line.y1()});
+            ctx.property(u"lineTo"_s).call({cmd.line.x2(), cmd.line.y2()});
+            ctx.setProperty(u"strokeStyle"_s, cmd.color.name(QColor::HexArgb));
+            ctx.setProperty(u"lineWidth"_s, cmd.strokeWidth);
+            ctx.property(u"stroke"_s).call();
             break;
         }
         case LuaDrawCmdType::Rect: {
-            ctx.setProperty(u"strokeStyle", cmd.color.name(QColor::HexArgb));
-            ctx.setProperty(u"lineWidth", cmd.strokeWidth);
-            ctx.property(u"strokeRect").call({cmd.rect.x(), cmd.rect.y(), cmd.rect.width(), cmd.rect.height()});
+            ctx.setProperty(u"strokeStyle"_s, cmd.color.name(QColor::HexArgb));
+            ctx.setProperty(u"lineWidth"_s, cmd.strokeWidth);
+            ctx.property(u"strokeRect"_s).call({cmd.rect.x(), cmd.rect.y(), cmd.rect.width(), cmd.rect.height()});
             break;
         }
         case LuaDrawCmdType::FillRect: {
-            ctx.setProperty(u"fillStyle", cmd.color.name(QColor::HexArgb));
-            ctx.property(u"fillRect").call({cmd.rect.x(), cmd.rect.y(), cmd.rect.width(), cmd.rect.height()});
+            ctx.setProperty(u"fillStyle"_s, cmd.color.name(QColor::HexArgb));
+            ctx.property(u"fillRect"_s).call({cmd.rect.x(), cmd.rect.y(), cmd.rect.width(), cmd.rect.height()});
             break;
         }
         case LuaDrawCmdType::Ellipse: {
-            ctx.property(u"beginPath").call();
-            ctx.property(u"ellipse").call({cmd.rect.center().x(), cmd.rect.center().y(),
-                                          cmd.rect.width() / 2.0, cmd.rect.height() / 2.0, 0, 0, 6.2831853});
-            ctx.setProperty(u"strokeStyle", cmd.color.name(QColor::HexArgb));
-            ctx.setProperty(u"lineWidth", cmd.strokeWidth);
-            ctx.property(u"stroke").call();
+            ctx.property(u"beginPath"_s).call();
+            ctx.property(u"ellipse"_s)
+                .call({cmd.rect.center().x(), cmd.rect.center().y(), cmd.rect.width() / 2.0, cmd.rect.height() / 2.0, 0,
+                    0, 6.2831853});
+            ctx.setProperty(u"strokeStyle"_s, cmd.color.name(QColor::HexArgb));
+            ctx.setProperty(u"lineWidth"_s, cmd.strokeWidth);
+            ctx.property(u"stroke"_s).call();
             break;
         }
         case LuaDrawCmdType::FillEllipse: {
-            ctx.property(u"beginPath").call();
-            ctx.property(u"ellipse").call({cmd.rect.center().x(), cmd.rect.center().y(),
-                                          cmd.rect.width() / 2.0, cmd.rect.height() / 2.0, 0, 0, 6.2831853});
-            ctx.setProperty(u"fillStyle", cmd.color.name(QColor::HexArgb));
-            ctx.property(u"fill").call();
+            ctx.property(u"beginPath"_s).call();
+            ctx.property(u"ellipse"_s)
+                .call({cmd.rect.center().x(), cmd.rect.center().y(), cmd.rect.width() / 2.0, cmd.rect.height() / 2.0, 0,
+                    0, 6.2831853});
+            ctx.setProperty(u"fillStyle"_s, cmd.color.name(QColor::HexArgb));
+            ctx.property(u"fill"_s).call();
             break;
         }
         case LuaDrawCmdType::Text: {
-            ctx.setProperty(u"fillStyle", cmd.color.name(QColor::HexArgb));
+            ctx.setProperty(u"fillStyle"_s, cmd.color.name(QColor::HexArgb));
             int sz = cmd.font.pixelSize() > 0 ? cmd.font.pixelSize() : 12;
             QString fontStr = QString("%1px %2").arg(sz).arg(cmd.font.family());
-            ctx.setProperty(u"font", fontStr);
-            ctx.property(u"fillText").call({cmd.text, cmd.rect.x(), cmd.rect.y()});
+            ctx.setProperty(u"font"_s, fontStr);
+            ctx.property(u"fillText"_s).call({cmd.text, cmd.rect.x(), cmd.rect.y()});
             break;
         }
         default:

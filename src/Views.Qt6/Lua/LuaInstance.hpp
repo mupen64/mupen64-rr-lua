@@ -52,6 +52,7 @@ class LuaInstance : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
+    Q_MOC_INCLUDE("LuaCanvas.hpp")
 
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
     Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
@@ -78,7 +79,7 @@ class LuaInstance : public QObject
     QString lastError() const { return m_lastError; }
     void setLastError(const QString &err);
 
-    LuaCanvas *canvas() const { return m_canvas; }
+    LuaCanvas *canvas() const;
     void setCanvas(LuaCanvas *canvas);
 
     lua_State *state() const { return m_l; }
@@ -130,6 +131,7 @@ class LuaInstance : public QObject
 
     lua_State *m_l{nullptr};
     QString m_path;
+    QString m_name;
     bool m_running{false};
     bool m_trusted{false};
     QString m_logs;

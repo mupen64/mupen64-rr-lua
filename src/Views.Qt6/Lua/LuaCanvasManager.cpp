@@ -33,7 +33,8 @@ void LuaCanvasManager::setInstanceManager(LuaInstanceManager *manager)
     if (m_instanceManager)
     {
         connect(m_instanceManager, &LuaInstanceManager::instanceAdded, this, &LuaCanvasManager::setupCanvasForInstance);
-        connect(m_instanceManager, &LuaInstanceManager::instanceRemoved, this, &LuaCanvasManager::removeCanvasForInstance);
+        connect(
+            m_instanceManager, &LuaInstanceManager::instanceRemoved, this, &LuaCanvasManager::removeCanvasForInstance);
 
         for (auto *inst : m_instanceManager->instances())
         {

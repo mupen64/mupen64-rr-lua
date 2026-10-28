@@ -12,8 +12,7 @@
 
 #include <Core/Types.hpp>
 #include "LuaInstance.hpp"
-
-class EmuContext;
+#include "EmuContext.hpp"
 
 class LuaInstanceManager : public QAbstractListModel
 {

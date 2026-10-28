@@ -5,16 +5,17 @@
  */
 #include "LuaInstance.hpp"
 #include "LuaCanvas.hpp"
-#include <Core/EmuContext.hpp>
+#include "EmuContext.hpp"
 #include <Core/API.hpp>
 
-#include <QApplication>
+#include <QGuiApplication>
 #include <QColor>
 #include <QDateTime>
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
 #include <QPalette>
+#include <QStyleHints>
 #include <QUrl>
 
 namespace
@@ -104,15 +105,42 @@ int register_callback_helper(lua_State *L, LuaCallbackKey key)
     return 0;
 }
 
-int emu_atvi(lua_State *L) { return register_callback_helper(L, LuaCallbackKey::VI); }
-int emu_atupdatescreen(lua_State *L) { return register_callback_helper(L, LuaCallbackKey::UpdateScreen); }
-int emu_atpaint(lua_State *L) { return register_callback_helper(L, LuaCallbackKey::Paint); }
-int emu_atinput(lua_State *L) { return register_callback_helper(L, LuaCallbackKey::Input); }
-int emu_atstop(lua_State *L) { return register_callback_helper(L, LuaCallbackKey::Stop); }
-int emu_atinterval(lua_State *L) { return register_callback_helper(L, LuaCallbackKey::Interval); }
-int emu_atreset(lua_State *L) { return register_callback_helper(L, LuaCallbackKey::Reset); }
-int emu_atkey(lua_State *L) { return register_callback_helper(L, LuaCallbackKey::Key); }
-int emu_atmouse(lua_State *L) { return register_callback_helper(L, LuaCallbackKey::Mouse); }
+int emu_atvi(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::VI);
+}
+int emu_atupdatescreen(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::UpdateScreen);
+}
+int emu_atpaint(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Paint);
+}
+int emu_atinput(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Input);
+}
+int emu_atstop(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Stop);
+}
+int emu_atinterval(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Interval);
+}
+int emu_atreset(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Reset);
+}
+int emu_atkey(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Key);
+}
+int emu_atmouse(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Mouse);
+}
 
 int emu_framecount(lua_State *L)
 {
@@ -213,13 +241,13 @@ int emu_get_pref(lua_State *L)
     const char *pref = luaL_checkstring(L, 1);
     if (std::strcmp(pref, "theme") == 0)
     {
-        bool isDark = qApp ? (qApp->palette().color(QPalette::Window).lightness() < 128) : true;
+        bool isDark = qGuiApp ? (qGuiApp->palette().color(QPalette::Window).lightness() < 128) : true;
         lua_pushstring(L, isDark ? "dark" : "light");
         return 1;
     }
     else if (std::strcmp(pref, "accent_color") == 0)
     {
-        QColor accent = qApp ? qApp->palette().color(QPalette::Highlight) : QColor(0, 120, 215);
+        QColor accent = qGuiApp ? qGuiApp->palette().color(QPalette::Highlight) : QColor(0, 120, 215);
         lua_createtable(L, 0, 4);
         lua_pushnumber(L, accent.redF());
         lua_setfield(L, -2, "r");
@@ -238,7 +266,7 @@ int emu_get_pref(lua_State *L)
     }
     else if (std::strcmp(pref, "caret_blink_time") == 0)
     {
-        lua_pushinteger(L, qApp ? qApp->cursorFlashTime() : 500);
+        lua_pushinteger(L, qGuiApp ? qGuiApp->styleHints()->cursorFlashTime() : 500);
         return 1;
     }
     lua_pushnil(L);
@@ -253,7 +281,7 @@ template <typename T> int memory_read(lua_State *L)
     {
         return luaL_error(L, "Core or RDRAM not available");
     }
-    auto val = core_rdram_load<T>(static_cast<uint8_t *>(ctx->rdram), addr);
+    auto val = core_rdram_load<T>((uint8_t *)ctx->rdram, addr);
     if (!val.has_value())
     {
         return luaL_error(L, "address out of bounds");
@@ -287,7 +315,7 @@ template <typename T> int memory_write(lua_State *L)
     {
         return luaL_error(L, "Core or RDRAM not available");
     }
-    bool ok = core_rdram_store<T>(static_cast<uint8_t *>(ctx->rdram), addr, val);
+    bool ok = core_rdram_store<T>((uint8_t *)ctx->rdram, addr, val);
     if (!ok)
     {
         return luaL_error(L, "address out of bounds");
@@ -403,7 +431,7 @@ int wgui_info(lua_State *L)
     return 1;
 }
 
-}
+} // namespace
 
 LuaInstance::LuaInstance(QObject *parent) : QObject(parent)
 {
@@ -447,6 +475,11 @@ void LuaInstance::setLastError(const QString &err)
     if (m_lastError == err) return;
     m_lastError = err;
     emit lastErrorChanged();
+}
+
+LuaCanvas *LuaInstance::canvas() const
+{
+    return m_canvas;
 }
 
 void LuaInstance::setCanvas(LuaCanvas *canvas)
@@ -658,7 +691,7 @@ void LuaInstance::registerEmuAPIs()
         {"get_hint", emu_get_hint},
         {"set_hint", emu_set_hint},
         {"get_pref", emu_get_pref},
-        {nullptr, nullptr}
+        {nullptr, nullptr},
     };
 
     luaL_setfuncs(m_l, emuFuncs, 0);
@@ -683,7 +716,7 @@ void LuaInstance::registerMemoryAPIs()
         {"writedword", memory_write<uint32_t>},
         {"writefloat", memory_write<float>},
         {"writedouble", memory_write<double>},
-        {nullptr, nullptr}
+        {nullptr, nullptr},
     };
 
     luaL_setfuncs(m_l, memFuncs, 0);
@@ -727,7 +760,7 @@ void LuaInstance::registerGuiAPIs()
         {"fillrecta", wgui_fillrect},
         {"clear", wgui_clear},
         {"info", wgui_info},
-        {nullptr, nullptr}
+        {nullptr, nullptr},
     };
     luaL_setfuncs(m_l, wguiFuncs, 0);
     lua_setglobal(m_l, "wgui");

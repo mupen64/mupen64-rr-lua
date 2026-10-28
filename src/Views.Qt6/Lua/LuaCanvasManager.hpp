@@ -10,16 +10,17 @@
 #include <qqmlintegration.h>
 #include <unordered_map>
 
+#include "LuaInstanceManager.hpp"
+
 class LuaCanvas;
-class LuaInstance;
-class LuaInstanceManager;
 
 class LuaCanvasManager : public QQuickItem
 {
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(LuaInstanceManager *instanceManager READ instanceManager WRITE setInstanceManager NOTIFY instanceManagerChanged)
+    Q_PROPERTY(
+        LuaInstanceManager *instanceManager READ instanceManager WRITE setInstanceManager NOTIFY instanceManagerChanged)
     Q_PROPERTY(QQuickItem *display READ display WRITE setDisplay NOTIFY displayChanged)
     Q_PROPERTY(int canvasCount READ canvasCount NOTIFY canvasCountChanged)
 

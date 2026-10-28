@@ -20,7 +20,7 @@
 #include <mutex>
 #include <qqmlintegration.h>
 
-class LuaInstance;
+#include "LuaInstance.hpp"
 
 enum class LuaDrawCmdType
 {
