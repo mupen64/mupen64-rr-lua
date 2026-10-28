@@ -42,12 +42,11 @@ EmuContext::EmuContext(QQuickItem *parent)
     m_core_params->find_available_rom =
         [&](const std::function<bool(const CoreROMHeader &)> &predicate) -> std::filesystem::path {
         // fetch ROM list from UI. If the UI is loading the ROM list, this will wait for that loading to finish.
-        std::promise<RomManager::RomList> rom_list_promise;
-        auto rom_list_future = rom_list_promise.get_future();
-        QMetaObject::invokeMethod(this, [this, rom_list_promise = std::move(rom_list_promise)] mutable {
-            auto func = [rom_list_promise = std::move(rom_list_promise)](
-                            const RomManager::RomList &list) mutable { rom_list_promise.set_value(list); };
-            m_rom_manager->requestRomData(std::move(func));
+        auto rom_list_promise = std::make_shared<std::promise<RomManager::RomList>>();
+        auto rom_list_future = rom_list_promise->get_future();
+        QMetaObject::invokeMethod(this, [this, rom_list_promise] {
+            m_rom_manager->requestRomData(
+                [rom_list_promise](const RomManager::RomList &list) { rom_list_promise->set_value(list); });
         });
 
         // Filter according to the core-provided predicate.
