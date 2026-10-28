@@ -37,8 +37,7 @@ static void (*dynarec_enter)(void (*code)()) = nullptr;
 
 static void build_dynarec_enter()
 {
-    unsigned char *buf = (unsigned char *)malloc_exec(64);
-    dynarec_enter = (void (*)(void (*)()))buf;
+    unsigned char *buf = (unsigned char *)malloc_exec(256);
 
     unsigned char *saved_ptr = *inst_pointer;
     unsigned char **saved_inst = inst_pointer;
@@ -47,7 +46,7 @@ static void build_dynarec_enter()
 
     inst_pointer = &buf;
     code_length = 0;
-    max_code_length = 64;
+    max_code_length = 256;
 
     exec_write_begin();
 
@@ -67,7 +66,8 @@ static void build_dynarec_enter()
     emit_add_imm_x(A64_SP, A64_SP, 96);
     emit_ret();
 
-    __builtin___clear_cache((char *)dynarec_enter, (char *)dynarec_enter + code_length);
+    dynarec_enter = (void (*)(void (*)()))buf;
+    __builtin___clear_cache((char *)buf, (char *)buf + code_length);
     exec_write_end();
 
     inst_pointer = saved_inst;
