@@ -188,7 +188,7 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
     });
 }
 
-void RomManager::requestRomData(std::move_only_function<void(const RomList &)> &&callback)
+void RomManager::requestRomData(RomDataCallback &&callback)
 {
     //     if (m_rom_data_request.has_value()) throw std::logic_error("ROM data request already active");
     //     m_rom_data_request.emplace(std::move(callback));

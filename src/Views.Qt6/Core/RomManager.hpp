@@ -7,6 +7,11 @@
 
 #include <memory>
 #include <vector>
+#include <version>
+
+#if !defined(__cpp_lib_move_only_function)
+#include <std23/move_only_function.h>
+#endif
 
 #include <QObject>
 #include <QAbstractTableModel>
@@ -54,6 +59,11 @@ class RomManager : public QAbstractTableModel
     Q_PROPERTY(bool loading READ isLoading NOTIFY loadingChanged)
   public:
     using RomList = std::vector<std::shared_ptr<RomData>>;
+#if defined(__cpp_lib_move_only_function)
+    using RomDataCallback = std::move_only_function<void(const RomList &)>;
+#else
+    using RomDataCallback = std23::move_only_function<void(const RomList &)>;
+#endif
 
     RomManager(QObject *parent = nullptr);
 
@@ -81,7 +91,7 @@ class RomManager : public QAbstractTableModel
      * @param callback A callback which will send the ROM list.
      * @throws std::logic_error if a future has already been requested.
      */
-    void requestRomData(std::move_only_function<void(const RomList &)> &&callback);
+    void requestRomData(RomDataCallback &&callback);
 
   signals:
     void loadingChanged();
@@ -114,6 +124,6 @@ class RomManager : public QAbstractTableModel
     void sendRomData();
 
     std::vector<std::shared_ptr<RomData>> m_rom_data;
-    std::optional<std::move_only_function<void(const RomList &)>> m_rom_data_request;
+    std::optional<RomDataCallback> m_rom_data_request;
     bool m_loading;
 };
