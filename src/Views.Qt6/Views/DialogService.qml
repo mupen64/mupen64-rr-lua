@@ -10,6 +10,9 @@ import QtQuick.Controls
 import Components
 
 Item {
+    id: root
+    signal dialogFinished(int id, int result)
+
     QtObject {
         id: priv
         property list<var> dialogQueue: []
@@ -38,6 +41,7 @@ Item {
                 diaServiceAsk.open();
                 break;
             case "multi":
+                diaServiceMulti.lastSelected = -1;
                 diaServiceMulti.title = currDialog.title;
                 diaServiceMulti.content = currDialog.content;
                 diaServiceMulti.coreType = currDialog.coreType;
@@ -52,36 +56,44 @@ Item {
                 showNextDialog()
         }
         function dialogClosed(result = undefined) {
-            if (result !== undefined && currDialog.done != null)
-                currDialog.done(result);
+            if (currDialog !== null && currDialog.id >= 0)
+                root.dialogFinished(currDialog.id, result === undefined ? 0 : Number(result));
             showNextDialog();
         }
     }
 
-    function queueInfoDialog(done, title, content, type) {
+    function discardDialogs(): void {
+        priv.dialogQueue = [];
+        priv.currDialog = null;
+        diaServiceInfo.close();
+        diaServiceAsk.close();
+        diaServiceMulti.close();
+    }
+
+    function queueInfoDialog(id: int, title: string, content: string, type: int): void {
         priv.queueDialogInner({
             type: "info",
-            done: done,
+            id: id,
             title: title,
             content: content,
             coreType: type
         });
     }
 
-    function queueAskDialog(done, title, content, type) {
+    function queueAskDialog(id: int, title: string, content: string, type: int): void {
         priv.queueDialogInner({
             type: "ask",
-            done: done,
+            id: id,
             title: title,
             content: content,
             coreType: type
         });
     }
 
-    function queueMultiDialog(done, title, content, choices, type) {
+    function queueMultiDialog(id: int, title: string, content: string, choices: list<string>, type: int): void {
         priv.queueDialogInner({
             type: "multi",
-            done: done,
+            id: id,
             title: title,
             content: content,
             choices: choices,
@@ -121,6 +133,6 @@ Item {
             }
         }
 
-        onClosed: priv.dialogClosed(lastSelected)
+        onClosed: priv.dialogClosed(result === Dialog.Accepted ? diaServiceMulti.lastSelected : -1)
     }
 }
