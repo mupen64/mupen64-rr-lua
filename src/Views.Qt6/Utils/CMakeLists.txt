@@ -9,10 +9,8 @@ mupen64rr_reuse_common_pch(Mupen64RR_Views_Qt6_Utils)
 qt_add_qml_module(Mupen64RR_Views_Qt6_Utils URI "Utils" SOURCES
     "include/ApplicationExt.hpp"
     "include/PathsUtil.hpp"
-    "include/QJSInterop.hpp"
     "include/QtIconImageProvider.hpp"
     "include/QtUtils.hpp"
-    "include/QmlCallableContext.hpp"
     "QtIconImageProvider.cpp"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Utils PUBLIC cxx_std_26)

@@ -103,6 +103,7 @@ ApplicationWindow {
         onUpdateScreen: coreDisplay.readPixels()
 
         // Dialog service
+        Component.onDestruction: dialogService.discardDialogs()
         onOpenInfoDialog: dialogService.queueInfoDialog
         onOpenAskDialog: dialogService.queueAskDialog
         onOpenMultiDialog: dialogService.queueMultiDialog
@@ -175,6 +176,13 @@ ApplicationWindow {
     // =====================================
 
     DialogService { id: dialogService }
+
+    Connections {
+        target: dialogService
+        function onDialogFinished(id, result) {
+            core.finishDialog(id, result);
+        }
+    }
 
     ConfigWindow {
         id: winConfig

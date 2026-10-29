@@ -32,7 +32,12 @@ bool HeldShortcutMap::addShortcut(Qt::Key key, QObject *object)
 {
     if (object == nullptr) return false;
     auto [node, inserted] = m_shortcuts.try_emplace(key, object);
-    return inserted;
+    if (!inserted)
+    {
+        if (!node->second.isNull()) return false;
+        node->second = object;
+    }
+    return true;
 }
 void HeldShortcutMap::clearShortcuts(QObject *object)
 {
@@ -65,7 +70,8 @@ bool HeldShortcutMap::eventFilter(QObject *, QEvent *event)
         if (matchedNode != m_shortcuts.end())
         {
             // trigger signal "released"
-            QMetaObject::invokeMethod(matchedNode->second, "released");
+            if (QObject *object = matchedNode->second.data())
+                QMetaObject::invokeMethod(object, "released");
         }
     }
     return false;
