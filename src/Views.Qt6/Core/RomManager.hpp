@@ -5,10 +5,13 @@
  */
 #pragma once
 
-#include <functional>
 #include <memory>
 #include <vector>
 #include <version>
+
+#if !defined(__cpp_lib_move_only_function)
+#include <std23/move_only_function.h>
+#endif
 
 #include <QObject>
 #include <QAbstractTableModel>
@@ -59,7 +62,7 @@ class RomManager : public QAbstractTableModel
 #if defined(__cpp_lib_move_only_function)
     using RomDataCallback = std::move_only_function<void(const RomList &)>;
 #else
-    using RomDataCallback = std::function<void(const RomList &)>;
+    using RomDataCallback = std23::move_only_function<void(const RomList &)>;
 #endif
 
     RomManager(QObject *parent = nullptr);
