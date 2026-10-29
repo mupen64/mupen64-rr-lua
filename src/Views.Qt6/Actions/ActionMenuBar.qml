@@ -19,6 +19,8 @@ MenuBar {
         id: priv
 
         property bool opened
+        // hold references to active menu items so they don't get deleted by the GC
+        property var menuObjects: []
 
         readonly property Component blankMenu: Menu {
             width: {
@@ -83,12 +85,16 @@ MenuBar {
         readonly property Component separator: MenuSeparator {}
 
         function newMenu(menu: EmuMenu): Menu {
-            return blankMenu.createObject(null, {
+            let viewMenu = blankMenu.createObject(null, {
                 title: Qt.binding(() => menu.text)
             }) as Menu;
+            priv.menuObjects.push(viewMenu);
+            return viewMenu;
         }
         function newSeparator(): MenuSeparator {
-            return separator.createObject(null, {}) as MenuSeparator;
+            let menuSeparator = separator.createObject(null, {}) as MenuSeparator;
+            priv.menuObjects.push(menuSeparator);
+            return menuSeparator;
         }
 
         function parentKey(key: string): string {
@@ -107,6 +113,11 @@ MenuBar {
         while (root.count > 0) {
             root.takeMenu(root.count - 1);
         }
+        for (let i = priv.menuObjects.length - 1; i >= 0; i--) {
+            priv.menuObjects[i]?.destroy();
+        }
+        priv.menuObjects = [];
+
         // construct the new menu
         let menuCache = {};
         let actionCache = {};
@@ -125,6 +136,8 @@ MenuBar {
                     // menu is a root menu, add to self
                     root.addMenu(viewMenu);
                     viewMenu.visibleChanged.connect(() => {
+                        if (root === null || priv === null)
+                            return;
                         priv.opened = root.menus.some(menu => menu.visible);
                     });
                 } else {
