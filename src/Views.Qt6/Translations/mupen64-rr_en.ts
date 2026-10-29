@@ -307,22 +307,22 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <translation>Recording (no modifiers)...</translation>
     </message>
     <message id="misc.units.MiB">
-        <location filename="../Core/RomManager.cpp" line="96"/>
+        <location filename="../Core/RomManager.cpp" line="98"/>
         <source>%1 MB</source>
         <translation>%1 MB</translation>
     </message>
     <message id="romBrowser.headers.romName">
-        <location filename="../Core/RomManager.cpp" line="114"/>
+        <location filename="../Core/RomManager.cpp" line="116"/>
         <source>ROM Name</source>
         <translation>ROM Name</translation>
     </message>
     <message id="romBrowser.headers.filename">
-        <location filename="../Core/RomManager.cpp" line="117"/>
+        <location filename="../Core/RomManager.cpp" line="119"/>
         <source>Filename</source>
         <translation>Filename</translation>
     </message>
     <message id="romBrowser.headers.size">
-        <location filename="../Core/RomManager.cpp" line="120"/>
+        <location filename="../Core/RomManager.cpp" line="122"/>
         <source>Size</source>
         <translation>Size</translation>
     </message>
@@ -330,6 +330,16 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <location filename="../../Plugins.Qt6.TASInput/MainWindow.qml" line="9"/>
         <source>TASInput</source>
         <translation>TASInput</translation>
+    </message>
+    <message id="tasinput.sensitivity">
+        <location filename="../../Plugins.Qt6.TASInput/JoystickSection.qml" line="53"/>
+        <source>Sensitivity</source>
+        <translation>Sensitivity</translation>
+    </message>
+    <message id="tasinput.position">
+        <location filename="../../Plugins.Qt6.TASInput/JoystickSection.qml" line="89"/>
+        <source>Position</source>
+        <translation>Position</translation>
     </message>
 </context>
 </TS>

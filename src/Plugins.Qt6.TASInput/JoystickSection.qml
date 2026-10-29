@@ -7,10 +7,6 @@ GridLayout {
     property int posX
     property int posY
 
-    onPosXChanged: {
-        // console.log(`root posX = ${posX}`);
-    }
-
     QtObject {
         id: priv
         readonly property IntValidator stickValidator: IntValidator {
@@ -53,7 +49,8 @@ GridLayout {
             Layout.row: 0
             Layout.columnSpan: 2
 
-            text: "Sensitivity"
+            //% "Sensitivity"
+            text: qsTrId("tasinput.sensitivity")
         }
         Label {
             Layout.column: 0
@@ -88,7 +85,8 @@ GridLayout {
                 Layout.row: 0
                 Layout.columnSpan: 2
 
-                text: "Position"
+                //% "Position"
+                text: qsTrId("tasinput.position")
             }
             Label {
                 Layout.column: 0

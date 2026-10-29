@@ -75,8 +75,7 @@ static int qt_main(int argc, char *argv[])
         Qt::QueuedConnection);
 
     // Use the Fusion style. It might be possible to support Qt theming later, but
-    // I'd rather not support multiple themes. If there's a way to dynamically source
-    // various kinds of spacing values, etc. it might be feasible.
+    // it seems to be a bit of a... pain in the backside, to say the least.
     QQuickStyle::setStyle("Fusion");
 
     // provider for system icons

@@ -21,6 +21,54 @@ TASInputUIManager *g_ui_manager = nullptr;
 // managed by the plugin. DO NOT MODIFY from outside.
 QPointer<TASInputUIManager> g_ext_ui_manager = nullptr;
 
+namespace
+{
+CoreButtons jsObjectToButtons(const QVariantMap &map)
+{
+    return {
+        .dr = map["btnDR"].toBool(),
+        .dl = map["btnDL"].toBool(),
+        .dd = map["btnDD"].toBool(),
+        .du = map["btnDU"].toBool(),
+        .start = map["btnS"].toBool(),
+        .z = map["btnZ"].toBool(),
+        .b = map["btnB"].toBool(),
+        .a = map["btnA"].toBool(),
+        .cr = map["btnCR"].toBool(),
+        .cl = map["btnCL"].toBool(),
+        .cd = map["btnCD"].toBool(),
+        .cu = map["btnCU"].toBool(),
+        .r = map["btnR"].toBool(),
+        .l = map["btnL"].toBool(),
+        .reserved_1 = 0,
+        .reserved_2 = 0,
+        .x = map["x"].toInt(),
+        .y = map["y"].toInt(),
+    };
+}
+QVariantMap buttonsToJSObject(CoreButtons buttons)
+{
+    return QVariantMap{
+        {"btnDR", QVariant::fromValue(buttons.dr)},
+        {"btnDL", QVariant::fromValue(buttons.dl)},
+        {"btnDD", QVariant::fromValue(buttons.dd)},
+        {"btnDU", QVariant::fromValue(buttons.du)},
+        {"btnS", QVariant::fromValue(buttons.start)},
+        {"btnZ", QVariant::fromValue(buttons.z)},
+        {"btnB", QVariant::fromValue(buttons.b)},
+        {"btnA", QVariant::fromValue(buttons.a)},
+        {"btnCR", QVariant::fromValue(buttons.cr)},
+        {"btnCL", QVariant::fromValue(buttons.cl)},
+        {"btnCD", QVariant::fromValue(buttons.cd)},
+        {"btnCU", QVariant::fromValue(buttons.cu)},
+        {"btnR", QVariant::fromValue(buttons.r)},
+        {"btnL", QVariant::fromValue(buttons.l)},
+        {"x", QVariant::fromValue(buttons.x)},
+        {"y", QVariant::fromValue(buttons.y)},
+    };
+}
+} // namespace
+
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Input;
@@ -125,26 +173,7 @@ void M64RRGetKeys(int32_t index, CoreButtons *buttons)
     QObject::connect(g_ext_ui_manager.get(), &TASInputUIManager::receiveInput, &event_loop,
         [=, &event_loop](int port, const QVariantMap &map) {
             if (port != index) return;
-            *buttons = {
-                .dr = map["btnDR"].toBool(),
-                .dl = map["btnDL"].toBool(),
-                .dd = map["btnDD"].toBool(),
-                .du = map["btnDU"].toBool(),
-                .start = map["btnS"].toBool(),
-                .z = map["btnZ"].toBool(),
-                .b = map["btnB"].toBool(),
-                .a = map["btnA"].toBool(),
-                .cr = map["btnCR"].toBool(),
-                .cl = map["btnCL"].toBool(),
-                .cd = map["btnCD"].toBool(),
-                .cu = map["btnCU"].toBool(),
-                .r = map["btnR"].toBool(),
-                .l = map["btnL"].toBool(),
-                .reserved_1 = 0,
-                .reserved_2 = 0,
-                .x = map["x"].toInt(),
-                .y = map["y"].toInt(),
-            };
+            *buttons = jsObjectToButtons(map);
             event_loop.quit();
         });
 
@@ -154,5 +183,8 @@ void M64RRGetKeys(int32_t index, CoreButtons *buttons)
 }
 void M64RRSetKeys(int32_t index, CoreButtons buttons)
 {
+    // block until the signal fires
+    QMetaObject::invokeMethod(g_ext_ui_manager, &TASInputUIManager::replaceInput, Qt::BlockingQueuedConnection, index,
+        buttonsToJSObject(buttons));
 }
 } // namespace BuiltinTAS::TASInput_Qt6
