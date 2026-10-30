@@ -6,6 +6,8 @@
 
 #include "Plugin.hpp"
 
+#include <QDir>
+#include <QStandardPaths>
 #include <decan.hpp>
 
 #include "Windowing.hpp"
@@ -15,12 +17,25 @@ template <class T>
 static inline void load_core_function(Plugin &plugin, const char *symbol, std::function<std::remove_pointer_t<T>> &func)
 {
     auto pointer = (T)plugin.load_symbol(symbol);
-    if (pointer != nullptr) func = pointer;
+    if (pointer != nullptr)
+    {
+        // std::println("found symbol {}", symbol);
+        func = pointer;
+    }
+    else
+    {
+        // std::println("missing symbol {}", symbol);
+    }
 }
 
 static size_t get_config_path(char *data, size_t size)
 {
-    static const std::u8string config_path = std::filesystem::absolute(IOUtils::config_path()).u8string();
+    static const std::string config_path =
+        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString();
+
+    auto dir = QDir();
+    auto config_qstr = QString::fromStdString(config_path);
+    if (!dir.exists(config_qstr)) dir.mkpath(config_qstr);
 
     if (data == nullptr) return config_path.size() + 1;
     if (size < config_path.size() + 1) return 0;
@@ -74,6 +89,9 @@ void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void
 
     m_init_data.reset(new M64RRSpec::PluginInit);
 
+    m_init_data->main_window = EmuContext::instance()->window();
+    m_init_data->platform = M64RRSpec::Platform::Qt6;
+
     m_init_data->rom = ctx->rom;
     m_init_data->rdram = (uint8_t *)ctx->rdram;
     m_init_data->dmem = (uint8_t *)ctx->sp_dmem;
@@ -99,11 +117,6 @@ void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void
 
     auto *video_process_dlist_ptr = (M64RRSpec::PtrProcessDList)load_symbol("M64RRProcessDList");
     m_init_data->process_dlist = video_process_dlist_ptr;
-
-    m_init_data->log_error = [](const char *msg) { std::println(stderr, "[ERROR] {}", msg); };
-    m_init_data->log_warn = [](const char *msg) { std::println(stderr, "[WARN]  {}", msg); };
-    m_init_data->log_info = [](const char *msg) { std::println(stderr, "[INFO]  {}", msg); };
-    m_init_data->log_trace = [](const char *msg) { std::println(stderr, "[TRACE] {}", msg); };
 
     m_init_data->get_effective_speed_mode = []() { return EmuContext::rawContext()->vr_get_effective_speed_mode(); };
     m_init_data->frame_skipped = []() { return EmuContext::rawContext()->vr_get_frame_skipped(); };

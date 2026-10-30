@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifdef _WIN32
+#ifdef MUPEN64RR_BUILD_WIN32
 
 #include "Main_Win32.hpp"
 #include "Config.hpp"

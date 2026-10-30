@@ -167,7 +167,7 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
             return entry.is_regular_file() && is_one_of(entry.path().extension(), {".n64", ".v64", ".z64", ".rom"});
         });
         auto sendRomData = [self, vrByteswap](const std::filesystem::directory_entry &entry) {
-            std::println("adding {}", entry.path().string());
+            // std::println("adding {}", entry.path().string());
             auto *romData = new RomData(entry.path(), entry.file_size(), vrByteswap);
 
             if (!self)

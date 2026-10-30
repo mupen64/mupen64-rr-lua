@@ -13,6 +13,15 @@ target_compile_features(Mupen64RR_Core_Headers INTERFACE cxx_std_26)
 target_include_directories(Mupen64RR_Core_Headers INTERFACE "include")
 target_link_libraries(Mupen64RR_Core_Headers INTERFACE Mupen64RR_Common)
 
+# options for specific frontends (specifically for the plugin API)
+if (MUPEN64RR_BUILD_WIN32)
+    target_compile_definitions(Mupen64RR_Core_Headers INTERFACE MUPEN64RR_BUILD_WIN32)
+endif()
+if (MUPEN64RR_BUILD_QT6)
+    target_compile_definitions(Mupen64RR_Core_Headers INTERFACE MUPEN64RR_BUILD_QT6)
+    target_link_libraries(Mupen64RR_Core_Headers INTERFACE Qt6::Core Qt6::Quick)
+endif()
+
 add_library(Mupen64RR_Core STATIC
     "Core.hpp"
     "Alloc.hpp"
