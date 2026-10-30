@@ -8,10 +8,12 @@ qt_add_library(Mupen64RR_Plugins_Qt6_TASInput STATIC)
 qt_add_qml_module(Mupen64RR_Plugins_Qt6_TASInput
     URI "TASInput"
     SOURCES
+        "GamepadManager.hpp"
         "JoystickData.hpp"
         "Main.hpp"
         "UIManager.hpp"
 
+        "GamepadManager.cpp"
         "JoystickData.cpp"
         "Main.cpp"
         "UIManager.cpp"
@@ -34,6 +36,7 @@ target_link_libraries(Mupen64RR_Plugins_Qt6_TASInput PRIVATE
     Mupen64RR_Plugins_Common
     Qt6::Core
     Qt6::Quick
+    SDL3::SDL3
 )
 target_compile_definitions(Mupen64RR_Plugins_Qt6_TASInput PRIVATE
     PLUGIN_NAMESPACE=BuiltinTAS::TASInput_Qt6
