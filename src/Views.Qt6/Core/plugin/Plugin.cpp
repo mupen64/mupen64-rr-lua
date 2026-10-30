@@ -6,6 +6,8 @@
 
 #include "Plugin.hpp"
 
+#include <QDir>
+#include <QStandardPaths>
 #include <decan.hpp>
 
 #include "Windowing.hpp"
@@ -15,18 +17,25 @@ template <class T>
 static inline void load_core_function(Plugin &plugin, const char *symbol, std::function<std::remove_pointer_t<T>> &func)
 {
     auto pointer = (T)plugin.load_symbol(symbol);
-    if (pointer != nullptr) {
+    if (pointer != nullptr)
+    {
         // std::println("found symbol {}", symbol);
         func = pointer;
     }
-    else {
+    else
+    {
         // std::println("missing symbol {}", symbol);
     }
 }
 
 static size_t get_config_path(char *data, size_t size)
 {
-    static const std::u8string config_path = std::filesystem::absolute(IOUtils::config_path()).u8string();
+    static const std::string config_path =
+        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString();
+
+    auto dir = QDir();
+    auto config_qstr = QString::fromStdString(config_path);
+    if (!dir.exists(config_qstr)) dir.mkpath(config_qstr);
 
     if (data == nullptr) return config_path.size() + 1;
     if (size < config_path.size() + 1) return 0;

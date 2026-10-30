@@ -63,6 +63,10 @@ static int qt_main(int argc, char *argv[])
     else
         delete translator;
 
+    // Force QSettings to use .ini on all platforms
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+
+    // Setup engine
     QQmlApplicationEngine engine;
 
     // Close if object creation fails

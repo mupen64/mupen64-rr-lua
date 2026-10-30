@@ -12,6 +12,7 @@
 #include <QQmlEngine>
 #include <QQmlComponent>
 #include <QQuickWindow>
+#include <QSettings>
 
 class TASInputUIManager : public QObject {
     Q_OBJECT
@@ -49,4 +50,6 @@ private:
     QQmlComponent* m_component;
     std::array<QQuickWindow*, 4> m_windows;
     bool m_is_open;
+
+    QSettings* m_settings;
 };

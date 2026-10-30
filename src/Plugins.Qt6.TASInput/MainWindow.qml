@@ -1,3 +1,4 @@
+import QtCore
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -27,6 +28,7 @@ ApplicationWindow {
 
     property var backend
     property int port: 0
+    property url configUrl
 
     ColumnLayout {
         id: rootItem
@@ -36,6 +38,12 @@ ApplicationWindow {
         ButtonsSection {
             id: buttons
         }
+    }
+
+    Settings {
+        id: settings
+        location: root.configUrl
+        category: `port${root.port}`
     }
 
     Connections {

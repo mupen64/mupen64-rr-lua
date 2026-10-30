@@ -151,7 +151,11 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
     }
     case M64RRSpec::Event::Type::Shutdown: {
         if (g_ext_ui_manager.isNull()) break;
-        g_ext_ui_manager->deleteLater();
+        auto *window = g_plugin->main_window.qt_window();
+        QMetaObject::invokeMethod(g_ext_ui_manager.get(), [] {
+            delete g_ui_manager;
+            g_ui_manager = nullptr;
+        }, Qt::BlockingQueuedConnection);
         break;
     }
     default:
