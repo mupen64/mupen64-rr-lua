@@ -7,6 +7,7 @@
 #include "Main.hpp"
 #include <Core/Plugin.hpp>
 #include <QQuickWindow>
+#include <QTimer>
 
 #include "UIManager.hpp"
 
@@ -17,7 +18,7 @@ namespace BuiltinTAS::TASInput_Qt6
 M64RRSpec::PluginInit *g_plugin = nullptr;
 
 // managed by the UI thread. DO NOT MODIFY from outside.
-TASInputUIManager *g_ui_manager = nullptr;
+QPointer<TASInputUIManager> g_ui_manager = nullptr;
 // managed by the plugin. DO NOT MODIFY from outside.
 QPointer<TASInputUIManager> g_ext_ui_manager = nullptr;
 
@@ -152,10 +153,10 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
     case M64RRSpec::Event::Type::Shutdown: {
         if (g_ext_ui_manager.isNull()) break;
         auto *window = g_plugin->main_window.qt_window();
-        QMetaObject::invokeMethod(g_ext_ui_manager.get(), [] {
+        QMetaObject::invokeMethod(window, [] {
             delete g_ui_manager;
             g_ui_manager = nullptr;
-        }, Qt::BlockingQueuedConnection);
+        }, Qt::QueuedConnection);
         break;
     }
     default:
@@ -172,6 +173,7 @@ void M64RRGetKeys(int32_t index, CoreButtons *buttons)
 
     // Temporary event loop to wait for a signal
     QEventLoop event_loop;
+    QTimer timeout;
 
     // once the input arrives, shut down the event loop and set the buttons
     QObject::connect(g_ext_ui_manager.get(), &TASInputUIManager::receiveInput, &event_loop,
@@ -181,7 +183,11 @@ void M64RRGetKeys(int32_t index, CoreButtons *buttons)
             event_loop.quit();
         });
 
+    // stop if input polling takes too long
+    QObject::connect(&timeout, &QTimer::timeout, &event_loop, &QEventLoop::quit);
+
     // fire the start signal; the event loop will be stopped by the handler
+    timeout.start(50);
     QMetaObject::invokeMethod(g_ext_ui_manager.get(), &TASInputUIManager::requestInput, index);
     event_loop.exec();
 }

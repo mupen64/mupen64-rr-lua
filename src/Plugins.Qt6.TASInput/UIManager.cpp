@@ -36,6 +36,7 @@ TASInputUIManager::TASInputUIManager(QQuickWindow *main_window, QObject *parent)
 }
 TASInputUIManager::~TASInputUIManager()
 {
+    close();
 }
 
 bool TASInputUIManager::isReady()
