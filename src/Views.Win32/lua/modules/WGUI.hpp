@@ -173,21 +173,6 @@ static std::optional<CLSID> get_encoder_clsid_for_extension(const std::string_vi
     return std::nullopt;
 }
 
-static int GetGUIInfo(lua_State *L)
-{
-    auto lua = LuaRealmManager::instance().get_by_state(L);
-
-    RECT rect;
-    GetClientRect(g_main_ctx.hwnd, &rect);
-
-    lua_newtable(L);
-    lua_pushinteger(L, rect.right - rect.left);
-    lua_setfield(L, -2, "width");
-    lua_pushinteger(L, rect.bottom - rect.top);
-    lua_setfield(L, -2, "height");
-    return 1;
-}
-
 static COLORREF StrToColor(const std::string &s, bool alpha = false, COLORREF def = 0)
 {
     if (s[0] == '#')

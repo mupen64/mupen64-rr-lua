@@ -851,6 +851,10 @@ function emu.main_window() end
 ---@return nil
 function Window:resize(x, y) end
 
+---Returns this window's client dimensions in pixels.
+---@return {x: integer, y: integer}
+function Window:size() end
+
 ---Calls `f` when this window is painted. Use [painter.current](lua://painter.current) to get the painter for the callback's scope.
 ---The painter is only valid for the duration of the callback.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
@@ -1464,10 +1468,6 @@ function wgui.polygon(points) end
 ---@param x2 integer
 ---@param y2 integer
 function wgui.line(x1, y1, x2, y2) end
-
----Returns the current width and height of the mupen window in a table.
----@return {width: integer, height: integer}
-function wgui.info() end
 
 ---Sets a rectangle bounding box such that you cannot draw outside of it.
 ---@param x integer
@@ -2481,6 +2481,13 @@ function __mupen_apply_shims()
     ---@return nil
     function emu.atmouse(f, unregister)
         return emu.main_window():atmouse(f, unregister)
+    end
+
+    ---@deprecated Use `emu.main_window():size()` instead.
+    ---@return {width: integer, height: integer}
+    function wgui.info()
+        local size = emu.main_window():size()
+        return { width = size.x, height = size.y }
     end
 
     ---@deprecated Use `emu.main_window():resize(x, y)` instead.

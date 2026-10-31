@@ -90,6 +90,19 @@ int closed(lua_State *L)
     return subscribe(L, LuaRealmManager::REG_CLOSED);
 }
 
+int size(lua_State *L)
+{
+    auto *window = check_window(L);
+    RECT rect{};
+    if (!GetClientRect(window->hwnd, &rect)) return luaL_error(L, "failed to query window size");
+    lua_createtable(L, 0, 2);
+    lua_pushinteger(L, rect.right - rect.left);
+    lua_setfield(L, -2, "x");
+    lua_pushinteger(L, rect.bottom - rect.top);
+    lua_setfield(L, -2, "y");
+    return 1;
+}
+
 int resize(lua_State *L)
 {
     auto *window = check_window(L);
@@ -267,7 +280,7 @@ namespace LuaCore::Window
 void register_types(lua_State *L)
 {
     static const luaL_Reg methods[] = {{"atpaint", atpaint}, {"atkey", atkey}, {"atmouse", atmouse}, {"closed", closed},
-        {"resize", resize}, {nullptr, nullptr}};
+        {"resize", resize}, {"size", size}, {nullptr, nullptr}};
     luaL_newmetatable(L, WINDOW_MT);
     luaL_setfuncs(L, methods, 0);
     lua_pushvalue(L, -1);

@@ -95,8 +95,7 @@ const luaL_Reg WGUI_FUNCS[] = {{"setbrush", LuaCore::Wgui::set_brush}, {"setpen"
     {"loadscreenreset", LuaCore::Wgui::LoadScreenReset}, {"getimageinfo", LuaCore::Wgui::GetImageInfo},
     /*</GDIPlus*/
     {"ellipse", LuaCore::Wgui::DrawEllipse}, {"polygon", LuaCore::Wgui::DrawPolygon}, {"line", LuaCore::Wgui::DrawLine},
-    {"info", LuaCore::Wgui::GetGUIInfo}, {"setclip", LuaCore::Wgui::SetClip}, {"resetclip", LuaCore::Wgui::ResetClip},
-    {NULL, NULL}};
+    {"setclip", LuaCore::Wgui::SetClip}, {"resetclip", LuaCore::Wgui::ResetClip}, {NULL, NULL}};
 
 const luaL_Reg PAINTER_FUNCS[] = {{"current", LuaCore::Painter::current}, {"new_image", LuaCore::Painter::new_image},
     {"load_image", LuaCore::Painter::load_image}, {"decode_image", LuaCore::Painter::decode_image},
