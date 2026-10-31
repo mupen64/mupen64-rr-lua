@@ -159,8 +159,8 @@ void LuaRenderer::resize(uint32_t width, uint32_t height)
     loadscreen_reset();
     if (presenter) presenter->resize(dc_size);
 
-    const UINT flags =
-        SWP_NOACTIVATE | SWP_NOMOVE | (LuaRendererManager::instance().detached_overlays() ? SWP_NOZORDER : 0);
+    const UINT flags = SWP_NOACTIVATE | SWP_NOMOVE |
+                       (LuaRendererManager::instance().detached_overlays() ? SWP_NOZORDER | SWP_NOOWNERZORDER : 0);
     SetWindowPos(m_gdi_overlay_hwnd, HWND_TOP, 0, 0, width, height, flags);
     SetWindowPos(m_d2d_overlay_hwnd, HWND_TOP, 0, 0, width, height, flags);
     move_and_order_overlays();
@@ -198,7 +198,8 @@ void LuaRenderer::move_and_order_overlays()
     for (const auto overlay : {m_gdi_overlay_hwnd, m_d2d_overlay_hwnd})
     {
         if (!IsWindow(overlay)) continue;
-        SetWindowPos(overlay, insert_after, position.x, position.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
+        SetWindowPos(
+            overlay, insert_after, position.x, position.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
     }
 }
 
@@ -208,7 +209,10 @@ void LuaRenderer::set_overlay_visibility(bool visible)
     visible = visible && IsWindowVisible(m_parent) && !IsIconic(m_parent);
     for (const auto overlay : {m_gdi_overlay_hwnd, m_d2d_overlay_hwnd})
     {
-        if (IsWindow(overlay)) ShowWindow(overlay, visible ? SW_SHOWNOACTIVATE : SW_HIDE);
+        if (!IsWindow(overlay) || (IsWindowVisible(overlay) != FALSE) == visible) continue;
+        SetWindowPos(overlay, nullptr, 0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE |
+                (visible ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
     }
     if (visible) move_and_order_overlays();
 }
@@ -235,7 +239,7 @@ LRESULT CALLBACK LuaRenderer::parent_window_subclass_proc(
         renderer->set_overlay_visibility(wparam != SIZE_MINIMIZED);
         break;
     case WM_ACTIVATE:
-        renderer->set_overlay_visibility(LOWORD(wparam) != WA_INACTIVE);
+        renderer->set_overlay_visibility(HIWORD(wparam) == 0);
         break;
     case WM_NCDESTROY:
         renderer->set_overlay_visibility(false);
@@ -370,7 +374,8 @@ void LuaRenderer::initialize(HWND parent)
 
     const auto ex_style = detached ? WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
                                    : WS_EX_LAYERED | WS_EX_TRANSPARENT;
-    const auto style = detached ? WS_POPUP : WS_CHILD | WS_VISIBLE;
+
+    const auto style = detached ? WS_POPUP | WS_SYSMENU : WS_CHILD | WS_VISIBLE;
     POINT position{};
     if (detached) ClientToScreen(m_parent, &position);
 
