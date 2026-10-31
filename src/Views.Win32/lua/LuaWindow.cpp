@@ -13,6 +13,12 @@ namespace
 constexpr const char *WINDOW_MT = "Mupen.Window";
 constexpr const char *WINDOW_CLASS = "MupenLuaWindow";
 
+std::string_view anchor_side(std::string_view anchor)
+{
+    if (anchor.ends_with("_full")) anchor.remove_suffix(5);
+    return anchor;
+}
+
 LuaWindow *check_window(lua_State *L, bool allow_closed = false)
 {
     auto *window = *static_cast<LuaWindow **>(luaL_checkudata(L, 1, WINDOW_MT));
@@ -120,6 +126,7 @@ int resize(lua_State *L)
         static_cast<int>(height) + frame_height, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
     window->updating_anchor = previous;
     if (!success) return luaL_error(L, "failed to resize window");
+    window->reposition();
     return 0;
 }
 
@@ -178,20 +185,31 @@ bool LuaWindow::call(uint8_t key, const std::function<int(lua_State *)> &invoke)
 
 void LuaWindow::reposition()
 {
-    if (closed || anchor.empty() || IsIconic(hwnd) || IsZoomed(hwnd)) return;
+    if (updating_anchor || closed || anchor.empty() || IsIconic(hwnd) || IsZoomed(hwnd) || IsIconic(g_main_ctx.hwnd))
+        return;
     RECT main_rect{}, rect{};
-    GetWindowRect(g_main_ctx.hwnd, &main_rect);
-    GetWindowRect(hwnd, &rect);
+    if (!GetWindowRect(g_main_ctx.hwnd, &main_rect) || !GetWindowRect(hwnd, &rect)) return;
+
+    const auto side = anchor_side(anchor);
+    int width = rect.right - rect.left, height = rect.bottom - rect.top;
+    if (anchor.ends_with("_full"))
+    {
+        if (side == "left" || side == "right")
+            height = main_rect.bottom - main_rect.top;
+        else
+            width = main_rect.right - main_rect.left;
+    }
     int x = main_rect.left, y = main_rect.top;
-    if (anchor == "right") x = main_rect.right;
-    if (anchor == "left") x -= rect.right - rect.left;
-    if (anchor == "bottom") y = main_rect.bottom;
-    if (anchor == "top") y -= rect.bottom - rect.top;
-    if (rect.left == x && rect.top == y) return;
-    const bool previous = updating_anchor;
+    if (side == "right") x = main_rect.right;
+    if (side == "left") x -= width;
+    if (side == "bottom") y = main_rect.bottom;
+    if (side == "top") y -= height;
+    const bool same_size = width == rect.right - rect.left && height == rect.bottom - rect.top;
+    if (rect.left == x && rect.top == y && same_size) return;
+
     updating_anchor = true;
-    SetWindowPos(hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-    updating_anchor = previous;
+    SetWindowPos(hwnd, nullptr, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE | (same_size ? SWP_NOSIZE : 0));
+    updating_anchor = false;
 }
 
 void LuaWindow::move_group()
@@ -209,11 +227,12 @@ void LuaWindow::move_group()
         static_cast<UINT32>(client_rect.bottom - client_rect.top) != renderer->dc_size.height)
         return;
 
+    const auto side = anchor_side(anchor);
     int x = rect.left, y = rect.top;
-    if (anchor == "right") x -= main_rect.right - main_rect.left;
-    if (anchor == "left") x += rect.right - rect.left;
-    if (anchor == "bottom") y -= main_rect.bottom - main_rect.top;
-    if (anchor == "top") y += rect.bottom - rect.top;
+    if (side == "right") x -= main_rect.right - main_rect.left;
+    if (side == "left") x += rect.right - rect.left;
+    if (side == "bottom") y -= main_rect.bottom - main_rect.top;
+    if (side == "top") y += rect.bottom - rect.top;
     if (x == main_rect.left && y == main_rect.top) return;
 
     SetWindowPos(g_main_ctx.hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
@@ -317,10 +336,9 @@ int create(lua_State *L)
         if (window->id == id) return luaL_error(L, "window id already exists: %s", id);
     lua_getfield(L, 1, "anchor");
     const char *anchor = lua_isnil(L, -1) ? "" : luaL_checkstring(L, -1);
-    luaL_argcheck(L,
-        !strcmp(anchor, "") || !strcmp(anchor, "left") || !strcmp(anchor, "right") || !strcmp(anchor, "top") ||
-            !strcmp(anchor, "bottom"),
-        1, "invalid anchor");
+    const auto side = anchor_side(anchor);
+    luaL_argcheck(
+        L, !*anchor || side == "left" || side == "right" || side == "top" || side == "bottom", 1, "invalid anchor");
     lua_getfield(L, 1, "size");
     luaL_checktype(L, -1, LUA_TTABLE);
     lua_getfield(L, -1, "x");
@@ -362,8 +380,8 @@ int create(lua_State *L)
     if (!closable) EnableMenuItem(GetSystemMenu(window->hwnd, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_GRAYED);
     auto *result = window.get();
     realm->windows.push_back(std::move(window));
-    result->renderer->initialize(result->hwnd);
     result->reposition();
+    result->renderer->initialize(result->hwnd);
     push_window(L, result);
     ShowWindow(result->hwnd, SW_SHOWNOACTIVATE);
     return 1;

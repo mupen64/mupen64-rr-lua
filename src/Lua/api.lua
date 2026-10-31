@@ -818,7 +818,7 @@ function emu.atvi(f, unregister) end
 ---@return nil
 function emu.atupdatescreen(f, unregister) end
 
----@alias WindowAnchor "left"|"right"|"top"|"bottom"
+---@alias WindowAnchor "left"|"right"|"top"|"bottom"|"left_full"|"right_full"|"top_full"|"bottom_full"
 
 ---@class WindowSize
 ---@field x integer Client width.
@@ -827,7 +827,7 @@ function emu.atupdatescreen(f, unregister) end
 ---@class WindowOptions
 ---@field id string Unique identifier for the window.
 ---@field size WindowSize The window size.
----@field anchor? WindowAnchor Anchor position relative to the main window.
+---@field anchor? WindowAnchor Anchor position relative to the main window. `_full` also matches the main window's outer height (left/right) or width (top/bottom).
 ---@field minimizable? boolean Whether the window can be minimized. Defaults to true.
 ---@field maximizable? boolean Whether the window can be maximized. Defaults to false.
 ---@field closable? boolean Whether the user can close the window. Defaults to true.
