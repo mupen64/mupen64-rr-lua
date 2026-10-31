@@ -1330,6 +1330,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     while (GetMessage(&msg, nullptr, 0, 0) > 0)
     {
+        if (HotkeyTracker::process_message(msg)) continue;
         if (is_dialog_message(&msg)) continue;
         TranslateMessage(&msg);
         DispatchMessage(&msg);

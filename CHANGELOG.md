@@ -4,6 +4,7 @@
 
 - Added F3DEX3 microcode support to TASVideo
 - Added Lua script-owned window API.
+- Added scoped hotkeys (with Lua API).
 
 ## 🐞 Bugfixes
 

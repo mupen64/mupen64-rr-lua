@@ -7,6 +7,7 @@
 #include "Common.hpp"
 #include <lua/LuaWindow.hpp>
 #include <lua/LuaRealmManager.hpp>
+#include <components/HotkeyTracker.hpp>
 
 namespace
 {
@@ -391,6 +392,7 @@ int create(lua_State *L)
         window.reset();
         return luaL_error(L, "failed to create Lua window");
     }
+    HotkeyTracker::attach(window->hwnd, "window.lua." + window->id);
     if (!closable) EnableMenuItem(GetSystemMenu(window->hwnd, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_GRAYED);
     auto *result = window.get();
     realm->windows.push_back(std::move(window));

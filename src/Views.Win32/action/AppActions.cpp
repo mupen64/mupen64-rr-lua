@@ -909,6 +909,21 @@ static bool always_enabled()
 
 #pragma endregion
 
+static void associate_app_hotkey(const std::string &path, Hotkey hotkey)
+{
+    hotkey.context = "window.builtin.main|window.lua.*";
+
+    const auto normalized_path = ActionManager::normalize_filter(path);
+    for (auto *hotkeys : {&g_config.hotkeys, &g_config.inital_hotkeys})
+    {
+        auto &existing = hotkeys->at(normalized_path);
+        if (existing.context == "window.builtin.main") existing.context = hotkey.context;
+    }
+
+    const bool success = ActionManager::associate_hotkey(path, hotkey, false);
+    need(success, std::format("Failed to associate hotkey for path '{}'.", path));
+}
+
 static void add_action_with_up(const std::string &path, const Hotkey &default_hotkey,
     const std::function<void()> &on_press, const std::function<void()> &on_release,
     const std::function<bool()> &get_enabled = {}, const std::function<bool()> &get_active = {},
@@ -924,8 +939,7 @@ static void add_action_with_up(const std::string &path, const Hotkey &default_ho
     });
     need(success, std::format("Failed to add action for path '{}'.", path));
 
-    success = ActionManager::associate_hotkey(path, default_hotkey, false);
-    need(success, std::format("Failed to associate hotkey for path '{}'.", path));
+    associate_app_hotkey(path, default_hotkey);
 }
 
 static void add_action(const std::string &path, const Hotkey &default_hotkey, const std::function<void()> &callback,
@@ -950,8 +964,7 @@ static void add_action(const std::string &path,
     });
     need(success, std::format("Failed to add action for path '{}'.", path));
 
-    success = ActionManager::associate_hotkey(path, Hotkey::make_empty(), false);
-    need(success, std::format("Failed to associate hotkey for path '{}'.", path));
+    associate_app_hotkey(path, Hotkey::make_empty());
 }
 
 static void generate_path_recent_menu(const std::string &base_path, const Hotkey &load_first_hotkey,

@@ -1808,6 +1808,32 @@ retest.describe('mupen64', function()
             end)
         end)
 
+        retest.describe('get_locked_hotkeys', function()
+            retest.it('defaults_modern_and_legacy_hotkeys_to_main', function()
+                action.lock_hotkeys(true, {
+                    { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_A } },
+                    { key = Mupen.VKeycodes.VK_A },
+                })
+                local locked = action.get_locked_hotkeys()
+                action.lock_hotkeys(false)
+                retest.expect(locked[1].context).to.equal('window.builtin.main')
+                retest.expect(locked[2].context).to.equal('window.builtin.main')
+                retest.expect(locked[1].trigger).to.equal(locked[2].trigger)
+            end)
+            retest.it('preserves_context_for_modern_and_legacy_hotkeys', function()
+                for _, context in ipairs({ 'window.*', 'window.builtin.*', 'window.builtin.main', 'window.builtin.pianoroll', 'window.lua.*', 'window.lua.test', 'window.builtin.main|window.lua.*' }) do
+                    action.lock_hotkeys(true, {
+                        { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_A }, context = context },
+                        { key = Mupen.VKeycodes.VK_A, context = context },
+                    })
+                    local locked = action.get_locked_hotkeys()
+                    action.lock_hotkeys(false)
+                    retest.expect(locked[1].context).to.equal(context)
+                    retest.expect(locked[2].context).to.equal(context)
+                end
+            end)
+        end)
+
         retest.describe('get_hotkeys_locked', function()
             retest.it('returns_locked_state', function()
                 action.lock_hotkeys(true)
