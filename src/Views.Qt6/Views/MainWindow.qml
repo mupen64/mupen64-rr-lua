@@ -12,6 +12,7 @@ import QtQuick.Layouts
 
 import Actions
 import Core
+import Lua
 import Views
 
 ApplicationWindow {
@@ -85,7 +86,13 @@ ApplicationWindow {
                 anchors.top: parent.top
                 anchors.left: parent.left
             }
-            // TODO: Lua canvas management
+
+            LuaCanvasManager {
+                id: luaCanvasManager
+                anchors.fill: coreDisplay
+                display: coreDisplay
+                instanceManager: luaManager
+            }
         }
     }
 
@@ -169,6 +176,7 @@ ApplicationWindow {
         core: core
         dialogService: dialogService
         winConfig: winConfig
+        winLua: diaLuaManager
         menuOpen: menuBar.opened
     }
 
@@ -189,5 +197,15 @@ ApplicationWindow {
         settingsActions: settingsActions
         settingsCore: settingsCore
         settingsPaths: settingsPaths
+    }
+
+    LuaInstanceManager {
+        id: luaManager
+        context: core
+    }
+
+    LuaScriptManager {
+        id: diaLuaManager
+        instanceManager: luaManager
     }
 }
