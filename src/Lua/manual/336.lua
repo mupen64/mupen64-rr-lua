@@ -34,4 +34,4 @@ end
 
 emu.atinput(evil)
 emu.atvi(evil)
-emu.atpaint(evil)
+emu.main_window():atpaint(evil)

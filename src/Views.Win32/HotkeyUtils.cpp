@@ -312,7 +312,8 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             EndDialog(hwnd, IDCANCEL);
             return TRUE;
         case IDC_CLEAR:
-            params->hotkey = Hotkey::make_empty();
+            params->hotkey.trigger = Hotkey::KeyCode(SDLK_UNKNOWN);
+            params->hotkey.ctrl = params->hotkey.shift = params->hotkey.alt = false;
             EndDialog(hwnd, IDOK);
             break;
         default:
@@ -346,6 +347,7 @@ bool HotkeyUtils::show_prompt(const HWND hwnd, const std::string &caption, Hotke
     const auto prev_hotkey = hotkey;
 
     hotkey = Hotkey::make_unassigned();
+    hotkey.context = prev_hotkey.context;
     auto params = new DialogParams{.headline = caption, .hotkey = hotkey};
 
     const INT_PTR result =
@@ -378,7 +380,7 @@ void HotkeyUtils::try_associate_hotkey(
 
     if (new_hotkey.is_empty())
     {
-        set_hotkey(action, Hotkey::make_empty());
+        set_hotkey(action, new_hotkey);
         return;
     }
 
@@ -391,7 +393,7 @@ void HotkeyUtils::try_associate_hotkey(
 
     for (const auto &pair : g_config.hotkeys)
     {
-        if (pair.first != action && pair.second == new_hotkey)
+        if (pair.first != action && pair.second.conflicts_with(new_hotkey))
         {
             conflicting_hotkeys.emplace_back(pair.first, pair.second);
         }

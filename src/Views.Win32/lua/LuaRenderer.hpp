@@ -53,10 +53,12 @@ class LuaRenderer
 
     std::chrono::steady_clock::time_point last_render_time;
 
-    void initialize();
+    void initialize(HWND parent = nullptr);
+    void resize(uint32_t width, uint32_t height);
     void pre_shutdown();
     void shutdown();
     void present_gdi_content();
+    void move_and_order_overlays();
     void mark_gdi_content_present();
     void ensure_d2d_renderer_created();
     void loadscreen_reset();
@@ -73,11 +75,15 @@ class LuaRenderer
     static constexpr uint32_t m_lua_gdi_color_mask = RGB(255, 0, 255);
     std::optional<float> m_target_fps;
 
+    HWND m_parent{};
     HWND m_d2d_overlay_hwnd{};
     HWND m_gdi_overlay_hwnd{};
     bool m_has_gdi_content{};
     bool m_ignore_create_renderer{};
 
+    static LRESULT CALLBACK parent_window_subclass_proc(
+        HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR data);
+    void set_overlay_visibility(bool visible);
     void create_loadscreen();
     void destroy_loadscreen();
 };

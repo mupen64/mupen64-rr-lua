@@ -2122,8 +2122,6 @@ CoreResult vr_close_rom_impl(bool stop_vcr)
         return CoreResult::VR_NotRunning;
     }
 
-    vr_resume_emu_impl(true);
-
     if (stop_vcr)
     {
         g_ctx.vcr_stop_all();
