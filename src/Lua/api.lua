@@ -2235,14 +2235,16 @@ function avi.stopcapture() end
 
 ---@alias HotkeyTrigger HotkeyNoTrigger|HotkeyKeyCodeTrigger|HotkeyMouseButtonTrigger
 
----The window scope in which a hotkey can trigger.
+---The window scopes in which a hotkey can trigger. Combine scopes with `|` (logical OR),
+---for example `window.builtin.main|window.lua.*`. Whitespace around scopes is ignored.
 ---@alias HotkeyContext
 ---| "window.*"
 ---| "window.builtin.*"
 ---| "window.builtin.main" -- Main window.
 ---| "window.builtin.pianoroll" -- Piano roll window.
 ---| "window.lua.*"
----| string -- A specific window. Usually like `window.lua.<id>`, as in `Window.id`.
+---| "window.builtin.main|window.lua.*" -- Main window and all Lua script windows.
+---| string -- A specific window (such as `window.lua.<id>`, as in `Window.id`) or a `|`-separated union of scopes.
 
 ---@class HotkeyModifiers
 ---@field context HotkeyContext? The window scope in which this hotkey can trigger. Defaults to `"window.builtin.main"`.
@@ -2385,7 +2387,7 @@ function action.invoke(path, up, release_on_repress, params) end
 
 ---Locks or unlocks action invocations from hotkeys.
 ---@param lock boolean Whether to lock or unlock action invocations from hotkeys. All hotkeys are affected on unlock.
----@param hotkeys Hotkey[]? The hotkeys affected by the lock. Ignored when unlocking.
+---@param hotkeys (Hotkey|LegacyHotkey)[]? Locks bindings with the same trigger and modifiers whose contexts overlap these hotkeys. Ignored when unlocking.
 function action.lock_hotkeys(lock, hotkeys) end
 
 ---Gets the hotkeys locked via `action.lock_hotkeys`.

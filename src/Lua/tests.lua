@@ -1821,7 +1821,7 @@ retest.describe('mupen64', function()
                 retest.expect(locked[1].trigger).to.equal(locked[2].trigger)
             end)
             retest.it('preserves_context_for_modern_and_legacy_hotkeys', function()
-                for _, context in ipairs({ 'window.*', 'window.builtin.*', 'window.builtin.main', 'window.builtin.pianoroll', 'window.lua.*', 'window.lua.test' }) do
+                for _, context in ipairs({ 'window.*', 'window.builtin.*', 'window.builtin.main', 'window.builtin.pianoroll', 'window.lua.*', 'window.lua.test', 'window.builtin.main|window.lua.*' }) do
                     action.lock_hotkeys(true, {
                         { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_A }, context = context },
                         { key = Mupen.VKeycodes.VK_A, context = context },
