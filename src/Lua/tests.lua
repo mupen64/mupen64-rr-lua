@@ -74,6 +74,46 @@ retest.describe('mupen64', function()
         end)
     end)
     retest.describe('emu', function()
+        retest.describe('windows', function()
+            retest.it('returns_the_same_main_window', function()
+                retest.expect(emu.main_window()).to.equal(emu.main_window())
+                retest.expect(type(emu.atpaint)).to.equal('function')
+                retest.expect(type(emu.atkey)).to.equal('function')
+                retest.expect(type(emu.atmouse)).to.equal('function')
+            end)
+
+            retest.it('scopes_registration_to_each_window', function()
+                local main = emu.main_window()
+                local aux = emu.create_window({ id = 'window-api-test', size = { x = 200, y = 100 } })
+                retest.expect(aux == main).to.equal(false)
+                for _, event in ipairs({ 'atpaint', 'atkey', 'atmouse' }) do
+                    local callback = function() end
+                    main[event](main, callback)
+                    retest.expect(function() aux[event](aux, callback, true) end).to.fail()
+                    aux[event](aux, callback)
+                    main[event](main, callback, true)
+                    aux[event](aux, callback, true)
+                    retest.expect(function() aux[event](aux, callback, true) end).to.fail()
+                    retest.expect(function() aux[event](aux, 'invalid') end).to.fail()
+                end
+                retest.expect(function()
+                    emu.create_window({ id = 'window-api-test', size = { x = 200, y = 100 } })
+                end).to.fail()
+            end)
+
+            retest.it('rejects_invalid_window_options', function()
+                local invalid = {
+                    {},
+                    { id = '',               size = { x = 200, y = 100 } },
+                    { id = 'invalid-size',   size = { x = 1.5, y = 100 } },
+                    { id = 'invalid-anchor', anchor = 'center',          size = { x = 200, y = 100 } },
+                }
+                for _, options in ipairs(invalid) do
+                    retest.expect(function() emu.create_window(options) end).to.fail()
+                end
+            end)
+        end)
+
         retest.describe('get_pref', function()
             retest.it('returns_resolved_theme', function()
                 local theme = emu.get_pref('theme')

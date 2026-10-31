@@ -134,12 +134,14 @@ for i = 1, GRADIENT_COUNT do
         bounds = linear_bounds,
         paint = {
             type = "linear_gradient",
-            x0 = linear_bounds.x, y0 = linear_bounds.y,
-            x1 = linear_bounds.x + linear_bounds.w, y1 = linear_bounds.y + linear_bounds.h,
+            x0 = linear_bounds.x,
+            y0 = linear_bounds.y,
+            x1 = linear_bounds.x + linear_bounds.w,
+            y1 = linear_bounds.y + linear_bounds.h,
             stops = {
-                { offset = 0, color = color0 },
+                { offset = 0,        color = color0 },
                 { offset = midpoint, color = color1 },
-                { offset = 1, color = color2 },
+                { offset = 1,        color = color2 },
             },
         },
     }
@@ -152,9 +154,9 @@ for i = 1, GRADIENT_COUNT do
             radius_x = 5 + (i % 13),
             radius_y = 4 + ((i * 3) % 11),
             stops = {
-                { offset = 0, color = color0 },
+                { offset = 0,        color = color0 },
                 { offset = midpoint, color = color1 },
-                { offset = 1, color = color2 },
+                { offset = 1,        color = color2 },
             },
         },
     }
@@ -329,7 +331,7 @@ local function draw_radial_gradients(p)
     end
 end
 
-emu.atpaint(function()
+emu.main_window():atpaint(function()
     local p = painter.current()
     frame = frame + 1
 

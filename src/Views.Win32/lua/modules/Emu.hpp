@@ -43,8 +43,7 @@ static int get_pref(lua_State *L)
 
     if (!strcmp(pref, "theme"))
     {
-        lua_pushstring(
-                    L, WinDarkMode::effective_theme() == WinDarkMode::EffectiveTheme::Dark ? "dark" : "light");
+        lua_pushstring(L, WinDarkMode::effective_theme() == WinDarkMode::EffectiveTheme::Dark ? "dark" : "light");
     }
     else if (!strcmp(pref, "accent_color"))
     {
@@ -130,11 +129,6 @@ static int subscribe_atupdatescreen(lua_State *L)
     return register_callback(L, LuaRealmManager::REG_ATUPDATESCREEN);
 }
 
-static int subscribe_atpaint(lua_State *L)
-{
-    return register_callback(L, LuaRealmManager::REG_ATPAINT);
-}
-
 static int subscribe_atvi(lua_State *L)
 {
     return register_callback(L, LuaRealmManager::REG_ATVI);
@@ -193,16 +187,6 @@ static int subscribe_atseekcompleted(lua_State *L)
 static int subscribe_atwarpmodifystatuschanged(lua_State *L)
 {
     return register_callback(L, LuaRealmManager::REG_ATWARPMODIFYSTATUSCHANGED);
-}
-
-static int subscribe_atkey(lua_State *L)
-{
-    return register_callback(L, LuaRealmManager::REG_ATKEY);
-}
-
-static int subscribe_atmouse(lua_State *L)
-{
-    return register_callback(L, LuaRealmManager::REG_ATMOUSE);
 }
 
 static int Screenshot(lua_State *L)

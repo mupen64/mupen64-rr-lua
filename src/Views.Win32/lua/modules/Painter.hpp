@@ -540,8 +540,8 @@ inline LuaRenderer *check_context(lua_State *L)
 {
     auto *environment = LuaRealmManager::instance().get_by_state(L);
     if (!environment) luaL_error(L, "painter is unavailable outside a Lua realm");
-    environment->renderer.ensure_d2d_renderer_created();
-    auto *context = &environment->renderer;
+    environment->current_renderer().ensure_d2d_renderer_created();
+    auto *context = &environment->current_renderer();
     if (!context->presenter || context->d2d_render_target_stack.empty() || !context->d2d_render_target_stack.top())
         luaL_error(L, "Direct2D renderer is unavailable");
     return context;
@@ -1275,7 +1275,7 @@ inline TextFactoryCache *get_text_factory_cache(lua_State *L)
 {
     auto *environment = LuaRealmManager::instance().get_by_state(L);
     if (!environment) return nullptr;
-    auto &cache = environment->renderer.painter_text_factory;
+    auto &cache = environment->current_renderer().painter_text_factory;
     if (!cache) cache = std::make_shared<TextFactoryCache>();
     return cache.get();
 }
@@ -2498,8 +2498,8 @@ inline int get_target_fps(lua_State *L)
 {
     auto *environment = LuaRealmManager::instance().get_by_state(L);
     if (!environment) return luaL_error(L, "painter is unavailable outside a Lua realm");
-    if (environment->renderer.target_fps().has_value())
-        lua_pushnumber(L, environment->renderer.target_fps().value());
+    if (environment->current_renderer().target_fps().has_value())
+        lua_pushnumber(L, environment->current_renderer().target_fps().value());
     else
         lua_pushnil(L);
     return 1;
@@ -2511,7 +2511,7 @@ inline int set_target_fps(lua_State *L)
     if (!environment) return luaL_error(L, "painter is unavailable outside a Lua realm");
     std::optional<float> fps;
     if (!lua_isnoneornil(L, 1)) fps = static_cast<float>(luaL_checknumber(L, 1));
-    environment->renderer.set_target_fps(fps);
+    environment->current_renderer().set_target_fps(fps);
     return 0;
 }
 
@@ -2627,7 +2627,7 @@ inline int measure_text(lua_State *L)
     Detail::TextMeasurementCache *measurement_cache = nullptr;
     if (auto *environment = LuaRealmManager::instance().get_by_state(L))
     {
-        auto &cache = environment->renderer.painter_text_measurements;
+        auto &cache = environment->current_renderer().painter_text_measurements;
         if (!cache) cache = std::make_shared<Detail::TextMeasurementCache>();
         measurement_cache = cache.get();
     }

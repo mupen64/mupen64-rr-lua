@@ -4,7 +4,7 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
-emu.atpaint(function()
+emu.main_window():atpaint(function()
     local p = painter.current()
     p:begin_path()
     p:rect({ x = 10, y = 10, w = 40, h = 40 })

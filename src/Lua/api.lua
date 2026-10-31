@@ -818,13 +818,56 @@ function emu.atvi(f, unregister) end
 ---@return nil
 function emu.atupdatescreen(f, unregister) end
 
----Calls `f` after every VI frame. Use [painter.current](lua://painter.current) to get the painter for the callback's scope.
+---@alias WindowAnchor "left"|"right"|"top"|"bottom"|"left_full"|"right_full"|"top_full"|"bottom_full"
+
+---@class WindowSize
+---@field x integer Client width.
+---@field y integer Client height.
+
+---@class WindowOptions
+---@field id string Unique identifier for the window.
+---@field size WindowSize The window size.
+---@field anchor? WindowAnchor Anchor position relative to the main window. `_full` also matches the main window's outer height (left/right) or width (top/bottom).
+---@field minimizable? boolean Whether the window can be minimized. Defaults to true.
+---@field maximizable? boolean Whether the window can be maximized. Defaults to false.
+---@field closable? boolean Whether the user can close the window. Defaults to true.
+
+---@class Window
+local Window = {}
+
+---Creates a script-owned window.
+---Windows are closed when the script stops.
+---@param options WindowOptions
+---@return Window
+function emu.create_window(options) end
+
+---Returns this script's window object for the emulator's main window.
+---@return Window
+function emu.main_window() end
+
+---Resizes this window's client area. Dimensions are clamped to 1–32767 pixels.
+---@param x integer Client width.
+---@param y integer Client height.
+---@return nil
+function Window:resize(x, y) end
+
+---Returns this window's client dimensions in pixels.
+---@return {x: integer, y: integer}
+function Window:size() end
+
+---Calls `f` when this window is painted. Use [painter.current](lua://painter.current) to get the painter for the callback's scope.
 ---The painter is only valid for the duration of the callback.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
----@param f fun(): nil The function to be called after every VI frame.
+---@param f fun(): nil The function to be called when the window is painted.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
-function emu.atpaint(f, unregister) end
+function Window:atpaint(f, unregister) end
+
+---Calls `f` when this window closes.
+---@param f fun(): nil The function to be called when the window closes.
+---@param unregister boolean? If true, then unregister the function `f`.
+---@return nil
+function Window:closed(f, unregister) end
 
 ---Calls the function `f` every input frame.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
@@ -905,20 +948,20 @@ function emu.atseekcompleted(f, unregister) end
 ---@return nil
 function emu.atwarpmodifystatuschanged(f, unregister) end
 
----Calls the function `f` when a keyboard event happens.
----Keyboard presses that trigger hotkeys take priority over this event.
+---Calls the function `f` when this window receives a keyboard event.
+---On the main window, keyboard presses that trigger hotkeys take priority over this event.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(args: KeyEventArgs): nil The function to be called when a keyboard event happens.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
-function emu.atkey(f, unregister) end
+function Window:atkey(f, unregister) end
 
----Calls the function `f` when a mouse event happens.
+---Calls the function `f` when this window receives a mouse event. Coordinates are relative to its client area.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(args: MouseEventArgs): nil The function to be called when a mouse event happens.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
-function emu.atmouse(f, unregister) end
+function Window:atmouse(f, unregister) end
 
 ---Returns the number of VIs since the last movie was played.
 ---This should match the statusbar.
@@ -1426,15 +1469,6 @@ function wgui.polygon(points) end
 ---@param y2 integer
 function wgui.line(x1, y1, x2, y2) end
 
----Returns the current width and height of the mupen window in a table.
----@return {width: integer, height: integer}
-function wgui.info() end
-
----Resizes the mupen window to `w` x `h`
----@param w integer
----@param h integer
-function wgui.resize(w, h) end
-
 ---Sets a rectangle bounding box such that you cannot draw outside of it.
 ---@param x integer
 ---@param y integer
@@ -1616,7 +1650,7 @@ function painter.load_image(path) end
 function painter.decode_image(data) end
 
 ---Gets the painter for the currently active painter scope.
----This is valid in an [emu.atpaint](lua://emu.atpaint) or [PainterImage:paint](lua://PainterImage.paint) callback and errors outside one.
+---This is valid in an [Window:atpaint](lua://Window.atpaint) or [PainterImage:paint](lua://PainterImage.paint) callback and errors outside one.
 ---@nodiscard
 ---@return Painter
 function painter.current() end
@@ -2425,6 +2459,45 @@ function __mupen_apply_shims()
         return x ^ y
     end
 
+    ---@deprecated Use `emu.main_window():atpaint(f, unregister)` instead.
+    ---@param f fun(): nil
+    ---@param unregister boolean?
+    ---@return nil
+    function emu.atpaint(f, unregister)
+        return emu.main_window():atpaint(f, unregister)
+    end
+
+    ---@deprecated Use `emu.main_window():atkey(f, unregister)` instead.
+    ---@param f fun(args: KeyEventArgs): nil
+    ---@param unregister boolean?
+    ---@return nil
+    function emu.atkey(f, unregister)
+        return emu.main_window():atkey(f, unregister)
+    end
+
+    ---@deprecated Use `emu.main_window():atmouse(f, unregister)` instead.
+    ---@param f fun(args: MouseEventArgs): nil
+    ---@param unregister boolean?
+    ---@return nil
+    function emu.atmouse(f, unregister)
+        return emu.main_window():atmouse(f, unregister)
+    end
+
+    ---@deprecated Use `emu.main_window():size()` instead.
+    ---@return {width: integer, height: integer}
+    function wgui.info()
+        local size = emu.main_window():size()
+        return { width = size.x, height = size.y }
+    end
+
+    ---@deprecated Use `emu.main_window():resize(x, y)` instead.
+    ---@param x integer
+    ---@param y integer
+    ---@return nil
+    function wgui.resize(x, y)
+        return emu.main_window():resize(x, y)
+    end
+
     -- emu.debugview deprecated, forwarded to print
     emu.debugview = print
 
@@ -2506,7 +2579,7 @@ function __mupen_apply_shims()
 
     local function require_painter()
         if not active_painter then
-            error("d2d drawing functions must be called from an emu.atpaint callback", 2)
+            error("d2d drawing functions must be called from a Window:atpaint callback", 2)
         end
         return active_painter
     end
@@ -2576,7 +2649,7 @@ function __mupen_apply_shims()
         end
 
         if not atdrawd2d_dispatch_registered then
-            emu.atpaint(dispatch_atdrawd2d)
+            emu.main_window():atpaint(dispatch_atdrawd2d)
             atdrawd2d_dispatch_registered = true
         end
         table.insert(atdrawd2d_callbacks, f)

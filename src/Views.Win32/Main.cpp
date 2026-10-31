@@ -54,7 +54,7 @@ bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
 bool g_emu_starting;
 DWORD g_ui_thread_id{};
-bool awaiting_triple_click[3]{};
+static std::unordered_map<HWND, std::array<bool, 3>> awaiting_triple_click;
 ULONG_PTR gdi_plus_token;
 
 // See App.hpp
@@ -66,9 +66,9 @@ constexpr UINT_PTR triple_click_timer_base = 0x4D00;
 static void CALLBACK clear_triple_click_timer(HWND hwnd, UINT, UINT_PTR timer_id, DWORD)
 {
     const auto button = timer_id - triple_click_timer_base;
-    if (button >= std::size(awaiting_triple_click)) return;
     KillTimer(hwnd, timer_id);
-    awaiting_triple_click[button] = false;
+    const auto it = awaiting_triple_click.find(hwnd);
+    if (it != awaiting_triple_click.end() && button < it->second.size()) it->second[button] = false;
 }
 
 BetterEmulationLock::BetterEmulationLock()
@@ -331,7 +331,8 @@ void on_task_changed(CoreVCRTask value)
         }
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) ||
-            task_is_playback(value) && !task_is_playback(previous_value) && !g_main_ctx.core_ctx->vcr_get_path().empty())
+            task_is_playback(value) && !task_is_playback(previous_value) &&
+                !g_main_ctx.core_ctx->vcr_get_path().empty())
         {
             RecentMenu::add(AppActions::RECENT_MOVIES, g_config.recent_movie_paths,
                 g_main_ctx.core_ctx->vcr_get_path().string(), g_config.is_recent_movie_paths_frozen);
@@ -597,14 +598,14 @@ static void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             const auto button = *args.button;
             const auto timer_id = triple_click_timer_base + button;
             KillTimer(hwnd, timer_id);
-            awaiting_triple_click[button] =
+            awaiting_triple_click[hwnd][button] =
                 SetTimer(hwnd, timer_id, GetDoubleClickTime(), clear_triple_click_timer) != 0;
         }
-        else if (args.pressed.value_or(false) && args.button && awaiting_triple_click[*args.button])
+        else if (args.pressed.value_or(false) && args.button && awaiting_triple_click[hwnd][*args.button])
         {
             const auto button = *args.button;
             KillTimer(hwnd, triple_click_timer_base + button);
-            awaiting_triple_click[button] = false;
+            awaiting_triple_click[hwnd][button] = false;
             args.triple_click = true;
         }
         args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
@@ -612,9 +613,62 @@ static void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
         args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
 
-        LuaRealmManager::instance().call_atmouse(args);
+        LuaRealmManager::instance().call_atmouse(args, hwnd);
         break;
     }
+    }
+}
+
+void handle_lua_window_events(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+    if (Message == WM_NCDESTROY)
+    {
+        awaiting_triple_click.erase(hwnd);
+        return;
+    }
+    switch (Message)
+    {
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN: {
+        const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
+
+        LuaKeyEventArgs args = get_base_key_event_args();
+        args.keycode = wParam;
+        if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
+            args.keycode2 = keycode;
+        args.pressed = true;
+        args.repeat = repeat;
+
+        LuaRealmManager::instance().call_atkey(args, hwnd);
+        break;
+    }
+    case WM_SYSKEYUP:
+    case WM_KEYUP: {
+        LuaKeyEventArgs args = get_base_key_event_args();
+        args.keycode = wParam;
+        if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
+            args.keycode2 = keycode;
+        args.pressed = false;
+        args.repeat = false;
+
+        LuaRealmManager::instance().call_atkey(args, hwnd);
+        break;
+    }
+    case WM_CHAR: {
+        LuaKeyEventArgs args = get_base_key_event_args();
+        const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
+        const auto chr = static_cast<char>(wParam);
+
+        if (std::iswcntrl(chr)) break;
+
+        args.text = std::string(1, chr);
+        args.repeat = repeat;
+        LuaRealmManager::instance().call_atkey(args, hwnd);
+        break;
+    }
+    default:
+        handle_mouse_events(hwnd, Message, wParam, lParam);
+        break;
     }
 }
 
@@ -661,45 +715,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_KEYDOWN:
-    case WM_SYSKEYDOWN: {
-        const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
-
-        LuaKeyEventArgs args = get_base_key_event_args();
-        args.keycode = wParam;
-        if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
-            args.keycode2 = keycode;
-        args.pressed = true;
-        args.repeat = repeat;
-
-        LuaRealmManager::instance().call_atkey(args);
+    case WM_SYSKEYDOWN:
+        handle_lua_window_events(hwnd, Message, wParam, lParam);
         PluginUtil::key_down(wParam, lParam);
         break;
-    }
+    case WM_KEYUP:
     case WM_SYSKEYUP:
-    case WM_KEYUP: {
-        LuaKeyEventArgs args = get_base_key_event_args();
-        args.keycode = wParam;
-        if (const auto keycode = HotkeyUtils::message_to_keycode(wParam, lParam); keycode.has_value())
-            args.keycode2 = keycode;
-        args.pressed = false;
-        args.repeat = false;
-
-        LuaRealmManager::instance().call_atkey(args);
+        handle_lua_window_events(hwnd, Message, wParam, lParam);
         PluginUtil::key_up(wParam, lParam);
         break;
-    }
-    case WM_CHAR: {
-        LuaKeyEventArgs args = get_base_key_event_args();
-        const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
-        const auto chr = static_cast<char>(wParam);
-
-        if (std::iswcntrl(chr)) break;
-
-        args.text = std::string(1, chr);
-        args.repeat = repeat;
-        LuaRealmManager::instance().call_atkey(args);
+    case WM_CHAR:
+        handle_lua_window_events(hwnd, Message, wParam, lParam);
         break;
-    }
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:
     case WM_LBUTTONDBLCLK:
@@ -805,11 +832,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         KillTimer(hwnd, sdl_timer_id);
         PostQuitMessage(0);
         return 0;
-    case WM_PREDESTROY:
+    case WM_PREDESTROY: {
+        const auto realms = LuaRealmManager::instance().realms();
+        for (const auto &realm : realms)
+            if (realm->main_window && !realm->main_window->close()) realm->stop();
         // This needs the UI thread to still be responsive.
         LuaRendererManager::instance().stop();
         DestroyWindow(hwnd);
         break;
+    }
     case WM_CLOSE:
         if (!confirm_user_exit()) return 0;
 

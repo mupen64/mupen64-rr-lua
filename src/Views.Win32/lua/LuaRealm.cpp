@@ -102,7 +102,8 @@ fail:
     {
         size_t message_len = 0;
         const char *message = lua_tolstring(env->l(), -1, &message_len);
-        const std::string error = message ? std::string(message, message_len) : "(unknown error in script's global scope, not of type string or number)";
+        const std::string error = message ? std::string(message, message_len)
+                                          : "(unknown error in script's global scope, not of type string or number)";
         env->stop();
         return std::unexpected(error);
     }
@@ -114,13 +115,18 @@ fail:
 void LuaRealm::stop()
 {
     const auto env = shared_from_this();
+    if (env->is_stopping) return;
+    env->is_stopping = true;
     need(env->l(), "LuaRealm::stop: Lua realm is already stopped");
 
     LuaRealmManager::instance().call_by_key(env.get(), LuaRealmManager::REG_ATSTOP);
 
+    for (const auto &window : env->windows) window->close();
+
     env->stopping(env.get());
 
     env->renderer.pre_shutdown();
+    for (const auto &window : env->windows) window->renderer->pre_shutdown();
 
     ActionManager::begin_batch_work();
     for (const auto &action : env->registered_actions)
@@ -161,6 +167,12 @@ void LuaRealm::stop()
     }
 
     LuaRealmManager::instance().remove_realm(env.get());
+    for (const auto &window : env->windows)
+    {
+        window->close();
+        window->renderer->shutdown();
+        DestroyWindow(window->hwnd);
+    }
     env->renderer.shutdown();
 
     g_view_logger->info("Lua destroyed");

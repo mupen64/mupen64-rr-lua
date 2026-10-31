@@ -13,7 +13,7 @@ dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_p
 
 action.lock_hotkeys(true)
 
-emu.atkey(function(args)
+emu.main_window():atkey(function(args)
     if args.keycode then
         print("Test passed!")
     end
