@@ -12,7 +12,7 @@
 #include <QQmlComponent>
 #include <QUrl>
 
-#define CONFIG_FILE_NAME "TASInputQt6.json"
+#define CONFIG_FILE_NAME "TASInputQt6.ini"
 
 using namespace BuiltinTAS::TASInput_Qt6;
 

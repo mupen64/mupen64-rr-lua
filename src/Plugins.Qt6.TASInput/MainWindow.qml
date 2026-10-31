@@ -12,8 +12,8 @@ import QtQuick.Layouts
 ApplicationWindow {
     id: root
     visible: true
-    //% "TASInput"
-    title: qsTrId("tasinput.appName")
+    //% "TASInput (P%1)"
+    title: qsTrId("tasinput.title").arg(port + 1)
 
     // ensure window fits content
     minimumWidth: rootItem.implicitWidth + leftPadding + rightPadding
