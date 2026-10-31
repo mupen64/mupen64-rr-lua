@@ -4,6 +4,10 @@
 
 - Added F3DEX3 microcode support to TASVideo
 
+## 🐞 Bugfixes
+
+- Fixed screenshot overwriting when more than one is taken within a second
+
 ## ⚡ Performance
 
 - Improved Pure Interpreter core performance when breakpoints are present

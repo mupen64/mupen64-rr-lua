@@ -509,10 +509,26 @@ void PluginUtil::screenshot(const std::filesystem::path &path)
         bhdr.bfReserved1 = bhdr.bfReserved2 = 0;
         bhdr.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
-        const auto path = AppConfig::screenshot_directory() / std::format("screen{}.bmp", time(nullptr));
+        const auto screenshot_dir = AppConfig::screenshot_directory();
+        const auto timestamp = time(nullptr);
 
-        HANDLE hfile;
-        hfile = CreateFile(path.string().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE hfile = INVALID_HANDLE_VALUE;
+        for (size_t n = 1;; ++n)
+        {
+            const auto file_name =
+                n == 1 ? std::format("screen{}.bmp", timestamp) : std::format("screen{}-{}.bmp", timestamp, n);
+            const auto file_path = screenshot_dir / file_name;
+
+            hfile =
+                CreateFile(file_path.string().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (hfile != INVALID_HANDLE_VALUE || GetLastError() != ERROR_FILE_EXISTS) break;
+        }
+
+        if (hfile == INVALID_HANDLE_VALUE)
+        {
+            g_view_logger->error("Failed to create screenshot file (code {})", GetLastError());
+            return;
+        }
 
         DWORD written;
 
