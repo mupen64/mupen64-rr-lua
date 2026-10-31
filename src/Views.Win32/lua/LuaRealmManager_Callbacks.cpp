@@ -280,7 +280,7 @@ void LuaRealmManager::call_warp_modify_status_changed(const int32_t status)
     RET_IF_NOT_REGISTERED(REG_ATWARPMODIFYSTATUSCHANGED);
     g_main_ctx.dispatcher->invoke([] {
         LuaRealmManager::instance().call_by_key(REG_ATWARPMODIFYSTATUSCHANGED, [](lua_State *l) {
-            lua_pushinteger(l, g_main_ctx.CoreCtx->vcr_get_warp_modify_status());
+            lua_pushinteger(l, g_main_ctx.core_ctx->vcr_get_warp_modify_status());
             return lua_pcall(l, 1, 0, 0);
         });
     });

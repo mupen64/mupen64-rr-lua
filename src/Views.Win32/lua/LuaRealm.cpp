@@ -131,7 +131,7 @@ void LuaRealm::stop()
 
     for (const auto &pair : env->active_breakpoints)
     {
-        g_main_ctx.CoreCtx->dbg_remove_breakpoint(pair.first);
+        g_main_ctx.core_ctx->dbg_remove_breakpoint(pair.first);
         lua_freecallback(env->l(), pair.second);
     }
 
