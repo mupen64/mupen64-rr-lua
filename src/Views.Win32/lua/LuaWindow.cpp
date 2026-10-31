@@ -101,9 +101,12 @@ int resize(lua_State *L)
     GetWindowRect(window->hwnd, &window_rect);
     const auto frame_width = (window_rect.right - window_rect.left) - (client_rect.right - client_rect.left);
     const auto frame_height = (window_rect.bottom - window_rect.top) - (client_rect.bottom - client_rect.top);
-    if (!SetWindowPos(window->hwnd, nullptr, 0, 0, static_cast<int>(width) + frame_width,
-            static_cast<int>(height) + frame_height, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE))
-        return luaL_error(L, "failed to resize window");
+    const bool previous = window->updating_anchor;
+    window->updating_anchor = true;
+    const bool success = SetWindowPos(window->hwnd, nullptr, 0, 0, static_cast<int>(width) + frame_width,
+        static_cast<int>(height) + frame_height, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
+    window->updating_anchor = previous;
+    if (!success) return luaL_error(L, "failed to resize window");
     return 0;
 }
 
@@ -171,7 +174,36 @@ void LuaWindow::reposition()
     if (anchor == "left") x -= rect.right - rect.left;
     if (anchor == "bottom") y = main_rect.bottom;
     if (anchor == "top") y -= rect.bottom - rect.top;
+    if (rect.left == x && rect.top == y) return;
+    const bool previous = updating_anchor;
+    updating_anchor = true;
     SetWindowPos(hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+    updating_anchor = previous;
+}
+
+void LuaWindow::move_group()
+{
+    if (updating_anchor || closed || anchor.empty() || IsIconic(hwnd) || IsZoomed(hwnd) || !renderer ||
+        !renderer->gdi_back_dc || IsIconic(g_main_ctx.hwnd))
+        return;
+
+    RECT main_rect{}, rect{}, client_rect{};
+    if (!GetWindowRect(g_main_ctx.hwnd, &main_rect) || !GetWindowRect(hwnd, &rect) ||
+        !GetClientRect(hwnd, &client_rect))
+        return;
+
+    if (static_cast<UINT32>(client_rect.right - client_rect.left) != renderer->dc_size.width ||
+        static_cast<UINT32>(client_rect.bottom - client_rect.top) != renderer->dc_size.height)
+        return;
+
+    int x = rect.left, y = rect.top;
+    if (anchor == "right") x -= main_rect.right - main_rect.left;
+    if (anchor == "left") x += rect.right - rect.left;
+    if (anchor == "bottom") y -= main_rect.bottom - main_rect.top;
+    if (anchor == "top") y += rect.bottom - rect.top;
+    if (x == main_rect.left && y == main_rect.top) return;
+
+    SetWindowPos(g_main_ctx.hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 bool LuaWindow::close()
@@ -204,6 +236,12 @@ LRESULT CALLBACK LuaWindow::wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     }
     if (window && !window->closed)
     {
+        if (msg == WM_MOVE) window->move_group();
+        if (msg == WM_WINDOWPOSCHANGED)
+        {
+            const auto *position = reinterpret_cast<const WINDOWPOS *>(lparam);
+            if (!(position->flags & SWP_NOMOVE)) window->move_group();
+        }
         if (msg == WM_EXITSIZEMOVE) window->reposition();
         if (msg == WM_SIZE && wparam != SIZE_MINIMIZED && window->renderer)
         {

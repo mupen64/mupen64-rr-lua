@@ -21,8 +21,10 @@ class LuaWindow
     std::unique_ptr<LuaRenderer> renderer;
     bool closed{};
     bool closable{true};
+    bool updating_anchor{};
 
     void reposition();
+    void move_group();
     bool close();
     bool call(uint8_t key, const std::function<int(lua_State *)> &invoke);
     static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
