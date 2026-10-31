@@ -27,6 +27,14 @@ static M64RRSpec::GLContext *g_wsi_context;
 static GLuint g_fbo = 0;
 static GLuint g_color_rbo = 0;
 static GLuint g_aux_rbo = 0;
+static GLuint g_vao = 0;
+static GLuint g_vbo = 0;
+
+static void OGL_UploadVertices(GLsizei count)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(GLVertex), OGL.vertices);
+}
 
 void OGL_ReadPixels()
 {
@@ -106,23 +114,29 @@ void OGL_InitStates()
     glGenRenderbuffers(1, &g_color_rbo);
     glGenRenderbuffers(1, &g_aux_rbo);
 
+    glGenVertexArrays(1, &g_vao);
+    glBindVertexArray(g_vao);
+    glGenBuffers(1, &g_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(OGL.vertices), nullptr, GL_STREAM_DRAW);
+
     // configure vertex attributes
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].x);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), (void *)offsetof(GLVertex, x));
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].color.r);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), (void *)offsetof(GLVertex, color.r));
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].secondaryColor.r);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), (void *)offsetof(GLVertex, secondaryColor.r));
     glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].s0);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), (void *)offsetof(GLVertex, s0));
     glEnableVertexAttribArray(3);
 
-    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].s1);
+    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), (void *)offsetof(GLVertex, s1));
     glEnableVertexAttribArray(4);
 
-    glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].fog);
+    glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(GLVertex), (void *)offsetof(GLVertex, fog));
     glEnableVertexAttribArray(5);
 
     glPolygonOffset(-3.0f, -3.0f);
@@ -209,11 +223,10 @@ bool OGL_InitContext()
     }
     else
     {
-        g_plugin->log_info("OpenGL ES 3.0 context unavailable; falling back to desktop OpenGL.");
-        // Fall back to OpenGL 2.1
-        request_format.major_version = 2;
+        g_plugin->log_info("OpenGL ES 3.0 context unavailable; falling back to desktop OpenGL 4.1 Core.");
+        request_format.major_version = 4;
         request_format.minor_version = 1;
-        request_format.context_type = M64RRSpec::GLContextType::OpenGLCompat;
+        request_format.context_type = M64RRSpec::GLContextType::OpenGLCore;
 
         need(g_wsi->new_gl_context(&request_format, &g_wsi_context) == M64RRSpec::GraphicsResult::Ok,
             "Creating fallback desktop OpenGL context failed.");
@@ -226,7 +239,7 @@ bool OGL_InitContext()
     glDisable(GL_FRAMEBUFFER_SRGB);
 
     g_plugin->log_info(OGL.isGLES ? "TASVideo: running on an OpenGL ES 2.0 context."
-                                  : "TASVideo: running on a desktop OpenGL compatibility context.");
+                                  : "TASVideo: running on a desktop OpenGL 4.1 Core context.");
 
     OGL.context_initialized = TRUE;
 
@@ -235,6 +248,16 @@ bool OGL_InitContext()
 
 static void OGL_ClearStates()
 {
+    if (g_vbo != 0)
+    {
+        glDeleteBuffers(1, &g_vbo);
+        g_vbo = 0;
+    }
+    if (g_vao != 0)
+    {
+        glDeleteVertexArrays(1, &g_vao);
+        g_vao = 0;
+    }
     if (g_fbo != 0)
     {
         glDeleteFramebuffers(1, &g_fbo);
@@ -634,6 +657,7 @@ void OGL_DrawTriangles()
         Combiner_UpdateDither(gDP.envColor.a);
 
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
+    OGL_UploadVertices(OGL.numVertices);
     glDrawArrays(GL_TRIANGLES, 0, OGL.numVertices);
     OGL.numTriangles = OGL.numVertices = 0;
 }
@@ -644,7 +668,7 @@ void OGL_DrawLine(SPVertex *vertices, int v0, int v1, float width)
 
     if (gSP.changed || gDP.changed) OGL_UpdateStates();
 
-    glLineWidth(width * OGL.scaleX);
+    glLineWidth(OGL.isGLES ? width * OGL.scaleX : 1.0f);
 
     for (int i = 0; i < 2; i++)
     {
@@ -664,6 +688,7 @@ void OGL_DrawLine(SPVertex *vertices, int v0, int v1, float width)
         OGL.vertices[i].w = vertices[v[i]].w;
         OGL.vertices[i].fog = 0.0f;
     }
+    OGL_UploadVertices(2);
     glDrawArrays(GL_LINES, 0, 2);
 }
 
@@ -709,6 +734,7 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
+    OGL_UploadVertices(6);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     OGL_SetIdentityProjection();
@@ -878,6 +904,7 @@ void OGL_DrawTexturedRect(
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
+    OGL_UploadVertices(4);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     OGL_SetIdentityProjection();
