@@ -20,10 +20,11 @@ local function attach(wnd, name, background)
     end)
     wnd:atpaint(function()
         paints = paints + 1
+        local mouse = wnd:mouse_position()
         local p = painter.current()
         p:clear(background)
         p:begin_path()
-        p:text(string.format('%s\nPaints: %d\nKeys: %d\nMouse: %d', name, paints, keys, clicks),
+        p:text(string.format('%s\nPaints: %d\nKeys: %d\nMouse: %d\nPosition: %d, %d', name, paints, keys, clicks, mouse.x, mouse.y),
             { x = 10, y = 10, w = 180, h = 150 }, { size = 14 })
         p:fill({ r = 1, g = 1, b = 1, a = 1 })
     end)

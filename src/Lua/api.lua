@@ -855,6 +855,10 @@ function Window:resize(x, y) end
 ---@return {x: integer, y: integer}
 function Window:size() end
 
+---Returns the current mouse position in pixels relative to this window's client area.
+---@return {x: integer, y: integer}
+function Window:mouse_position() end
+
 ---Calls `f` when this window is painted. Use [painter.current](lua://painter.current) to get the painter for the callback's scope.
 ---The painter is only valid for the duration of the callback.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
