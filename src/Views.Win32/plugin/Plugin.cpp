@@ -509,7 +509,6 @@ void PluginUtil::screenshot(const std::filesystem::path &path)
         bhdr.bfReserved1 = bhdr.bfReserved2 = 0;
         bhdr.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
-        const auto screenshot_dir = AppConfig::screenshot_directory();
         const auto timestamp = time(nullptr);
 
         HANDLE hfile = INVALID_HANDLE_VALUE;
@@ -517,7 +516,7 @@ void PluginUtil::screenshot(const std::filesystem::path &path)
         {
             const auto file_name =
                 n == 1 ? std::format("screen{}.bmp", timestamp) : std::format("screen{}-{}.bmp", timestamp, n);
-            const auto file_path = screenshot_dir / file_name;
+            const auto file_path = dir / file_name;
 
             hfile =
                 CreateFile(file_path.string().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);

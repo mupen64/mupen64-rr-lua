@@ -7,6 +7,7 @@
 ## 🐞 Bugfixes
 
 - Fixed screenshot overwriting when more than one is taken within a second
+- Fixed screenshots not respecting configured screenshot directory
 
 ## ⚡ Performance
 
