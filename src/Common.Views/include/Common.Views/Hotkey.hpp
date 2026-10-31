@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <variant>
 #include <SDL3/SDL_keycode.h>
 #include <SDL3/SDL_mouse.h>
@@ -44,8 +45,12 @@ struct Hotkey
     bool shift{};
     bool alt{};
 
-    explicit Hotkey(const Trigger trigger, const bool ctrl = false, const bool shift = false, const bool alt = false)
-        : trigger(trigger), ctrl(ctrl), shift(shift), alt(alt)
+    /// The window scope in which this hotkey can trigger.
+    std::string context = "window.builtin.main";
+
+    explicit Hotkey(const Trigger trigger, const bool ctrl = false, const bool shift = false, const bool alt = false,
+        std::string context = "window.builtin.main")
+        : trigger(trigger), ctrl(ctrl), shift(shift), alt(alt), context(std::move(context))
     {
     }
 
@@ -91,9 +96,33 @@ struct Hotkey
         return hotkey;
     }
 
+    /**
+     * \brief Gets whether this hotkey applies to the specified window context.
+     */
+    [[nodiscard]] bool matches_context(std::string_view window_context) const
+    {
+        const bool lua_window = window_context.starts_with("window.lua.") && window_context.size() > 11;
+        const bool builtin_window =
+            window_context == "window.builtin.main" || window_context == "window.builtin.pianoroll";
+        if (!builtin_window && !lua_window) return false;
+        return context == window_context || context == "window.*" ||
+               (context == "window.builtin.*" && builtin_window) || (context == "window.lua.*" && lua_window);
+    }
+
+    /**
+     * \brief Gets whether the same input can trigger both hotkeys in at least one window.
+     */
+    [[nodiscard]] bool conflicts_with(const Hotkey &other) const
+    {
+        return trigger == other.trigger && ctrl == other.ctrl && shift == other.shift && alt == other.alt &&
+               (context == other.context || context == "window.*" || other.context == "window.*" ||
+                   matches_context(other.context) || other.matches_context(context));
+    }
+
     bool operator==(const Hotkey &other) const
     {
-        return trigger == other.trigger && ctrl == other.ctrl && shift == other.shift && alt == other.alt;
+        return trigger == other.trigger && ctrl == other.ctrl && shift == other.shift && alt == other.alt &&
+               context == other.context;
     }
 };
 

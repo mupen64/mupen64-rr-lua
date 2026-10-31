@@ -53,6 +53,9 @@ static void push_legacy_hotkey(lua_State *L, const ::Hotkey &hotkey)
 
     lua_pushboolean(L, hotkey.alt);
     lua_setfield(L, -2, "alt");
+
+    lua_pushlstring(L, hotkey.context.data(), hotkey.context.size());
+    lua_setfield(L, -2, "context");
 }
 
 static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
@@ -70,6 +73,9 @@ static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
 
     lua_pushboolean(L, hotkey.alt);
     lua_setfield(L, -2, "alt");
+
+    lua_pushlstring(L, hotkey.context.data(), hotkey.context.size());
+    lua_setfield(L, -2, "context");
 }
 
 static ::Hotkey::Trigger check_trigger(lua_State *L, int i)
@@ -143,6 +149,10 @@ static ::Hotkey check_hotkey(lua_State *L, int i)
 
     lua_getfield(L, i, "alt");
     hotkey.alt = luaL_opt(L, lua_toboolean, -1, false);
+    lua_pop(L, 1);
+
+    lua_getfield(L, i, "context");
+    hotkey.context = luaL_optstring(L, -1, "window.builtin.main");
     lua_pop(L, 1);
 
     return hotkey;

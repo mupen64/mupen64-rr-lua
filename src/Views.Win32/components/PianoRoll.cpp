@@ -10,6 +10,7 @@
 #include <Common.Views/Config.hpp>
 #include <Common.Views/Messages.hpp>
 #include <components/CoreUtils.hpp>
+#include <components/HotkeyTracker.hpp>
 #include "../action/ActionMenu.hpp"
 
 struct piano_roll_history_state
@@ -1076,6 +1077,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         // We create all the child controls here because windows dialog scaling would mess our stuff up when mixing
         // dialog manager and manual creation
         piano_roll.hwnd = hwnd;
+        HotkeyTracker::attach(hwnd, "window.builtin.pianoroll");
         piano_roll.joy_hwnd = CreateWindowEx(0, JOYSTICK_CLASS, "", WS_CHILD | WS_VISIBLE, 17, 30, 131, 131,
             piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
         CreateWindowEx(0, WC_STATIC, "History", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT | SS_CENTERIMAGE, 17, 166,

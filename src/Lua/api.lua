@@ -2235,7 +2235,17 @@ function avi.stopcapture() end
 
 ---@alias HotkeyTrigger HotkeyNoTrigger|HotkeyKeyCodeTrigger|HotkeyMouseButtonTrigger
 
+---The window scope in which a hotkey can trigger.
+---@alias HotkeyContext
+---| "window.*"
+---| "window.builtin.*"
+---| "window.builtin.main" -- Main window.
+---| "window.builtin.pianoroll" -- Piano roll window.
+---| "window.lua.*"
+---| string -- A specific window. Usually like `window.lua.<id>`, as in `Window.id`.
+
 ---@class HotkeyModifiers
+---@field context HotkeyContext? The window scope in which this hotkey can trigger. Defaults to `"window.builtin.main"`.
 ---@field ctrl boolean? Whether the control modifier is pressed. Defaults to `false`.
 ---@field shift boolean? Whether the shift modifier is pressed. Defaults to `false`.
 ---@field alt boolean? Whether the alt modifier is pressed. Defaults to `false`.
