@@ -90,6 +90,23 @@ int closed(lua_State *L)
     return subscribe(L, LuaRealmManager::REG_CLOSED);
 }
 
+int resize(lua_State *L)
+{
+    auto *window = check_window(L);
+    const auto width = std::clamp<lua_Integer>(luaL_checkinteger(L, 2), 1, 32767);
+    const auto height = std::clamp<lua_Integer>(luaL_checkinteger(L, 3), 1, 32767);
+
+    RECT client_rect{}, window_rect{};
+    GetClientRect(window->hwnd, &client_rect);
+    GetWindowRect(window->hwnd, &window_rect);
+    const auto frame_width = (window_rect.right - window_rect.left) - (client_rect.right - client_rect.left);
+    const auto frame_height = (window_rect.bottom - window_rect.top) - (client_rect.bottom - client_rect.top);
+    if (!SetWindowPos(window->hwnd, nullptr, 0, 0, static_cast<int>(width) + frame_width,
+            static_cast<int>(height) + frame_height, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE))
+        return luaL_error(L, "failed to resize window");
+    return 0;
+}
+
 bool window_option(lua_State *L, const char *name, bool fallback)
 {
     lua_getfield(L, 1, name);
@@ -211,8 +228,8 @@ namespace LuaCore::Window
 {
 void register_types(lua_State *L)
 {
-    static const luaL_Reg methods[] = {
-        {"atpaint", atpaint}, {"atkey", atkey}, {"atmouse", atmouse}, {"closed", closed}, {nullptr, nullptr}};
+    static const luaL_Reg methods[] = {{"atpaint", atpaint}, {"atkey", atkey}, {"atmouse", atmouse}, {"closed", closed},
+        {"resize", resize}, {nullptr, nullptr}};
     luaL_newmetatable(L, WINDOW_MT);
     luaL_setfuncs(L, methods, 0);
     lua_pushvalue(L, -1);

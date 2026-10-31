@@ -188,24 +188,6 @@ static int GetGUIInfo(lua_State *L)
     return 1;
 }
 
-static int ResizeWindow(lua_State *L)
-{
-    need(is_on_gui_thread(), "ResizeWindow must be called on the GUI thread");
-
-    auto lua = LuaRealmManager::instance().get_by_state(L);
-
-    RECT clientRect, wndRect;
-    GetWindowRect(g_main_ctx.hwnd, &wndRect);
-    GetClientRect(g_main_ctx.hwnd, &clientRect);
-    wndRect.bottom -= wndRect.top;
-    wndRect.right -= wndRect.left;
-    int w = luaL_checkinteger(L, 1), h = luaL_checkinteger(L, 2);
-    SetWindowPos(g_main_ctx.hwnd, 0, 0, 0, w + (wndRect.right - clientRect.right),
-        h + (wndRect.bottom - clientRect.bottom), SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
-
-    return 0;
-}
-
 static COLORREF StrToColor(const std::string &s, bool alpha = false, COLORREF def = 0)
 {
     if (s[0] == '#')

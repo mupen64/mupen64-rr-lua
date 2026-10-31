@@ -845,6 +845,12 @@ function emu.create_window(options) end
 ---@return Window
 function emu.main_window() end
 
+---Resizes this window's client area. Dimensions are clamped to 1–32767 pixels.
+---@param x integer Client width.
+---@param y integer Client height.
+---@return nil
+function Window:resize(x, y) end
+
 ---Calls `f` when this window is painted. Use [painter.current](lua://painter.current) to get the painter for the callback's scope.
 ---The painter is only valid for the duration of the callback.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
@@ -1462,11 +1468,6 @@ function wgui.line(x1, y1, x2, y2) end
 ---Returns the current width and height of the mupen window in a table.
 ---@return {width: integer, height: integer}
 function wgui.info() end
-
----Resizes the mupen window to `w` x `h`
----@param w integer
----@param h integer
-function wgui.resize(w, h) end
 
 ---Sets a rectangle bounding box such that you cannot draw outside of it.
 ---@param x integer
@@ -2456,6 +2457,38 @@ function __mupen_apply_shims()
     -- math.pow shim
     math.pow = math.pow or function(x, y)
         return x ^ y
+    end
+
+    ---@deprecated Use `emu.main_window():atpaint(f, unregister)` instead.
+    ---@param f fun(): nil
+    ---@param unregister boolean?
+    ---@return nil
+    function emu.atpaint(f, unregister)
+        return emu.main_window():atpaint(f, unregister)
+    end
+
+    ---@deprecated Use `emu.main_window():atkey(f, unregister)` instead.
+    ---@param f fun(args: KeyEventArgs): nil
+    ---@param unregister boolean?
+    ---@return nil
+    function emu.atkey(f, unregister)
+        return emu.main_window():atkey(f, unregister)
+    end
+
+    ---@deprecated Use `emu.main_window():atmouse(f, unregister)` instead.
+    ---@param f fun(args: MouseEventArgs): nil
+    ---@param unregister boolean?
+    ---@return nil
+    function emu.atmouse(f, unregister)
+        return emu.main_window():atmouse(f, unregister)
+    end
+
+    ---@deprecated Use `emu.main_window():resize(x, y)` instead.
+    ---@param x integer
+    ---@param y integer
+    ---@return nil
+    function wgui.resize(x, y)
+        return emu.main_window():resize(x, y)
     end
 
     -- emu.debugview deprecated, forwarded to print

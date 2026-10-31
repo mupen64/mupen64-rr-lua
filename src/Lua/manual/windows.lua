@@ -6,7 +6,7 @@
 
 local main = emu.main_window()
 assert(main == emu.main_window())
-assert(emu.atpaint == nil and emu.atkey == nil and emu.atmouse == nil)
+assert(type(emu.atpaint) == 'function' and type(emu.atkey) == 'function' and type(emu.atmouse) == 'function')
 
 local function attach(wnd, name, background)
     local paints, keys, clicks = 0, 0, 0
