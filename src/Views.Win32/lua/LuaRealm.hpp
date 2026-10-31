@@ -8,6 +8,7 @@
 
 #include <lua/LuaTypes.hpp>
 #include <lua/LuaRenderer.hpp>
+#include <lua/LuaWindow.hpp>
 #include <lua.h>
 
 class LuaRealm;
@@ -63,7 +64,12 @@ class LuaRealm : public std::enable_shared_from_this<LuaRealm>
     lua_State *l() const { return m_l; }
     std::filesystem::path path() const { return m_path; }
 
+    bool is_stopping{};
     LuaRenderer renderer;
+    LuaRenderer *active_renderer{};
+    LuaRenderer &current_renderer() { return active_renderer ? *active_renderer : renderer; }
+    std::unique_ptr<LuaWindow> main_window;
+    std::vector<std::unique_ptr<LuaWindow>> windows;
     std::vector<ActionManager::action_path> registered_actions;
     std::unordered_map<std::string, std::vector<ActionParamMeta>> param_meta_map;
     std::vector<std::pair<CoreBreakpointId, uintptr_t *>> active_breakpoints;

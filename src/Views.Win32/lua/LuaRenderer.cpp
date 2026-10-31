@@ -15,43 +15,18 @@
 #include <lua/presenters/GDIPresenter.hpp>
 #include <Common.Views/Messages.hpp>
 
-void LuaRendererManager::set_overlay_visibility(bool visible)
-{
-    if (!m_detached_overlays) return;
-
-    for (const auto &lua : LuaRealmManager::instance().realms())
-    {
-        const auto set_window_visibility = [&](HWND hwnd) {
-            if (!IsWindow(hwnd)) return;
-            ShowWindow(hwnd, visible ? SW_SHOWNOACTIVATE : SW_HIDE);
-        };
-        set_window_visibility(lua->renderer.gdi_overlay_hwnd());
-        set_window_visibility(lua->renderer.d2d_overlay_hwnd());
-    }
-}
-
 LRESULT CALLBACK LuaRendererManager::main_window_subclass_proc(
     HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR data)
 {
     switch (msg)
     {
     case WM_MOVE:
+    case WM_SIZE:
+        for (const auto &realm : LuaRealmManager::instance().realms())
+            for (const auto &window : realm->windows) window->reposition();
+        [[fallthrough]];
     case WM_DISPLAYCHANGE:
         instance().m_refresh_rate_invalidated = true;
-        break;
-    case WM_ACTIVATE:
-        switch (LOWORD(wparam))
-        {
-        case WA_ACTIVE:
-        case WA_CLICKACTIVE:
-            instance().set_overlay_visibility(true);
-            break;
-        case WA_INACTIVE:
-            instance().set_overlay_visibility(false);
-            break;
-        default:
-            break;
-        }
         break;
     case WM_NCDESTROY:
         RemoveWindowSubclass(hwnd, main_window_subclass_proc, id);
@@ -73,24 +48,39 @@ void LuaRendererManager::draw(bool force)
         const auto fps = lua->renderer.target_fps().value_or(1000.0f);
         const auto target_frame_time = 1000.0f / fps;
 
-        if (time_since_last_render < target_frame_time && !force) continue;
-
         bool success = true;
-
-        success &= LuaRealmManager::instance().call_by_key(
-            lua.get(), LuaRealmManager::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback);
-        if (lua->renderer.presenter) lua->renderer.presenter->present();
-
-        // GDI Graphics. Ugh.
-        success &= LuaRealmManager::instance().call_by_key(lua.get(), LuaRealmManager::REG_ATUPDATESCREEN);
-
-        if (lua->renderer.has_gdi_content())
+        if (time_since_last_render >= target_frame_time || force)
         {
-            lua->renderer.present_gdi_content();
+
+            if (lua->main_window)
+                success &=
+                    lua->main_window->call(LuaRealmManager::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback);
+            if (lua->renderer.presenter) lua->renderer.presenter->present();
+
+            // GDI Graphics. Ugh.
+            success &= LuaRealmManager::instance().call_by_key(lua.get(), LuaRealmManager::REG_ATUPDATESCREEN);
+
+            if (lua->renderer.has_gdi_content())
+            {
+                lua->renderer.present_gdi_content();
+            }
+
+            lua->renderer.last_render_time = now;
         }
 
-        lua->renderer.last_render_time = now;
-
+        std::vector<LuaWindow *> windows;
+        for (const auto &window : lua->windows) windows.push_back(window.get());
+        for (auto *window : windows)
+        {
+            if (window->closed) continue;
+            auto &renderer = *window->renderer;
+            const auto elapsed = std::chrono::duration<double, std::milli>(now - renderer.last_render_time).count();
+            if (!force && elapsed < 1000.0 / renderer.target_fps().value_or(1000.0f)) continue;
+            success &= window->call(LuaRealmManager::REG_ATPAINT, LuaCore::Painter::invoke_paint_callback);
+            if (!window->closed && renderer.presenter) renderer.presenter->present();
+            if (!window->closed && renderer.has_gdi_content()) renderer.present_gdi_content();
+            renderer.last_render_time = now;
+        }
         if (!success) to_destroy.push_back(lua);
     }
 
@@ -141,37 +131,39 @@ void LuaRendererManager::start_draw_clock()
 
 void LuaRendererManager::resize(uint32_t width, uint32_t height)
 {
+    for (const auto &lua : LuaRealmManager::instance().realms()) lua->renderer.resize(width, height);
+}
+
+void LuaRenderer::resize(uint32_t width, uint32_t height)
+{
+    if (!gdi_back_dc || m_ignore_create_renderer) return;
     width = std::max(width, 1u);
     height = std::max(height, 1u);
+    if (dc_size.width == width && dc_size.height == height) return;
 
-    for (const auto &lua : LuaRealmManager::instance().realms())
-    {
-        if (lua->renderer.dc_size.width == width && lua->renderer.dc_size.height == height) continue;
+    dc_size = {width, height};
+    RECT wnd_rect{0, 0, (LONG)width, (LONG)height};
 
-        lua->renderer.dc_size = {width, height};
-        RECT wnd_rect{0, 0, (LONG)width, (LONG)height};
+    HDC gdi_dc = GetDC(m_parent);
+    HDC new_back_dc = CreateCompatibleDC(gdi_dc);
+    HBITMAP new_bmp = CreateCompatibleBitmap(gdi_dc, width, height);
+    SelectObject(new_back_dc, new_bmp);
+    ReleaseDC(m_parent, gdi_dc);
+    SelectObject(gdi_back_dc, nullptr);
+    DeleteObject(gdi_bmp);
+    DeleteDC(gdi_back_dc);
+    gdi_back_dc = new_back_dc;
+    gdi_bmp = new_bmp;
 
-        HDC gdi_dc = GetDC(g_main_ctx.hwnd);
-        HDC new_back_dc = CreateCompatibleDC(gdi_dc);
-        HBITMAP new_bmp = CreateCompatibleBitmap(gdi_dc, width, height);
-        SelectObject(new_back_dc, new_bmp);
-        ReleaseDC(g_main_ctx.hwnd, gdi_dc);
-        SelectObject(lua->renderer.gdi_back_dc, nullptr);
-        DeleteObject(lua->renderer.gdi_bmp);
-        DeleteDC(lua->renderer.gdi_back_dc);
-        lua->renderer.gdi_back_dc = new_back_dc;
-        lua->renderer.gdi_bmp = new_bmp;
+    FillRect(gdi_back_dc, &wnd_rect, LuaRendererManager::instance().alpha_mask_brush());
+    loadscreen_reset();
+    if (presenter) presenter->resize(dc_size);
 
-        FillRect(lua->renderer.gdi_back_dc, &wnd_rect, m_alpha_mask_brush);
-
-        lua->renderer.loadscreen_reset();
-
-        if (lua->renderer.presenter) lua->renderer.presenter->resize(lua->renderer.dc_size);
-
-        const UINT overlay_swp_flags = SWP_NOACTIVATE | SWP_NOMOVE | (m_detached_overlays ? SWP_NOZORDER : 0);
-        SetWindowPos(lua->renderer.gdi_overlay_hwnd(), HWND_TOP, 0, 0, width, height, overlay_swp_flags);
-        SetWindowPos(lua->renderer.d2d_overlay_hwnd(), HWND_TOP, 0, 0, width, height, overlay_swp_flags);
-    }
+    const UINT flags =
+        SWP_NOACTIVATE | SWP_NOMOVE | (LuaRendererManager::instance().detached_overlays() ? SWP_NOZORDER : 0);
+    SetWindowPos(m_gdi_overlay_hwnd, HWND_TOP, 0, 0, width, height, flags);
+    SetWindowPos(m_d2d_overlay_hwnd, HWND_TOP, 0, 0, width, height, flags);
+    move_and_order_overlays();
 }
 
 LRESULT CALLBACK LuaRendererManager::overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -179,36 +171,78 @@ LRESULT CALLBACK LuaRendererManager::overlay_wndproc(HWND hwnd, UINT msg, WPARAM
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-// Moves and orders the specified overlay windows to be on top of the main window.
-// If no hwnds are provided, all overlay windows from all Lua realms are updated.
-void LuaRendererManager::move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds)
+void LuaRendererManager::move_and_order_overlays()
 {
-    if (!m_detached_overlays) return;
-
-    std::vector<HWND> wnds;
-    if (hwnds.has_value())
-        wnds = *hwnds;
-    else
+    for (const auto &realm : LuaRealmManager::instance().realms())
     {
-        for (const auto &lua : LuaRealmManager::instance().realms())
-        {
-            wnds.push_back(lua->renderer.gdi_overlay_hwnd());
-            wnds.push_back(lua->renderer.d2d_overlay_hwnd());
-        }
+        realm->renderer.move_and_order_overlays();
+        for (const auto &window : realm->windows)
+            if (!window->closed) window->renderer->move_and_order_overlays();
     }
+}
 
-    RECT rc;
-    GetClientRect(g_main_ctx.hwnd, &rc);
-    POINT pt = {rc.left, rc.top};
-    ClientToScreen(g_main_ctx.hwnd, &pt);
+void LuaRenderer::move_and_order_overlays()
+{
+    if (!LuaRendererManager::instance().detached_overlays() || !IsWindow(m_parent) || IsIconic(m_parent)) return;
 
-    HWND above_main = GetWindow(g_main_ctx.hwnd, GW_HWNDPREV);
-    HWND insert_after = above_main ? above_main : HWND_TOP;
+    POINT position{};
+    ClientToScreen(m_parent, &position);
 
-    for (const auto &hwnd : wnds)
+    // Keep the surfaces immediately above their own window, without inserting a
+    // surface relative to itself when it is already directly above the owner.
+    HWND insert_after = GetWindow(m_parent, GW_HWNDPREV);
+    while (insert_after && (insert_after == m_gdi_overlay_hwnd || insert_after == m_d2d_overlay_hwnd))
+        insert_after = GetWindow(insert_after, GW_HWNDPREV);
+    if (!insert_after) insert_after = HWND_TOP;
+
+    for (const auto overlay : {m_gdi_overlay_hwnd, m_d2d_overlay_hwnd})
     {
-        SetWindowPos(hwnd, insert_after, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
+        if (!IsWindow(overlay)) continue;
+        SetWindowPos(overlay, insert_after, position.x, position.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
     }
+}
+
+void LuaRenderer::set_overlay_visibility(bool visible)
+{
+    if (!LuaRendererManager::instance().detached_overlays()) return;
+    visible = visible && IsWindowVisible(m_parent) && !IsIconic(m_parent);
+    for (const auto overlay : {m_gdi_overlay_hwnd, m_d2d_overlay_hwnd})
+    {
+        if (IsWindow(overlay)) ShowWindow(overlay, visible ? SW_SHOWNOACTIVATE : SW_HIDE);
+    }
+    if (visible) move_and_order_overlays();
+}
+
+LRESULT CALLBACK LuaRenderer::parent_window_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR data)
+{
+    auto *renderer = reinterpret_cast<LuaRenderer *>(data);
+    switch (msg)
+    {
+    case WM_WINDOWPOSCHANGED: {
+        renderer->move_and_order_overlays();
+        const auto *position = reinterpret_cast<const WINDOWPOS *>(lparam);
+        if (position->flags & SWP_HIDEWINDOW)
+            renderer->set_overlay_visibility(false);
+        else if (position->flags & SWP_SHOWWINDOW)
+            renderer->set_overlay_visibility(true);
+        break;
+    }
+    case WM_SHOWWINDOW:
+        renderer->set_overlay_visibility(wparam != 0);
+        break;
+    case WM_SIZE:
+        renderer->set_overlay_visibility(wparam != SIZE_MINIMIZED);
+        break;
+    case WM_ACTIVATE:
+        renderer->set_overlay_visibility(LOWORD(wparam) != WA_INACTIVE);
+        break;
+    case WM_NCDESTROY:
+        renderer->set_overlay_visibility(false);
+        RemoveWindowSubclass(hwnd, parent_window_subclass_proc, id);
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
 void LuaRenderer::present_gdi_content()
@@ -230,11 +264,11 @@ void LuaRenderer::create_loadscreen()
     {
         return;
     }
-    auto gdi_dc = GetDC(g_main_ctx.hwnd);
+    auto gdi_dc = GetDC(m_parent);
     loadscreen_dc = CreateCompatibleDC(gdi_dc);
     loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, dc_size.width, dc_size.height);
     SelectObject(loadscreen_dc, loadscreen_bmp);
-    ReleaseDC(g_main_ctx.hwnd, gdi_dc);
+    ReleaseDC(m_parent, gdi_dc);
 }
 
 void LuaRenderer::destroy_loadscreen()
@@ -297,7 +331,7 @@ LuaRenderer::LuaRenderer()
     bkmode = TRANSPARENT;
 }
 
-void LuaRenderer::initialize()
+void LuaRenderer::initialize(HWND parent)
 {
     if (gdi_back_dc != nullptr || m_ignore_create_renderer)
     {
@@ -306,9 +340,11 @@ void LuaRenderer::initialize()
 
     g_view_logger->info("Creating multi-target renderer for Lua...");
 
+    m_parent = parent ? parent : g_main_ctx.hwnd;
+    const bool detached = LuaRendererManager::instance().detached_overlays();
     RECT window_rect;
-    GetClientRect(g_main_ctx.hwnd, &window_rect);
-    if (Statusbar::hwnd())
+    GetClientRect(m_parent, &window_rect);
+    if (!parent && Statusbar::hwnd())
     {
         // We don't want to paint over statusbar
         RECT rc{};
@@ -323,32 +359,37 @@ void LuaRenderer::initialize()
     // Key 0 is reserved for clearing the image pool, too late to change it now...
     image_pool_index = 1;
 
-    auto gdi_dc = GetDC(g_main_ctx.hwnd);
+    auto gdi_dc = GetDC(m_parent);
     gdi_back_dc = CreateCompatibleDC(gdi_dc);
     gdi_bmp = CreateCompatibleBitmap(gdi_dc, dc_size.width, dc_size.height);
     SelectObject(gdi_back_dc, gdi_bmp);
-    ReleaseDC(g_main_ctx.hwnd, gdi_dc);
+    ReleaseDC(m_parent, gdi_dc);
 
     // If we don't fill up the DC with the key first, it never becomes "transparent"
     FillRect(gdi_back_dc, &window_rect, LuaRendererManager::instance().alpha_mask_brush());
 
-    const auto ex_style = LuaRendererManager::instance().detached_overlays()
-                              ? WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW
-                              : WS_EX_LAYERED | WS_EX_TRANSPARENT;
-    const auto style =
-        LuaRendererManager::instance().detached_overlays() ? WS_POPUP | WS_VISIBLE : WS_CHILD | WS_VISIBLE;
+    const auto ex_style = detached ? WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
+                                   : WS_EX_LAYERED | WS_EX_TRANSPARENT;
+    const auto style = detached ? WS_POPUP : WS_CHILD | WS_VISIBLE;
+    POINT position{};
+    if (detached) ClientToScreen(m_parent, &position);
 
-    m_gdi_overlay_hwnd = CreateWindowEx(ex_style, LuaRendererManager::overlay_class(), "", style, 0, 0, dc_size.width,
-        dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+    m_gdi_overlay_hwnd = CreateWindowEx(ex_style, LuaRendererManager::overlay_class(), "", style, position.x,
+        position.y, dc_size.width, dc_size.height, m_parent, nullptr, g_main_ctx.hinst, nullptr);
 
-    m_d2d_overlay_hwnd = CreateWindowEx(ex_style, LuaRendererManager::overlay_class(), "", style, 0, 0, dc_size.width,
-        dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+    m_d2d_overlay_hwnd = CreateWindowEx(ex_style, LuaRendererManager::overlay_class(), "", style, position.x,
+        position.y, dc_size.width, dc_size.height, m_parent, nullptr, g_main_ctx.hinst, nullptr);
 
-    // This renderer's realm isn't in LuaRealmManager::instance().realms() yet, so provide its hwnds manually.
-    LuaRendererManager::instance().move_and_order_overlays(std::vector<HWND>{m_gdi_overlay_hwnd, m_d2d_overlay_hwnd});
+    if (detached)
+    {
+        SetWindowSubclass(
+            m_parent, parent_window_subclass_proc, reinterpret_cast<UINT_PTR>(this), reinterpret_cast<DWORD_PTR>(this));
+        move_and_order_overlays();
+        set_overlay_visibility(IsWindowVisible(m_parent));
+    }
 
     // Put these over the MGE compositor.
-    if (!LuaRendererManager::instance().detached_overlays())
+    if (!detached)
     {
         SetWindowPos(m_gdi_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
         SetWindowPos(m_d2d_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
@@ -374,6 +415,8 @@ void LuaRenderer::pre_shutdown()
 void LuaRenderer::shutdown()
 {
     g_view_logger->info("Destroying Lua renderer...");
+
+    RemoveWindowSubclass(m_parent, parent_window_subclass_proc, reinterpret_cast<UINT_PTR>(this));
 
     SelectObject(gdi_back_dc, nullptr);
     DeleteObject(brush);

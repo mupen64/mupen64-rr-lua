@@ -818,13 +818,46 @@ function emu.atvi(f, unregister) end
 ---@return nil
 function emu.atupdatescreen(f, unregister) end
 
----Calls `f` after every VI frame. Use [painter.current](lua://painter.current) to get the painter for the callback's scope.
+---@alias WindowAnchor "left"|"right"|"top"|"bottom"
+
+---@class WindowSize
+---@field x integer Client width.
+---@field y integer Client height.
+
+---@class WindowOptions
+---@field id string Unique identifier for the window.
+---@field size WindowSize The window size.
+---@field anchor? WindowAnchor Anchor position relative to the main window.
+---@field minimizable? boolean Whether the window can be minimized. Defaults to true.
+---@field maximizable? boolean Whether the window can be maximized. Defaults to false.
+---@field closable? boolean Whether the user can close the window. Defaults to true.
+
+---@class Window
+local Window = {}
+
+---Creates a script-owned window.
+---Windows are closed when the script stops.
+---@param options WindowOptions
+---@return Window
+function emu.create_window(options) end
+
+---Returns this script's window object for the emulator's main window.
+---@return Window
+function emu.main_window() end
+
+---Calls `f` when this window is painted. Use [painter.current](lua://painter.current) to get the painter for the callback's scope.
 ---The painter is only valid for the duration of the callback.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
----@param f fun(): nil The function to be called after every VI frame.
+---@param f fun(): nil The function to be called when the window is painted.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
-function emu.atpaint(f, unregister) end
+function Window:atpaint(f, unregister) end
+
+---Calls `f` when this window closes.
+---@param f fun(): nil The function to be called when the window closes.
+---@param unregister boolean? If true, then unregister the function `f`.
+---@return nil
+function Window:closed(f, unregister) end
 
 ---Calls the function `f` every input frame.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
@@ -905,20 +938,20 @@ function emu.atseekcompleted(f, unregister) end
 ---@return nil
 function emu.atwarpmodifystatuschanged(f, unregister) end
 
----Calls the function `f` when a keyboard event happens.
----Keyboard presses that trigger hotkeys take priority over this event.
+---Calls the function `f` when this window receives a keyboard event.
+---On the main window, keyboard presses that trigger hotkeys take priority over this event.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(args: KeyEventArgs): nil The function to be called when a keyboard event happens.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
-function emu.atkey(f, unregister) end
+function Window:atkey(f, unregister) end
 
----Calls the function `f` when a mouse event happens.
+---Calls the function `f` when this window receives a mouse event. Coordinates are relative to its client area.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(args: MouseEventArgs): nil The function to be called when a mouse event happens.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
-function emu.atmouse(f, unregister) end
+function Window:atmouse(f, unregister) end
 
 ---Returns the number of VIs since the last movie was played.
 ---This should match the statusbar.
@@ -1616,7 +1649,7 @@ function painter.load_image(path) end
 function painter.decode_image(data) end
 
 ---Gets the painter for the currently active painter scope.
----This is valid in an [emu.atpaint](lua://emu.atpaint) or [PainterImage:paint](lua://PainterImage.paint) callback and errors outside one.
+---This is valid in an [Window:atpaint](lua://Window.atpaint) or [PainterImage:paint](lua://PainterImage.paint) callback and errors outside one.
 ---@nodiscard
 ---@return Painter
 function painter.current() end
@@ -2506,7 +2539,7 @@ function __mupen_apply_shims()
 
     local function require_painter()
         if not active_painter then
-            error("d2d drawing functions must be called from an emu.atpaint callback", 2)
+            error("d2d drawing functions must be called from a Window:atpaint callback", 2)
         end
         return active_painter
     end
@@ -2576,7 +2609,7 @@ function __mupen_apply_shims()
         end
 
         if not atdrawd2d_dispatch_registered then
-            emu.atpaint(dispatch_atdrawd2d)
+            emu.main_window():atpaint(dispatch_atdrawd2d)
             atdrawd2d_dispatch_registered = true
         end
         table.insert(atdrawd2d_callbacks, f)

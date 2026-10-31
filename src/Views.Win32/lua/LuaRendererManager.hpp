@@ -30,7 +30,7 @@ class LuaRendererManager
     void stop();
     void draw(bool force = false);
     void blit_all(HDC hdc);
-    void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds = std::nullopt);
+    void move_and_order_overlays();
 
     bool detached_overlays() const { return m_detached_overlays; }
     HBRUSH alpha_mask_brush() const { return m_alpha_mask_brush; }
@@ -52,7 +52,6 @@ class LuaRendererManager
     static LRESULT CALLBACK overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
     static void draw_clock_proc(std::stop_token stop_token);
 
-    void set_overlay_visibility(bool visible);
     UINT get_screen_refresh_rate();
     void start_draw_clock();
     void stop_draw_clock();

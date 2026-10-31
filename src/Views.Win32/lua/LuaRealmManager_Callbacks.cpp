@@ -286,21 +286,33 @@ void LuaRealmManager::call_warp_modify_status_changed(const int32_t status)
     });
 }
 
-void LuaRealmManager::call_atkey(const LuaKeyEventArgs &args)
+static void call_window_event(HWND hwnd, uint8_t key, const std::function<int(lua_State *)> &invoke)
 {
-    RET_IF_NOT_REGISTERED(REG_ATKEY);
-    g_main_ctx.dispatcher->invoke([args] {
-        LuaRealmManager::instance().call_by_key(
-            REG_ATKEY, [&args](lua_State *l) { return invoke_key_callback(l, args); });
+    // Hold realms alive while callbacks run and defer stops until after iteration.
+    const auto realms = LuaRealmManager::instance().realms();
+    for (const auto &realm : realms)
+    {
+        LuaWindow *target = nullptr;
+        if (hwnd == g_main_ctx.hwnd)
+            target = realm->main_window.get();
+        else
+            for (const auto &window : realm->windows)
+                if (window->hwnd == hwnd && !window->closed) target = window.get();
+        if (target && !target->call(key, invoke)) realm->stop();
+    }
+}
+
+void LuaRealmManager::call_atkey(const LuaKeyEventArgs &args, HWND hwnd)
+{
+    g_main_ctx.dispatcher->invoke([args, hwnd] {
+        call_window_event(hwnd, REG_ATKEY, [&args](lua_State *l) { return invoke_key_callback(l, args); });
     });
 }
 
-void LuaRealmManager::call_atmouse(const LuaMouseEventArgs &args)
+void LuaRealmManager::call_atmouse(const LuaMouseEventArgs &args, HWND hwnd)
 {
-    RET_IF_NOT_REGISTERED(REG_ATMOUSE);
-    g_main_ctx.dispatcher->invoke([args] {
-        LuaRealmManager::instance().call_by_key(
-            REG_ATMOUSE, [&args](lua_State *l) { return invoke_mouse_callback(l, args); });
+    g_main_ctx.dispatcher->invoke([args, hwnd] {
+        call_window_event(hwnd, REG_ATMOUSE, [&args](lua_State *l) { return invoke_mouse_callback(l, args); });
     });
 }
 
