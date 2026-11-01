@@ -13,6 +13,7 @@
 - Fixed screenshot overwriting when more than one is taken within a second
 - Fixed screenshots not respecting configured screenshot directory
 - Fixed missing dpad down button in piano roll
+- Fixed Mupen sometimes staying around as a zombie process after closing.
 
 ## ⚡ Performance
 

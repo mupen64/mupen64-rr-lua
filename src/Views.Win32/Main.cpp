@@ -1188,6 +1188,7 @@ void Main::init_sdl()
     {
         g_main_ctx.dispatcher->invoke([] {
             SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+            SDL_SetHint(SDL_HINT_WINDOWS_ENABLE_MESSAGELOOP, "0");
             need(
                 SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), "Failed to init SDL");
         });
