@@ -330,6 +330,16 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <source>TASInput</source>
         <translation>TASInput</translation>
     </message>
+    <message id="tasinput.gamepadConnected">
+        <location filename="../../Plugins.Qt6.TASInput/MainWindow.qml" line="45"/>
+        <source>Gamepad: %1</source>
+        <translation>Gamepad: %1</translation>
+    </message>
+    <message id="tasinput.gamepadNone">
+        <location filename="../../Plugins.Qt6.TASInput/MainWindow.qml" line="47"/>
+        <source>No gamepad connected</source>
+        <translation>No gamepad connected</translation>
+    </message>
     <message id="tasinput.sensitivity">
         <location filename="../../Plugins.Qt6.TASInput/JoystickSection.qml" line="59"/>
         <source>Sensitivity</source>
