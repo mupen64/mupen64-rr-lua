@@ -171,7 +171,7 @@ static void update_inputs()
 /**
  * Gets a button value from a BUTTONS struct at a given column index.
  * \param btn The BUTTONS struct to get the value from
- * \param i The column index. Must be in the range [3, 15] inclusive.
+ * \param i The column index. Must be in the range [4, 16] inclusive.
  * \return The button value at the given column index
  */
 static unsigned get_input_value_from_column_index(CoreButtons btn, size_t i)
@@ -213,7 +213,7 @@ static unsigned get_input_value_from_column_index(CoreButtons btn, size_t i)
 /**
  * Sets a button value in a BUTTONS struct at a given column index.
  * \param btn The BUTTONS struct to set the value in
- * \param i The column index. Must be in the range [3, 15] inclusive.
+ * \param i The column index. Must be in the range [4, 16] inclusive.
  * \param value The button value to set
  */
 static void set_input_value_from_column_index(CoreButtons *btn, size_t i, bool value)
@@ -267,7 +267,7 @@ static void set_input_value_from_column_index(CoreButtons *btn, size_t i, bool v
 
 /**
  * Gets the button name from a column index.
- * \param i The column index. Must be in the range [3, 15] inclusive.
+ * \param i The column index. Must be in the range [4, 16] inclusive.
  * \return The name of the button at the specified column index.
  */
 static const char *get_button_name_from_column_index(size_t i)
@@ -1139,7 +1139,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         ListView_InsertColumn(piano_roll.lv_hwnd, 4, &lv_column);
 
         lv_column.cx = 30;
-        for (int i = 4; i <= 15; ++i)
+        for (int i = 4; i <= 16; ++i)
         {
             lv_column.pszText = const_cast<LPSTR>(get_button_name_from_column_index(i));
             ListView_InsertColumn(piano_roll.lv_hwnd, i + 1, &lv_column);
