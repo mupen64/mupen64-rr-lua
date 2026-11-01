@@ -59,7 +59,7 @@ static HWND statusbar_hwnd;
 
 static const std::vector<Segment> &get_current_parts()
 {
-    return g_main_ctx.CoreCtx->vr_get_launched() ? EMU_PARTS : IDLE_PARTS;
+    return g_main_ctx.core_ctx->vr_get_launched() ? EMU_PARTS : IDLE_PARTS;
 }
 
 static size_t section_to_segment_index(const Statusbar::Section section)

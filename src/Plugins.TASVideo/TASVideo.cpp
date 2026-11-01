@@ -10,6 +10,9 @@
 #include "RSP.hpp"
 #include "Config.hpp"
 
+namespace BuiltinTAS::TASVideo
+{
+
 TASVideoContext g_tas_ctx{};
 
 static void log_shim(const wchar_t *str)
@@ -18,8 +21,9 @@ static void log_shim(const wchar_t *str)
 }
 
 M64RRSpec::PluginInit *g_plugin;
+const M64RRSpec::WindowingAPI *g_wsi;
 
-bool init_rsp_thread()
+static bool init_rsp_thread()
 {
     if (RSP.thread)
     {
@@ -49,7 +53,7 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->description[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRProcessEvent(Event event)
+EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
 {
     static int8_t init_count = 0;
 
@@ -61,6 +65,9 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         g_plugin = event.initiate.init;
 
         Config_LoadConfig();
+        break;
+    case M64RRSpec::Event::Type::InitializeDisplay:
+        g_wsi = event.initialize_display.wsi;
         break;
     case M64RRSpec::Event::Type::Shutdown:
         init_count--;
@@ -74,7 +81,6 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         break;
     case M64RRSpec::Event::Type::RomOpened:
         init_rsp_thread();
-        OGL_ResizeWindow();
         break;
     case M64RRSpec::Event::Type::RomClosed:
         RSP_SendMessage(RSPMSG_BLACKOUT);
@@ -98,7 +104,6 @@ EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height)
     if (height) *height = OGL.height;
     if (buffer)
     {
-        extern void *gCapturedPixels;
         gCapturedPixels = buffer;
         if (RSP.thread)
         {
@@ -112,3 +117,4 @@ EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle)
 {
 }
 #endif
+}

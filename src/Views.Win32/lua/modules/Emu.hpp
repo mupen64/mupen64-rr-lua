@@ -37,15 +37,76 @@ static int set_hint(lua_State *L)
     return 0;
 }
 
+static int get_pref(lua_State *L)
+{
+    const char *pref = luaL_checkstring(L, 1);
+
+    if (!strcmp(pref, "theme"))
+    {
+        lua_pushstring(L, WinDarkMode::effective_theme() == WinDarkMode::EffectiveTheme::Dark ? "dark" : "light");
+    }
+    else if (!strcmp(pref, "accent_color"))
+    {
+        DWORD color{};
+        BOOL opaque{};
+        COLORREF rgb;
+        if (SUCCEEDED(DwmGetColorizationColor(&color, &opaque)))
+            rgb = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+        else
+            rgb = GetSysColor(COLOR_HIGHLIGHT);
+
+        lua_createtable(L, 0, 4);
+        lua_pushnumber(L, GetRValue(rgb) / 255.0);
+        lua_setfield(L, -2, "r");
+        lua_pushnumber(L, GetGValue(rgb) / 255.0);
+        lua_setfield(L, -2, "g");
+        lua_pushnumber(L, GetBValue(rgb) / 255.0);
+        lua_setfield(L, -2, "b");
+        lua_pushnumber(L, 1.0);
+        lua_setfield(L, -2, "a");
+    }
+    else if (!strcmp(pref, "lang"))
+    {
+        lua_pushstring(L, "en_US"); // we only support en_US for now
+    }
+    else if (!strcmp(pref, "reduced_motion"))
+    {
+        BOOL animations_enabled = TRUE;
+        const auto success = SystemParametersInfo(SPI_GETCLIENTAREAANIMATION, 0, &animations_enabled, 0);
+        lua_pushboolean(L, success && !animations_enabled);
+    }
+    else if (!strcmp(pref, "high_contrast"))
+    {
+        HIGHCONTRAST high_contrast{};
+        high_contrast.cbSize = sizeof(high_contrast);
+        const auto success = SystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, 0);
+        lua_pushboolean(L, success && (high_contrast.dwFlags & HCF_HIGHCONTRASTON));
+    }
+    else if (!strcmp(pref, "caret_blink_time"))
+    {
+        const auto blink_time = GetCaretBlinkTime();
+        if (blink_time == INFINITE || blink_time == 0)
+            lua_pushboolean(L, false);
+        else
+            lua_pushinteger(L, blink_time);
+    }
+    else
+    {
+        return luaL_error(L, "Unknown preference '%s'", pref);
+    }
+
+    return 1;
+}
+
 static int GetVICount(lua_State *L)
 {
-    lua_pushinteger(L, g_main_ctx.CoreCtx->vcr_get_current_vi());
+    lua_pushinteger(L, g_main_ctx.core_ctx->vcr_get_current_vi());
     return 1;
 }
 
 static int GetSampleCount(lua_State *L)
 {
-    const CoreVCRSeekInfo info = g_main_ctx.CoreCtx->vcr_get_seek_info();
+    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
     lua_pushinteger(L, info.current_sample);
     return 1;
 }
@@ -66,11 +127,6 @@ static int register_callback(lua_State *L, const LuaRealmManager::callback_key k
 static int subscribe_atupdatescreen(lua_State *L)
 {
     return register_callback(L, LuaRealmManager::REG_ATUPDATESCREEN);
-}
-
-static int subscribe_atpaint(lua_State *L)
-{
-    return register_callback(L, LuaRealmManager::REG_ATPAINT);
 }
 
 static int subscribe_atvi(lua_State *L)
@@ -133,16 +189,6 @@ static int subscribe_atwarpmodifystatuschanged(lua_State *L)
     return register_callback(L, LuaRealmManager::REG_ATWARPMODIFYSTATUSCHANGED);
 }
 
-static int subscribe_atkey(lua_State *L)
-{
-    return register_callback(L, LuaRealmManager::REG_ATKEY);
-}
-
-static int subscribe_atmouse(lua_State *L)
-{
-    return register_callback(L, LuaRealmManager::REG_ATMOUSE);
-}
-
 static int Screenshot(lua_State *L)
 {
     const auto path = luaL_checkstring(L, 1);
@@ -170,18 +216,18 @@ static int EmuPause(lua_State *L)
 
     if (pause)
     {
-        g_main_ctx.CoreCtx->vr_pause_emu();
+        g_main_ctx.core_ctx->vr_pause_emu();
     }
     else
     {
-        g_main_ctx.CoreCtx->vr_resume_emu();
+        g_main_ctx.core_ctx->vr_resume_emu();
     }
     return 0;
 }
 
 static int GetEmuPause(lua_State *L)
 {
-    lua_pushboolean(L, g_main_ctx.CoreCtx->vr_get_paused());
+    lua_pushboolean(L, g_main_ctx.core_ctx->vr_get_paused());
     return 1;
 }
 
@@ -194,13 +240,13 @@ static int GetSpeed(lua_State *L)
 static int SetSpeed(lua_State *L)
 {
     g_config.core.fps_modifier = luaL_checkinteger(L, 1);
-    g_main_ctx.CoreCtx->vr_on_speed_modifier_changed();
+    g_main_ctx.core_ctx->vr_on_speed_modifier_changed();
     return 0;
 }
 
 static int get_speed_mode(lua_State *L)
 {
-    const auto mode = g_main_ctx.CoreCtx->vr_get_speed_mode();
+    const auto mode = g_main_ctx.core_ctx->vr_get_speed_mode();
     lua_pushinteger(L, (lua_Integer)mode);
     return 1;
 }
@@ -208,7 +254,7 @@ static int get_speed_mode(lua_State *L)
 static int set_speed_mode(lua_State *L)
 {
     const auto mode = (CoreSpeedMode)luaL_checkinteger(L, 1);
-    g_main_ctx.CoreCtx->vr_set_speed_mode(mode);
+    g_main_ctx.core_ctx->vr_set_speed_mode(mode);
     return 0;
 }
 
@@ -237,14 +283,14 @@ static int GetAddress(lua_State *L)
     {                                                                                                                  \
         x, n                                                                                                           \
     }
-    const NameAndVariable list[] = {A("rdram", g_main_ctx.CoreCtx->rdram),
-        A("rdram_register", g_main_ctx.CoreCtx->rdram_register), A("MI_register", g_main_ctx.CoreCtx->mi_register),
-        A("pi_register", g_main_ctx.CoreCtx->pi_register), A("sp_register", g_main_ctx.CoreCtx->sp_register),
-        A("rsp_register", g_main_ctx.CoreCtx->rsp_register), A("si_register", g_main_ctx.CoreCtx->si_register),
-        A("vi_register", g_main_ctx.CoreCtx->vi_register), A("ri_register", g_main_ctx.CoreCtx->ri_register),
-        A("ai_register", g_main_ctx.CoreCtx->ai_register), A("dpc_register", g_main_ctx.CoreCtx->dpc_register),
-        A("dps_register", g_main_ctx.CoreCtx->dps_register), B("SP_DMEM", g_main_ctx.CoreCtx->sp_dmem),
-        B("PIF_RAM", g_main_ctx.CoreCtx->pif_ram), {NULL, NULL}};
+    const NameAndVariable list[] = {A("rdram", g_main_ctx.core_ctx->rdram),
+        A("rdram_register", g_main_ctx.core_ctx->rdram_register), A("MI_register", g_main_ctx.core_ctx->mi_register),
+        A("pi_register", g_main_ctx.core_ctx->pi_register), A("sp_register", g_main_ctx.core_ctx->sp_register),
+        A("rsp_register", g_main_ctx.core_ctx->rsp_register), A("si_register", g_main_ctx.core_ctx->si_register),
+        A("vi_register", g_main_ctx.core_ctx->vi_register), A("ri_register", g_main_ctx.core_ctx->ri_register),
+        A("ai_register", g_main_ctx.core_ctx->ai_register), A("dpc_register", g_main_ctx.core_ctx->dpc_register),
+        A("dps_register", g_main_ctx.core_ctx->dps_register), B("SP_DMEM", g_main_ctx.core_ctx->sp_dmem),
+        B("PIF_RAM", g_main_ctx.core_ctx->pif_ram), {NULL, NULL}};
 #undef A
 #undef B
     const char *s = lua_tostring(L, 1);

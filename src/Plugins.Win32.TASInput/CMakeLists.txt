@@ -51,11 +51,5 @@ target_link_libraries(Mupen64RR_Plugins_Win32_TASInput PRIVATE
 )
 
 target_compile_definitions(Mupen64RR_Plugins_Win32_TASInput PRIVATE
-    M64RRGetMetadata=M64RRBuiltinTASInputGetMetadata
-    M64RRProcessEvent=M64RRBuiltinTASInputProcessEvent
-    M64RRReadController=M64RRBuiltinTASInputReadController
-    M64RRShowConfig=M64RRBuiltinTASInputShowConfig
-    M64RRGetKeys=M64RRBuiltinTASInputGetKeys
-    M64RRSetKeys=M64RRBuiltinTASInputSetKeys
-    g_plugin=M64RRBuiltinTASInputPlugin
+    PLUGIN_NAMESPACE=BuiltinTAS::TASInput
 )

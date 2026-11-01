@@ -26,12 +26,30 @@ struct ToastWindow
 {
     std::string title;
     std::string content;
+    std::string subtitle;
+    HFONT subtitle_font{};
     HICON icon{};
     HWND icon_hwnd{};
     HWND title_hwnd{};
     HWND content_hwnd{};
+    HWND subtitle_hwnd{};
     HWND close_hwnd{};
+
+    ~ToastWindow()
+    {
+        if (subtitle_font) DeleteObject(subtitle_font);
+    }
 };
+
+RECT measure_subtitle(HDC dc, const ToastWindow &toast, int width)
+{
+    RECT rect{0, 0, width, 0};
+    if (toast.subtitle.empty()) return rect;
+    const auto old_font = SelectObject(dc, toast.subtitle_font);
+    DrawText(dc, toast.subtitle.c_str(), -1, &rect, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+    SelectObject(dc, old_font);
+    return rect;
+}
 
 std::vector<HWND> toast_windows;
 
@@ -109,20 +127,27 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
 
     switch (message)
     {
-    case WM_INITDIALOG:
+    case WM_INITDIALOG: {
         toast = reinterpret_cast<ToastWindow *>(lparam);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(toast));
         toast->icon_hwnd = GetDlgItem(hwnd, IDC_TOAST_ICON);
         toast->title_hwnd = GetDlgItem(hwnd, IDC_TOAST_TITLE);
         toast->content_hwnd = GetDlgItem(hwnd, IDC_TOAST_CONTENT);
+        toast->subtitle_hwnd = GetDlgItem(hwnd, IDC_TOAST_SUBTITLE);
         toast->close_hwnd = GetDlgItem(hwnd, IDC_TOAST_CLOSE);
         SetDlgItemText(hwnd, IDC_TOAST_TITLE, toast->title.c_str());
         SetDlgItemText(hwnd, IDC_TOAST_CONTENT, toast->content.c_str());
         ShowWindow(toast->title_hwnd, toast->title.empty() ? SW_HIDE : SW_SHOW);
+        ShowWindow(toast->subtitle_hwnd, toast->subtitle.empty() ? SW_HIDE : SW_SHOW);
+        LOGFONT font{};
+        GetObject(GetStockObject(DEFAULT_GUI_FONT), sizeof(font), &font);
+        font.lfHeight = font.lfHeight * 85 / 100;
+        toast->subtitle_font = CreateFontIndirect(&font);
         SendMessage(toast->title_hwnd, WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), TRUE);
         SendMessage(toast->content_hwnd, WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), TRUE);
         WinDarkMode::attach(hwnd, {.is_dialog = true});
         return FALSE;
+    }
     case WM_SIZE: {
         if (!toast) break;
         const int width = LOWORD(lparam);
@@ -136,15 +161,34 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         if (toast->title_hwnd)
             SetWindowPos(
                 toast->title_hwnd, nullptr, text_x, padding, text_width, title_height, SWP_NOZORDER | SWP_NOACTIVATE);
+        const HDC dc = GetDC(hwnd);
+        const int subtitle_height = measure_subtitle(dc, *toast, text_width).bottom;
+        ReleaseDC(hwnd, dc);
+        const int subtitle_space = subtitle_height ? subtitle_height + gap : 0;
         SetWindowPos(toast->content_hwnd, nullptr, text_x, padding + title_height, text_width,
-            std::max(1, height - 2 * padding - title_height), SWP_NOZORDER | SWP_NOACTIVATE);
+            std::max(1, height - 2 * padding - title_height - subtitle_space), SWP_NOZORDER | SWP_NOACTIVATE);
+        SetWindowPos(toast->subtitle_hwnd, nullptr, text_x, height - padding - subtitle_height, text_width,
+            subtitle_height, SWP_NOZORDER | SWP_NOACTIVATE);
         RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
         return 0;
     }
 
     case WM_DRAWITEM: {
         const auto dis = reinterpret_cast<DRAWITEMSTRUCT *>(lparam);
-        if (!toast || dis->CtlType != ODT_STATIC || dis->CtlID != IDC_TOAST_ICON) return FALSE;
+        if (!toast || dis->CtlType != ODT_STATIC) return FALSE;
+        if (dis->CtlID == IDC_TOAST_SUBTITLE)
+        {
+            const int saved_dc = SaveDC(dis->hDC);
+            FillRect(dis->hDC, &dis->rcItem, WinDarkMode::theme_data().bg_brush);
+            SelectObject(dis->hDC, toast->subtitle_font);
+            SetTextColor(dis->hDC, GetSysColor(COLOR_GRAYTEXT));
+            SetBkMode(dis->hDC, TRANSPARENT);
+            RECT rect = dis->rcItem;
+            DrawText(dis->hDC, toast->subtitle.c_str(), -1, &rect, DT_WORDBREAK | DT_NOPREFIX);
+            RestoreDC(dis->hDC, saved_dc);
+            return TRUE;
+        }
+        if (dis->CtlID != IDC_TOAST_ICON) return FALSE;
 
         DrawIconEx(
             dis->hDC, dis->rcItem.left, dis->rcItem.top, toast->icon, icon_size, icon_size, 0, nullptr, DI_NORMAL);
@@ -176,6 +220,7 @@ void show_impl(const ToastData &data)
     auto toast = std::make_unique<ToastWindow>();
     toast->title = data.title.value_or("");
     toast->content = data.content;
+    toast->subtitle = data.subtitle.value_or("");
     toast->icon = icon_for_tone(data.tone);
 
     const HWND hwnd = CreateDialogParam(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_TOAST), g_main_ctx.hwnd, toast_proc,
@@ -199,18 +244,22 @@ void show_impl(const ToastData &data)
 
     const int text_left_padding = padding + icon_size + gap;
     constexpr int text_right_padding = close_size + padding + gap;
-    const int desired_text_width = std::max(static_cast<int>(content_measure.right), static_cast<int>(title_size.cx));
+    const auto subtitle_measure = measure_subtitle(dc, *created, 32767);
+    const int desired_text_width = std::max({static_cast<int>(content_measure.right), static_cast<int>(title_size.cx),
+        static_cast<int>(subtitle_measure.right)});
     const int desired_width = desired_text_width + text_left_padding + text_right_padding;
     const int minimum_width = text_left_padding + text_right_padding;
     const int width = std::min(max_width, std::max(minimum_width, desired_width));
     const int text_width = std::max(1, width - text_left_padding - text_right_padding);
     RECT text_rect{0, 0, text_width, 0};
     DrawText(dc, created->content.c_str(), -1, &text_rect, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+    const int subtitle_height = measure_subtitle(dc, *created, text_width).bottom;
     ReleaseDC(hwnd, dc);
 
     const int title_height = created->title.empty() ? 0 : 16;
-    const int height =
-        std::max(icon_size + 2 * padding, title_height + static_cast<int>(text_rect.bottom) + 2 * padding);
+    const int subtitle_space = subtitle_height ? subtitle_height + gap : 0;
+    const int height = std::max(
+        icon_size + 2 * padding, title_height + static_cast<int>(text_rect.bottom) + subtitle_space + 2 * padding);
     SetWindowPos(hwnd, nullptr, 0, 0, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
 
     auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(data.ttl).count();
@@ -224,8 +273,11 @@ namespace Toasts
 {
 void show(const ToastData &data)
 {
-    g_view_logger->info("Toast: title={}; content={}; tone={}; ttl={}", data.title.value_or(""), data.content,
-        static_cast<uint8_t>(data.tone), data.ttl.count());
+    g_view_logger->info("Toast: title={}; content={}; subtitle={}; tone={}; ttl={}", data.title.value_or(""),
+        data.content, data.subtitle.value_or(""), static_cast<uint8_t>(data.tone), data.ttl.count());
+
+    const auto fallback_content =
+        data.subtitle && !data.subtitle->empty() ? std::format("{}\n\n{}", data.content, *data.subtitle) : data.content;
 
     switch ((Config::ToastMode)g_config.toast_mode)
     {
@@ -233,10 +285,12 @@ void show(const ToastData &data)
         g_main_ctx.dispatcher->invoke([&] { show_impl(data); });
         return;
     case Config::ToastMode::Statusbar:
-        Statusbar::post(data.content, Statusbar::Section::Notification);
+        Statusbar::post(data.subtitle && !data.subtitle->empty() ? std::format("{} - {}", data.content, *data.subtitle)
+                                                                 : data.content,
+            Statusbar::Section::Notification);
         return;
     case Config::ToastMode::Dialog:
-        DialogService::show_dialog(data.content, data.title, data.tone);
+        DialogService::show_dialog(fallback_content, data.title, data.tone);
         return;
     }
 }

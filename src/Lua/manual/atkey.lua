@@ -4,10 +4,10 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
--- Demonstrates the `emu.atkey` callback.
+-- Demonstrates the `emu.main_window():atkey` callback.
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
-emu.atkey(function (args)
+emu.main_window():atkey(function(args)
     print(args)
 end)

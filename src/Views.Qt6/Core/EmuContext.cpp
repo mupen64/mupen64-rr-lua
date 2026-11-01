@@ -8,12 +8,11 @@
 
 #include <print>
 
+#include <QIcon>
 #include <QQmlEngine>
 #include <QThread>
-#include <QIcon>
+#include <QThreadPool>
 #include <QUrl>
-
-#include <QJSInterop.hpp>
 
 static std::atomic<EmuContext *> g_core_instance = nullptr;
 
@@ -27,8 +26,8 @@ static void set_core_instance(EmuContext *ptr)
         throw std::logic_error("EmuContext should not be created twice!");
 }
 
-EmuContext::EmuContext(QObject *parent)
-    : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
+EmuContext::EmuContext(QQuickItem *parent)
+    : QQuickItem(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
       m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this)), m_paths(new EmuPaths(this)),
       m_rom_manager(nullptr)
 {
@@ -79,6 +78,7 @@ EmuContext::EmuContext(QObject *parent)
 
     m_core_params->callbacks.emu_starting = [&] { m_plugins.value().emu_started(*m_core_params); };
     m_core_params->callbacks.emu_stopped = [&] {
+        std::lock_guard lock(m_read_video_mutex);
         m_plugins.value().emu_stopped(*m_core_params);
         m_plugins.reset();
         m_fn_read_video = nullptr;
@@ -91,6 +91,7 @@ EmuContext::EmuContext(QObject *parent)
             auto audio_plugin = Plugin(BuiltinTAS::PluginID::TASAudio);
             auto input_plugin = Plugin(BuiltinTAS::PluginID::DummyInput);
             auto rsp_plugin = Plugin(BuiltinTAS::PluginID::TASRSP);
+            std::lock_guard lock(m_read_video_mutex);
             m_plugins.emplace(
                 std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin), std::move(rsp_plugin));
 
@@ -113,51 +114,15 @@ EmuContext::EmuContext(QObject *parent)
     m_core_params->show_multiple_choice_dialog = [&](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title,
                                                      CoreMessageTone type) -> size_t {
-        std::promise<size_t> promise;
-        auto future = promise.get_future();
-
-        QMetaObject::invokeMethod(
-            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
-                // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
-                    [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
-                auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
-
-                openMultiDialog(done_callback, title, str, qt_choices, QmlCoreMessageTone::from_core(type));
-            });
-
-        return future.get();
+        auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
+        return this->startMultiDialog(title, str, qt_choices, QmlCoreMessageTone::from_core(type)).get();
     };
     m_core_params->show_ask_dialog = [&](std::string_view id, const char *str, const char *title,
                                          bool warning) -> bool {
-        std::promise<bool> promise;
-        auto future = promise.get_future();
-
-        QMetaObject::invokeMethod(
-            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
-                // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
-                    [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
-
-                openAskDialog(done_callback, title, str, warning ? QmlCoreMessageTone::Warn : QmlCoreMessageTone::Info);
-            });
-
-        return future.get();
+        return this->startAskDialog(title, str, warning ? QmlCoreMessageTone::Warn : QmlCoreMessageTone::Info).get();
     };
     m_core_params->show_dialog = [&](const char *str, const char *title, CoreMessageTone type) {
-        std::promise<void> promise;
-        auto future = promise.get_future();
-
-        QMetaObject::invokeMethod(
-            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
-                // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::toJSFunction(
-                    qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
-
-                openAskDialog(done_callback, title, str, QmlCoreMessageTone::from_core(type));
-            });
-
-        future.get();
+        this->startInfoDialog(title, str, QmlCoreMessageTone::from_core(type)).get();
     };
 #pragma endregion
 
@@ -184,8 +149,11 @@ EmuContext::EmuContext(QObject *parent)
 
 EmuContext::~EmuContext()
 {
+    cancelPendingDialogs();
+
     // ensure ROM is closed
     m_core_ctx->vr_close_rom(true);
+    g_core_instance.store(nullptr);
 }
 
 EmuContext *EmuContext::instance()
@@ -196,20 +164,35 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-QmlCoreResult::Value EmuContext::startROM(const QString &pathIn)
+void EmuContext::startROM(const QString &pathIn)
 {
     std::filesystem::path path = std::u16string_view{pathIn};
-    return QmlCoreResult::from_core(m_core_ctx->vr_start_rom(path));
+    QPointer<EmuContext> self(this);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([self, coreCtx, path] {
+        auto result = coreCtx->vr_start_rom(path);
+        if (self) self->startDialogForCoreResult(result);
+    });
 }
 
-QmlCoreResult::Value EmuContext::closeROM(bool resetVCR)
+void EmuContext::closeROM(bool resetVCR)
 {
-    return QmlCoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
+    QPointer<EmuContext> self(this);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([self, coreCtx, resetVCR] {
+        auto result = coreCtx->vr_close_rom(resetVCR);
+        if (self) self->startDialogForCoreResult(result);
+    });
 }
 
-QmlCoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
+void EmuContext::resetROM(bool resetSaveData, bool stopVCR)
 {
-    return QmlCoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
+    QPointer<EmuContext> self(this);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([self, coreCtx, resetSaveData, stopVCR] {
+        auto result = coreCtx->vr_reset_rom(resetSaveData, stopVCR);
+        if (self) self->startDialogForCoreResult(result);
+    });
 }
 
 void EmuContext::invalidateVisuals()
@@ -242,9 +225,10 @@ void EmuContext::saveFile(const QString &pathIn)
     // To keep operations from running on the wrong frame, we also block the core from
     // advancing until the operation is queued.
     m_core_ctx->vr_wait_increment();
-    QThreadPool::globalInstance()->start([=, this] {
-        m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, CoreSTJob::Save, nullptr, false);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([coreCtx, path] {
+        coreCtx->vr_wait_decrement();
+        coreCtx->st_do_file(path, CoreSTJob::Save, nullptr, false);
     });
 }
 
@@ -261,9 +245,10 @@ void EmuContext::loadFile(const QString &pathIn)
     std::filesystem::path path = std::u16string_view{pathIn};
     // see saveFile()
     m_core_ctx->vr_wait_increment();
-    QThreadPool::globalInstance()->start([=, this] {
-        m_core_ctx->vr_wait_decrement();
-        m_core_ctx->st_do_file(path, CoreSTJob::Load, nullptr, false);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([coreCtx, path] {
+        coreCtx->vr_wait_decrement();
+        coreCtx->st_do_file(path, CoreSTJob::Load, nullptr, false);
     });
 }
 
@@ -334,6 +319,77 @@ void EmuContext::setSpeedModifier(int32_t valueIn)
     }
 }
 
+int EmuContext::registerDialog(std::move_only_function<void(int)> finish)
+{
+    const int id = m_next_dialog_id++;
+    m_pending_dialogs.emplace(id, PendingDialog{std::move(finish)});
+    return id;
+}
+
+std::future<size_t> EmuContext::startMultiDialog(
+    QAnyStringView title, QAnyStringView content, const QList<QString> &choices, QmlCoreMessageTone::Value type)
+{
+    std::promise<size_t> promise;
+    auto future = promise.get_future();
+
+    QMetaObject::invokeMethod(this, [=, this, promise = std::move(promise), title = title.toString(),
+                                        content = content.toString(), choices = choices] mutable {
+        const int id = registerDialog(
+            [promise = std::move(promise)](int result) mutable { promise.set_value(static_cast<size_t>(result)); });
+        openMultiDialog(id, title, content, choices, type);
+    });
+
+    return future;
+}
+
+std::future<bool> EmuContext::startAskDialog(
+    QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type)
+{
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    QMetaObject::invokeMethod(
+        this, [=, this, promise = std::move(promise), title = title.toString(), content = content.toString()] mutable {
+            const int id =
+                registerDialog([promise = std::move(promise)](int result) mutable { promise.set_value(result == 1); });
+            openAskDialog(id, title, content, type);
+        });
+
+    return future;
+}
+std::future<void> EmuContext::startInfoDialog(
+    QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type)
+{
+    std::promise<void> promise;
+    auto future = promise.get_future();
+
+    QMetaObject::invokeMethod(
+        this, [=, this, promise = std::move(promise), title = title.toString(), content = content.toString()] mutable {
+            const int id = registerDialog([promise = std::move(promise)](int) mutable { promise.set_value(); });
+            openInfoDialog(id, title, content, type);
+        });
+
+    return future;
+}
+
+void EmuContext::finishDialog(int id, int result)
+{
+    auto it = m_pending_dialogs.find(id);
+    if (it == m_pending_dialogs.end()) return;
+
+    auto finish = std::move(it->second.finish);
+    m_pending_dialogs.erase(it);
+    finish(result);
+}
+
+void EmuContext::cancelPendingDialogs()
+{
+    auto pending = std::move(m_pending_dialogs);
+    m_pending_dialogs.clear();
+
+    for (auto &entry : pending) entry.second.finish(-1);
+}
+
 // Misc. functions
 // ==========================
 EmuOptions *EmuContext::options()
@@ -348,6 +404,9 @@ EmuPaths *EmuContext::paths()
 
 void EmuContext::readVideoOutput(QImage &image)
 {
+    std::lock_guard lock(m_read_video_mutex);
+    if (m_fn_read_video == nullptr) return;
+
     int32_t width = 0;
     int32_t height = 0;
     m_fn_read_video(nullptr, &width, &height);
@@ -380,6 +439,21 @@ void EmuContext::setRomManager(RomManager *value)
 
 // Internal utilities
 // ==========================
+
+void EmuContext::startDialogForCoreResult(CoreResult result)
+{
+    using namespace Qt::Literals;
+
+    if (result == CoreResult::Res_Ok) return;
+
+    auto message = QmlCoreResult::messageCpp(QmlCoreResult::from_core(result));
+    if (!message.has_value()) return;
+
+    auto [module, error] = message.value();
+
+    auto title = u"%1 Error %2"_s.arg(module, static_cast<int32_t>(result));
+    this->startInfoDialog(title, error, QmlCoreMessageTone::Error);
+}
 
 void CoreUtil::clear_plugin_funcs(CoreParams &params)
 {

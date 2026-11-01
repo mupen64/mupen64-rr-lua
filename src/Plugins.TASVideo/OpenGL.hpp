@@ -74,6 +74,8 @@ struct GLcolor
     float r{}, g{}, b{}, a{};
 };
 
+extern void *gCapturedPixels;
+
 void OGL_ReadPixels();
 bool OGL_Start();
 void OGL_Stop();

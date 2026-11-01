@@ -30,6 +30,7 @@ retest.attach_coverage(
         { "hotkey",    hotkey },
         { "action",    action },
         { "clipboard", clipboard },
+        { "dialogs",   dialogs },
     }
 )
 
@@ -73,6 +74,93 @@ retest.describe('mupen64', function()
         end)
     end)
     retest.describe('emu', function()
+        retest.describe('windows', function()
+            retest.it('returns_the_same_main_window', function()
+                retest.expect(emu.main_window()).to.equal(emu.main_window())
+                retest.expect(type(emu.atpaint)).to.equal('function')
+                retest.expect(type(emu.atkey)).to.equal('function')
+                retest.expect(type(emu.atmouse)).to.equal('function')
+            end)
+
+            retest.it('scopes_registration_to_each_window', function()
+                local main = emu.main_window()
+                local aux = emu.create_window({ id = 'window-api-test', size = { x = 200, y = 100 } })
+                retest.expect(aux == main).to.equal(false)
+                for _, event in ipairs({ 'atpaint', 'atkey', 'atmouse' }) do
+                    local callback = function() end
+                    main[event](main, callback)
+                    retest.expect(function() aux[event](aux, callback, true) end).to.fail()
+                    aux[event](aux, callback)
+                    main[event](main, callback, true)
+                    aux[event](aux, callback, true)
+                    retest.expect(function() aux[event](aux, callback, true) end).to.fail()
+                    retest.expect(function() aux[event](aux, 'invalid') end).to.fail()
+                end
+                retest.expect(function()
+                    emu.create_window({ id = 'window-api-test', size = { x = 200, y = 100 } })
+                end).to.fail()
+            end)
+
+            retest.it('rejects_invalid_window_options', function()
+                local invalid = {
+                    {},
+                    { id = '',               size = { x = 200, y = 100 } },
+                    { id = 'invalid-size',   size = { x = 1.5, y = 100 } },
+                    { id = 'invalid-anchor', anchor = 'center',          size = { x = 200, y = 100 } },
+                }
+                for _, options in ipairs(invalid) do
+                    retest.expect(function() emu.create_window(options) end).to.fail()
+                end
+            end)
+        end)
+
+        retest.describe('get_pref', function()
+            retest.it('returns_resolved_theme', function()
+                local theme = emu.get_pref('theme')
+                retest.expect(theme == 'light' or theme == 'dark').to.equal(true)
+            end)
+
+            retest.it('returns_normalized_accent_color', function()
+                local color = emu.get_pref('accent_color')
+                retest.expect(type(color)).to.equal('table')
+                for _, channel in ipairs({ 'r', 'g', 'b', 'a' }) do
+                    retest.expect(type(color[channel])).to.equal('number')
+                    retest.expect(color[channel] >= 0 and color[channel] <= 1).to.equal(true)
+                end
+                retest.expect(color.a).to.equal(1)
+            end)
+
+            retest.it('returns_frontend_language', function()
+                retest.expect(emu.get_pref('lang')).to.equal('en_US')
+            end)
+
+            retest.it('returns_reduced_motion_preference', function()
+                retest.expect(type(emu.get_pref('reduced_motion'))).to.equal('boolean')
+            end)
+
+            retest.it('returns_high_contrast_preference', function()
+                retest.expect(type(emu.get_pref('high_contrast'))).to.equal('boolean')
+            end)
+
+            retest.it('returns_caret_blink_time_preference', function()
+                local blink_time = emu.get_pref('caret_blink_time')
+                if blink_time ~= false then
+                    retest.expect(type(blink_time)).to.equal('number')
+                    retest.expect(blink_time > 0).to.equal(true)
+                    retest.expect(blink_time % 1).to.equal(0)
+                end
+            end)
+
+            retest.it('rejects_unknown_preferences', function()
+                retest.expect(function() emu.get_pref('unknown') end).to.fail()
+            end)
+
+            retest.it('rejects_missing_or_invalid_arguments', function()
+                retest.expect(function() emu.get_pref() end).to.fail()
+                retest.expect(function() emu.get_pref({}) end).to.fail()
+            end)
+        end)
+
         retest.describe('callbacks', function()
             retest.it('unregistering_nonregistered_callback_doesnt_crash', function()
                 local success = pcall(emu.atinput, function() end, true)
@@ -1720,6 +1808,32 @@ retest.describe('mupen64', function()
             end)
         end)
 
+        retest.describe('get_locked_hotkeys', function()
+            retest.it('defaults_modern_and_legacy_hotkeys_to_main', function()
+                action.lock_hotkeys(true, {
+                    { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_A } },
+                    { key = Mupen.VKeycodes.VK_A },
+                })
+                local locked = action.get_locked_hotkeys()
+                action.lock_hotkeys(false)
+                retest.expect(locked[1].context).to.equal('window.builtin.main')
+                retest.expect(locked[2].context).to.equal('window.builtin.main')
+                retest.expect(locked[1].trigger).to.equal(locked[2].trigger)
+            end)
+            retest.it('preserves_context_for_modern_and_legacy_hotkeys', function()
+                for _, context in ipairs({ 'window.*', 'window.builtin.*', 'window.builtin.main', 'window.builtin.pianoroll', 'window.lua.*', 'window.lua.test', 'window.builtin.main|window.lua.*' }) do
+                    action.lock_hotkeys(true, {
+                        { trigger = { type = 'keycode', value = Mupen.keycode.SDLK_A }, context = context },
+                        { key = Mupen.VKeycodes.VK_A, context = context },
+                    })
+                    local locked = action.get_locked_hotkeys()
+                    action.lock_hotkeys(false)
+                    retest.expect(locked[1].context).to.equal(context)
+                    retest.expect(locked[2].context).to.equal(context)
+                end
+            end)
+        end)
+
         retest.describe('get_hotkeys_locked', function()
             retest.it('returns_locked_state', function()
                 action.lock_hotkeys(true)
@@ -1749,6 +1863,37 @@ retest.describe('mupen64', function()
                     hotkeys.prompt({})
                 end
                 retest.expect(func).to.fail()
+            end)
+        end)
+    end)
+
+    retest.describe('dialogs', function()
+        retest.describe('show_notification', function()
+            retest.it('accepts_defaults', function()
+                dialogs.show_notification('Lua notification test')
+            end)
+            retest.it('accepts_all_tones', function()
+                for _, tone in ipairs({ 'error', 'warn', 'info' }) do
+                    dialogs.show_notification('Lua notification test', 'Lua API tests', tone)
+                end
+            end)
+            retest.it('accepts_nil_title', function()
+                dialogs.show_notification('Lua notification test', nil, 'info')
+            end)
+            retest.it('errors_if_content_nil', function()
+                retest.expect(function() dialogs.show_notification(nil) end).to.fail()
+            end)
+            retest.it('errors_if_content_not_string', function()
+                retest.expect(function() dialogs.show_notification({}) end).to.fail()
+            end)
+            retest.it('errors_if_title_not_string', function()
+                retest.expect(function() dialogs.show_notification('test', {}) end).to.fail()
+            end)
+            retest.it('errors_if_type_unknown', function()
+                retest.expect(function() dialogs.show_notification('test', nil, 'unknown') end).to.fail()
+            end)
+            retest.it('errors_if_type_not_string', function()
+                retest.expect(function() dialogs.show_notification('test', nil, {}) end).to.fail()
             end)
         end)
     end)

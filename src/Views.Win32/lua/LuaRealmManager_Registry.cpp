@@ -6,8 +6,10 @@
 
 #include "Common.hpp"
 #include <lua/modules/AVI.hpp>
+#include <lua/LuaWindow.hpp>
 #include <lua/modules/Action.hpp>
 #include <lua/modules/Clipboard.hpp>
+#include <lua/modules/Dialogs.hpp>
 #include <lua/modules/Painter.hpp>
 #include <lua/modules/Emu.hpp>
 #include <lua/modules/Global.hpp>
@@ -25,17 +27,16 @@ const luaL_Reg GLOBAL_FUNCS[] = {{"print", LuaCore::Global::print}, {"tostringex
     {"stop", LuaCore::Global::StopScript}, {NULL, NULL}};
 
 const luaL_Reg EMU_FUNCS[] = {{"console", LuaCore::Emu::ConsoleWriteLua}, {"statusbar", LuaCore::Emu::StatusbarWrite},
-    {"get_hint", LuaCore::Emu::get_hint}, {"set_hint", LuaCore::Emu::set_hint},
+    {"get_hint", LuaCore::Emu::get_hint}, {"set_hint", LuaCore::Emu::set_hint}, {"get_pref", LuaCore::Emu::get_pref},
 
     {"atvi", LuaCore::Emu::subscribe_atvi}, {"atupdatescreen", LuaCore::Emu::subscribe_atupdatescreen},
-    {"atpaint", LuaCore::Emu::subscribe_atpaint}, {"atinput", LuaCore::Emu::subscribe_atinput},
-    {"atstop", LuaCore::Emu::subscribe_atstop}, {"atwindowmessage", LuaCore::Emu::subscribe_atwindowmessage},
-    {"atinterval", LuaCore::Emu::subscribe_atinterval}, {"atplaymovie", LuaCore::Emu::subscribe_atplaymovie},
-    {"atstopmovie", LuaCore::Emu::subscribe_atstopmovie}, {"atloadstate", LuaCore::Emu::subscribe_atloadstate},
-    {"atsavestate", LuaCore::Emu::subscribe_atsavestate}, {"atreset", LuaCore::Emu::subscribe_atreset},
-    {"atseekcompleted", LuaCore::Emu::subscribe_atseekcompleted},
+    {"atinput", LuaCore::Emu::subscribe_atinput}, {"atstop", LuaCore::Emu::subscribe_atstop},
+    {"atwindowmessage", LuaCore::Emu::subscribe_atwindowmessage}, {"atinterval", LuaCore::Emu::subscribe_atinterval},
+    {"atplaymovie", LuaCore::Emu::subscribe_atplaymovie}, {"atstopmovie", LuaCore::Emu::subscribe_atstopmovie},
+    {"atloadstate", LuaCore::Emu::subscribe_atloadstate}, {"atsavestate", LuaCore::Emu::subscribe_atsavestate},
+    {"atreset", LuaCore::Emu::subscribe_atreset}, {"atseekcompleted", LuaCore::Emu::subscribe_atseekcompleted},
     {"atwarpmodifystatuschanged", LuaCore::Emu::subscribe_atwarpmodifystatuschanged},
-    {"atkey", LuaCore::Emu::subscribe_atkey}, {"atmouse", LuaCore::Emu::subscribe_atmouse},
+    {"create_window", LuaCore::Window::create}, {"main_window", LuaCore::Window::main},
 
     {"framecount", LuaCore::Emu::GetVICount}, {"samplecount", LuaCore::Emu::GetSampleCount},
     {"inputcount", LuaCore::Emu::GetInputCount},
@@ -55,7 +56,7 @@ const luaL_Reg EMU_FUNCS[] = {{"console", LuaCore::Emu::ConsoleWriteLua}, {"stat
 
     {NULL, NULL}};
 
-const luaL_Reg MEMORY_FUNCS[] = { // memory conversion functions
+const luaL_Reg MEMORY_FUNCS[] = {// memory conversion functions
     {"inttofloat", LuaCore::Memory::int_to_float}, {"inttodouble", LuaCore::Memory::int_to_double},
     {"floattoint", LuaCore::Memory::float_to_int}, {"doubletoint", LuaCore::Memory::double_to_int},
     {"qwordtonumber", LuaCore::Memory::qword_to_number},
@@ -94,8 +95,7 @@ const luaL_Reg WGUI_FUNCS[] = {{"setbrush", LuaCore::Wgui::set_brush}, {"setpen"
     {"loadscreenreset", LuaCore::Wgui::LoadScreenReset}, {"getimageinfo", LuaCore::Wgui::GetImageInfo},
     /*</GDIPlus*/
     {"ellipse", LuaCore::Wgui::DrawEllipse}, {"polygon", LuaCore::Wgui::DrawPolygon}, {"line", LuaCore::Wgui::DrawLine},
-    {"info", LuaCore::Wgui::GetGUIInfo}, {"resize", LuaCore::Wgui::ResizeWindow}, {"setclip", LuaCore::Wgui::SetClip},
-    {"resetclip", LuaCore::Wgui::ResetClip}, {NULL, NULL}};
+    {"setclip", LuaCore::Wgui::SetClip}, {"resetclip", LuaCore::Wgui::ResetClip}, {NULL, NULL}};
 
 const luaL_Reg PAINTER_FUNCS[] = {{"current", LuaCore::Painter::current}, {"new_image", LuaCore::Painter::new_image},
     {"load_image", LuaCore::Painter::load_image}, {"decode_image", LuaCore::Painter::decode_image},
@@ -146,6 +146,8 @@ const luaL_Reg CLIPBOARD_FUNCS[] = {{"get", LuaCore::Clipboard::get},
     {"get_content_type", LuaCore::Clipboard::get_content_type}, {"set", LuaCore::Clipboard::set},
     {"clear", LuaCore::Clipboard::clear}, {NULL, NULL}};
 
+const luaL_Reg DIALOGS_FUNCS[] = {{"show_notification", LuaCore::Dialogs::show_notification}, {NULL, NULL}};
+
 const std::pair<std::string, lua_CFunction> OVERRIDE_FUNCS[] = {{"os.exit", LuaCore::Global::Exit}};
 
 static void register_as_package(lua_State *lua_state, const char *name, const luaL_Reg *regs)
@@ -191,6 +193,7 @@ void LuaRealmManager::register_functions(lua_State *L)
     register_as_package(L, "debugger", DEBUGGER_FUNCS);
     register_as_package(L, "wgui", WGUI_FUNCS);
     LuaCore::Painter::register_types(L);
+    LuaCore::Window::register_types(L);
     register_as_package(L, "painter", PAINTER_FUNCS);
     register_as_package(L, "input", INPUT_FUNCS);
     register_as_package(L, "joypad", JOYPAD_FUNCS);
@@ -201,6 +204,7 @@ void LuaRealmManager::register_functions(lua_State *L)
     register_as_package(L, "hotkey", HOTKEY_FUNCS);
     register_as_package(L, "action", ACTION_FUNCS);
     register_as_package(L, "clipboard", CLIPBOARD_FUNCS);
+    register_as_package(L, "dialogs", DIALOGS_FUNCS);
     for (const auto &[name, func] : OVERRIDE_FUNCS)
     {
         register_function(L, name, func);

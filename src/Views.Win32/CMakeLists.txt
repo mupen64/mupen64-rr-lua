@@ -40,6 +40,7 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "Main.hpp"
     "lua/LuaTypes.hpp"
     "lua/LuaRealm.hpp"
+    "lua/LuaWindow.hpp"
     "lua/LuaRealmManager.hpp"
 
     "lua/LuaRenderer.hpp"
@@ -59,6 +60,7 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "lua/modules/Action.hpp"
     "lua/modules/Hotkey.hpp"
     "lua/modules/Clipboard.hpp"
+    "lua/modules/Dialogs.hpp"
     "lua/presenters/DCompPresenter.hpp"
     "lua/presenters/GDIPresenter.hpp"
     "lua/presenters/Presenter.hpp"
@@ -66,6 +68,7 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "plugin/BuiltinTAS.hpp"
     "plugin/ZEPlugin.hpp"
     "plugin/M64RRPlugin.hpp"
+    "plugin/Windowing.hpp"
     "resource.h"
     "../Plugins.TASAudio/Resource.rc"
     "../Plugins.TASVideo/Resource.rc"
@@ -108,12 +111,14 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "lua/LuaRealmManager_Storage.cpp"
     "lua/LuaRealmManager_Registry.cpp"
     "lua/LuaRenderer.cpp"
+    "lua/LuaWindow.cpp"
     "lua/LuaDialog.cpp"
     "lua/presenters/DCompPresenter.cpp"
     "lua/presenters/GDIPresenter.cpp"
     "plugin/Plugin.cpp"
     "plugin/ZEPlugin.cpp"
     "plugin/M64RRPlugin.cpp"
+    "plugin/Windowing.cpp"
 
     # Resource script
     "Resource.rc"

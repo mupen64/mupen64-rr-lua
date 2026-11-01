@@ -7,6 +7,7 @@
 #pragma once
 
 #include <tmmintrin.h>
+#include "Types.hpp"
 
 const unsigned char Five2Eight[32] = {
     0,   // 00000 = 00000000

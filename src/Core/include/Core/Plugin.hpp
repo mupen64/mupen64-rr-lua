@@ -16,6 +16,7 @@
 #endif
 
 #include <Core/Types.hpp>
+#include <Core/Graphics.hpp>
 
 #if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
@@ -189,6 +190,8 @@ extern "C"
             // The plugin is being asked to provide the controller configuration.
             InitializeControllers,
 
+            InitializeDisplay,
+
             // Emulation has started.
             RomOpened,
 
@@ -209,14 +212,24 @@ extern "C"
             CoreController *controllers; // [4]
         };
 
+        struct InitializeDisplayEvent
+        {
+            Type type;
+            // A pointer to a function table containing the windowing API functions.
+            const WindowingAPI *wsi;
+        };
+
         // The type of the event.
         Type type;
 
         // The initiate event details. Only valid when `type` is `Initiate`.
         InitiateEvent initiate;
 
-        // The initialize controllers event details. Only valid when `type` is `InitializeControllers`.
+        // The initialize-controllers event details. Only valid when `type` is `InitializeControllers`.
         InitializeControllersEvent initialize_controllers;
+
+        // The initialize-display event details. Only valid when `type` is `InitializeDisplay`.
+        InitializeDisplayEvent initialize_display;
     };
 
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);
@@ -240,31 +253,33 @@ extern "C"
 
 } // namespace M64RRSpec
 
-#if defined(PLUGIN_WITH_CALLBACKS)
+#ifdef PLUGIN_WITH_CALLBACKS
 
+#ifdef PLUGIN_NAMESPACE
+namespace PLUGIN_NAMESPACE
+#else
 extern "C"
+#endif
 {
-    using namespace M64RRSpec;
-
     // ReSharper disable CppInconsistentNaming
 
     /**
      * \brief Retrieves the plugin metadata. Always called before any other plugin function.
      * \param metadata The plugin metadata to be filled in.
      */
-    EXPORT void CALL M64RRGetMetadata(PluginMetadata *metadata);
+    EXPORT void CALL M64RRGetMetadata(::M64RRSpec::PluginMetadata *metadata);
 
     /**
      * \brief Notifies the plugin of an event.
      * \param event The event.
      */
-    EXPORT void CALL M64RRProcessEvent(Event event);
+    EXPORT void CALL M64RRProcessEvent(::M64RRSpec::Event event);
 
     /**
      * \brief Shows the configuration window.
      * \param parent_window The parent window handle.
      */
-    EXPORT void CALL M64RRShowConfig(WindowHandle parent_window);
+    EXPORT void CALL M64RRShowConfig(::M64RRSpec::WindowHandle parent_window);
 
     /**
      * \brief Retrieves all active windows that belong to the plugin.
@@ -273,7 +288,7 @@ extern "C"
      * window handles will not be filled in.
      * \param count The number of active windows. If `nullptr`, the number of active windows will not be returned.
      */
-    EXPORT void CALL M64RRGetWindows(WindowHandle *windows, size_t *count);
+    EXPORT void CALL M64RRGetWindows(::M64RRSpec::WindowHandle *windows, size_t *count);
 
     // ---
 
@@ -301,7 +316,7 @@ extern "C"
      * \brief Called when the audio DAC rate changes.
      * \param system_type The system type.
      */
-    EXPORT void CALL M64RRAIDacrateChanged(CoreSystemType system_type);
+    EXPORT void CALL M64RRAIDacrateChanged(::CoreSystemType system_type);
 
     /**
      * \brief Called when the audio length changes.
@@ -315,14 +330,14 @@ extern "C"
      * \param controller The controller index.
      * \param keys The buttons to be filled in.
      */
-    EXPORT void CALL M64RRGetKeys(int32_t index, CoreButtons *buttons);
+    EXPORT void CALL M64RRGetKeys(int32_t index, ::CoreButtons *buttons);
 
     /**
      * \brief Notifies the plugin that the keys for the specified controller have changed.
      * \param controller The controller index.
      * \param keys The buttons to be set.
      */
-    EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons);
+    EXPORT void CALL M64RRSetKeys(int32_t index, ::CoreButtons buttons);
 
     /**
      * \brief Notifies the plugin of a controller command.

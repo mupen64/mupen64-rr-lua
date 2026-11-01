@@ -11,6 +11,7 @@
 #include <components/Statusbar.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
+#include <plugin/Windowing.hpp>
 
 static M64RRSpec::PtrProcessEvent g_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows g_mupenrr_video_get_windows_fn = nullptr;
@@ -143,45 +144,45 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type
     case Plugin::Type::Video:
         if (dummy)
         {
-            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoVideoGetMetadata));
+            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::DummyVideo::M64RRGetMetadata));
             break;
         }
-        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoGetMetadata));
-        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoProcessEvent));
-        add("M64RRProcessDList", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoProcessDList));
-        add("M64RRReadVideo", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoReadVideo));
-        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoShowConfig));
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRProcessEvent));
+        add("M64RRProcessDList", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRProcessDList));
+        add("M64RRReadVideo", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRReadVideo));
+        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRShowConfig));
         break;
     case Plugin::Type::Audio:
         if (dummy)
         {
-            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoAudioGetMetadata));
+            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::DummyAudio::M64RRGetMetadata));
             break;
         }
-        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioGetMetadata));
-        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioProcessEvent));
-        add("M64RRAIDacrateChanged", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioAIDacrateChanged));
-        add("M64RRAILenChanged", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioAILenChanged));
-        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioShowConfig));
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRProcessEvent));
+        add("M64RRAIDacrateChanged", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRAIDacrateChanged));
+        add("M64RRAILenChanged", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRAILenChanged));
+        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::TASAudio::M64RRShowConfig));
         break;
     case Plugin::Type::Input:
         if (dummy)
         {
-            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoInputGetMetadata));
-            add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoInputProcessEvent));
+            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::DummyInput::M64RRGetMetadata));
+            add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::DummyInput::M64RRProcessEvent));
             break;
         }
-        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputGetMetadata));
-        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputProcessEvent));
-        add("M64RRReadController", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputReadController));
-        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputShowConfig));
-        add("M64RRGetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputGetKeys));
-        add("M64RRSetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputSetKeys));
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRProcessEvent));
+        add("M64RRReadController", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRReadController));
+        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRShowConfig));
+        add("M64RRGetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRGetKeys));
+        add("M64RRSetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::TASInput::M64RRSetKeys));
         break;
     case Plugin::Type::RSP:
-        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASRSPGetMetadata));
-        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASRSPProcessEvent));
-        add("M64RRDoRSPCycles", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASRSPDoRSPCycles));
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASRSP::M64RRGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASRSP::M64RRProcessEvent));
+        add("M64RRDoRSPCycles", reinterpret_cast<FARPROC>(BuiltinTAS::TASRSP::M64RRDoRSPCycles));
         break;
     }
 
@@ -256,29 +257,29 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     }
     init->platform = M64RRSpec::Platform::Windows;
     init->main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
-    init->rom = g_main_ctx.CoreCtx->rom;
-    init->rdram = (uint8_t *)g_main_ctx.CoreCtx->rdram;
-    init->dmem = (uint8_t *)g_main_ctx.CoreCtx->sp_dmem;
-    init->imem = (uint8_t *)g_main_ctx.CoreCtx->sp_imem;
+    init->rom = g_main_ctx.core_ctx->rom;
+    init->rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
+    init->dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
+    init->imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
 
-    init->rdram_register = g_main_ctx.CoreCtx->rdram_register;
-    init->mi_register = g_main_ctx.CoreCtx->mi_register;
-    init->pi_register = g_main_ctx.CoreCtx->pi_register;
-    init->sp_register = g_main_ctx.CoreCtx->sp_register;
-    init->rsp_register = g_main_ctx.CoreCtx->rsp_register;
-    init->si_register = g_main_ctx.CoreCtx->si_register;
-    init->vi_register = g_main_ctx.CoreCtx->vi_register;
-    init->ri_register = g_main_ctx.CoreCtx->ri_register;
-    init->ai_register = g_main_ctx.CoreCtx->ai_register;
-    init->dpc_register = g_main_ctx.CoreCtx->dpc_register;
-    init->dps_register = g_main_ctx.CoreCtx->dps_register;
+    init->rdram_register = g_main_ctx.core_ctx->rdram_register;
+    init->mi_register = g_main_ctx.core_ctx->mi_register;
+    init->pi_register = g_main_ctx.core_ctx->pi_register;
+    init->sp_register = g_main_ctx.core_ctx->sp_register;
+    init->rsp_register = g_main_ctx.core_ctx->rsp_register;
+    init->si_register = g_main_ctx.core_ctx->si_register;
+    init->vi_register = g_main_ctx.core_ctx->vi_register;
+    init->ri_register = g_main_ctx.core_ctx->ri_register;
+    init->ai_register = g_main_ctx.core_ctx->ai_register;
+    init->dpc_register = g_main_ctx.core_ctx->dpc_register;
+    init->dps_register = g_main_ctx.core_ctx->dps_register;
 
     init->process_dlist = funcs.video_process_dlist;
 
-    init->get_effective_speed_mode = [](void) { return g_main_ctx.CoreCtx->vr_get_effective_speed_mode(); };
-    init->frame_skipped = [](void) { return g_main_ctx.CoreCtx->vr_get_frame_skipped(); };
+    init->get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
+    init->frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
     init->config_path = get_config_path;
-    init->rcp_counter = g_main_ctx.CoreCtx->rcp_counter;
+    init->rcp_counter = g_main_ctx.core_ctx->rcp_counter;
     init->request_size = Main::request_size;
 
     switch (m_type)
@@ -318,6 +319,11 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     {
     case Plugin::Type::Video: {
         g_view_logger->trace("Initiating video plugin (MupenRR)...");
+
+        process_event_on_gui_thread(event_fn, M64RRSpec::Event{.initialize_display = {
+                                                                   .type = M64RRSpec::Event::Type::InitializeDisplay,
+                                                                   .wsi = &SDLWindowAPI::functions(),
+                                                               }});
 
         LOOKUP_MUPENRR_FN(g_mupenrr_video_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
         LOOKUP_MUPENRR_FN(g_mupenrr_video_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");

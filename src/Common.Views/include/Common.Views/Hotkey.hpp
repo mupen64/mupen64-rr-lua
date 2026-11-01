@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <variant>
 #include <SDL3/SDL_keycode.h>
 #include <SDL3/SDL_mouse.h>
@@ -44,8 +45,12 @@ struct Hotkey
     bool shift{};
     bool alt{};
 
-    explicit Hotkey(const Trigger trigger, const bool ctrl = false, const bool shift = false, const bool alt = false)
-        : trigger(trigger), ctrl(ctrl), shift(shift), alt(alt)
+    /// The window scopes in which this hotkey can trigger, separated by | (logical OR).
+    std::string context = "window.builtin.main";
+
+    explicit Hotkey(const Trigger trigger, const bool ctrl = false, const bool shift = false, const bool alt = false,
+        std::string context = "window.builtin.main")
+        : trigger(trigger), ctrl(ctrl), shift(shift), alt(alt), context(std::move(context))
     {
     }
 
@@ -91,9 +96,61 @@ struct Hotkey
         return hotkey;
     }
 
+    /**
+     * \brief Gets whether this hotkey applies to the specified window context.
+     */
+    [[nodiscard]] bool matches_context(std::string_view window_context) const
+    {
+        return any_context(context, [&](std::string_view scope) { return matches_scope(scope, window_context); });
+    }
+
+    /**
+     * \brief Gets whether the same input can trigger both hotkeys in at least one window.
+     */
+    [[nodiscard]] bool conflicts_with(const Hotkey &other) const
+    {
+        if (trigger != other.trigger || ctrl != other.ctrl || shift != other.shift || alt != other.alt) return false;
+        return any_context(context, [&](std::string_view scope) {
+            return any_context(other.context, [&](std::string_view other_scope) {
+                return scope == other_scope || scope == "window.*" || other_scope == "window.*" ||
+                       matches_scope(scope, other_scope) || matches_scope(other_scope, scope);
+            });
+        });
+    }
+
     bool operator==(const Hotkey &other) const
     {
-        return trigger == other.trigger && ctrl == other.ctrl && shift == other.shift && alt == other.alt;
+        return trigger == other.trigger && ctrl == other.ctrl && shift == other.shift && alt == other.alt &&
+               context == other.context;
+    }
+
+  private:
+    template <typename Predicate> static bool any_context(std::string_view contexts, Predicate predicate)
+    {
+        while (!contexts.empty())
+        {
+            const auto separator = contexts.find('|');
+            auto scope = contexts.substr(0, separator);
+            const auto first = scope.find_first_not_of(" \t\r\n");
+            if (first != std::string_view::npos)
+            {
+                scope = scope.substr(first, scope.find_last_not_of(" \t\r\n") - first + 1);
+                if (predicate(scope)) return true;
+            }
+            if (separator == std::string_view::npos) break;
+            contexts.remove_prefix(separator + 1);
+        }
+        return false;
+    }
+
+    static bool matches_scope(std::string_view scope, std::string_view window_context)
+    {
+        const bool lua_window = window_context.starts_with("window.lua.") && window_context.size() > 11;
+        const bool builtin_window =
+            window_context == "window.builtin.main" || window_context == "window.builtin.pianoroll";
+        if (!builtin_window && !lua_window) return false;
+        return scope == window_context || scope == "window.*" || (scope == "window.builtin.*" && builtin_window) ||
+               (scope == "window.lua.*" && lua_window);
     }
 };
 

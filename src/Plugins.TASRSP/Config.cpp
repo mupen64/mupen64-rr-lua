@@ -9,6 +9,8 @@
 
 #define CONFIG_FILE_NAME "TASRSP.json"
 
+using namespace BuiltinTAS::TASRSP;
+
 RSPConfig config = {};
 RSPConfig default_config = {};
 RSPConfig prev_config = {};

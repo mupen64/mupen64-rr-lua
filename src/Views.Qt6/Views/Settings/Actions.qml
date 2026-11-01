@@ -36,7 +36,7 @@ ActionManager {
                 return;
 
             let title = `${message.module} Error ${result}`;
-            root.dialogService.queueInfoDialog(null, title, message.error, CoreMessageTone.Error);
+            root.dialogService.queueInfoDialog(-1, title, message.error, CoreMessageTone.Error);
         }
     }
 
@@ -58,20 +58,14 @@ ActionManager {
         key: QT_TRID_NOOP("menu.file.closeROM")
         defaultShortcut: "Ctrl+W"
         enabled: root.core.launched
-        onTriggered: {
-            let result = root.core.closeROM();
-            priv.showDialogForError(result);
-        }
+        onTriggered: root.core.closeROM()
     }
     EmuAction {
         //% "Reset ROM"
         key: QT_TRID_NOOP("menu.file.resetROM")
         defaultShortcut: "Ctrl+R"
         enabled: root.core.launched
-        onTriggered: {
-            let result = root.core.resetROM();
-            priv.showDialogForError(result);
-        }
+        onTriggered: root.core.resetROM()
     }
 
     // EMULATION (PAUSE/SPEED)
@@ -317,8 +311,7 @@ ActionManager {
         nameFilters: [`${qsTrId("formats.rom")} (*.n64 *.z64 *.v64 *.rom)`]
         onAccepted: {
             let path = Paths.toLocalFile(selectedFile);
-            let result = root.core.startROM(path);
-            priv.showDialogForError(result);
+            root.core.startROM(path);
         }
     }
     Dialogs.FileDialog {
