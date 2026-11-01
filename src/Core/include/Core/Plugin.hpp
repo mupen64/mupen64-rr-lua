@@ -31,6 +31,11 @@
 #error "Unsupported platform"
 #endif
 
+#ifdef MUPEN64RR_BUILD_QT6
+// forward-declared for Qt6
+class QQuickWindow;
+#endif
+
 namespace M64RRSpec
 {
 extern "C"
@@ -41,8 +46,7 @@ extern "C"
     enum class Platform : uint8_t
     {
         Windows,
-        X11,
-        Wayland
+        Qt6,
     };
 
     struct WindowHandle
@@ -56,13 +60,13 @@ extern "C"
             ptr2 = nullptr;
         }
 
-#ifdef _WIN32
-        WindowHandle(HWND hwnd)
-        {
-            ptr1 = reinterpret_cast<void *>(hwnd);
-            ptr2 = nullptr;
-        }
+#ifdef MUPEN64RR_BUILD_WIN32
+        WindowHandle(HWND hwnd) : ptr1(reinterpret_cast<void *>(hwnd)), ptr2(nullptr) {}
         HWND hwnd() const { return reinterpret_cast<HWND>(ptr1); }
+#endif
+#ifdef MUPEN64RR_BUILD_QT6
+        WindowHandle(QQuickWindow *window) : ptr1(window), ptr2(nullptr) {}
+        QQuickWindow *qt_window() const  { return (QQuickWindow *)ptr1; }
 #endif
     };
 
@@ -190,6 +194,7 @@ extern "C"
             // The plugin is being asked to provide the controller configuration.
             InitializeControllers,
 
+            // The plugin is being provided with function to initialize graphics APIs.
             InitializeDisplay,
 
             // Emulation has started.
@@ -234,6 +239,8 @@ extern "C"
 
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);
     typedef void(CALL *PtrProcessEvent)(Event event);
+
+    // Win32-specific methods
     typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
     typedef void(CALL *PtrGetWindows)(WindowHandle *windows, size_t *count);
 
@@ -261,100 +268,100 @@ namespace PLUGIN_NAMESPACE
 extern "C"
 #endif
 {
-    // ReSharper disable CppInconsistentNaming
+// ReSharper disable CppInconsistentNaming
 
-    /**
-     * \brief Retrieves the plugin metadata. Always called before any other plugin function.
-     * \param metadata The plugin metadata to be filled in.
-     */
-    EXPORT void CALL M64RRGetMetadata(::M64RRSpec::PluginMetadata *metadata);
+/**
+ * \brief Retrieves the plugin metadata. Always called before any other plugin function.
+ * \param metadata The plugin metadata to be filled in.
+ */
+EXPORT void CALL M64RRGetMetadata(::M64RRSpec::PluginMetadata *metadata);
 
-    /**
-     * \brief Notifies the plugin of an event.
-     * \param event The event.
-     */
-    EXPORT void CALL M64RRProcessEvent(::M64RRSpec::Event event);
+/**
+ * \brief Notifies the plugin of an event.
+ * \param event The event.
+ */
+EXPORT void CALL M64RRProcessEvent(::M64RRSpec::Event event);
 
-    /**
-     * \brief Shows the configuration window.
-     * \param parent_window The parent window handle.
-     */
-    EXPORT void CALL M64RRShowConfig(::M64RRSpec::WindowHandle parent_window);
+/**
+ * \brief Shows the configuration window.
+ * \param parent_window The parent window handle.
+ */
+EXPORT void CALL M64RRShowConfig(::M64RRSpec::WindowHandle parent_window);
 
-    /**
-     * \brief Retrieves all active windows that belong to the plugin.
-     * Implementation isn't required on non-Windows platforms.
-     * \param windows The array of window handles to be filled in. Must be of element count `count`. If `nullptr`, the
-     * window handles will not be filled in.
-     * \param count The number of active windows. If `nullptr`, the number of active windows will not be returned.
-     */
-    EXPORT void CALL M64RRGetWindows(::M64RRSpec::WindowHandle *windows, size_t *count);
+/**
+ * \brief Retrieves all active windows that belong to the plugin.
+ * Implementation isn't required on non-Windows platforms.
+ * \param windows The array of window handles to be filled in. Must be of element count `count`. If `nullptr`, the
+ * window handles will not be filled in.
+ * \param count The number of active windows. If `nullptr`, the number of active windows will not be returned.
+ */
+EXPORT void CALL M64RRGetWindows(::M64RRSpec::WindowHandle *windows, size_t *count);
 
-    // ---
+// ---
 
-    /**
-     * \brief Processes high-level display lists.
-     * \note This should only be implemented for HLE graphics plugins.
-     */
-    EXPORT void CALL M64RRProcessDList(void);
+/**
+ * \brief Processes high-level display lists.
+ * \note This should only be implemented for HLE graphics plugins.
+ */
+EXPORT void CALL M64RRProcessDList(void);
 
-    /**
-     * \brief Processes low-level display lists.
-     * \note This should only be implemented for LLE graphics plugins.
-     */
-    EXPORT void CALL M64RRProcessRDPList(void);
+/**
+ * \brief Processes low-level display lists.
+ * \note This should only be implemented for LLE graphics plugins.
+ */
+EXPORT void CALL M64RRProcessRDPList(void);
 
-    /**
-     * \brief Reads video data.
-     * \param buffer The buffer to store the video data. Can be `nullptr`.
-     * \param width The width of the video. Can be `nullptr`.
-     * \param height The height of the video. Can be `nullptr`.
-     */
-    EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height);
+/**
+ * \brief Reads video data.
+ * \param buffer The buffer to store the video data. Can be `nullptr`.
+ * \param width The width of the video. Can be `nullptr`.
+ * \param height The height of the video. Can be `nullptr`.
+ */
+EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height);
 
-    /**
-     * \brief Called when the audio DAC rate changes.
-     * \param system_type The system type.
-     */
-    EXPORT void CALL M64RRAIDacrateChanged(::CoreSystemType system_type);
+/**
+ * \brief Called when the audio DAC rate changes.
+ * \param system_type The system type.
+ */
+EXPORT void CALL M64RRAIDacrateChanged(::CoreSystemType system_type);
 
-    /**
-     * \brief Called when the audio length changes.
-     */
-    EXPORT void CALL M64RRAILenChanged(void);
+/**
+ * \brief Called when the audio length changes.
+ */
+EXPORT void CALL M64RRAILenChanged(void);
 
-    // ---
+// ---
 
-    /**
-     * \brief Reads inputs for the specified controller.
-     * \param controller The controller index.
-     * \param keys The buttons to be filled in.
-     */
-    EXPORT void CALL M64RRGetKeys(int32_t index, ::CoreButtons *buttons);
+/**
+ * \brief Reads inputs for the specified controller.
+ * \param controller The controller index.
+ * \param keys The buttons to be filled in.
+ */
+EXPORT void CALL M64RRGetKeys(int32_t index, ::CoreButtons *buttons);
 
-    /**
-     * \brief Notifies the plugin that the keys for the specified controller have changed.
-     * \param controller The controller index.
-     * \param keys The buttons to be set.
-     */
-    EXPORT void CALL M64RRSetKeys(int32_t index, ::CoreButtons buttons);
+/**
+ * \brief Notifies the plugin that the keys for the specified controller have changed.
+ * \param controller The controller index.
+ * \param keys The buttons to be set.
+ */
+EXPORT void CALL M64RRSetKeys(int32_t index, ::CoreButtons buttons);
 
-    /**
-     * \brief Notifies the plugin of a controller command.
-     * \param controller The controller index.
-     * \param command The controller command.
-     */
-    EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command);
+/**
+ * \brief Notifies the plugin of a controller command.
+ * \param controller The controller index.
+ * \param command The controller command.
+ */
+EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command);
 
-    // ---
+// ---
 
-    /**
-     * \brief Advances the RSP.
-     * \param cycles The number of RSP cycles to do.
-     */
-    EXPORT uint32_t CALL M64RRDoRSPCycles(uint32_t cycles);
+/**
+ * \brief Advances the RSP.
+ * \param cycles The number of RSP cycles to do.
+ */
+EXPORT uint32_t CALL M64RRDoRSPCycles(uint32_t cycles);
 
-    // ReSharper restore CppInconsistentNaming
+// ReSharper restore CppInconsistentNaming
 }
 
 #endif

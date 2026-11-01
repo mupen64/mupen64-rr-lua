@@ -63,6 +63,10 @@ static int qt_main(int argc, char *argv[])
     else
         delete translator;
 
+    // Force QSettings to use .ini on all platforms
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+
+    // Setup engine
     QQmlApplicationEngine engine;
 
     // Close if object creation fails
@@ -74,19 +78,9 @@ static int qt_main(int argc, char *argv[])
         },
         Qt::QueuedConnection);
 
-#if defined(_WIN32)
-    // Windows: default to Fusion, as the system theme isn't exactly nice.
+    // Use the Fusion style. It might be possible to support Qt theming later, but
+    // it seems to be a bit of a... pain in the backside, to say the least.
     QQuickStyle::setStyle("Fusion");
-#else
-    if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE"))
-    {
-        const auto desktop = qEnvironmentVariable("XDG_CURRENT_DESKTOP");
-        if (!desktop.contains("KDE", Qt::CaseInsensitive))
-        {
-            QQuickStyle::setStyle("Fusion");
-        }
-    }
-#endif
 
     // provider for system icons
     engine.addImageProvider(u"icons"_s, new QtIconImageProvider);
