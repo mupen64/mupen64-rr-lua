@@ -45,13 +45,6 @@ struct Config
         FFmpeg
     };
 
-    enum class StatusbarLayout
-    {
-        Classic,
-        Modern,
-        ModernWithReadOnly
-    };
-
     /**
      * \brief Describes how toasts are shown.
      */
@@ -106,11 +99,6 @@ struct Config
     /// Whether the statusbar is allowed to scale its segments up.
     /// </summary>
     int32_t statusbar_scale_up;
-
-    /// <summary>
-    /// The statusbar layout.
-    /// </summary>
-    int32_t statusbar_layout = (int32_t)StatusbarLayout::Modern;
 
     std::string rom_directory = ".\\roms\\";
     std::string plugins_directory = ".\\plugin\\";
