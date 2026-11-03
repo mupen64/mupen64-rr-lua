@@ -142,7 +142,8 @@ EXPORT void CALL M64RRAILenChanged()
 SDLAudio::Config read_config()
 {
     SDLAudio::Config cfg;
-    std::fstream fs(IOUtils::config_path(), std::ios_base::in | std::ios_base::out | std::ios_base::app | std::ios_base::ate);
+    std::fstream fs(BuiltinTAS::TASAudio::config_path(),
+        std::ios_base::in | std::ios_base::out | std::ios_base::app | std::ios_base::ate);
     fs.exceptions(std::ios_base::badbit);
 
     // if the config file was missing or empty, write the default config
@@ -166,7 +167,7 @@ SDLAudio::Config read_config()
 }
 void write_config(const SDLAudio::Config &config)
 {
-    std::ofstream fs(IOUtils::config_path());
+    std::ofstream fs(BuiltinTAS::TASAudio::config_path());
     fs.exceptions(std::ios_base::badbit);
     config.write_to(fs);
 }
