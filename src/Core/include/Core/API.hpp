@@ -246,6 +246,11 @@ extern "C"
         std::function<void(const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
             [](const CoreSTCallbackInfo &, const std::vector<uint8_t> &) {};
 
+        /*
+         * \brief Reports whether savestate operations are pending.
+         */
+        std::function<void(bool)> st_pending_changed = [](bool) {};
+
         std::function<void()> video_process_dlist;
         std::function<void()> video_process_rdp_list;
         std::function<void()> video_show_cfb;
