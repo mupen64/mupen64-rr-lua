@@ -29,13 +29,13 @@ target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE
     Mupen64RR_Common_Views
     Mupen64RR_Core
 
-    Mupen64RR_Views_Qt6_Actionsplugin
-    Mupen64RR_Views_Qt6_Componentsplugin
-    Mupen64RR_Views_Qt6_Configplugin
+    # Mupen64RR_Views_Qt6_Actionsplugin
+    # Mupen64RR_Views_Qt6_Componentsplugin
+    # Mupen64RR_Views_Qt6_Configplugin
     Mupen64RR_Views_Qt6_Core
-    Mupen64RR_Views_Qt6_Coreplugin
+    # Mupen64RR_Views_Qt6_Coreplugin
     Mupen64RR_Views_Qt6_Utils
-    Mupen64RR_Views_Qt6_Utilsplugin
+    # Mupen64RR_Views_Qt6_Utilsplugin
 
     Qt::Widgets
     Qt::Quick
@@ -110,6 +110,12 @@ qt_add_qml_module(Mupen64RR_Views_Qt6
         ${qml_sources}
         ${qml_settings_sources}
         ${qml_config_pages}
+    IMPORTS
+        TARGET Mupen64RR_Views_Qt6_Actions
+        TARGET Mupen64RR_Views_Qt6_Components
+        TARGET Mupen64RR_Views_Qt6_Config
+        TARGET Mupen64RR_Views_Qt6_Core
+        TARGET Mupen64RR_Views_Qt6_Utils
 )
 
 # ASSETS
@@ -143,9 +149,11 @@ set(fallback_ts_name "${PROJECT_NAME}_${QT_I18N_SOURCE_LANGUAGE}.ts")
 set(ts_dir "${CMAKE_CURRENT_SOURCE_DIR}/Translations")
 set(fallback_ts "${ts_dir}/${fallback_ts_name}")
 
-# note: there is a zero-width space as the 2nd option to `lrelease`.
-# This is a workaround to CMake not letting me pass the empty string.
+qt_collect_translation_source_targets(all_i18n_targets DIRECTORY "..")
+
 qt_add_translations(Mupen64RR_Views_Qt6
+    TARGETS ${all_i18n_targets}
+    SOURCE_TARGETS ${all_i18n_targets}
     TS_OUTPUT_DIRECTORY "${ts_dir}"
     TS_FILES "${fallback_ts}"
     IMMEDIATE_CALL

@@ -4,10 +4,10 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
--- Demonstrates the `emu.atmouse` callback.
+-- Demonstrates the `emu.main_window():atmouse` callback.
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
-emu.atmouse(function (args)
+emu.main_window():atmouse(function(args)
     print(args)
 end)

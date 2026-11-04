@@ -40,6 +40,7 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "Main.hpp"
     "lua/LuaTypes.hpp"
     "lua/LuaRealm.hpp"
+    "lua/LuaWindow.hpp"
     "lua/LuaRealmManager.hpp"
 
     "lua/LuaRenderer.hpp"
@@ -110,6 +111,7 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "lua/LuaRealmManager_Storage.cpp"
     "lua/LuaRealmManager_Registry.cpp"
     "lua/LuaRenderer.cpp"
+    "lua/LuaWindow.cpp"
     "lua/LuaDialog.cpp"
     "lua/presenters/DCompPresenter.cpp"
     "lua/presenters/GDIPresenter.cpp"

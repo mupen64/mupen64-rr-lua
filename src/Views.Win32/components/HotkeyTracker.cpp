@@ -15,26 +15,27 @@ const auto HOTKEY_TRACKER_CTX = "Mupen64_HotkeyTrackerContext";
 
 struct HotkeyTrackerContext
 {
-    bool last_lmb{};
-    bool last_rmb{};
+    std::string window_context;
     bool last_mmb{};
     bool last_xmb1{};
     bool last_xmb2{};
 };
 
-static std::optional<bool> on_key(bool is_up, int32_t key)
+static bool on_key(bool is_up, int32_t key, const std::string &window_context)
 {
     const bool shift = GetKeyState(VK_SHIFT) & 0x8000;
     const bool ctrl = GetKeyState(VK_CONTROL) & 0x8000;
     const bool alt = GetKeyState(VK_MENU) & 0x8000;
     bool hit = false;
 
-    const auto trigger = *HotkeyUtils::vk_to_trigger(key);
+    const auto trigger = HotkeyUtils::vk_to_trigger(key);
+    if (!trigger) return false;
 
     const auto hotkeys = g_config.hotkeys;
     for (const auto &[path, hotkey] : hotkeys)
     {
-        if (trigger == hotkey.trigger && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
+        if (!hotkey.matches_context(window_context)) continue;
+        if (*trigger == hotkey.trigger && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
         {
             if (!ActionManager::get_enabled(path)) continue;
             if (ActionManager::is_hotkey_locked(hotkey)) continue;
@@ -75,78 +76,22 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(
         const bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
         const bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
         const bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
-        bool hit = false;
-
-        const auto hotkeys = g_config.hotkeys;
-        for (const auto &[path, hotkey] : hotkeys)
-        {
-            const auto vk = HotkeyUtils::trigger_to_vk(hotkey.trigger);
-            if (!vk) continue;
-            if (ActionManager::is_hotkey_locked(hotkey)) continue;
-
-            const auto down = (mmb && !ctx->last_mmb && *vk == VK_MBUTTON) ||
-                              (xmb1 && !ctx->last_xmb1 && *vk == VK_XBUTTON1) ||
-                              (xmb2 && !ctx->last_xmb2 && *vk == VK_XBUTTON2);
-            const auto up = (!mmb && ctx->last_mmb && *vk == VK_MBUTTON) ||
-                            (!xmb1 && ctx->last_xmb1 && *vk == VK_XBUTTON1) ||
-                            (!xmb2 && ctx->last_xmb2 && *vk == VK_XBUTTON2);
-
-            hit = down || up;
-
-            if (down)
-            {
-                const auto params = ActionManager::get_params(path);
-
-                // Has params: hand off to ParameterPalette.
-                if (!params.empty())
-                    ParameterPalette::show(path);
-                else
-                    ActionManager::invoke(path);
-            }
-
-            if (up)
-            {
-                ActionManager::invoke(path, true, true);
-            }
-        }
-
+        const auto window_context = ctx->window_context;
+        const auto last_mmb = ctx->last_mmb;
+        const auto last_xmb1 = ctx->last_xmb1;
+        const auto last_xmb2 = ctx->last_xmb2;
         ctx->last_mmb = mmb;
         ctx->last_xmb1 = xmb1;
         ctx->last_xmb2 = xmb2;
 
-        if (hit)
-        {
-            return 0;
-        }
+        if (GetAncestor(hwnd, GA_ROOT) != GetForegroundWindow()) break;
 
-        break;
-    }
-    case WM_KEYDOWN:
-    case WM_KEYUP:
-    case WM_SYSKEYDOWN:
-    case WM_SYSKEYUP: {
-        const auto result = on_key(msg == WM_KEYUP || msg == WM_SYSKEYUP, (int)wParam);
-        if (result.has_value() && result.value()) return 0;
-        break;
-    }
-    case WM_NOTIFY: {
-        auto nmhdr = reinterpret_cast<LPNMHDR>(lParam);
-        if (nmhdr && nmhdr->hwndFrom && IsWindow(nmhdr->hwndFrom) &&
-            SendMessage(nmhdr->hwndFrom, WM_GETDLGCODE, 0, 0) != 0)
-        {
-            char class_name[32]{};
-            GetClassName(nmhdr->hwndFrom, class_name, std::size(class_name));
+        bool hit = false;
+        if (mmb != last_mmb) hit |= on_key(!mmb, VK_MBUTTON, window_context);
+        if (xmb1 != last_xmb1) hit |= on_key(!xmb1, VK_XBUTTON1, window_context);
+        if (xmb2 != last_xmb2) hit |= on_key(!xmb2, VK_XBUTTON2, window_context);
+        if (hit) return 0;
 
-            if (strcmp(class_name, WC_LISTVIEW) == 0 && nmhdr->code == LVN_KEYDOWN)
-            {
-                auto key = reinterpret_cast<LPNMLVKEYDOWN>(lParam)->wVKey;
-
-                if (on_key(false, key))
-                {
-                    return TRUE;
-                }
-            }
-        }
         break;
     }
     default:
@@ -156,9 +101,25 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-bool HotkeyTracker::attach(const HWND hwnd)
+bool HotkeyTracker::process_message(const MSG &msg)
+{
+    if (msg.message != WM_KEYDOWN && msg.message != WM_KEYUP && msg.message != WM_SYSKEYDOWN &&
+        msg.message != WM_SYSKEYUP)
+        return false;
+
+    const auto hwnd = GetAncestor(msg.hwnd, GA_ROOT);
+    const auto ctx = static_cast<HotkeyTrackerContext *>(GetProp(hwnd, HOTKEY_TRACKER_CTX));
+    if (!ctx) return false;
+
+    const auto window_context = ctx->window_context;
+    return on_key(
+        msg.message == WM_KEYUP || msg.message == WM_SYSKEYUP, static_cast<int32_t>(msg.wParam), window_context);
+}
+
+bool HotkeyTracker::attach(const HWND hwnd, const std::string &window_context)
 {
     auto context = std::make_unique<HotkeyTrackerContext>();
+    context->window_context = window_context;
 
     if (!SetProp(hwnd, HOTKEY_TRACKER_CTX, context.get()))
     {

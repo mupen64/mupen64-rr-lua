@@ -693,5 +693,6 @@ bool ActionManager::is_hotkey_locked(const Hotkey &hotkey)
 {
     if (!g_mgr.lock_hotkeys) return false;
     if (g_mgr.locked_hotkeys.empty()) return true;
-    return std::ranges::find(g_mgr.locked_hotkeys, hotkey) != g_mgr.locked_hotkeys.end();
+    return std::ranges::any_of(
+        g_mgr.locked_hotkeys, [&](const Hotkey &locked) { return locked.conflicts_with(hotkey); });
 }
