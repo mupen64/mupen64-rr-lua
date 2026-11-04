@@ -12,6 +12,8 @@
 - Fixed Lua graphics staying above other applications when Mupen is sent to the background under Wine
 - Fixed screenshot overwriting when more than one is taken within a second
 - Fixed screenshots not respecting configured screenshot directory
+- Fixed missing dpad down button in piano roll
+- Fixed Mupen sometimes staying around as a zombie process after closing.
 
 ## ⚡ Performance
 
