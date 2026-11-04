@@ -41,6 +41,7 @@ target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
     Qt6::Quick
 
     vendor::decan
+    vendor::nontype_functional
 )
 
 target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC

@@ -22,6 +22,9 @@ add_library(vendor::glad ALIAS glad)
 add_subdirectory(mini)
 add_library(vendor::mini ALIAS mini)
 
+add_subdirectory(nontype_functional)
+add_library(vendor::nontype_functional ALIAS nontype_functional)
+
 add_subdirectory(xxhash64)
 add_library(vendor::xxhash64 ALIAS xxhash64)
 
