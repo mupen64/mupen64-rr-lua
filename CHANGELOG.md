@@ -10,6 +10,8 @@
 
 - Fixed Lua-created windows turning black when unfocused under Wine
 - Fixed Lua graphics staying above other applications when Mupen is sent to the background under Wine
+- Fixed windows beeping at you when pressing keys in some cases
+- Fixed Alt and F10 not activating the main window's menu bar
 - Fixed screenshot overwriting when more than one is taken within a second
 - Fixed screenshots not respecting configured screenshot directory
 - Fixed missing dpad down button in piano roll

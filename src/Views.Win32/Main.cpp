@@ -680,6 +680,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         auto drop = (HDROP)wParam;
         char fname[MAX_PATH] = {0};
         DragQueryFile(drop, 0, fname, std::size(fname));
+        DragFinish(drop);
 
         std::filesystem::path path = fname;
         std::string extension = MiscHelpers::to_lower(path.extension().string());
@@ -715,15 +716,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_KEYDOWN:
-    case WM_SYSKEYDOWN:
         handle_lua_window_events(hwnd, Message, wParam, lParam);
         PluginUtil::key_down(wParam, lParam);
         break;
+    case WM_SYSKEYDOWN:
+        handle_lua_window_events(hwnd, Message, wParam, lParam);
+        PluginUtil::key_down(wParam, lParam);
+        return DefWindowProc(hwnd, Message, wParam, lParam);
     case WM_KEYUP:
-    case WM_SYSKEYUP:
         handle_lua_window_events(hwnd, Message, wParam, lParam);
         PluginUtil::key_up(wParam, lParam);
         break;
+    case WM_SYSKEYUP:
+        handle_lua_window_events(hwnd, Message, wParam, lParam);
+        PluginUtil::key_up(wParam, lParam);
+        return DefWindowProc(hwnd, Message, wParam, lParam);
     case WM_CHAR:
         handle_lua_window_events(hwnd, Message, wParam, lParam);
         break;
@@ -810,7 +817,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_NCCREATE:
         g_main_ctx.hwnd = hwnd;
         g_main_hwnd = hwnd;
-        break;
+        return DefWindowProc(hwnd, Message, wParam, lParam);
     case WM_CREATE:
         g_ui_thread_id = GetCurrentThreadId();
         g_main_ctx.dispatcher = std::make_shared<Dispatcher>(hwnd);
@@ -827,7 +834,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         LuaDialog::init();
         LuaRendererManager::instance().init();
         SetTimer(hwnd, sdl_timer_id, 1000 / 60, sdl_timer_proc);
-        return TRUE;
+        return 0;
     case WM_DESTROY:
         KillTimer(hwnd, sdl_timer_id);
         PostQuitMessage(0);
@@ -887,33 +894,32 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_ACTIVATE:
         UpdateWindow(hwnd);
 
-        if (!g_config.is_unfocused_pause_enabled)
+        if (g_config.is_unfocused_pause_enabled)
         {
-            break;
+            switch (LOWORD(wParam))
+            {
+            case WA_ACTIVE:
+            case WA_CLICKACTIVE:
+                if (!g_paused_before_focus)
+                {
+                    g_main_ctx.core_ctx->vr_resume_emu();
+                }
+                break;
+            case WA_INACTIVE:
+                g_paused_before_focus = g_main_ctx.core_ctx->vr_get_paused();
+                g_main_ctx.core_ctx->vr_pause_emu();
+                break;
+            default:
+                break;
+            }
         }
 
-        switch (LOWORD(wParam))
-        {
-        case WA_ACTIVE:
-        case WA_CLICKACTIVE:
-            if (!g_paused_before_focus)
-            {
-                g_main_ctx.core_ctx->vr_resume_emu();
-            }
-            break;
-        case WA_INACTIVE:
-            g_paused_before_focus = g_main_ctx.core_ctx->vr_get_paused();
-            g_main_ctx.core_ctx->vr_pause_emu();
-            break;
-        default:
-            break;
-        }
-        break;
+        return DefWindowProc(hwnd, Message, wParam, lParam);
     default:
         return DefWindowProc(hwnd, Message, wParam, lParam);
     }
 
-    return TRUE;
+    return 0;
 }
 
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
