@@ -8,6 +8,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 # USEFUL SETTINGS
 # ============================
 
+# add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+# add_link_options(-fsanitize=address)
+
 # COMMON LIBRARIES
 # ============================
 
@@ -75,7 +78,8 @@ endif()
 # ============================
 
 if (MUPEN64RR_BUILD_QT6)
-    # add_subdirectory(ViewModels.Qt6)
+    add_subdirectory(Plugins.Qt6.TASInput)
+
     add_subdirectory(Views.Qt6)
 endif()
 
