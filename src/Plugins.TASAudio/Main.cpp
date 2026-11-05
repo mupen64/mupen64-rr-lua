@@ -149,14 +149,12 @@ SDLAudio::Config read_config()
     // if the config file was missing or empty, write the default config
     if (!std::filesystem::exists(config_path))
     {
-        std::println("writing to {}", config_path.string());
         std::ofstream fs (config_path);
         cfg.write_to(fs);
         return cfg;
     }
 
     std::ifstream fs(config_path, std::ios_base::in);
-    std::println("tellg = {}", (std::streamoff) fs.tellg());
 
     try
     {
