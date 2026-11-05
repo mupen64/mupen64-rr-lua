@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 qt_add_library(Mupen64RR_Views_Qt6_Actions STATIC)
 qt_add_qml_module(Mupen64RR_Views_Qt6_Actions
-    URI "Actions"
+    URI "Mupen64.Actions"
     SOURCES
         "ActionHelpers.hpp"
         "HeldShortcutMap.hpp"

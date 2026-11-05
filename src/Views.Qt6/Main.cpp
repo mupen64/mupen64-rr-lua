@@ -16,11 +16,11 @@
 
 #include <QQuickStyle>
 
-Q_IMPORT_QML_PLUGIN(ActionsPlugin)
-Q_IMPORT_QML_PLUGIN(CorePlugin)
-Q_IMPORT_QML_PLUGIN(ComponentsPlugin)
-Q_IMPORT_QML_PLUGIN(ConfigPlugin)
-Q_IMPORT_QML_PLUGIN(UtilsPlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64Actions)
+// Q_IMPORT_QML_PLUGIN(Mupen64Core)
+// Q_IMPORT_QML_PLUGIN(Mupen64Components)
+// Q_IMPORT_QML_PLUGIN(Mupen64Config)
+// Q_IMPORT_QML_PLUGIN(Mupen64Utils)
 
 namespace
 {
@@ -86,7 +86,7 @@ static int qt_main(int argc, char *argv[])
     engine.addImageProvider(u"icons"_s, new QtIconImageProvider);
 
     // load and run Views/MainWindow.qml
-    engine.loadFromModule("Views", "MainWindow");
+    engine.loadFromModule("Mupen64.Views", "MainWindow");
 
     return QGuiApplication::exec();
 }

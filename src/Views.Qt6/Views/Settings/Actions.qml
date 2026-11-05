@@ -9,9 +9,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs
 
-import Actions
-import Core
-import Utils
+import Mupen64.Actions
+import Mupen64.Core
+import Mupen64.Utils
 
 ActionManager {
     id: root

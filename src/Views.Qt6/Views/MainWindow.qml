@@ -10,9 +10,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Actions
-import Core
-import Views
+import Mupen64.Actions
+import Mupen64.Core
 
 ApplicationWindow {
     id: mainWindow

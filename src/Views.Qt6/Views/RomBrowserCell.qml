@@ -9,7 +9,7 @@ import QtQml
 import QtQuick
 import QtQuick.Controls
 
-import Core
+import Mupen64.Core
 
 Rectangle {
     id: root

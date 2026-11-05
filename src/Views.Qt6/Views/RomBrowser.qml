@@ -10,7 +10,7 @@ import QtQml.Models
 import QtQuick
 import QtQuick.Controls
 
-import Core
+import Mupen64.Core
 
 Item {
     id: root
