@@ -27,7 +27,20 @@ extern "C"
 
 enum class LuaCallbackKey : uint8_t
 {
+    UpdateScreen,
+    Paint,
+    VI,
+    Input,
     Stop,
+    Interval,
+    PlayMovie,
+    StopMovie,
+    LoadState,
+    SaveState,
+    Reset,
+    SeekCompleted,
+    Key,
+    Mouse,
     _Count
 };
 
@@ -60,7 +73,12 @@ class LuaInstance : public QObject
     QString lastError() const { return m_lastError; }
     void setLastError(const QString &err);
 
+    static LuaInstance *fromState(lua_State *L);
+
     lua_State *state() const { return m_l; }
+
+    // Input polls seen by this instance (emu.inputcount).
+    quint64 inputCount() const { return m_inputCount; }
 
     Q_INVOKABLE bool start();
     Q_INVOKABLE void stop();
@@ -70,6 +88,15 @@ class LuaInstance : public QObject
 
     std::string queryHint(const std::string &key) const;
     void setHint(const std::string &key, const std::string &value);
+
+    void dispatchUpdateScreen();
+    void dispatchPaint();
+    void dispatchVI();
+    void dispatchInput(int controllerIndex);
+    void dispatchInterval();
+    void dispatchReset();
+    void dispatchSaveState();
+    void dispatchLoadState();
 
     void registerCallback(LuaCallbackKey key, int luaFuncIndex);
     void unregisterCallback(LuaCallbackKey key, int luaFuncIndex);
@@ -94,6 +121,7 @@ class LuaInstance : public QObject
     QString m_name;
     bool m_running{false};
     bool m_trusted{false};
+    quint64 m_inputCount{0};
     QString m_logs;
     QString m_lastError;
 
