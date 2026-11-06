@@ -285,3 +285,19 @@ void LuaInstanceManager::dispatchLoadState()
         if (inst->isRunning()) inst->dispatchLoadState();
     }
 }
+
+void LuaInstanceManager::dispatchKey(int key, bool pressed, bool ctrl, bool alt, bool shift)
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchKey(key, pressed, ctrl, alt, shift);
+    }
+}
+
+void LuaInstanceManager::dispatchMouse(int x, int y, int button, bool pressed)
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchMouse(x, y, button, pressed);
+    }
+}

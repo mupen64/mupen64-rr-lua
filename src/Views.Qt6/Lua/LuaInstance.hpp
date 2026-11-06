@@ -13,6 +13,7 @@
 #include <QPointer>
 #include <QString>
 #include <QUrl>
+#include <QtGui/QMouseEvent>
 #include <QtGui/QWheelEvent>
 #include <qqmlintegration.h>
 
@@ -32,6 +33,11 @@ extern "C"
 #include <Core/Types.hpp>
 
 class LuaCanvas;
+class LuaWindow;
+class QKeyEvent;
+class QMouseEvent;
+class QQuickWindow;
+class QWindow;
 
 enum class LuaCallbackKey : uint8_t
 {
@@ -86,11 +92,32 @@ class LuaInstance : public QObject
     LuaCanvas *canvas() const;
     void setCanvas(LuaCanvas *canvas);
 
+    // Window the Lua windows glue themselves to (the emulator main window).
+    QWindow *hostWindow() const;
+    void setHostWindow(QWindow *window);
+
     // Canvas the wgui/painter primitives draw on: the overlay unless a window callback runs.
     LuaCanvas *activeCanvas() const;
     void setActiveCanvas(LuaCanvas *canvas);
 
+    LuaWindow *findWindow(const QString &id) const;
+    LuaWindow *addWindow(const QString &id, const QString &anchor, bool closable);
+    void dropWindow(LuaWindow *window);
+    LuaWindow *mainWindow() const;
+    void createMainWindow();
+    void closeWindows();
+    void repositionWindows();
+
     static LuaInstance *fromState(lua_State *L);
+
+    // Event tables passed to atkey/atmouse (also used per-window).
+    void pushKeyTable(const QKeyEvent &event);
+    void pushMouseTable(const QMouseEvent &event);
+    // events on the app window are dispatched in the canvas coordinate space the scripts use
+    void pushMouseTableAt(const QPointF &position, const QMouseEvent &event);
+    void pushWheelTableAt(const QPointF &position, const QWheelEvent &event);
+    // Windows Virtual-Key codes, so scripts see the same e.keycode as on the Windows view.
+    static int qtKeyToVk(int qtKey);
 
     lua_State *state() const { return m_l; }
 
@@ -114,6 +141,8 @@ class LuaInstance : public QObject
     void dispatchReset();
     void dispatchSaveState();
     void dispatchLoadState();
+    void dispatchKey(int key, bool pressed, bool ctrl, bool alt, bool shift);
+    void dispatchMouse(int x, int y, int button, bool pressed);
 
     void registerCallback(LuaCallbackKey key, int luaFuncIndex);
     void unregisterCallback(LuaCallbackKey key, int luaFuncIndex);
@@ -129,6 +158,10 @@ class LuaInstance : public QObject
     void errorOccurred(const QString &error);
     void started();
     void stopped();
+
+  protected:
+    // key/mouse events arriving at the emulator window: main window + emu.atkey/atmouse
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
   private:
     void registerGlobalAPIs();
@@ -154,6 +187,16 @@ class LuaInstance : public QObject
     QString m_lastError;
     QPointer<LuaCanvas> m_canvas{nullptr};
     QPointer<LuaCanvas> m_activeCanvas{nullptr};
+    QPointer<QWindow> m_hostWindow{nullptr};
+
+    std::vector<std::unique_ptr<LuaWindow>> m_windows;
+    QPointer<LuaWindow> m_mainWindow{nullptr};
+
+    // last click, to synthesize the double/triple-click flags the Win32 host gets from QPA
+    int m_lastClickButton = -1;
+    QPointF m_lastClickPos;
+    qint64 m_lastClickMs = 0;
+    int m_lastClickChain = 0;
 
     std::unordered_map<LuaCallbackKey, std::vector<int>> m_callbacks;
     std::unordered_map<std::string, std::string> m_hints;

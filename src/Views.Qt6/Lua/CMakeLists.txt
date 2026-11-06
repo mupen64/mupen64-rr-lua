@@ -6,6 +6,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 qt_add_library(Mupen64RR_Views_Qt6_Lua STATIC)
 mupen64rr_reuse_common_pch(Mupen64RR_Views_Qt6_Lua)
+# the shared API prelude (same file the Windows host embeds): stubs + compatibility shims
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/../../Lua/api.lua" PROPERTIES QT_RESOURCE_ALIAS "api.lua")
+qt_add_resources(Mupen64RR_Views_Qt6_Lua "lua_api_prelude"
+    PREFIX "/mupen"
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/../../Lua/api.lua"
+)
 qt_add_qml_module(Mupen64RR_Views_Qt6_Lua URI "Mupen64.Lua"
     IMPORTS
         TARGET Mupen64RR_Views_Qt6_Core
@@ -16,12 +22,16 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Lua URI "Mupen64.Lua"
         "LuaCanvas.hpp"
         "LuaCanvasManager.hpp"
         "LuaPainter.hpp"
+        "LuaWindow.hpp"
+        "LuaAction.hpp"
 
         "LuaInstance.cpp"
         "LuaInstanceManager.cpp"
         "LuaCanvas.cpp"
         "LuaCanvasManager.cpp"
         "LuaPainter.cpp"
+        "LuaWindow.cpp"
+        "LuaAction.cpp"
     QML_FILES
         "LuaQmlCanvas.qml"
 )

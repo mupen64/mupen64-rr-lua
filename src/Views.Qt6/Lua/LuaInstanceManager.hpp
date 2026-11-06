@@ -68,6 +68,8 @@ class LuaInstanceManager : public QAbstractListModel
     void dispatchReset();
     void dispatchSaveState();
     void dispatchLoadState();
+    void dispatchKey(int key, bool pressed, bool ctrl, bool alt, bool shift);
+    void dispatchMouse(int x, int y, int button, bool pressed);
 
   signals:
     void countChanged();
