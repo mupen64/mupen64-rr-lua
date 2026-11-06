@@ -80,6 +80,7 @@ void LuaCanvasManager::setupCanvasForInstance(LuaInstance *instance)
     canvas->setSize(QSizeF(w, h));
 
     instance->setCanvas(canvas);
+    if (window()) instance->setHostWindow(window());
     m_canvases[instance] = canvas;
 
     emit canvasCreated(canvas);
