@@ -8,8 +8,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Core
-import Components
+import Mupen64.Core
+import Mupen64.Components
 
 DialogBase {
     id: dialog

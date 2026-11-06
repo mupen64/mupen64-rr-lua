@@ -7,8 +7,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-import Actions
-import Config as Config
+import Mupen64.Actions
+import Mupen64.Config as Config
 
 Config.ListPage {
     id: root

@@ -9,7 +9,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs as Dialogs
 
-import Utils
+import Mupen64.Utils
 
 GroupBox {
     id: root

@@ -6,7 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 qt_add_library(Mupen64RR_Views_Qt6_Core STATIC)
 mupen64rr_reuse_common_pch(Mupen64RR_Views_Qt6_Core)
-qt_add_qml_module(Mupen64RR_Views_Qt6_Core URI "Core"
+qt_add_qml_module(Mupen64RR_Views_Qt6_Core
+    URI "Mupen64.Core"
     IMPORTS
         TARGET Mupen64RR_Views_Qt6_Utils
     SOURCES

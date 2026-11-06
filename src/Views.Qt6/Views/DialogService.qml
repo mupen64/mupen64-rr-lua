@@ -7,7 +7,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
-import Components
+import Mupen64.Components
 
 Item {
     id: root
