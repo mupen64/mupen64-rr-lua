@@ -184,6 +184,17 @@ class EmuContext : public QQuickItem
     Q_INVOKABLE EmuPaths *paths();
 
     /**
+     * @brief Queues a controller input override, to be applied by the next `callbacks.input` invocation.
+     * Used by Lua scripts (joypad.set).
+     */
+    void luaSetControllerInput(int32_t controller, CoreButtons keys);
+
+    /**
+     * @brief Returns the last controller input observed by the Lua engine for a port (joypad.get).
+     */
+    CoreButtons luaControllerInput(int32_t controller) const;
+
+    /**
      * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
      * @note May reallocate the image if needed.
      *
