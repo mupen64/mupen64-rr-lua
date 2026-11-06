@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "LuaInstance.hpp"
+#include "LuaCanvas.hpp"
 #include "LuaInternal.hpp"
+#include "LuaPainter.hpp"
 #include "Resources.hpp"
 
 #include <lua.hpp>
@@ -60,9 +62,36 @@ void LuaInstance::setLastError(const QString &err)
     lastErrorChanged();
 }
 
+LuaCanvas *LuaInstance::canvas() const
+{
+    return m_canvas;
+}
+
+void LuaInstance::setCanvas(LuaCanvas *canvas)
+{
+    if (m_canvas == canvas) return;
+    if (m_activeCanvas && m_activeCanvas == m_canvas) m_activeCanvas = canvas;
+    m_canvas = canvas;
+    if (m_canvas)
+    {
+        m_canvas->setInstance(this);
+    }
+    emit canvasChanged();
+}
+
 LuaInstance *LuaInstance::fromState(lua_State *L)
 {
     return LuaInternal::getInstance(L);
+}
+
+LuaCanvas *LuaInstance::activeCanvas() const
+{
+    return m_activeCanvas ? m_activeCanvas : m_canvas;
+}
+
+void LuaInstance::setActiveCanvas(LuaCanvas *canvas)
+{
+    m_activeCanvas = canvas;
 }
 
 void LuaInstance::clearLogs()
@@ -170,7 +199,9 @@ void LuaInstance::dispatchUpdateScreen()
 
 void LuaInstance::dispatchPaint()
 {
+    if (m_canvas) m_canvas->clear();
     invokeCallback(LuaCallbackKey::Paint);
+    if (m_canvas) m_canvas->requestPaint();
 }
 
 void LuaInstance::dispatchInput(int controllerIndex)
@@ -252,6 +283,8 @@ bool LuaInstance::start()
         LuaInternal::registerEmuAPIs(m_l);
         LuaInternal::registerMemoryAPIs(m_l);
         LuaInternal::registerJoypadAPIs(m_l);
+        LuaInternal::registerGuiAPIs(m_l);
+        LuaPainter::registerTypes(m_l);
 
         if (LuaInternal::doStringView(m_l, LuaResources::inspect())) return false;
 
@@ -307,6 +340,13 @@ void LuaInstance::stop()
 
         lua_close(m_l);
         m_l = nullptr;
+    }
+
+    m_activeCanvas = nullptr;
+
+    if (m_canvas)
+    {
+        m_canvas->clear();
     }
 
     if (m_running)
