@@ -14,17 +14,26 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Lua
     SOURCES
         "LuaInstance.hpp"
         "LuaInstanceManager.hpp"
+        "LuaCanvas.hpp"
+        "LuaCanvasManager.hpp"
+        "LuaPainter.hpp"
         "Resources.hpp"
 
         "LuaInstance.cpp"
         "LuaInstanceManager.cpp"
+        "LuaCanvas.cpp"
+        "LuaCanvasManager.cpp"
+        "LuaPainter.cpp"
         "LuaInternal.cpp"
         "LuaInternal.hpp"
         "LuaGlobal.cpp"
         "LuaEmu.cpp"
         "LuaMemory.cpp"
         "LuaJoypad.cpp"
+        "LuaGui.cpp"
         "Resources.cpp"
+    QML_FILES
+        "LuaQmlCanvas.qml"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Lua PUBLIC cxx_std_26)
 target_include_directories(Mupen64RR_Views_Qt6_Lua PUBLIC ".")
