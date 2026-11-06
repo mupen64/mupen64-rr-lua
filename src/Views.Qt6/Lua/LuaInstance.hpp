@@ -25,6 +25,8 @@ extern "C"
 
 #include <Core/Types.hpp>
 
+class LuaCanvas;
+
 enum class LuaCallbackKey : uint8_t
 {
     UpdateScreen,
@@ -48,6 +50,7 @@ class LuaInstance : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
+    Q_MOC_INCLUDE("LuaCanvas.hpp")
 
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
     Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
@@ -55,6 +58,7 @@ class LuaInstance : public QObject
     Q_PROPERTY(bool trusted READ isTrusted WRITE setTrusted NOTIFY trustedChanged)
     Q_PROPERTY(QString logs READ logs NOTIFY logsChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
+    Q_PROPERTY(LuaCanvas *canvas READ canvas WRITE setCanvas NOTIFY canvasChanged)
 
   public:
     explicit LuaInstance(QObject *parent = nullptr);
@@ -72,6 +76,13 @@ class LuaInstance : public QObject
     QString logs() const { return m_logs; }
     QString lastError() const { return m_lastError; }
     void setLastError(const QString &err);
+
+    LuaCanvas *canvas() const;
+    void setCanvas(LuaCanvas *canvas);
+
+    // Canvas the wgui/painter primitives draw on: the overlay unless a window callback runs.
+    LuaCanvas *activeCanvas() const;
+    void setActiveCanvas(LuaCanvas *canvas);
 
     static LuaInstance *fromState(lua_State *L);
 
@@ -108,6 +119,7 @@ class LuaInstance : public QObject
     void trustedChanged();
     void logsChanged();
     void lastErrorChanged();
+    void canvasChanged();
     void logAdded(const QString &text);
     void errorOccurred(const QString &error);
     void started();
@@ -124,6 +136,8 @@ class LuaInstance : public QObject
     quint64 m_inputCount{0};
     QString m_logs;
     QString m_lastError;
+    QPointer<LuaCanvas> m_canvas{nullptr};
+    QPointer<LuaCanvas> m_activeCanvas{nullptr};
 
     std::unordered_map<LuaCallbackKey, std::vector<int>> m_callbacks;
     std::unordered_map<std::string, std::string> m_hints;
