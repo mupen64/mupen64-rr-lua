@@ -44,6 +44,30 @@ ApplicationWindow {
         ButtonsSection {
             id: buttons
         }
+        CheckBox {
+            checked: gamepad.enabled
+            onToggled: gamepad.enabled = checked
+            enabled: gamepad.connected
+            text: gamepad.connected
+                //% "Gamepad: %1"
+                ? qsTrId("tasinput.gamepadConnected").arg(gamepad.deviceName)
+                //% "No gamepad connected"
+                : qsTrId("tasinput.gamepadNone")
+        }
+    }
+
+    GamepadManager {
+        id: gamepad
+
+        readonly property var buttonStates: ["stateA", "stateB", "stateZ", "stateS", "stateL", "stateR", "stateDU", "stateDD", "stateDL", "stateDR", "stateCU", "stateCD", "stateCL", "stateCR"]
+
+        onButtonEdge: function (button, pressed) {
+            buttons[buttonStates[button]] = pressed;
+        }
+        onStickMoved: function (x, y) {
+            joystick.posX = x;
+            joystick.posY = y;
+        }
     }
 
     Settings {
@@ -58,6 +82,8 @@ ApplicationWindow {
         function onRequestInput(port: int) {
             if (port != root.port)
                 return;
+
+            gamepad.poll();
 
             // buttons need to be updated
             buttons.doPollUpdate();
