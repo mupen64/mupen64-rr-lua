@@ -11,7 +11,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs as Dialogs
 
-import Mupen64.Lua
+import Lua
 
 ApplicationWindow {
     id: window

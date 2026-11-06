@@ -60,6 +60,15 @@ class LuaInstanceManager : public QAbstractListModel
     Q_INVOKABLE void restartAll();
     Q_INVOKABLE void clearAll();
 
+    void dispatchUpdateScreen();
+    void dispatchPaint();
+    void dispatchVI();
+    void dispatchInput(int controllerIndex);
+    void dispatchInterval();
+    void dispatchReset();
+    void dispatchSaveState();
+    void dispatchLoadState();
+
   signals:
     void countChanged();
     void contextChanged();

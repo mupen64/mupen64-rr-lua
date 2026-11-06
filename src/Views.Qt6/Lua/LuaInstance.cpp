@@ -14,6 +14,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QPalette>
+#include <QQuickItem>
+#include <QQuickWindow>
 #include <QStyleHints>
 #include <QUrl>
 
@@ -70,10 +72,39 @@ int register_callback_helper(lua_State *L, LuaCallbackKey key)
     return 0;
 }
 
+int emu_atvi(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::VI);
+}
+int emu_atupdatescreen(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::UpdateScreen);
+}
+int emu_atpaint(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Paint);
+}
+int emu_atinput(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Input);
+}
 int emu_atstop(lua_State *L)
 {
     return register_callback_helper(L, LuaCallbackKey::Stop);
 }
+int emu_atinterval(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Interval);
+}
+int emu_atreset(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Reset);
+}
+int emu_atloadstate(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::LoadState);
+}
+
 int emu_framecount(lua_State *L)
 {
     auto *ctx = EmuContext::rawContext();
@@ -145,6 +176,43 @@ int emu_getspeed(lua_State *L)
     {
         lua_pushinteger(L, 100);
     }
+    return 1;
+}
+
+int emu_get_speed_mode(lua_State *L)
+{
+    if (auto *ctx = EmuContext::instance())
+    {
+        lua_pushinteger(L, static_cast<int>(ctx->speedMode()));
+    }
+    else
+    {
+        lua_pushinteger(L, static_cast<int>(QmlCoreSpeedMode::Normal));
+    }
+    return 1;
+}
+
+int emu_set_speed_mode(lua_State *L)
+{
+    if (auto *ctx = EmuContext::instance())
+    {
+        const int mode = static_cast<int>(luaL_checkinteger(L, 1));
+        if (mode >= static_cast<int>(QmlCoreSpeedMode::Normal) && mode <= static_cast<int>(QmlCoreSpeedMode::UltraFastForward))
+        {
+            ctx->setSpeedMode(static_cast<QmlCoreSpeedMode::Value>(mode));
+        }
+        else
+        {
+            luaL_error(L, "invalid speed mode: %d", mode);
+        }
+    }
+    return 0;
+}
+
+int emu_inputcount(lua_State *L)
+{
+    auto *inst = getInstance(L);
+    lua_pushinteger(L, inst ? static_cast<lua_Integer>(inst->inputCount()) : 0);
     return 1;
 }
 
@@ -301,6 +369,14 @@ void LuaInstance::setLastError(const QString &err)
     emit lastErrorChanged();
 }
 
+LuaInstance *LuaInstance::fromState(lua_State *L)
+{
+    lua_getfield(L, LUA_REGISTRYINDEX, "__lua_instance");
+    auto *inst = static_cast<LuaInstance *>(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    return inst;
+}
+
 void LuaInstance::clearLogs()
 {
     m_logs.clear();
@@ -394,6 +470,50 @@ void LuaInstance::invokeCallback(LuaCallbackKey key, int nargs)
     if (nargs > 0) lua_pop(m_l, nargs);
 }
 
+void LuaInstance::dispatchVI()
+{
+    invokeCallback(LuaCallbackKey::VI);
+}
+
+void LuaInstance::dispatchUpdateScreen()
+{
+    invokeCallback(LuaCallbackKey::UpdateScreen);
+}
+
+void LuaInstance::dispatchPaint()
+{
+    invokeCallback(LuaCallbackKey::Paint);
+}
+
+void LuaInstance::dispatchInput(int controllerIndex)
+{
+    if (!m_l || !m_running) return;
+    ++m_inputCount;
+    // the official API passes a 0-based controller index (see emu.atinput)
+    lua_pushinteger(m_l, controllerIndex);
+    invokeCallback(LuaCallbackKey::Input, 1);
+}
+
+void LuaInstance::dispatchInterval()
+{
+    invokeCallback(LuaCallbackKey::Interval);
+}
+
+void LuaInstance::dispatchReset()
+{
+    invokeCallback(LuaCallbackKey::Reset);
+}
+
+void LuaInstance::dispatchSaveState()
+{
+    invokeCallback(LuaCallbackKey::SaveState);
+}
+
+void LuaInstance::dispatchLoadState()
+{
+    invokeCallback(LuaCallbackKey::LoadState);
+}
+
 void LuaInstance::registerGlobalAPIs()
 {
     lua_register(m_l, "print", lua_global_print);
@@ -405,13 +525,23 @@ void LuaInstance::registerEmuAPIs()
     lua_newtable(m_l);
 
     const luaL_Reg emuFuncs[] = {
+        {"atvi", emu_atvi},
+        {"atupdatescreen", emu_atupdatescreen},
+        {"atpaint", emu_atpaint},
+        {"atinput", emu_atinput},
         {"atstop", emu_atstop},
+        {"atinterval", emu_atinterval},
+        {"atreset", emu_atreset},
+        {"atloadstate", emu_atloadstate},
         {"framecount", emu_framecount},
         {"samplecount", emu_samplecount},
+        {"inputcount", emu_inputcount},
         {"pause", emu_pause},
         {"getpause", emu_getpause},
         {"speed", emu_speed},
         {"getspeed", emu_getspeed},
+        {"get_speed_mode", emu_get_speed_mode},
+        {"set_speed_mode", emu_set_speed_mode},
         {"get_hint", emu_get_hint},
         {"set_hint", emu_set_hint},
         {"get_pref", emu_get_pref},
@@ -447,6 +577,110 @@ void LuaInstance::registerMemoryAPIs()
     lua_setglobal(m_l, "memory");
 }
 
+void LuaInstance::pushJoypad(lua_State *L, int port)
+{
+    CoreButtons buttons{};
+    if (auto *ctx = EmuContext::instance())
+    {
+        buttons = ctx->luaControllerInput(port);
+    }
+
+    lua_newtable(L);
+#define P(a, s)                                                                                                        \
+    lua_pushboolean(L, buttons.a);                                                                                     \
+    lua_setfield(L, -2, s)
+    P(dr, "right");
+    P(dl, "left");
+    P(dd, "down");
+    P(du, "up");
+    P(start, "start");
+    P(z, "Z");
+    P(b, "B");
+    P(a, "A");
+    P(cr, "Cright");
+    P(cl, "Cleft");
+    P(cd, "Cdown");
+    P(cu, "Cup");
+    P(r, "R");
+    P(l, "L");
+#undef P
+    lua_pushinteger(L, buttons.y);
+    lua_setfield(L, -2, "Y");
+    lua_pushinteger(L, buttons.x);
+    lua_setfield(L, -2, "X");
+}
+
+void LuaInstance::setJoypad(lua_State *L, int port)
+{
+    CoreButtons keys{};
+#define P(a, s)                                                                                                        \
+    lua_getfield(L, -1, s);                                                                                            \
+    keys.a = static_cast<unsigned>(lua_toboolean(L, -1));                                                              \
+    lua_pop(L, 1)
+    P(dr, "right");
+    P(dl, "left");
+    P(dd, "down");
+    P(du, "up");
+    P(start, "start");
+    P(z, "Z");
+    P(b, "B");
+    P(a, "A");
+    P(cr, "Cright");
+    P(cl, "Cleft");
+    P(cd, "Cdown");
+    P(cu, "Cup");
+    P(r, "R");
+    P(l, "L");
+#undef P
+    lua_getfield(L, -1, "Y");
+    keys.y = static_cast<signed>(lua_tointeger(L, -1));
+    lua_pop(L, 1);
+    lua_getfield(L, -1, "X");
+    keys.x = static_cast<signed>(lua_tointeger(L, -1));
+    lua_pop(L, 1);
+
+    if (auto *ctx = EmuContext::instance())
+    {
+        ctx->luaSetControllerInput(port, keys);
+    }
+}
+
+void LuaInstance::registerJoypadAPIs()
+{
+    lua_newtable(m_l);
+
+    lua_pushcfunction(m_l, [](lua_State *L) -> int {
+        auto *inst = getInstance(L);
+        if (!inst) return 0;
+        int port = static_cast<int>(luaL_optinteger(L, 1, 1)) - 1;
+        if (port < 0 || port >= 4) return luaL_error(L, "port: 1-4");
+        inst->pushJoypad(L, port);
+        return 1;
+    });
+    lua_setfield(m_l, -2, "get");
+
+    lua_pushcfunction(m_l, [](lua_State *L) -> int {
+        auto *inst = getInstance(L);
+        if (!inst) return 0;
+        int port;
+        if (lua_type(L, 1) == LUA_TTABLE)
+        {
+            port = 0;
+        }
+        else
+        {
+            port = static_cast<int>(luaL_optinteger(L, 1, 1)) - 1;
+        }
+        if (port < 0 || port >= 4) return luaL_error(L, "port: 1-4");
+        if (!lua_istable(L, -1)) return luaL_error(L, "table expected");
+        inst->setJoypad(L, port);
+        return 0;
+    });
+    lua_setfield(m_l, -2, "set");
+
+    lua_setglobal(m_l, "joypad");
+}
+
 void LuaInstance::applySandbox()
 {
     const char *sandboxScript = R"(
@@ -469,6 +703,7 @@ bool LuaInstance::start()
 
     // a new attempt starts clean: stale errors must not linger in the UI
     setLastError(QString());
+    m_inputCount = 0;
 
     if (m_path.isEmpty())
     {
@@ -509,6 +744,7 @@ bool LuaInstance::start()
     registerGlobalAPIs();
     registerEmuAPIs();
     registerMemoryAPIs();
+    registerJoypadAPIs();
 
     if (!m_trusted)
     {

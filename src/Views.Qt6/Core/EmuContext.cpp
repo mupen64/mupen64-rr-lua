@@ -138,6 +138,17 @@ EmuContext::EmuContext(QQuickItem *parent)
     m_core_params->callbacks.core_executing_changed = [&](bool value) {
         QMetaObject::invokeMethod(this, &EmuContext::coreExecutingChanged, value);
     };
+    m_core_params->callbacks.vi = [&](bool) { QMetaObject::invokeMethod(this, &EmuContext::luaVI); };
+    m_core_params->callbacks.input = [&](CoreButtons *input, int index) {
+        // apply any pending joypad.set() override and stash the input on the core thread
+        luaApplyControllerInput(index, input);
+        luaStashControllerInput(index, *input);
+        QMetaObject::invokeMethod(this, &EmuContext::luaInput, static_cast<int32_t>(index));
+    };
+    m_core_params->callbacks.interval = [&] { QMetaObject::invokeMethod(this, &EmuContext::luaInterval); };
+    m_core_params->callbacks.save_state = [&] { QMetaObject::invokeMethod(this, &EmuContext::luaSaveState); };
+    m_core_params->callbacks.load_state = [&] { QMetaObject::invokeMethod(this, &EmuContext::luaLoadState); };
+    m_core_params->callbacks.reset = [&] { QMetaObject::invokeMethod(this, &EmuContext::luaReset); };
 
     // propagate signals to core
     connect(
@@ -203,6 +214,43 @@ void EmuContext::invalidateVisuals()
 void EmuContext::frameAdvance(size_t frames)
 {
     m_core_ctx->vr_frame_advance(frames);
+}
+
+bool EmuContext::luaApplyControllerInput(int32_t controller, CoreButtons *input)
+{
+    if (controller < 0 || controller >= 4) return false;
+
+    std::lock_guard lock(m_lua_controller_mutex);
+    if (!m_lua_controller_overwrite[controller]) return false;
+
+    *input = m_lua_controller_data[controller];
+    m_lua_controller_overwrite[controller] = false;
+    return true;
+}
+
+void EmuContext::luaStashControllerInput(int32_t controller, const CoreButtons &input)
+{
+    if (controller < 0 || controller >= 4) return;
+
+    std::lock_guard lock(m_lua_controller_mutex);
+    m_lua_last_controller_data[controller] = input;
+}
+
+void EmuContext::luaSetControllerInput(int32_t controller, CoreButtons keys)
+{
+    if (controller < 0 || controller >= 4) return;
+
+    std::lock_guard lock(m_lua_controller_mutex);
+    m_lua_controller_data[controller] = keys;
+    m_lua_controller_overwrite[controller] = true;
+}
+
+CoreButtons EmuContext::luaControllerInput(int32_t controller) const
+{
+    if (controller < 0 || controller >= 4) return {};
+
+    std::lock_guard lock(m_lua_controller_mutex);
+    return m_lua_last_controller_data[controller];
 }
 
 // st_* functions

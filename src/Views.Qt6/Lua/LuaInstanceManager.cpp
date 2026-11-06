@@ -75,6 +75,23 @@ void LuaInstanceManager::setContext(EmuContext *ctx)
 
     m_context = ctx;
 
+    if (m_context)
+    {
+        connect(m_context, &EmuContext::updateScreen, this, [this]() {
+            dispatchUpdateScreen();
+            dispatchPaint();
+        });
+
+        connect(m_context, &EmuContext::luaVI, this, [this]() { dispatchVI(); });
+        connect(m_context, &EmuContext::luaInput, this, [this](int32_t index) {
+            dispatchInput(static_cast<int>(index));
+        });
+        connect(m_context, &EmuContext::luaInterval, this, [this]() { dispatchInterval(); });
+        connect(m_context, &EmuContext::luaSaveState, this, [this]() { dispatchSaveState(); });
+        connect(m_context, &EmuContext::luaLoadState, this, [this]() { dispatchLoadState(); });
+        connect(m_context, &EmuContext::luaReset, this, [this]() { dispatchReset(); });
+    }
+
     emit contextChanged();
 }
 
@@ -203,4 +220,68 @@ void LuaInstanceManager::clearAll()
 
     emit countChanged();
     emit instancesChanged();
+}
+
+void LuaInstanceManager::dispatchUpdateScreen()
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchUpdateScreen();
+    }
+}
+
+void LuaInstanceManager::dispatchPaint()
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchPaint();
+    }
+}
+
+void LuaInstanceManager::dispatchVI()
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchVI();
+    }
+}
+
+void LuaInstanceManager::dispatchInput(int controllerIndex)
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchInput(controllerIndex);
+    }
+}
+
+void LuaInstanceManager::dispatchInterval()
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchInterval();
+    }
+}
+
+void LuaInstanceManager::dispatchReset()
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchReset();
+    }
+}
+
+void LuaInstanceManager::dispatchSaveState()
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchSaveState();
+    }
+}
+
+void LuaInstanceManager::dispatchLoadState()
+{
+    for (auto *inst : m_instances)
+    {
+        if (inst->isRunning()) inst->dispatchLoadState();
+    }
 }

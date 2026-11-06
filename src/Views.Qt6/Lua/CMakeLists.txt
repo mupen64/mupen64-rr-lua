@@ -6,10 +6,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 qt_add_library(Mupen64RR_Views_Qt6_Lua STATIC)
 mupen64rr_reuse_common_pch(Mupen64RR_Views_Qt6_Lua)
-qt_add_qml_module(Mupen64RR_Views_Qt6_Lua
-    URI "Mupen64.Lua"
+qt_add_qml_module(Mupen64RR_Views_Qt6_Lua URI "Mupen64.Lua"
     IMPORTS
         TARGET Mupen64RR_Views_Qt6_Core
+        TARGET Mupen64RR_Views_Qt6_Utils
     SOURCES
         "LuaInstance.hpp"
         "LuaInstanceManager.hpp"
@@ -24,6 +24,7 @@ target_link_libraries(Mupen64RR_Views_Qt6_Lua PUBLIC
     Mupen64RR_Common_Views
     Mupen64RR_Core
     Mupen64RR_Views_Qt6_Core
+    Mupen64RR_Views_Qt6_Utils
 
     Qt6::Core
     Qt6::Quick
