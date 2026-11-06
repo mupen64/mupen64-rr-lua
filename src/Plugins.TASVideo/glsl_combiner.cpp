@@ -47,18 +47,18 @@ static int g_fogEnabled = 0;
 
 static float g_projection[16];
 
-static const char *VERTEX_SHADER_BODY = "attribute vec4 aPosition;\n"
-                                        "attribute vec4 aColor;\n"
-                                        "attribute vec4 aSecondaryColor;\n"
-                                        "attribute vec2 aTexCoord0;\n"
-                                        "attribute vec2 aTexCoord1;\n"
-                                        "attribute float aFog;\n"
+static const char *VERTEX_SHADER_BODY = "VS_IN vec4 aPosition;\n"
+                                        "VS_IN vec4 aColor;\n"
+                                        "VS_IN vec4 aSecondaryColor;\n"
+                                        "VS_IN vec2 aTexCoord0;\n"
+                                        "VS_IN vec2 aTexCoord1;\n"
+                                        "VS_IN float aFog;\n"
                                         "uniform mat4 uProjection;\n"
-                                        "varying lowp vec4 vColor;\n"
-                                        "varying lowp vec4 vSecondaryColor;\n"
-                                        "varying highp vec2 vTexCoord0;\n"
-                                        "varying highp vec2 vTexCoord1;\n"
-                                        "varying mediump float vFog;\n"
+                                        "VS_OUT lowp vec4 vColor;\n"
+                                        "VS_OUT lowp vec4 vSecondaryColor;\n"
+                                        "VS_OUT highp vec2 vTexCoord0;\n"
+                                        "VS_OUT highp vec2 vTexCoord1;\n"
+                                        "VS_OUT mediump float vFog;\n"
                                         "void main() {\n"
                                         "    gl_Position = uProjection * aPosition;\n"
                                         "    vColor = clamp(aColor, 0.0, 1.0);\n"
@@ -124,13 +124,13 @@ static std::string ColorValue(int operand, bool firstCycle, UniformUsage &usage)
     case COMBINED_ALPHA:
         return firstCycle ? "vec3(0.0)" : "vec3(combinedA)";
     case TEXEL0:
-        return "texture2D(uTex0, vTexCoord0).rgb";
+        return "TEX2D(uTex0, vTexCoord0).rgb";
     case TEXEL0_ALPHA:
-        return "vec3(texture2D(uTex0, vTexCoord0).a)";
+        return "vec3(TEX2D(uTex0, vTexCoord0).a)";
     case TEXEL1:
-        return "texture2D(uTex1, vTexCoord1).rgb";
+        return "TEX2D(uTex1, vTexCoord1).rgb";
     case TEXEL1_ALPHA:
-        return "vec3(texture2D(uTex1, vTexCoord1).a)";
+        return "vec3(TEX2D(uTex1, vTexCoord1).a)";
     case PRIMITIVE:
         usage.prim = true;
         return "uPrimColor.rgb";
@@ -185,10 +185,10 @@ static std::string AlphaValue(int operand, bool firstCycle, UniformUsage &usage)
         return firstCycle ? "0.0" : "combinedA";
     case TEXEL0:
     case TEXEL0_ALPHA:
-        return "texture2D(uTex0, vTexCoord0).a";
+        return "TEX2D(uTex0, vTexCoord0).a";
     case TEXEL1:
     case TEXEL1_ALPHA:
-        return "texture2D(uTex1, vTexCoord1).a";
+        return "TEX2D(uTex1, vTexCoord1).a";
     case PRIMITIVE:
     case PRIMITIVE_ALPHA:
         usage.prim = true;
@@ -329,7 +329,7 @@ static std::string BuildFragmentSource(Combiner *color, Combiner *alpha)
     // one of 32 random 32x32 patterns picked by the env alpha and rotated every draw; here a
     // per-pixel hash is compared against the same alpha, and the seed rotates per draw the same way.
     body += "    else if (uAlphaTest == 3) { if (ditherNoise() >= uDitherAlpha) discard; }\n";
-    body += "    gl_FragColor = result;\n";
+    body += "    FRAG_COLOR = result;\n";
 
     std::string source;
     if (OGL.isGLES)
@@ -341,19 +341,26 @@ static std::string BuildFragmentSource(Combiner *color, Combiner *alpha)
         source += "precision mediump float;\n";
         source += "#define highp mediump\n";
         source += "#endif\n";
+        source += "#define FS_IN varying\n";
+        source += "#define TEX2D texture2D\n";
+        source += "#define FRAG_COLOR gl_FragColor\n";
     }
     else
     {
-        source += "#version 120\n";
+        source += "#version 410 core\n";
         source += "#define lowp\n";
         source += "#define mediump\n";
         source += "#define highp\n";
+        source += "#define FS_IN in\n";
+        source += "#define TEX2D texture\n";
+        source += "out vec4 fragColor;\n";
+        source += "#define FRAG_COLOR fragColor\n";
     }
     source += "#define WRAP(x, lo, hi) (mod((x) - (lo), (hi) - (lo)) + (lo))\n";
-    source += "varying lowp vec4 vColor;\n";
-    source += "varying highp vec2 vTexCoord0;\n";
-    source += "varying highp vec2 vTexCoord1;\n";
-    source += "varying mediump float vFog;\n";
+    source += "FS_IN lowp vec4 vColor;\n";
+    source += "FS_IN highp vec2 vTexCoord0;\n";
+    source += "FS_IN highp vec2 vTexCoord1;\n";
+    source += "FS_IN mediump float vFog;\n";
     source += "uniform sampler2D uTex0;\n";
     source += "uniform sampler2D uTex1;\n";
     if (usage.prim) source += "uniform vec4 uPrimColor;\n";
@@ -413,11 +420,13 @@ static GLuint GetVertexShader()
         if (OGL.isGLES)
         {
             source = "#version 100\n";
+            source += "#define VS_IN attribute\n#define VS_OUT varying\n";
         }
         else
         {
-            source = "#version 120\n";
+            source = "#version 410 core\n";
             source += "#define lowp\n#define mediump\n#define highp\n";
+            source += "#define VS_IN in\n#define VS_OUT out\n";
         }
         source += VERTEX_SHADER_BODY;
         g_vertexShader = CompileShader(GL_VERTEX_SHADER, source.c_str());
