@@ -10,6 +10,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Lua
     URI "Mupen64.Lua"
     IMPORTS
         TARGET Mupen64RR_Views_Qt6_Core
+        TARGET Mupen64RR_Views_Qt6_Utils
     SOURCES
         "LuaInstance.hpp"
         "LuaInstanceManager.hpp"
@@ -22,6 +23,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Lua
         "LuaGlobal.cpp"
         "LuaEmu.cpp"
         "LuaMemory.cpp"
+        "LuaJoypad.cpp"
         "Resources.cpp"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Lua PUBLIC cxx_std_26)
@@ -31,6 +33,7 @@ target_link_libraries(Mupen64RR_Views_Qt6_Lua PUBLIC
     Mupen64RR_Common_Views
     Mupen64RR_Core
     Mupen64RR_Views_Qt6_Core
+    Mupen64RR_Views_Qt6_Utils
 
     Qt6::Core
     Qt6::Quick
