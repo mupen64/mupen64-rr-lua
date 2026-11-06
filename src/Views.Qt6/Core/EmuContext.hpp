@@ -146,6 +146,17 @@ class EmuContext : public QQuickItem
     Q_INVOKABLE EmuPaths *paths();
 
     /**
+     * @brief Queues a controller input override, to be applied by the next `callbacks.input` invocation.
+     * Used by Lua scripts (joypad.set).
+     */
+    void luaSetControllerInput(int32_t controller, CoreButtons keys);
+
+    /**
+     * @brief Returns the last controller input observed by the Lua engine for a port (joypad.get).
+     */
+    CoreButtons luaControllerInput(int32_t controller) const;
+
+    /**
      * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
      * @note May reallocate the image if needed.
      *
@@ -177,6 +188,24 @@ class EmuContext : public QQuickItem
 
     // -> callbacks.emu_launched_changed
     void launchedChanged(bool value);
+
+    // -> callbacks.vi
+    void luaVI();
+
+    // -> callbacks.input
+    void luaInput(int32_t index);
+
+    // -> callbacks.interval
+    void luaInterval();
+
+    // -> callbacks.save_state
+    void luaSaveState();
+
+    // -> callbacks.load_state
+    void luaLoadState();
+
+    // -> callbacks.reset
+    void luaReset();
 
     // -> callbacks.emu_paused_changed
     void pausedChanged(bool value);
@@ -257,11 +286,22 @@ class EmuContext : public QQuickItem
     void cancelPendingDialogs();
     void startDialogForCoreResult(CoreResult result);
 
+    /** Applies a pending Lua controller input override on the core thread (see LuaInstance::setJoypad()). */
+    bool luaApplyControllerInput(int32_t controller, CoreButtons *input);
+    /** Stashes the current controller input for Lua scripts (see LuaInstance::pushJoypad()). */
+    void luaStashControllerInput(int32_t controller, const CoreButtons &input);
+
     CoreCfg *m_core_cfg;
     CoreParams *m_core_params;
     CoreCtx *m_core_ctx;
 
     mutable std::mutex m_read_video_mutex;
+
+    // Lua controller overrides (joypad.set), protected against the core thread
+    mutable std::mutex m_lua_controller_mutex;
+    CoreButtons m_lua_controller_data[4]{};
+    bool m_lua_controller_overwrite[4]{};
+    CoreButtons m_lua_last_controller_data[4]{};
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;

@@ -18,6 +18,7 @@
 
 // Q_IMPORT_QML_PLUGIN(Mupen64Actions)
 // Q_IMPORT_QML_PLUGIN(Mupen64Core)
+// Q_IMPORT_QML_PLUGIN(Mupen64Lua)
 // Q_IMPORT_QML_PLUGIN(Mupen64Components)
 // Q_IMPORT_QML_PLUGIN(Mupen64Config)
 // Q_IMPORT_QML_PLUGIN(Mupen64Utils)
