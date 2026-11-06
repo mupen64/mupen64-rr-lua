@@ -175,58 +175,58 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <translation>Start Movie Recording</translation>
     </message>
     <message id="menu.movie.startPlayback">
-        <location filename="../Views/Settings/Actions.qml" line="312"/>
+        <location filename="../Views/Settings/Actions.qml" line="314"/>
         <source>Start Movie Playback</source>
         <translation>Start Movie Playback</translation>
     </message>
     <message id="menu.movie.stopMovie">
-        <location filename="../Views/Settings/Actions.qml" line="317"/>
+        <location filename="../Views/Settings/Actions.qml" line="320"/>
         <source>Stop Movie</source>
         <translation>Stop Movie</translation>
     </message>
     <message id="menu.movie.createBackup">
-        <location filename="../Views/Settings/Actions.qml" line="321"/>
+        <location filename="../Views/Settings/Actions.qml" line="326"/>
         <source>Create Movie Backup</source>
         <translation>Create Movie Backup</translation>
     </message>
     <message id="menu.movie.loopPlayback">
-        <location filename="../Views/Settings/Actions.qml" line="326"/>
+        <location filename="../Views/Settings/Actions.qml" line="333"/>
         <source>Loop Playback</source>
         <translation>Loop Playback</translation>
     </message>
     <message id="menu.movie.readOnly">
-        <location filename="../Views/Settings/Actions.qml" line="331"/>
+        <location filename="../Views/Settings/Actions.qml" line="339"/>
         <source>Read-Only</source>
         <translation>Read-Only</translation>
     </message>
     <message id="menu.movie.waitAtEnd">
-        <location filename="../Views/Settings/Actions.qml" line="336"/>
+        <location filename="../Views/Settings/Actions.qml" line="345"/>
         <source>Wait at End</source>
         <translation>Wait at End</translation>
     </message>
     <message id="dialogs.loadROM.title">
-        <location filename="../Views/Settings/Actions.qml" line="346"/>
+        <location filename="../Views/Settings/Actions.qml" line="355"/>
         <source>Load ROM...</source>
         <translation>Load ROM...</translation>
     </message>
     <message id="formats.rom">
-        <location filename="../Views/Settings/Actions.qml" line="349"/>
+        <location filename="../Views/Settings/Actions.qml" line="358"/>
         <source>N64 ROMs</source>
         <translation>N64 ROMs</translation>
     </message>
     <message id="dialogs.loadState.title">
-        <location filename="../Views/Settings/Actions.qml" line="358"/>
+        <location filename="../Views/Settings/Actions.qml" line="367"/>
         <source>Load State...</source>
         <translation>Load State...</translation>
     </message>
     <message id="formats.state">
-        <location filename="../Views/Settings/Actions.qml" line="361"/>
-        <location filename="../Views/Settings/Actions.qml" line="372"/>
+        <location filename="../Views/Settings/Actions.qml" line="370"/>
+        <location filename="../Views/Settings/Actions.qml" line="381"/>
         <source>Savestates</source>
         <translation>Savestates</translation>
     </message>
     <message id="dialogs.saveState.title">
-        <location filename="../Views/Settings/Actions.qml" line="370"/>
+        <location filename="../Views/Settings/Actions.qml" line="379"/>
         <source>Save State...</source>
         <translation>Save State...</translation>
     </message>
@@ -380,6 +380,16 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <location filename="../../Plugins.Qt6.TASInput/MainWindow.qml" line="16"/>
         <source>TASInput (P%1)</source>
         <translation>TASInput (P%1)</translation>
+    </message>
+    <message id="core.dialog.movieOverwriteWarning.title">
+        <location filename="../Core/EmuContext.cpp" line="294"/>
+        <source>Overwrite Movie</source>
+        <translation>Overwrite Movie</translation>
+    </message>
+    <message id="core.dialog.movieOverwriteWarning">
+        <location filename="../Core/EmuContext.cpp" line="297"/>
+        <source>The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?</source>
+        <translation>The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?</translation>
     </message>
 </context>
 </TS>

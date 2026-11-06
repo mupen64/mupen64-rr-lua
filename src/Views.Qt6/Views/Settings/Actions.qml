@@ -329,18 +329,21 @@ ActionManager {
         addSeparator: true
     }
     EmuAction {
-        //% "Loop Playback"
+        id: actVcrLoopPlayback
+        //% "Loop Movie Playback"
         key: QT_TRID_NOOP("menu.movie.loopPlayback")
         defaultShortcut: "Shift+L"
         checkable: true
     }
     EmuAction {
+        id: actVcrReadonly
         //% "Read-Only"
         key: QT_TRID_NOOP("menu.movie.readOnly")
         defaultShortcut: "Shift+R"
         checkable: true
     }
     EmuAction {
+        id: actVcrWaitAtEnd
         //% "Wait at End"
         key: QT_TRID_NOOP("menu.movie.waitAtEnd")
         checkable: true
@@ -400,11 +403,13 @@ ActionManager {
             root.winConfig.visible
         ].some(value => value)
 
-        // Tie GS button state to the GSButton item
+        // Tie relevant core states to their UI actions
         root.core.gsButton: actGSButton.checked
-
-        // Tie fast-forward state to the checked item
         root.core.speedMode: (actFastForward.checked)? CoreSpeedMode.FastForward : CoreSpeedMode.Normal
+        root.core.vcrReadonly: actVcrReadonly.checked
+        root.core.movieLoopEnabled: actVcrLoopPlayback.checked
+        root.core.waitAtMovieEnd: actVcrWaitAtEnd.checked
+
     }
     Connections {
         target: root.core
