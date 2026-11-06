@@ -60,6 +60,11 @@ void LuaInstance::setLastError(const QString &err)
     lastErrorChanged();
 }
 
+LuaInstance *LuaInstance::fromState(lua_State *L)
+{
+    return LuaInternal::getInstance(L);
+}
+
 void LuaInstance::clearLogs()
 {
     m_logs.clear();
@@ -153,12 +158,57 @@ void LuaInstance::invokeCallback(LuaCallbackKey key, int nargs)
     if (nargs > 0) lua_pop(m_l, nargs);
 }
 
+void LuaInstance::dispatchVI()
+{
+    invokeCallback(LuaCallbackKey::VI);
+}
+
+void LuaInstance::dispatchUpdateScreen()
+{
+    invokeCallback(LuaCallbackKey::UpdateScreen);
+}
+
+void LuaInstance::dispatchPaint()
+{
+    invokeCallback(LuaCallbackKey::Paint);
+}
+
+void LuaInstance::dispatchInput(int controllerIndex)
+{
+    if (!m_l || !m_running) return;
+    ++m_inputCount;
+    // the official API passes a 0-based controller index (see emu.atinput)
+    lua_pushinteger(m_l, controllerIndex);
+    invokeCallback(LuaCallbackKey::Input, 1);
+}
+
+void LuaInstance::dispatchInterval()
+{
+    invokeCallback(LuaCallbackKey::Interval);
+}
+
+void LuaInstance::dispatchReset()
+{
+    invokeCallback(LuaCallbackKey::Reset);
+}
+
+void LuaInstance::dispatchSaveState()
+{
+    invokeCallback(LuaCallbackKey::SaveState);
+}
+
+void LuaInstance::dispatchLoadState()
+{
+    invokeCallback(LuaCallbackKey::LoadState);
+}
+
 bool LuaInstance::start()
 {
     if (m_running) return false;
 
     // a new attempt starts clean: stale errors must not linger in the UI
     setLastError(QString());
+    m_inputCount = 0;
 
     if (m_path.isEmpty())
     {
@@ -201,6 +251,7 @@ bool LuaInstance::start()
         LuaInternal::registerGlobalAPIs(m_l);
         LuaInternal::registerEmuAPIs(m_l);
         LuaInternal::registerMemoryAPIs(m_l);
+        LuaInternal::registerJoypadAPIs(m_l);
 
         if (LuaInternal::doStringView(m_l, LuaResources::inspect())) return false;
 

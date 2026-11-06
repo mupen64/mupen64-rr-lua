@@ -46,9 +46,37 @@ int register_callback_helper(lua_State *L, LuaCallbackKey key)
     return 0;
 }
 
+int emu_atvi(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::VI);
+}
+int emu_atupdatescreen(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::UpdateScreen);
+}
+int emu_atpaint(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Paint);
+}
+int emu_atinput(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Input);
+}
 int emu_atstop(lua_State *L)
 {
     return register_callback_helper(L, LuaCallbackKey::Stop);
+}
+int emu_atinterval(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Interval);
+}
+int emu_atreset(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Reset);
+}
+int emu_atloadstate(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::LoadState);
 }
 int emu_framecount(lua_State *L)
 {
@@ -124,6 +152,44 @@ int emu_getspeed(lua_State *L)
     return 1;
 }
 
+int emu_get_speed_mode(lua_State *L)
+{
+    if (auto *ctx = EmuContext::instance())
+    {
+        lua_pushinteger(L, static_cast<int>(ctx->speedMode()));
+    }
+    else
+    {
+        lua_pushinteger(L, static_cast<int>(QmlCoreSpeedMode::Normal));
+    }
+    return 1;
+}
+
+int emu_set_speed_mode(lua_State *L)
+{
+    if (auto *ctx = EmuContext::instance())
+    {
+        const int mode = static_cast<int>(luaL_checkinteger(L, 1));
+        if (mode >= static_cast<int>(QmlCoreSpeedMode::Normal) &&
+            mode <= static_cast<int>(QmlCoreSpeedMode::UltraFastForward))
+        {
+            ctx->setSpeedMode(static_cast<QmlCoreSpeedMode::Value>(mode));
+        }
+        else
+        {
+            luaL_error(L, "invalid speed mode: %d", mode);
+        }
+    }
+    return 0;
+}
+
+int emu_inputcount(lua_State *L)
+{
+    auto *inst = getInstance(L);
+    lua_pushinteger(L, inst ? static_cast<lua_Integer>(inst->inputCount()) : 0);
+    return 1;
+}
+
 int emu_get_hint(lua_State *L)
 {
     auto *inst = getInstance(L);
@@ -188,13 +254,23 @@ void registerEmuAPIs(lua_State *L)
     lua_newtable(L);
 
     const luaL_Reg emuFuncs[] = {
+        {"atvi", emu_atvi},
+        {"atupdatescreen", emu_atupdatescreen},
+        {"atpaint", emu_atpaint},
+        {"atinput", emu_atinput},
         {"atstop", emu_atstop},
+        {"atinterval", emu_atinterval},
+        {"atreset", emu_atreset},
+        {"atloadstate", emu_atloadstate},
         {"framecount", emu_framecount},
         {"samplecount", emu_samplecount},
+        {"inputcount", emu_inputcount},
         {"pause", emu_pause},
         {"getpause", emu_getpause},
         {"speed", emu_speed},
         {"getspeed", emu_getspeed},
+        {"get_speed_mode", emu_get_speed_mode},
+        {"set_speed_mode", emu_set_speed_mode},
         {"get_hint", emu_get_hint},
         {"set_hint", emu_set_hint},
         {"get_pref", emu_get_pref},
