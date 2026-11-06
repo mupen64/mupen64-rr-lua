@@ -58,7 +58,8 @@ struct AxisMapping
     friend void from_json(const nlohmann::json &j, AxisMapping &self)
     {
         if (!j.is_object()) throw std::domain_error("AxisMapping expected JSON object");
-#define TASINPUT_FIELD(field) if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
+#define TASINPUT_FIELD(field)                                                                                          \
+    if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
         TASINPUT_FIELD(axis);
         TASINPUT_FIELD(key_negative);
         TASINPUT_FIELD(key_positive);
@@ -92,7 +93,8 @@ struct ButtonMapping
     friend void from_json(const nlohmann::json &j, ButtonMapping &self)
     {
         if (!j.is_object()) throw std::domain_error("ButtonMapping expected JSON object");
-#define TASINPUT_FIELD(field) if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
+#define TASINPUT_FIELD(field)                                                                                          \
+    if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
         TASINPUT_FIELD(button);
         TASINPUT_FIELD(axis);
         TASINPUT_FIELD(axis_direction);
@@ -215,7 +217,8 @@ struct ControllerConfig
     friend void from_json(const nlohmann::json &j, ControllerConfig &self)
     {
         if (!j.is_object()) throw std::domain_error("ControllerConfig expected JSON object");
-#define TASINPUT_FIELD(field) if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
+#define TASINPUT_FIELD(field)                                                                                          \
+    if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
         TASINPUT_FIELD(dpad_right);
         TASINPUT_FIELD(dpad_left);
         TASINPUT_FIELD(dpad_down);
@@ -293,7 +296,8 @@ struct InputConfig
     friend void from_json(const nlohmann::json &j, InputConfig &self)
     {
         if (!j.is_object()) throw std::domain_error("InputConfig expected JSON object");
-#define TASINPUT_FIELD(field) if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
+#define TASINPUT_FIELD(field)                                                                                          \
+    if (j.contains(#field)) nlohmann::from_json(j.at(#field), self.field)
         self = {};
         TASINPUT_FIELD(always_on_top);
         TASINPUT_FIELD(float_from_parent);

@@ -24,7 +24,9 @@
 #define DEBUG_COMBINE 0
 
 // *technically* this is bad practice, but this is mainly just to isolate names that would otherwise collide
-namespace BuiltinTAS::TASVideo {}
+namespace BuiltinTAS::TASVideo
+{
+}
 using namespace BuiltinTAS::TASVideo;
 
 #define DebugMsg(str, ...)

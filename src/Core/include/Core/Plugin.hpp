@@ -66,7 +66,7 @@ extern "C"
 #endif
 #ifdef MUPEN64RR_BUILD_QT6
         WindowHandle(QQuickWindow *window) : ptr1(window), ptr2(nullptr) {}
-        QQuickWindow *qt_window() const  { return (QQuickWindow *)ptr1; }
+        QQuickWindow *qt_window() const { return (QQuickWindow *)ptr1; }
 #endif
     };
 

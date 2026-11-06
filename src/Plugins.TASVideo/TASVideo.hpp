@@ -17,6 +17,6 @@ namespace BuiltinTAS::TASVideo
 extern TASVideoContext g_tas_ctx;
 extern M64RRSpec::PluginInit *g_plugin;
 extern const M64RRSpec::WindowingAPI *g_wsi;
-}
+} // namespace BuiltinTAS::TASVideo
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS Video")

@@ -117,4 +117,4 @@ EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle)
 {
 }
 #endif
-}
+} // namespace BuiltinTAS::TASVideo
