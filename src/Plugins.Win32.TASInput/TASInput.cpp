@@ -1375,4 +1375,4 @@ EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons)
 {
     status[index].set_visuals_lazy(buttons, false);
 }
-}
+} // namespace BuiltinTAS::TASInput

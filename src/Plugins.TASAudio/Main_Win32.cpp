@@ -24,6 +24,6 @@ EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle parent_window)
         if (g_backend.has_value()) g_backend->merge_cfg_live(cfg);
     }
 }
-}
+} // namespace BuiltinTAS::TASAudio
 
 #endif

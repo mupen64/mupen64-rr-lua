@@ -289,7 +289,6 @@ void OGL_Stop()
     glFinish();
 }
 
-
 static void OGL_SetRectViewport()
 {
     if (OGL.adjustScreen)

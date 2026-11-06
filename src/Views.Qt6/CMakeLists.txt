@@ -105,7 +105,7 @@ foreach(item IN LISTS qml_config_pages)
 endforeach()
 
 qt_add_qml_module(Mupen64RR_Views_Qt6
-    URI "Views"
+    URI "Mupen64.Views"
     QML_FILES
         ${qml_sources}
         ${qml_settings_sources}

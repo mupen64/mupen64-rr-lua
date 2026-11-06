@@ -7,7 +7,7 @@
 import QtCore
 import QtQuick
 
-import Core
+import Mupen64.Core
 
 Settings {
     category: "paths"

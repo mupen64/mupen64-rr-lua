@@ -55,11 +55,11 @@ void TASInputUIManager::open()
     if (m_is_open) return;
     m_is_open = true;
 
-    for (size_t i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++)
+    {
         // check if port is present
         bool present = m_settings->value(u"port%1/present"_s.arg(i), i == 0).toBool();
-        if (!present)
-            continue;
+        if (!present) continue;
 
         QVariantMap properties{
             {"transientParent", QVariant::fromValue(m_main_window)},
@@ -70,8 +70,6 @@ void TASInputUIManager::open()
         m_windows[i] = (QQuickWindow *)m_component->createWithInitialProperties(properties);
         ((QObject *)m_windows[i])->setParent(this);
     }
-
-
 }
 
 void TASInputUIManager::close()

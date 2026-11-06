@@ -34,7 +34,8 @@ class TASJoystickData : public QObject
         posYChanged();
     }
 
-    Q_INVOKABLE void setPos(int x, int y) {
+    Q_INVOKABLE void setPos(int x, int y)
+    {
         setPosX(x);
         setPosY(y);
     }

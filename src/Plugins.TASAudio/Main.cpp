@@ -51,7 +51,6 @@ static inline std::filesystem::path config_path()
     return std::filesystem::path(path) / CONFIG_FILE_NAME;
 }
 
-
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Audio;
@@ -138,7 +137,7 @@ EXPORT void CALL M64RRAILenChanged()
         g_plugin->log_error(std::format("Exception at AiLenChanged(): {}", e.what()).c_str());
     }
 }
-}
+} // namespace BuiltinTAS::TASAudio
 
 SDLAudio::Config read_config()
 {
@@ -149,7 +148,7 @@ SDLAudio::Config read_config()
     // if the config file was missing or empty, write the default config
     if (!std::filesystem::exists(config_path))
     {
-        std::ofstream fs (config_path);
+        std::ofstream fs(config_path);
         cfg.write_to(fs);
         return cfg;
     }
