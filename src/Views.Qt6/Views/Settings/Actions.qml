@@ -299,6 +299,53 @@ ActionManager {
         onTriggered: root.winConfig.show()
     }
 
+    EmuMenu {
+        //% "Movie"
+        key: QT_TRID_NOOP("menu.movie")
+    }
+    EmuAction {
+        //% "Start Movie Recording"
+        key: QT_TRID_NOOP("menu.movie.startRecording")
+        defaultShortcut: "Ctrl+Shift+R"
+        enabled: root.core.launched
+    }
+    EmuAction {
+        //% "Start Movie Playback"
+        key: QT_TRID_NOOP("menu.movie.startPlayback")
+        defaultShortcut: "Ctrl+Shift+P"
+        addSeparator: true
+    }
+    EmuAction {
+        //% "Stop Movie"
+        key: QT_TRID_NOOP("menu.movie.stopMovie")
+        defaultShortcut: "Ctrl+Shift+C"
+        enabled: root.core.launched
+    }
+    EmuAction {
+        //% "Create Movie Backup"
+        key: QT_TRID_NOOP("menu.movie.createBackup")
+        defaultShortcut: "Ctrl+Shift+B"
+        enabled: root.core.launched
+        addSeparator: true
+    }
+    EmuAction {
+        //% "Loop Playback"
+        key: QT_TRID_NOOP("menu.movie.loopPlayback")
+        defaultShortcut: "Shift+L"
+        checkable: true
+    }
+    EmuAction {
+        //% "Read-Only"
+        key: QT_TRID_NOOP("menu.movie.readOnly")
+        defaultShortcut: "Shift+R"
+        checkable: true
+    }
+    EmuAction {
+        //% "Wait at End"
+        key: QT_TRID_NOOP("menu.movie.waitAtEnd")
+        checkable: true
+    }
+
     // Dialogs
     // ================================
 

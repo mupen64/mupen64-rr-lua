@@ -164,29 +164,69 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <source>Settings...</source>
         <translation>Settings...</translation>
     </message>
-    <message id="dialogs.loadROM.title">
+    <message id="menu.movie">
+        <location filename="../Views/Settings/Actions.qml" line="304"/>
+        <source>Movie</source>
+        <translation>Movie</translation>
+    </message>
+    <message id="menu.movie.startRecording">
         <location filename="../Views/Settings/Actions.qml" line="308"/>
+        <source>Start Movie Recording</source>
+        <translation>Start Movie Recording</translation>
+    </message>
+    <message id="menu.movie.startPlayback">
+        <location filename="../Views/Settings/Actions.qml" line="312"/>
+        <source>Start Movie Playback</source>
+        <translation>Start Movie Playback</translation>
+    </message>
+    <message id="menu.movie.stopMovie">
+        <location filename="../Views/Settings/Actions.qml" line="317"/>
+        <source>Stop Movie</source>
+        <translation>Stop Movie</translation>
+    </message>
+    <message id="menu.movie.createBackup">
+        <location filename="../Views/Settings/Actions.qml" line="321"/>
+        <source>Create Movie Backup</source>
+        <translation>Create Movie Backup</translation>
+    </message>
+    <message id="menu.movie.loopPlayback">
+        <location filename="../Views/Settings/Actions.qml" line="326"/>
+        <source>Loop Playback</source>
+        <translation>Loop Playback</translation>
+    </message>
+    <message id="menu.movie.readOnly">
+        <location filename="../Views/Settings/Actions.qml" line="331"/>
+        <source>Read-Only</source>
+        <translation>Read-Only</translation>
+    </message>
+    <message id="menu.movie.waitAtEnd">
+        <location filename="../Views/Settings/Actions.qml" line="336"/>
+        <source>Wait at End</source>
+        <translation>Wait at End</translation>
+    </message>
+    <message id="dialogs.loadROM.title">
+        <location filename="../Views/Settings/Actions.qml" line="346"/>
         <source>Load ROM...</source>
         <translation>Load ROM...</translation>
     </message>
     <message id="formats.rom">
-        <location filename="../Views/Settings/Actions.qml" line="311"/>
+        <location filename="../Views/Settings/Actions.qml" line="349"/>
         <source>N64 ROMs</source>
         <translation>N64 ROMs</translation>
     </message>
     <message id="dialogs.loadState.title">
-        <location filename="../Views/Settings/Actions.qml" line="320"/>
+        <location filename="../Views/Settings/Actions.qml" line="358"/>
         <source>Load State...</source>
         <translation>Load State...</translation>
     </message>
     <message id="formats.state">
-        <location filename="../Views/Settings/Actions.qml" line="323"/>
-        <location filename="../Views/Settings/Actions.qml" line="334"/>
+        <location filename="../Views/Settings/Actions.qml" line="361"/>
+        <location filename="../Views/Settings/Actions.qml" line="372"/>
         <source>Savestates</source>
         <translation>Savestates</translation>
     </message>
     <message id="dialogs.saveState.title">
-        <location filename="../Views/Settings/Actions.qml" line="332"/>
+        <location filename="../Views/Settings/Actions.qml" line="370"/>
         <source>Save State...</source>
         <translation>Save State...</translation>
     </message>
@@ -325,10 +365,6 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <location filename="../Core/RomManager.cpp" line="122"/>
         <source>Size</source>
         <translation>Size</translation>
-    </message>
-    <message id="tasinput.appName">
-        <source>TASInput</source>
-        <translation>TASInput</translation>
     </message>
     <message id="tasinput.sensitivity">
         <location filename="../../Plugins.Qt6.TASInput/JoystickSection.qml" line="59"/>
