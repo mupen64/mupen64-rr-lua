@@ -308,12 +308,14 @@ ActionManager {
         key: QT_TRID_NOOP("menu.movie.startRecording")
         defaultShortcut: "Ctrl+Shift+R"
         enabled: root.core.launched
+        onTriggered: diaMovieRecord.open()
     }
     EmuAction {
         //% "Start Movie Playback"
         key: QT_TRID_NOOP("menu.movie.startPlayback")
-        defaultShortcut: "Ctrl+Shift+P"
         addSeparator: true
+        defaultShortcut: "Ctrl+Shift+P"
+        onTriggered: diaMoviePlayback.open()
     }
     EmuAction {
         //% "Stop Movie"
@@ -324,9 +326,9 @@ ActionManager {
     EmuAction {
         //% "Create Movie Backup"
         key: QT_TRID_NOOP("menu.movie.createBackup")
+        addSeparator: true
         defaultShortcut: "Ctrl+Shift+B"
         enabled: root.core.launched
-        addSeparator: true
     }
     EmuAction {
         id: actVcrLoopPlayback
@@ -386,6 +388,16 @@ ActionManager {
             let path = Paths.toLocalFile(selectedFile);
             root.core.saveFile(path);
         }
+    }
+
+    MovieDialog {
+        id: diaMovieRecord
+        forPlayback: false
+    }
+
+    MovieDialog {
+        id: diaMoviePlayback
+        forPlayback: true
     }
 
     // Bindings
