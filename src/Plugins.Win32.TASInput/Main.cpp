@@ -11,4 +11,8 @@
 #include <ConfigDialog.hpp>
 
 HINSTANCE g_inst;
+
+namespace BuiltinTAS::TASInput
+{
 M64RRSpec::PluginInit *g_plugin;
+}

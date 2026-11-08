@@ -26,6 +26,8 @@ Shortcut {
         function updateShortcuts() {
             // console.trace("updateShortcuts called, shortcut = " + root.sequence);
             HeldShortcutMap.clearShortcuts(root);
+            if (allKeys == null)
+                return;
             for (const key of allKeys) {
                 HeldShortcutMap.addShortcut(key, root);
             }

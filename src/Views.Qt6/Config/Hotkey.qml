@@ -10,8 +10,8 @@ import QtQuick.Layouts
 import QtQuick.Dialogs as Dialogs
 
 
-import Actions
-import Components
+import Mupen64.Actions
+import Mupen64.Components
 
 Button {
     id: root

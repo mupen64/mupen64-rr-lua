@@ -8,8 +8,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Components
-import Config
+import Mupen64.Components
+import Mupen64.Config
 
 ListPage {
     id: root

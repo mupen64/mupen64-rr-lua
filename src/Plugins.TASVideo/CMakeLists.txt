@@ -25,6 +25,7 @@ add_library(Mupen64RR_Plugins_TASVideo STATIC
     "FrameBuffer.hpp"
     "F3DWRUS.hpp"
     "F3DPD.hpp"
+    "F3DEX3.hpp"
     "F3DEX2.hpp"
     "F3DEX.hpp"
     "F3DDKR.hpp"
@@ -55,6 +56,7 @@ add_library(Mupen64RR_Plugins_TASVideo STATIC
     "FrameBuffer.cpp"
     "F3DWRUS.cpp"
     "F3DPD.cpp"
+    "F3DEX3.cpp"
     "F3DEX2.cpp"
     "F3DEX.cpp"
     "F3DDKR.cpp"
@@ -85,10 +87,6 @@ else()
 endif()
 
 target_compile_features(Mupen64RR_Plugins_TASVideo PRIVATE cxx_std_26)
-target_compile_definitions(Mupen64RR_Plugins_TASVideo PRIVATE
-    MUPEN64RR_BUILD_WIN32=$<BOOL:${MUPEN64RR_BUILD_WIN32}>
-    MUPEN64RR_BUILD_QT6=$<BOOL:${MUPEN64RR_BUILD_QT6}>
-)
 set_target_properties(Mupen64RR_Plugins_TASVideo PROPERTIES
     OUTPUT_NAME "TASVideo"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
@@ -114,10 +112,6 @@ target_link_libraries(Mupen64RR_Plugins_TASVideo PRIVATE
 )
 
 target_compile_definitions(Mupen64RR_Plugins_TASVideo PRIVATE
-    M64RRGetMetadata=M64RRBuiltinTASVideoGetMetadata
-    M64RRProcessEvent=M64RRBuiltinTASVideoProcessEvent
-    M64RRProcessDList=M64RRBuiltinTASVideoProcessDList
-    M64RRReadVideo=M64RRBuiltinTASVideoReadVideo
-    M64RRShowConfig=M64RRBuiltinTASVideoShowConfig
-    g_plugin=M64RRBuiltinTASVideoPlugin
+    PLUGIN_NAMESPACE=BuiltinTAS::TASVideo
+    # g_plugin=M64RRBuiltinTASVideoPlugin
 )

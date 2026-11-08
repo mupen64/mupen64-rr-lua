@@ -20,6 +20,7 @@ struct ToastData
     std::optional<std::string> title = std::nullopt;
     CoreMessageTone tone = CoreMessageTone::Warn;
     std::chrono::milliseconds ttl = std::chrono::seconds(5);
+    std::optional<std::string> subtitle = std::nullopt;
 };
 
 /**

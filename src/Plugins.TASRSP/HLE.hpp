@@ -24,8 +24,6 @@
 #define A_MAIN 0x00
 #define A_MIX 0x10
 
-extern M64RRSpec::PluginInit *g_plugin;
-
 typedef struct
 {
     uint32_t type;

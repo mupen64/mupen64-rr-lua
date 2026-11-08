@@ -49,6 +49,7 @@ class LuaRealmManager
         REG_ATWARPMODIFYSTATUSCHANGED,
         REG_ATKEY,
         REG_ATMOUSE,
+        REG_CLOSED,
         _COUNT,
     };
 
@@ -115,6 +116,6 @@ class LuaRealmManager
     void call_reset();
     void call_seek_completed();
     void call_warp_modify_status_changed(int32_t status);
-    void call_atkey(const LuaKeyEventArgs &args);
-    void call_atmouse(const LuaMouseEventArgs &args);
+    void call_atkey(const LuaKeyEventArgs &args, HWND hwnd);
+    void call_atmouse(const LuaMouseEventArgs &args, HWND hwnd);
 };

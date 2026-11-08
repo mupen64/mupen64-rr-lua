@@ -5,7 +5,7 @@
  */
 
 import QtQuick
-import Config
+import Mupen64.Config
 
 ListPage {
     id: root

@@ -28,11 +28,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Install git-cliff
-        uses: taiki-e/install-action@v2
-        with:
-          tool: git-cliff
-        
+
       - parallel:
         - name: Download windows-x86 release
           uses: actions/download-artifact@v8
@@ -51,22 +47,37 @@ jobs:
           mv mupen-release-stable-windows-x86.zip mupen-windows-x86.zip
           mv mupen-release-stable-windows-x64.zip mupen-windows-x64.zip
 
-      - name: Generate changelog with git-cliff
-        id: changelog
+      - name: Extract release notes from changelog
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md
-          {
-            echo 'body<<EOF'
-            cat CHANGELOG_DRAFT.md
-            echo EOF
-          } >> "$GITHUB_OUTPUT"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          lines = Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()
+          heading = f"# {version}"
+          try:
+              start = lines.index(heading) + 1
+          except ValueError:
+              raise SystemExit(f"No changelog section found for version {version}")
+          end = next(
+              (i for i in range(start, len(lines)) if lines[i].startswith("# ")),
+              len(lines),
+          )
+          notes = "\n".join(lines[start:end]).strip()
+          if not notes:
+              raise SystemExit(f"Changelog section for version {version} is empty")
+          Path("CHANGELOG_DRAFT.md").write_text(notes + "\n", encoding="utf-8")
+          PY
 
       - name: Create draft stable release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.version }}
           name: ${{ inputs.version }}
-          body: ${{ steps.changelog.outputs.body }}
+          body_path: CHANGELOG_DRAFT.md
           prerelease: false
           draft: true
           files: |

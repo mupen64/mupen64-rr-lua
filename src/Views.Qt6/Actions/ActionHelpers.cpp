@@ -23,7 +23,9 @@ QVariant ActionHelpers::sequenceToKey(const QVariant &variant)
     auto type = variant.metaType();
     if (type.id() == QMetaType::Int)
     {
-        return sequenceToKeyImpl(QKeySequence::keyBindings((QKeySequence::StandardKey)variant.toInt())[0]);
+        const auto bindings = QKeySequence::keyBindings((QKeySequence::StandardKey)variant.toInt());
+        if (bindings.isEmpty()) return {};
+        return sequenceToKeyImpl(bindings[0]);
     }
 
     if (type.id() == QMetaType::QString || type.id() == QMetaType::QChar)

@@ -3176,6 +3176,11 @@ void vr_recompile(uint32_t addr)
     }
     else
     {
+        if (!blocks[addr >> 12])
+        {
+            return;
+        }
+
         uint32_t paddr = PAddr(addr);
         if (paddr)
         {

@@ -63,8 +63,9 @@ static json convert_to_json(const std::map<std::string, Hotkey> &value)
 {
     return value | std::views::transform([](const std::pair<const std::string, Hotkey> &mapping) {
         const auto &hotkey = mapping.second;
-        return std::pair(mapping.first, json::object({{"trigger", hotkey.trigger}, {"ctrl", hotkey.ctrl},
-                                            {"shift", hotkey.shift}, {"alt", hotkey.alt}}));
+        return std::pair(
+            mapping.first, json::object({{"trigger", hotkey.trigger}, {"ctrl", hotkey.ctrl}, {"shift", hotkey.shift},
+                               {"alt", hotkey.alt}, {"context", hotkey.context}}));
     }) | std::ranges::to<json::object_t>();
 }
 
@@ -95,6 +96,7 @@ static bool convert_from_json(const json &j, std::map<std::string, Hotkey> &valu
                 hotkey.ctrl = hotkey_json["ctrl"];
                 hotkey.shift = hotkey_json["shift"];
                 hotkey.alt = hotkey_json["alt"];
+                hotkey.context = hotkey_json.value("context", std::string("window.builtin.main"));
 
                 return std::pair(std::move(name), hotkey);
             }) |

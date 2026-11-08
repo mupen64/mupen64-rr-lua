@@ -49,13 +49,13 @@ struct TabContext
 
 static std::optional<std::string> readonly_when_emu_running()
 {
-    if (g_main_ctx.CoreCtx->vr_get_core_executing()) return "The ROM needs to be closed before changing this option";
+    if (g_main_ctx.core_ctx->vr_get_core_executing()) return "The ROM needs to be closed before changing this option";
     return std::nullopt;
 }
 
 static std::optional<std::string> readonly_when_vcr_active()
 {
-    if (g_main_ctx.CoreCtx->vcr_get_task() != CoreVCRTask::Idle)
+    if (g_main_ctx.core_ctx->vcr_get_task() != CoreVCRTask::Idle)
         return "The movie needs to be stopped before changing this option";
     return std::nullopt;
 }
@@ -305,7 +305,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         if (dis->CtlType == ODT_STATIC && std::ranges::contains(plugin_icon_ids, static_cast<int>(dis->CtlID)))
         {
             draw_bitmap_transparent(dis->hDC, dis->rcItem, g_main_ctx.hinst, static_cast<int>(dis->CtlID),
-                WinDarkMode::theme_data.bg_color == WinDarkMode::dark_theme_data.bg_color);
+                WinDarkMode::effective_theme() == WinDarkMode::EffectiveTheme::Dark);
             return TRUE;
         }
         return FALSE;
@@ -387,10 +387,10 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             IDRSPABOUT,
         };
 
-        EnableWindow(GetDlgItem(hwnd, IDC_COMBO_GFX), !g_main_ctx.CoreCtx->vr_get_launched());
-        EnableWindow(GetDlgItem(hwnd, IDC_COMBO_INPUT), !g_main_ctx.CoreCtx->vr_get_launched());
-        EnableWindow(GetDlgItem(hwnd, IDC_COMBO_SOUND), !g_main_ctx.CoreCtx->vr_get_launched());
-        EnableWindow(GetDlgItem(hwnd, IDC_COMBO_RSP), !g_main_ctx.CoreCtx->vr_get_launched());
+        EnableWindow(GetDlgItem(hwnd, IDC_COMBO_GFX), !g_main_ctx.core_ctx->vr_get_launched());
+        EnableWindow(GetDlgItem(hwnd, IDC_COMBO_INPUT), !g_main_ctx.core_ctx->vr_get_launched());
+        EnableWindow(GetDlgItem(hwnd, IDC_COMBO_SOUND), !g_main_ctx.core_ctx->vr_get_launched());
+        EnableWindow(GetDlgItem(hwnd, IDC_COMBO_RSP), !g_main_ctx.core_ctx->vr_get_launched());
 
         for (const auto &id : ids_to_enable)
         {

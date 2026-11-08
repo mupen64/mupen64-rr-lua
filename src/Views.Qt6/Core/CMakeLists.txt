@@ -6,12 +6,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 qt_add_library(Mupen64RR_Views_Qt6_Core STATIC)
 mupen64rr_reuse_common_pch(Mupen64RR_Views_Qt6_Core)
-qt_add_qml_module(Mupen64RR_Views_Qt6_Core URI "Core"
+qt_add_qml_module(Mupen64RR_Views_Qt6_Core
+    URI "Mupen64.Core"
     IMPORTS
         TARGET Mupen64RR_Views_Qt6_Utils
     SOURCES
         "plugin/BuiltinTAS.hpp"
         "plugin/Plugin.hpp"
+        "plugin/Windowing.hpp"
         "CoreEnums.hpp"
         "DefaultPaths.hpp"
         "EmuContext.hpp"
@@ -20,6 +22,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Core URI "Core"
 
         "plugin/BuiltinTAS.cpp"
         "plugin/Plugin.cpp"
+        "plugin/Windowing.cpp"
         "CoreEnums.cpp"
         "DefaultPaths.cpp"
         "EmuContext.cpp"
@@ -39,6 +42,7 @@ target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
     Qt6::Quick
 
     vendor::decan
+    vendor::nontype_functional
 )
 
 target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
@@ -49,4 +53,6 @@ target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
     Mupen64RR_Plugins_TASVideo
     Mupen64RR_Plugins_TASAudio
     Mupen64RR_Plugins_TASRSP
+
+    Mupen64RR_Plugins_Qt6_TASInput
 )

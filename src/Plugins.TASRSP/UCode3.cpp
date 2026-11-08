@@ -7,6 +7,8 @@
 #include "Main.hpp"
 #include "HLE.hpp"
 
+using namespace BuiltinTAS::TASRSP;
+
 static void SPNOOP()
 {
     assert(false && std::format("Unknown/Unimplemented Audio Command {} in ABI 3", inst1 >> 24).c_str());

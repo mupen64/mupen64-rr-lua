@@ -16,6 +16,5 @@ set_target_properties(Mupen64RR_Plugins_DummyAudio PROPERTIES
 mupen64rr_reuse_common_pch(Mupen64RR_Plugins_DummyAudio)
 target_link_libraries(Mupen64RR_Plugins_DummyAudio PRIVATE Mupen64RR_Plugins_Common)
 target_compile_definitions(Mupen64RR_Plugins_DummyAudio PRIVATE
-    M64RRGetMetadata=M64RRBuiltinNoAudioGetMetadata
-    M64RRProcessEvent=M64RRBuiltinNoAudioProcessEvent
+    PLUGIN_NAMESPACE=BuiltinTAS::DummyAudio
 )

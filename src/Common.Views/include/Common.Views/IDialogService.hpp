@@ -67,7 +67,8 @@ void show_statusbar(std::string_view str);
  * \param str The notification text.
  * \param title The notification title. If `std::nullopt`, no title will be shown.
  * \param type The notification tone.
+ * \param subtitle Optional smaller text shown below the content.
  */
-void show_notification(
-    std::string str, std::optional<std::string> title = std::nullopt, CoreMessageTone type = CoreMessageTone::Warn);
+void show_notification(std::string str, std::optional<std::string> title = std::nullopt,
+    CoreMessageTone type = CoreMessageTone::Warn, std::optional<std::string> subtitle = std::nullopt);
 } // namespace DialogService

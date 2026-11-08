@@ -7,10 +7,11 @@
 #include <Common/DummyPluginStub.hpp>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("No Input")
-
+namespace BuiltinTAS::DummyInput
+{
 DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Input)
 
-EXPORT void CALL M64RRProcessEvent(Event event)
+EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
 {
     switch (event.type)
     {
@@ -31,3 +32,4 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         break;
     }
 }
+} // namespace BuiltinTAS::DummyInput

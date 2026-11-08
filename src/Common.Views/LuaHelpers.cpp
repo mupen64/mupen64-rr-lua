@@ -171,6 +171,7 @@ std::string lua_pushstlstring(lua_State *L, const std::string &str)
     return str;
 }
 
+#ifdef _WIN32
 std::wstring luaL_checkstlwstring(lua_State *L, const int i)
 {
     const auto text = luaL_checkstlstring(L, i);
@@ -180,6 +181,7 @@ std::wstring luaL_checkstlwstring(lua_State *L, const int i)
     if (result.empty()) luaL_error(L, "string is not valid UTF-8");
     return result;
 }
+#endif
 
 bool luaL_checkboolean(lua_State *L, int i)
 {

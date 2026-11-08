@@ -10,9 +10,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Actions
-import Core
-import Views
+import Mupen64.Actions
+import Mupen64.Core
 
 ApplicationWindow {
     id: mainWindow
@@ -103,6 +102,7 @@ ApplicationWindow {
         onUpdateScreen: coreDisplay.readPixels()
 
         // Dialog service
+        Component.onDestruction: dialogService.discardDialogs()
         onOpenInfoDialog: dialogService.queueInfoDialog
         onOpenAskDialog: dialogService.queueAskDialog
         onOpenMultiDialog: dialogService.queueMultiDialog
@@ -175,6 +175,13 @@ ApplicationWindow {
     // =====================================
 
     DialogService { id: dialogService }
+
+    Connections {
+        target: dialogService
+        function onDialogFinished(id, result) {
+            core.finishDialog(id, result);
+        }
+    }
 
     ConfigWindow {
         id: winConfig

@@ -477,7 +477,7 @@ void update_pif_read()
                             }
                         }
 
-                        while (g_wait_counter)
+                        while (g_wait_counter && !stop)
                         {
                             std::this_thread::sleep_for(std::chrono::milliseconds(1));
                             if (stAllowed)
@@ -486,7 +486,7 @@ void update_pif_read()
                             }
                         }
 
-                        while (emu_paused)
+                        while (emu_paused && !stop)
                         {
                             std::this_thread::sleep_for(std::chrono::milliseconds(10));
 

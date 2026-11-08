@@ -8,4 +8,7 @@
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("No Audio")
 
+namespace BuiltinTAS::DummyAudio
+{
 DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Audio)
+}

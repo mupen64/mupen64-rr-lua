@@ -164,6 +164,7 @@
 #define IDC_TOAST_CLOSE 10189
 #define IDC_PARAMETER_PALETTE_BACK 10190
 #define IDC_PARAMETER_PALETTE_NEXT 10191
+#define IDC_TOAST_SUBTITLE 10192
 
 // Next default values for new objects
 //

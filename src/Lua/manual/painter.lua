@@ -270,7 +270,7 @@ custom_row("text hit-test", "painter.hittest_text_position(text, x, y, style, op
             local time = os.clock()
             local sweep_width = bounds.w - 24
             local probes = {
-                { x = bounds.x + 12 + sweep_width * (0.5 + 0.5 * math.sin(time * 1.1)), y = bounds.y + 6 },
+                { x = bounds.x + 12 + sweep_width * (0.5 + 0.5 * math.sin(time * 1.1)),       y = bounds.y + 6 },
                 { x = bounds.x + 12 + sweep_width * (0.5 + 0.5 * math.sin(time * 1.1 + 2.1)), y = bounds.y + 22 },
                 { x = bounds.x + 12 + sweep_width * (0.5 + 0.5 * math.sin(time * 1.1 + 4.2)), y = bounds.y + 38 },
             }
@@ -464,7 +464,10 @@ custom_row("linear gradient", "type='linear_gradient', x0/y0/x1/y1, stops", {
         draw = function(q, x, y)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                x0 = x + 24,
+                y0 = y + 50,
+                x1 = x + 161,
+                y1 = y + 50,
                 stops = {
                     { offset = 0, color = colors.orange },
                     { offset = 1, color = colors.blue },
@@ -480,7 +483,10 @@ custom_row("linear gradient", "type='linear_gradient', x0/y0/x1/y1, stops", {
         draw = function(q, x, y)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 92, y0 = y + 18, x1 = x + 92, y1 = y + 86,
+                x0 = x + 92,
+                y0 = y + 18,
+                x1 = x + 92,
+                y1 = y + 86,
                 stops = {
                     { offset = 0, color = colors.green },
                     { offset = 1, color = colors.purple },
@@ -500,7 +506,10 @@ custom_row("linear gradient", "type='linear_gradient', x0/y0/x1/y1, stops", {
             local dy = 32 * math.sin(angle)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 92 - dx, y0 = y + 50 - dy, x1 = x + 92 + dx, y1 = y + 50 + dy,
+                x0 = x + 92 - dx,
+                y0 = y + 50 - dy,
+                x1 = x + 92 + dx,
+                y1 = y + 50 + dy,
                 stops = {
                     { offset = 0, color = colors.blue },
                     { offset = 1, color = colors.orange },
@@ -516,11 +525,14 @@ custom_row("linear gradient", "type='linear_gradient', x0/y0/x1/y1, stops", {
         draw = function(q, x, y)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                x0 = x + 24,
+                y0 = y + 50,
+                x1 = x + 161,
+                y1 = y + 50,
                 stops = {
-                    { offset = 0, color = colors.orange },
+                    { offset = 0,   color = colors.orange },
                     { offset = 0.5, color = colors.green },
-                    { offset = 1, color = colors.purple },
+                    { offset = 1,   color = colors.purple },
                 },
             }
             q:begin_path()
@@ -536,7 +548,10 @@ custom_row("radial gradient", "type='radial_gradient', center_x/y, radius_x/y, s
         draw = function(q, x, y)
             local gradient = {
                 type = "radial_gradient",
-                center_x = x + 92, center_y = y + 51, radius_x = 40, radius_y = 40,
+                center_x = x + 92,
+                center_y = y + 51,
+                radius_x = 40,
+                radius_y = 40,
                 stops = {
                     { offset = 0, color = colors.orange },
                     { offset = 1, color = colors.blue },
@@ -552,7 +567,10 @@ custom_row("radial gradient", "type='radial_gradient', center_x/y, radius_x/y, s
         draw = function(q, x, y)
             local gradient = {
                 type = "radial_gradient",
-                center_x = x + 92, center_y = y + 51, radius_x = 68, radius_y = 29,
+                center_x = x + 92,
+                center_y = y + 51,
+                radius_x = 68,
+                radius_y = 29,
                 stops = {
                     { offset = 0, color = colors.green },
                     { offset = 1, color = colors.purple },
@@ -572,11 +590,14 @@ custom_row("radial gradient", "type='radial_gradient', center_x/y, radius_x/y, s
             local radius = 32 + 8 * (0.5 + 0.5 * math.sin(time * 1.7))
             local gradient = {
                 type = "radial_gradient",
-                center_x = center_x, center_y = center_y, radius_x = radius, radius_y = radius,
+                center_x = center_x,
+                center_y = center_y,
+                radius_x = radius,
+                radius_y = radius,
                 stops = {
-                    { offset = 0, color = colors.orange },
+                    { offset = 0,    color = colors.orange },
                     { offset = 0.55, color = colors.green },
-                    { offset = 1, color = colors.blue },
+                    { offset = 1,    color = colors.blue },
                 },
             }
             q:begin_path()
@@ -589,7 +610,10 @@ custom_row("radial gradient", "type='radial_gradient', center_x/y, radius_x/y, s
         draw = function(q, x, y)
             local gradient = {
                 type = "radial_gradient",
-                center_x = x + 92, center_y = y + 51, radius_x = 24, radius_y = 24,
+                center_x = x + 92,
+                center_y = y + 51,
+                radius_x = 24,
+                radius_y = 24,
                 stops = {
                     { offset = 0, color = colors.text },
                     { offset = 1, color = colors.purple },
@@ -612,12 +636,15 @@ custom_row("gradient stops", "sorted stops, alpha, and clamping", {
             local second_stop = 0.82 - 0.14 * pulse
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                x0 = x + 24,
+                y0 = y + 50,
+                x1 = x + 161,
+                y1 = y + 50,
                 stops = {
-                    { offset = 0, color = colors.blue },
-                    { offset = first_stop, color = colors.orange },
+                    { offset = 0,           color = colors.blue },
+                    { offset = first_stop,  color = colors.orange },
                     { offset = second_stop, color = colors.green },
-                    { offset = 1, color = colors.purple },
+                    { offset = 1,           color = colors.purple },
                 },
             }
             q:begin_path()
@@ -630,11 +657,14 @@ custom_row("gradient stops", "sorted stops, alpha, and clamping", {
         draw = function(q, x, y)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                x0 = x + 24,
+                y0 = y + 50,
+                x1 = x + 161,
+                y1 = y + 50,
                 stops = {
-                    { offset = 1, color = colors.purple },
+                    { offset = 1,   color = colors.purple },
                     { offset = 0.5, color = colors.green },
-                    { offset = 0, color = colors.orange },
+                    { offset = 0,   color = colors.orange },
                 },
             }
             q:begin_path()
@@ -650,7 +680,10 @@ custom_row("gradient stops", "sorted stops, alpha, and clamping", {
             q:fill(colors.blue)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                x0 = x + 24,
+                y0 = y + 50,
+                x1 = x + 161,
+                y1 = y + 50,
                 stops = {
                     { offset = 0, color = color(0.78, 0.52, 0.30, 0) },
                     { offset = 1, color = colors.orange },
@@ -666,7 +699,10 @@ custom_row("gradient stops", "sorted stops, alpha, and clamping", {
         draw = function(q, x, y)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 65, y0 = y + 50, x1 = x + 120, y1 = y + 50,
+                x0 = x + 65,
+                y0 = y + 50,
+                x1 = x + 120,
+                y1 = y + 50,
                 stops = {
                     { offset = 0, color = colors.orange },
                     { offset = 1, color = colors.blue },
@@ -685,7 +721,10 @@ custom_row("gradient paints", "reuse gradients with fill and stroke", {
         draw = function(q, x, y)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 26, y0 = y + 50, x1 = x + 159, y1 = y + 50,
+                x0 = x + 26,
+                y0 = y + 50,
+                x1 = x + 159,
+                y1 = y + 50,
                 stops = {
                     { offset = 0, color = colors.orange },
                     { offset = 1, color = colors.blue },
@@ -701,7 +740,10 @@ custom_row("gradient paints", "reuse gradients with fill and stroke", {
         draw = function(q, x, y)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                x0 = x + 24,
+                y0 = y + 50,
+                x1 = x + 161,
+                y1 = y + 50,
                 stops = {
                     { offset = 0, color = colors.green },
                     { offset = 1, color = colors.purple },
@@ -717,11 +759,14 @@ custom_row("gradient paints", "reuse gradients with fill and stroke", {
         draw = function(q, x, y)
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 24, y0 = y + 50, x1 = x + 161, y1 = y + 50,
+                x0 = x + 24,
+                y0 = y + 50,
+                x1 = x + 161,
+                y1 = y + 50,
                 stops = {
-                    { offset = 0, color = colors.orange },
+                    { offset = 0,   color = colors.orange },
                     { offset = 0.5, color = colors.green },
-                    { offset = 1, color = colors.blue },
+                    { offset = 1,   color = colors.blue },
                 },
             }
             q:begin_path()
@@ -737,11 +782,14 @@ custom_row("gradient paints", "reuse gradients with fill and stroke", {
             local midpoint = 0.25 + 0.5 * (0.5 + 0.5 * math.sin(time * 1.3))
             local gradient = {
                 type = "linear_gradient",
-                x0 = x + 18, y0 = y + 50, x1 = x + 167, y1 = y + 50,
+                x0 = x + 18,
+                y0 = y + 50,
+                x1 = x + 167,
+                y1 = y + 50,
                 stops = {
-                    { offset = 0, color = colors.orange },
+                    { offset = 0,        color = colors.orange },
                     { offset = midpoint, color = colors.green },
-                    { offset = 1, color = colors.blue },
+                    { offset = 1,        color = colors.blue },
                 },
             }
             q:begin_path()
@@ -1003,7 +1051,7 @@ local function draw_scrollbar(p, view_w, view_h, max_scroll)
     p:fill(color(1, 1, 1, 0.35))
 end
 
-emu.atmouse(function(ev)
+emu.main_window():atmouse(function(ev)
     if not ev.y_wheel then
         return
     end
@@ -1016,7 +1064,7 @@ emu.atmouse(function(ev)
     scroll_y = math.max(0, math.min(max_scroll, scroll_y + step))
 end)
 
-emu.atpaint(function()
+emu.main_window():atpaint(function()
     local p = painter.current()
     local info = wgui.info()
     local view_w, view_h = info.width, info.height

@@ -1,6 +1,5 @@
 .idea/
 build/
-CHANGELOG.md
 
 ## CMake gitignore file.
 ## Latest available at https://github.com/github/gitignore/blob/main/CMake.gitignore

@@ -8,6 +8,8 @@
 #include "HLE.hpp"
 #include <tmmintrin.h>
 
+using namespace BuiltinTAS::TASRSP;
+
 /******** DMEM Memory Map for ABI 1 ***************
 Address/Range		Description
 -------------		-------------------------------

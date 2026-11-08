@@ -7,6 +7,7 @@
 
 #include <QObject>
 #include <QImage>
+#include <QPointer>
 #include <QQuickItem>
 #include <qqmlintegration.h>
 
@@ -17,7 +18,7 @@ class EmuDisplay : public QQuickItem
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(EmuContext *context MEMBER m_context READ context WRITE setContext NOTIFY contextChanged)
+    Q_PROPERTY(EmuContext *context READ context WRITE setContext NOTIFY contextChanged)
   public:
     // Inherited stuff
     // ============================================
@@ -64,6 +65,6 @@ class EmuDisplay : public QQuickItem
   private:
     void visibleChangedImpl();
 
-    EmuContext *m_context;
+    QPointer<EmuContext> m_context;
     QImage m_frame;
 };

@@ -5,8 +5,14 @@
  */
 #pragma once
 
+#include <future>
+#include <functional>
+#include <mutex>
+#include <unordered_map>
+
 #include <QObject>
-#include <QThreadPool>
+#include <QPointer>
+#include <QQuickItem>
 #include <QUrl>
 #include <qqmlintegration.h>
 
@@ -23,7 +29,7 @@ class EmuPaths;
  * @brief QML-owned singleton holding the core and related objects.
  * Implemented as a non-singleton, but will throw a tantrum if instantiated more than once.
  */
-class EmuContext : public QObject
+class EmuContext : public QQuickItem
 {
     Q_OBJECT
     QML_ELEMENT
@@ -49,7 +55,7 @@ class EmuContext : public QObject
   public:
     static constexpr size_t num_save_slots = 10;
 
-    EmuContext(QObject *parent = nullptr);
+    EmuContext(QQuickItem *parent = nullptr);
     virtual ~EmuContext();
 
     static EmuContext *instance();
@@ -64,13 +70,13 @@ class EmuContext : public QObject
     // ==========================
 
     // -> vr_start_rom
-    Q_INVOKABLE QmlCoreResult::Value startROM(const QString &path);
+    Q_INVOKABLE void startROM(const QString &path);
 
     // -> vr_close_rom
-    Q_INVOKABLE QmlCoreResult::Value closeROM(bool resetVCR = true);
+    Q_INVOKABLE void closeROM(bool resetVCR = true);
 
     // -> vr_reset_rom
-    Q_INVOKABLE QmlCoreResult::Value resetROM(bool resetSaveData, bool stopVCR);
+    Q_INVOKABLE void resetROM(bool resetSaveData, bool stopVCR);
 
     // -> vr_invalidate_visuals
     Q_INVOKABLE void invalidateVisuals();
@@ -147,6 +153,17 @@ class EmuContext : public QObject
      */
     void readVideoOutput(QImage &image);
 
+    // Dialog service
+    // ============================================
+
+    std::future<size_t> startMultiDialog(
+        QAnyStringView title, QAnyStringView content, const QList<QString> &choices, QmlCoreMessageTone::Value type);
+
+    std::future<bool> startAskDialog(QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
+    std::future<void> startInfoDialog(QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
+
+    Q_INVOKABLE void finishDialog(int id, int result);
+
     // Misc. properties
     // ==========================
 
@@ -206,47 +223,61 @@ class EmuContext : public QObject
     /**
      * @brief Opens a multiple-choice dialog.
      *
-     * @param done (type: `void(size_t)`) Function to be called when finished.
+     * @param id The dialog request ID.
      * @param title The dialog's title.
      * @param content The dialog's content text.
      * @param choices A list of choices to use for the bottom buttons.
      * @param type The dialog's type. Used to display an icon next to the text.
      */
-    void openMultiDialog(QJSValue done, QAnyStringView title, QAnyStringView content, const QList<QString> &choices,
-        QmlCoreMessageTone::Value type);
+    void openMultiDialog(
+        int id, QString title, QString content, const QList<QString> &choices, QmlCoreMessageTone::Value type);
 
     /**
      * @brief Opens a yes/no dialog.
      *
-     * @param done (type: `void(bool result)`) Function to be called when finished.
+     * @param id The dialog request ID.
      * @param title The dialog's title.
      * @param content The dialog's content text.
      * @param type The dialog's type. Used to display an icon next to the text.
      */
-    void openAskDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
+    void openAskDialog(int id, QString title, QString content, QmlCoreMessageTone::Value type);
 
     /**
      * @brief Opens an info dialog.
      *
-     * @param done (type: `void()`) Function to be called when finished.
+     * @param id The dialog request ID.
      * @param title The dialog's title.
      * @param content The dialog's content text.
      * @param type The dialog's type. Used to display an icon next to the text.
      */
-    void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, QmlCoreMessageTone::Value type);
+    void openInfoDialog(int id, QString title, QString content, QmlCoreMessageTone::Value type);
 
   private:
+    int registerDialog(std::move_only_function<void(int)> finish);
+    void cancelPendingDialogs();
+    void startDialogForCoreResult(CoreResult result);
+
     CoreCfg *m_core_cfg;
     CoreParams *m_core_params;
     CoreCtx *m_core_ctx;
 
+    mutable std::mutex m_read_video_mutex;
+
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
 
-    RomManager *m_rom_manager;
+    QPointer<RomManager> m_rom_manager;
 
     EmuOptions *m_options;
     EmuPaths *m_paths;
+
+    struct PendingDialog
+    {
+        std::move_only_function<void(int)> finish;
+    };
+
+    std::unordered_map<int, PendingDialog> m_pending_dialogs;
+    int m_next_dialog_id = 0;
 };
 
 /**
@@ -434,7 +465,7 @@ class EmuOptions : public QObject
 };
 
 /**
- *
+ * @brief Qt bindings for various paths that must be exposed to the core.
  */
 class EmuPaths : public QObject
 {

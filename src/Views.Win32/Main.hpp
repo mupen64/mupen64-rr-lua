@@ -28,7 +28,7 @@
 struct MainContext
 {
     CoreParams core{};
-    CoreCtx *CoreCtx{};
+    CoreCtx *core_ctx{};
     // PlatformService io_service{};
     bool frame_changed{};
     int last_wheel_delta{};

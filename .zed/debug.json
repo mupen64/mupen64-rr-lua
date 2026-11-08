@@ -1,12 +1,12 @@
 [
   {
     "adapter": "CodeLLDB",
-    "label": "mupen64.exe (linux native) (CodeLLDB)",
+    "label": "mupen64-qt6 (linux native) (CodeLLDB)",
     "request": "launch",
-    "name": "mupen64.exe (linux native) (CodeLLDB)",
-    "program": "./build/out/mupen64.exe",
+    "name": "mupen64-qt6 (linux native) (CodeLLDB)",
+    "program": "./build/out/mupen64-qt6",
     "stopOnEntry": false,
-    "build": "build (linux native)"
+    "build": "build"
   },
   {
     "adapter": "CodeLLDB",
