@@ -16,6 +16,7 @@
 - Fixed screenshots not respecting configured screenshot directory
 - Fixed missing dpad down button in piano roll
 - Fixed Mupen sometimes staying around as a zombie process after closing.
+- Fixed multi-line subtitles in toasts causing them to fill the window horizontally
 
 ## ⚡ Performance
 

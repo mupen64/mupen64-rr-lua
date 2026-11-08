@@ -41,12 +41,12 @@ struct ToastWindow
     }
 };
 
-RECT measure_subtitle(HDC dc, const ToastWindow &toast, int width)
+RECT measure_subtitle(HDC dc, const ToastWindow &toast, int width, bool word_break = true)
 {
-    RECT rect{0, 0, width, 0};
-    if (toast.subtitle.empty()) return rect;
+    if (toast.subtitle.empty()) return {};
+    RECT rect{0, 0, word_break ? width : 0, 0};
     const auto old_font = SelectObject(dc, toast.subtitle_font);
-    DrawText(dc, toast.subtitle.c_str(), -1, &rect, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+    DrawText(dc, toast.subtitle.c_str(), -1, &rect, DT_CALCRECT | DT_NOPREFIX | (word_break ? DT_WORDBREAK : 0));
     SelectObject(dc, old_font);
     return rect;
 }
@@ -237,14 +237,14 @@ void show_impl(const ToastData &data)
     const auto *created = reinterpret_cast<ToastWindow *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
     SelectObject(dc, font);
 
-    RECT content_measure{0, 0, 32767, 0};
-    DrawText(dc, created->content.c_str(), -1, &content_measure, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+    RECT content_measure{};
+    DrawText(dc, created->content.c_str(), -1, &content_measure, DT_CALCRECT | DT_NOPREFIX);
     SIZE title_size{};
     GetTextExtentPoint32(dc, created->title.c_str(), static_cast<int>(created->title.size()), &title_size);
 
     const int text_left_padding = padding + icon_size + gap;
     constexpr int text_right_padding = close_size + padding + gap;
-    const auto subtitle_measure = measure_subtitle(dc, *created, 32767);
+    const auto subtitle_measure = measure_subtitle(dc, *created, 32767, false);
     const int desired_text_width = std::max({static_cast<int>(content_measure.right), static_cast<int>(title_size.cx),
         static_cast<int>(subtitle_measure.right)});
     const int desired_width = desired_text_width + text_left_padding + text_right_padding;
