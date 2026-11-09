@@ -20,6 +20,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Views
         "SettingsActions.qml"
         "SettingsCore.qml"
         "SettingsPaths.qml"
+        "SimpleTableCell.qml"
 )
 target_link_libraries(Mupen64RR_Views_Qt6_Views PUBLIC
     Qt6::Quick Qt6::QuickControls2

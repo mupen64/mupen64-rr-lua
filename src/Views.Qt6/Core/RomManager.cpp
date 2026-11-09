@@ -127,12 +127,15 @@ QVariant RomManager::headerData(int section, Qt::Orientation orientation, int ro
 
 QHash<int, QByteArray> RomManager::roleNames() const
 {
-    static const QHash<int, QByteArray> s_instance{// text to display (QString)
-        {Qt::DisplayRole, "display"}, {RoleDisplayType, "displayType"},
+    static const QHash<int, QByteArray> s_instance{
+        // text to display (QString)
+        {Qt::DisplayRole, "display"},
+        {RoleDisplayType, "displayType"},
         // ROM path to open on double-click (QString)
         {RoleRomPath, "romPath"},
         // region code to render icon (var: int | null)
-        {RoleRegionCode, "regionCode"}};
+        {RoleRegionCode, "regionCode"},
+    };
     return s_instance;
 }
 Qt::ItemFlags RomManager::flags(const QModelIndex &index) const
@@ -166,7 +169,7 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
         auto romFilter = std::views::filter([](const std::filesystem::directory_entry &entry) {
             return entry.is_regular_file() && is_one_of(entry.path().extension(), {".n64", ".v64", ".z64", ".rom"});
         });
-        auto sendRomData = [self, vrByteswap](const std::filesystem::directory_entry &entry) {
+        auto returnRomData = [self, vrByteswap](const std::filesystem::directory_entry &entry) {
             // std::println("adding {}", entry.path().string());
             auto *romData = new RomData(entry.path(), entry.file_size(), vrByteswap);
 
@@ -182,19 +185,28 @@ Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive
         };
 
         if (recursive)
-            std::ranges::for_each(std::filesystem::recursive_directory_iterator{romDirPath} | romFilter, sendRomData);
+            std::ranges::for_each(std::filesystem::recursive_directory_iterator{romDirPath} | romFilter, returnRomData);
         else
-            std::ranges::for_each(std::filesystem::directory_iterator{romDirPath} | romFilter, sendRomData);
+            std::ranges::for_each(std::filesystem::directory_iterator{romDirPath} | romFilter, returnRomData);
     });
 }
 
 void RomManager::requestRomData(RomDataCallback &&callback)
 {
-    //     if (m_rom_data_request.has_value()) throw std::logic_error("ROM data request already active");
-    //     m_rom_data_request.emplace(std::move(callback));
-    //
-    //     // if result can be resolved now, resolve it now
-    //     if (!m_loading) sendRomData();
+    if (m_rom_data_request.has_value()) throw std::logic_error("ROM data request already active");
+    m_rom_data_request.emplace(std::move(callback));
+
+    // if result can be resolved now, resolve it now
+    if (!m_loading) sendRomData();
+}
+
+void RomManager::setLoading(bool value)
+{
+    if (value == m_loading) return;
+    m_loading = value;
+
+    if (!m_loading) sendRomData();
+    loadingChanged();
 }
 
 void RomManager::clearRomList()

@@ -65,7 +65,7 @@ ActionManager {
         key: QT_TRID_NOOP("menu.file.resetROM")
         defaultShortcut: "Ctrl+R"
         enabled: root.core.launched
-        onTriggered: root.core.resetROM()
+        onTriggered: root.core.resetROM(false, true)
     }
 
     // EMULATION (PAUSE/SPEED)
@@ -308,14 +308,14 @@ ActionManager {
         key: QT_TRID_NOOP("menu.movie.startRecording")
         defaultShortcut: "Ctrl+Shift+R"
         enabled: root.core.launched
-        onTriggered: diaMovieRecord.open()
+        onTriggered: diaMovieRecord.show()
     }
     EmuAction {
         //% "Start Movie Playback"
         key: QT_TRID_NOOP("menu.movie.startPlayback")
         addSeparator: true
         defaultShortcut: "Ctrl+Shift+P"
-        onTriggered: diaMoviePlayback.open()
+        onTriggered: diaMoviePlayback.show()
     }
     EmuAction {
         //% "Stop Movie"
