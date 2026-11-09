@@ -42,6 +42,7 @@ class EmuContext : public QQuickItem
     Q_PROPERTY(bool coreExecuting READ isCoreExecuting NOTIFY coreExecutingChanged)
     Q_PROPERTY(bool gsButton READ isGSButton WRITE setGSButton NOTIFY gsButtonChanged)
     Q_PROPERTY(QmlCoreSpeedMode::Value speedMode READ speedMode WRITE setSpeedMode NOTIFY speedModeChanged)
+    Q_PROPERTY(QmlCoreVCRTask::Value vcrTask READ vcrTask NOTIFY vcrTaskChanged)
 
     // CoreCfg properties
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
@@ -144,6 +145,8 @@ class EmuContext : public QQuickItem
     // -> vr_set_speed_mode
     void setSpeedMode(QmlCoreSpeedMode::Value speedMode);
 
+    QmlCoreVCRTask::Value vcrTask() const;
+
     // CoreCfg properties
     // ==========================
 
@@ -222,6 +225,9 @@ class EmuContext : public QQuickItem
 
     // -> set_speed_mode() called
     void speedModeChanged(QmlCoreSpeedMode::Value value);
+
+    // -> callbacks.task_changed
+    void vcrTaskChanged(QmlCoreVCRTask::Value value);
 
     // CoreCfg properties
     // ==========================

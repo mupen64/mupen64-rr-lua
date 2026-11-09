@@ -178,7 +178,7 @@ ApplicationWindow {
                             text: qsTrId("dialogs.movie.startFrom.save")
                             enabled: !root.forPlayback
 
-                            readonly property int value: VcrStartFrom.Snapshot
+                            readonly property int value: VCRStartFrom.Snapshot
                         }
                         RadioButton {
                             ButtonGroup.group: groupStartFrom
@@ -186,7 +186,7 @@ ApplicationWindow {
                             text: qsTrId("dialogs.movie.startFrom.reset")
                             enabled: !root.forPlayback
 
-                            readonly property int value: VcrStartFrom.Nothing
+                            readonly property int value: VCRStartFrom.Nothing
                         }
                         RadioButton {
                             ButtonGroup.group: groupStartFrom
@@ -194,7 +194,7 @@ ApplicationWindow {
                             text: qsTrId("dialogs.movie.startFrom.eeprom")
                             enabled: !root.forPlayback
 
-                            readonly property int value: VcrStartFrom.Eeprom
+                            readonly property int value: VCRStartFrom.Eeprom
                         }
                     }
                 }

@@ -17,6 +17,7 @@ ActionManager {
     id: root
 
     required property EmuContext core
+    required property SettingsCore settingsCore
     required property DialogService dialogService
     required property ConfigWindow winConfig
 

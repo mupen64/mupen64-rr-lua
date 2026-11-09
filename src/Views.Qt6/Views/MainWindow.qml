@@ -177,6 +177,7 @@ ApplicationWindow {
         // core objects
         core: core
         dialogService: dialogService
+        settingsCore: settingsCore
         winConfig: winConfig
         menuOpen: menuBar.opened
     }

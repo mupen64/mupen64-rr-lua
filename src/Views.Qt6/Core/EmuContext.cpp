@@ -139,6 +139,9 @@ EmuContext::EmuContext(QQuickItem *parent)
     m_core_params->callbacks.core_executing_changed = [&](bool value) {
         QMetaObject::invokeMethod(this, &EmuContext::coreExecutingChanged, value);
     };
+    m_core_params->callbacks.task_changed = [&](CoreVCRTask value) {
+        QMetaObject::invokeMethod(this, &EmuContext::vcrTaskChanged, QmlCoreVCRTask::from_core(value));
+    };
 
     // propagate signals to core
     connect(
@@ -397,6 +400,11 @@ void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode)
         m_core_ctx->vr_set_speed_mode(QmlCoreSpeedMode::to_core(speedMode));
         speedModeChanged(speedMode);
     }
+}
+
+QmlCoreVCRTask::Value EmuContext::vcrTask() const
+{
+    return QmlCoreVCRTask::from_core(m_core_ctx->vcr_get_task());
 }
 
 // CoreCfg properties
