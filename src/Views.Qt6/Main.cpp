@@ -16,11 +16,11 @@
 
 #include <QQuickStyle>
 
-// Q_IMPORT_QML_PLUGIN(Mupen64Actions)
-// Q_IMPORT_QML_PLUGIN(Mupen64Core)
-// Q_IMPORT_QML_PLUGIN(Mupen64Components)
-// Q_IMPORT_QML_PLUGIN(Mupen64Config)
-// Q_IMPORT_QML_PLUGIN(Mupen64Utils)
+// Q_IMPORT_QML_PLUGIN(Mupen64ActionsPlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64CorePlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64ComponentsPlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64ConfigPlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64UtilsPlugin)
 
 namespace
 {
@@ -32,7 +32,7 @@ constexpr QLatin1StringView DISPLAY_NAME = "Mupen64"_L1;
 
 } // namespace
 
-static int qt_main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     using namespace Qt::Literals;
 
@@ -89,9 +89,4 @@ static int qt_main(int argc, char *argv[])
     engine.loadFromModule("Mupen64.Views", "MainWindow");
 
     return QGuiApplication::exec();
-}
-
-int main(int argc, char *argv[])
-{
-    return qt_main(argc, argv);
 }

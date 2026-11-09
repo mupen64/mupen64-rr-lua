@@ -18,6 +18,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Core
         "DefaultPaths.hpp"
         "EmuContext.hpp"
         "EmuDisplay.hpp"
+        "MovieMetadata.hpp"
         "RomManager.hpp"
 
         "plugin/BuiltinTAS.cpp"
@@ -27,6 +28,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Core
         "DefaultPaths.cpp"
         "EmuContext.cpp"
         "EmuDisplay.cpp"
+        "MovieMetadata.cpp"
         "RomManager.cpp"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Core PUBLIC cxx_std_26)

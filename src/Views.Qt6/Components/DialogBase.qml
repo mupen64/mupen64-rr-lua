@@ -22,13 +22,14 @@ Dialog {
             let window = dialog.contentItem.Window.window;
             if (!dialog.contentItem.visible || window == null) return;
 
-            window.minimumWidth = dialog.width;
-            window.minimumHeight = dialog.height;
-
-            if (!window.windowResizable) {
-                window.maximumWidth = Qt.binding(() => window.minimumWidth);
-                window.maximumHeight = Qt.binding(() => window.minimumHeight);
-            }
+            // window.minimumWidth = dialog.width;
+            // window.minimumHeight = dialog.height;
+//
+//             if (!window.windowResizable) {
+//                 window.maximumWidth = Qt.binding(() => window.minimumWidth);
+//                 window.maximumHeight = Qt.binding(() => window.minimumHeight);
+//             }
+//
         }
     }
 }

@@ -17,6 +17,7 @@ ActionManager {
     id: root
 
     required property EmuContext core
+    required property SettingsCore settingsCore
     required property DialogService dialogService
     required property ConfigWindow winConfig
 
@@ -65,7 +66,7 @@ ActionManager {
         key: QT_TRID_NOOP("menu.file.resetROM")
         defaultShortcut: "Ctrl+R"
         enabled: root.core.launched
-        onTriggered: root.core.resetROM()
+        onTriggered: root.core.resetROM(false, true)
     }
 
     // EMULATION (PAUSE/SPEED)
@@ -299,6 +300,60 @@ ActionManager {
         onTriggered: root.winConfig.show()
     }
 
+    EmuMenu {
+        //% "Movie"
+        key: QT_TRID_NOOP("menu.movie")
+    }
+    EmuAction {
+        //% "Start Movie Recording"
+        key: QT_TRID_NOOP("menu.movie.startRecording")
+        defaultShortcut: "Ctrl+Shift+R"
+        enabled: root.core.launched
+        onTriggered: diaMovieRecord.show()
+    }
+    EmuAction {
+        //% "Start Movie Playback"
+        key: QT_TRID_NOOP("menu.movie.startPlayback")
+        addSeparator: true
+        defaultShortcut: "Ctrl+Shift+P"
+        onTriggered: diaMoviePlayback.show()
+    }
+    EmuAction {
+        //% "Stop Movie"
+        key: QT_TRID_NOOP("menu.movie.stopMovie")
+        defaultShortcut: "Ctrl+Shift+C"
+        enabled: root.core.launched
+        onTriggered: root.core.vcrStopAll()
+    }
+    EmuAction {
+        //% "Create Movie Backup"
+        key: QT_TRID_NOOP("menu.movie.createBackup")
+        addSeparator: true
+        defaultShortcut: "Ctrl+Shift+B"
+        enabled: root.core.launched
+        onTriggered: root.core.vcrWriteBackup()
+    }
+    EmuAction {
+        id: actVcrLoopPlayback
+        //% "Loop Movie Playback"
+        key: QT_TRID_NOOP("menu.movie.loopPlayback")
+        defaultShortcut: "Shift+L"
+        checkable: true
+    }
+    EmuAction {
+        id: actVcrReadonly
+        //% "Read-Only"
+        key: QT_TRID_NOOP("menu.movie.readOnly")
+        defaultShortcut: "Shift+R"
+        checkable: true
+    }
+    EmuAction {
+        id: actVcrWaitAtEnd
+        //% "Wait at End"
+        key: QT_TRID_NOOP("menu.movie.waitAtEnd")
+        checkable: true
+    }
+
     // Dialogs
     // ================================
 
@@ -338,6 +393,20 @@ ActionManager {
         }
     }
 
+    MovieDialog {
+        id: diaMovieRecord
+        forPlayback: false
+
+        onAccepted: root.core.vcrStartRecording(currentPath, currentStartFlags, currentAuthor, currentDescription)
+    }
+
+    MovieDialog {
+        id: diaMoviePlayback
+        forPlayback: true
+
+        onAccepted: root.core.vcrStartPlayback(currentPath, currentAuthor, currentDescription)
+    }
+
     // Bindings
     // ================================
 
@@ -349,15 +418,19 @@ ActionManager {
             root.menuOpen,
             diaLoadState.visible,
             diaSaveState.visible,
+            diaMovieRecord.visible,
+            diaMoviePlayback.visible,
             // config dialog
             root.winConfig.visible
         ].some(value => value)
 
-        // Tie GS button state to the GSButton item
+        // Tie relevant core states to their UI actions
         root.core.gsButton: actGSButton.checked
-
-        // Tie fast-forward state to the checked item
         root.core.speedMode: (actFastForward.checked)? CoreSpeedMode.FastForward : CoreSpeedMode.Normal
+        root.core.vcrReadonly: actVcrReadonly.checked
+        root.core.movieLoopEnabled: actVcrLoopPlayback.checked
+        root.core.waitAtMovieEnd: actVcrWaitAtEnd.checked
+
     }
     Connections {
         target: root.core

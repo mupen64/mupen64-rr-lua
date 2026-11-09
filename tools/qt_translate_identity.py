@@ -64,8 +64,19 @@ def main():
     # iterate over the whole document
     for context in root.getElementsByTagName("context"):
         for message in context.getElementsByTagName("message"):
+            locations = message.getElementsByTagName("location")
             source_el = message.getElementsByTagName("source")[0]
             translation_el = message.getElementsByTagName("translation")[0]
+
+            message_id = message.getAttribute("id")
+
+            if locations.length == 0:
+                print(f"warning: skipping {message_id} (obsolete)")
+                continue
+
+            if source_el.childNodes.length == 0:
+                print(f"warning: skipping {message_id} (missing source translation)")
+                continue
 
             while translation_el.firstChild is not None:
                 translation_el.removeChild(translation_el.firstChild)

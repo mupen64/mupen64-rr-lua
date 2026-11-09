@@ -102,7 +102,7 @@ class RomManager : public QAbstractTableModel
         ColRegionCode = 0,
         ColRomName,
         ColFilename,
-        ColSize
+        ColSize,
     };
     enum UserRoles
     {
@@ -112,12 +112,7 @@ class RomManager : public QAbstractTableModel
     };
 
     // QML should never change this, only we do
-    Q_INVOKABLE void setLoading(bool value)
-    {
-        if (value == m_loading) return;
-        m_loading = value;
-        loadingChanged();
-    }
+    Q_INVOKABLE void setLoading(bool value);
 
     void clearRomList();
     Q_INVOKABLE void addRom(RomData *rom);

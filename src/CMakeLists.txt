@@ -78,8 +78,9 @@ endif()
 # ============================
 
 if (MUPEN64RR_BUILD_QT6)
-    add_subdirectory(Plugins.Qt6.TASInput)
+    set(QT_QML_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/qml")
 
+    add_subdirectory(Plugins.Qt6.TASInput)
     add_subdirectory(Views.Qt6)
 endif()
 

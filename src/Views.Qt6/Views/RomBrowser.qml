@@ -79,6 +79,7 @@ Item {
         anchors.bottom: root.bottom
 
         model: root.romManager
+        clip: true
 
         selectionBehavior: TableView.SelectRows
         selectionMode: TableView.SingleSelection
