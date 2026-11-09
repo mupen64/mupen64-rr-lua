@@ -110,7 +110,8 @@ class EmuContext : public QQuickItem
     Q_INVOKABLE void vcrStartPlayback(const QString &path, const QVariant &author, const QVariant &description);
 
     // -> vcr_start_recording
-    Q_INVOKABLE void vcrStartRecording(const QString &path, uint32_t flags, const QString &author, const QString &description);
+    Q_INVOKABLE void vcrStartRecording(
+        const QString &path, uint32_t flags, const QString &author, const QString &description);
 
     // -> vcr_continue_recording
     Q_INVOKABLE void vcrContinueRecording();

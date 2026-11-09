@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
 #include "MovieMetadata.hpp"
 
 #include <type_traits>
@@ -264,14 +269,15 @@ void MovieMetadata::loadMovie(const QString &path)
 
             auto author = QString::fromUtf8(header.author);
             auto description = QString::fromUtf8(header.description);
-            auto startFlags = (int) header.start_flags;
+            auto startFlags = (int)header.start_flags;
             auto extra_data = MovieMetadata::extractExtraData(core_ctx, header, inputs);
 
             QMetaObject::invokeMethod(self, &MovieMetadata::updateValues, author, description, startFlags, extra_data);
         });
 }
 
-void MovieMetadata::updateValues(QAnyStringView author, QAnyStringView description, int startFlags, const ExtraDataList &extraData)
+void MovieMetadata::updateValues(
+    QAnyStringView author, QAnyStringView description, int startFlags, const ExtraDataList &extraData)
 {
     beginResetModel();
     m_extraData = extraData;

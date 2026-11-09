@@ -196,7 +196,6 @@ class QmlVCRStartFrom : public QObject
     // static ::CoreSpeedMode to_core(Value value) { return (::CoreSpeedMode)(int)value; }
 };
 
-
 class QmlCoreVCRTask : public QObject
 {
     Q_OBJECT

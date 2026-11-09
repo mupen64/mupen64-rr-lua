@@ -41,7 +41,7 @@ class MovieMetadata : public QAbstractTableModel
     QString description() const { return m_description; }
     int startFlags() const { return m_startFlags; }
 
-    Q_INVOKABLE void loadMovie(const QString& path);
+    Q_INVOKABLE void loadMovie(const QString &path);
 
   signals:
     void loadingChanged();
@@ -54,7 +54,8 @@ class MovieMetadata : public QAbstractTableModel
   private:
     using ExtraDataList = QList<std::pair<QString, QString>>;
 
-    static ExtraDataList extractExtraData(CoreCtx* core_ctx, const CoreVCRMovieHeader& header, std::span<CoreButtons> inputs);
+    static ExtraDataList extractExtraData(
+        CoreCtx *core_ctx, const CoreVCRMovieHeader &header, std::span<CoreButtons> inputs);
 
     // QML should never change this, only we do
     Q_INVOKABLE void setLoading(bool value)
@@ -64,11 +65,12 @@ class MovieMetadata : public QAbstractTableModel
         loadingChanged();
     }
 
-    Q_INVOKABLE void updateValues(QAnyStringView author, QAnyStringView description, int startFlags, const ExtraDataList &extraData);
+    Q_INVOKABLE void updateValues(
+        QAnyStringView author, QAnyStringView description, int startFlags, const ExtraDataList &extraData);
 
-    QString m_author {};
-    QString m_description {};
-    int m_startFlags {0};
+    QString m_author{};
+    QString m_description{};
+    int m_startFlags{0};
     ExtraDataList m_extraData;
 
     bool m_loading;
