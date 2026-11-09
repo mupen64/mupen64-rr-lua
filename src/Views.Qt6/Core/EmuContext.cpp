@@ -115,6 +115,7 @@ EmuContext::EmuContext(QQuickItem *parent)
                                                      const char *str, const char *title,
                                                      CoreMessageTone type) -> size_t {
         auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
+        std::println("fire! {}", id);
         return this->startMultiDialog(title, str, qt_choices, QmlCoreMessageTone::from_core(type)).get();
     };
     m_core_params->show_ask_dialog = [&](std::string_view id, const char *str, const char *title,

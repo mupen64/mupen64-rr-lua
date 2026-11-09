@@ -56,8 +56,7 @@ ApplicationWindow {
         enabled: root.backend != null
         target: root.backend
         function onRequestInput(port: int) {
-            if (port != root.port)
-                return;
+            if (port != root.port) return;
 
             // buttons need to be updated
             buttons.doPollUpdate();
@@ -82,6 +81,25 @@ ApplicationWindow {
                 btnB: buttons.stateB,
                 btnA: buttons.stateA
             });
+        }
+        function onReplaceInput(port: int, state: var) {
+            if (port != root.port) return;
+            joystick.posX = state.x;
+            joystick.posY = state.y;
+            buttons.stateL = state.btnL;
+            buttons.stateZ = state.btnZ;
+            buttons.stateR = state.btnR;
+            buttons.stateDU = state.btnDU;
+            buttons.stateDL = state.btnDL;
+            buttons.stateDR = state.btnDR;
+            buttons.stateDD = state.btnDD;
+            buttons.stateS = state.btnS;
+            buttons.stateCU = state.btnCU;
+            buttons.stateCL = state.btnCL;
+            buttons.stateCR = state.btnCR;
+            buttons.stateCD = state.btnCD;
+            buttons.stateB = state.btnB;
+            buttons.stateA = state.btnA;
         }
     }
 }

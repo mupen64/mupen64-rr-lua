@@ -102,9 +102,15 @@ ApplicationWindow {
         onUpdateScreen: coreDisplay.readPixels()
 
         // Dialog service
-        onOpenInfoDialog: dialogService.queueInfoDialog
-        onOpenAskDialog: dialogService.queueAskDialog
-        onOpenMultiDialog: dialogService.queueMultiDialog
+        onOpenInfoDialog: function (id: int, title: string, content: string, type: int) {
+            dialogService.queueInfoDialog(id, title, content, type);
+        }
+        onOpenAskDialog: function (id: int, title: string, content: string, type: int) {
+            dialogService.queueAskDialog(id, title, content, type);
+        }
+        onOpenMultiDialog: function (id: int, title: string, content: string, choices: list<string>, type: int) {
+            dialogService.queueMultiDialog(id, title, content, choices, type);
+        }
 
         // Config options
         options.coreType: settingsCore.coreType

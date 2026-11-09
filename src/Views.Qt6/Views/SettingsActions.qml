@@ -415,6 +415,8 @@ ActionManager {
             root.menuOpen,
             diaLoadState.visible,
             diaSaveState.visible,
+            diaMovieRecord.visible,
+            diaMoviePlayback.visible,
             // config dialog
             root.winConfig.visible
         ].some(value => value)

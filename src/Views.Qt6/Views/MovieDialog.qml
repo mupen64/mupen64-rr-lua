@@ -26,6 +26,9 @@ ApplicationWindow {
     }
     function resetDialog() {
         currentPath = "";
+        currentAuthor = "";
+        currentDescription = "";
+        currentStartFlags = 0;
     }
 
     property bool forPlayback
