@@ -11,6 +11,7 @@
 #include "SDLBackend.hpp"
 #include <Core/Types.hpp>
 #include <Core/Plugin.hpp>
+#include <iostream>
 
 namespace BuiltinTAS::TASAudio
 {
@@ -49,7 +50,6 @@ static inline std::filesystem::path config_path()
     g_plugin->config_path(path.data(), size);
     return std::filesystem::path(path) / CONFIG_FILE_NAME;
 }
-
 
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
@@ -137,20 +137,23 @@ EXPORT void CALL M64RRAILenChanged()
         g_plugin->log_error(std::format("Exception at AiLenChanged(): {}", e.what()).c_str());
     }
 }
-}
+} // namespace BuiltinTAS::TASAudio
 
 SDLAudio::Config read_config()
 {
     SDLAudio::Config cfg;
-    std::fstream fs(IOUtils::config_path(), std::ios_base::in | std::ios_base::out | std::ios_base::app | std::ios_base::ate);
-    fs.exceptions(std::ios_base::badbit);
+
+    auto config_path = BuiltinTAS::TASAudio::config_path();
 
     // if the config file was missing or empty, write the default config
-    if (fs.tellg() == 0)
+    if (!std::filesystem::exists(config_path))
     {
+        std::ofstream fs(config_path);
         cfg.write_to(fs);
         return cfg;
     }
+
+    std::ifstream fs(config_path, std::ios_base::in);
 
     try
     {
@@ -166,7 +169,7 @@ SDLAudio::Config read_config()
 }
 void write_config(const SDLAudio::Config &config)
 {
-    std::ofstream fs(IOUtils::config_path());
+    std::ofstream fs(BuiltinTAS::TASAudio::config_path());
     fs.exceptions(std::ios_base::badbit);
     config.write_to(fs);
 }

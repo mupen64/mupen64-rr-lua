@@ -89,7 +89,7 @@ EmuContext::EmuContext(QQuickItem *parent)
         {
             auto video_plugin = Plugin(BuiltinTAS::PluginID::TASVideo);
             auto audio_plugin = Plugin(BuiltinTAS::PluginID::TASAudio);
-            auto input_plugin = Plugin(BuiltinTAS::PluginID::DummyInput);
+            auto input_plugin = Plugin(BuiltinTAS::PluginID::TASInput);
             auto rsp_plugin = Plugin(BuiltinTAS::PluginID::TASRSP);
             std::lock_guard lock(m_read_video_mutex);
             m_plugins.emplace(
@@ -115,6 +115,7 @@ EmuContext::EmuContext(QQuickItem *parent)
                                                      const char *str, const char *title,
                                                      CoreMessageTone type) -> size_t {
         auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
+        std::println("fire! {}", id);
         return this->startMultiDialog(title, str, qt_choices, QmlCoreMessageTone::from_core(type)).get();
     };
     m_core_params->show_ask_dialog = [&](std::string_view id, const char *str, const char *title,
@@ -137,6 +138,9 @@ EmuContext::EmuContext(QQuickItem *parent)
     };
     m_core_params->callbacks.core_executing_changed = [&](bool value) {
         QMetaObject::invokeMethod(this, &EmuContext::coreExecutingChanged, value);
+    };
+    m_core_params->callbacks.task_changed = [&](CoreVCRTask value) {
+        QMetaObject::invokeMethod(this, &EmuContext::vcrTaskChanged, QmlCoreVCRTask::from_core(value));
     };
 
     // propagate signals to core
@@ -252,6 +256,101 @@ void EmuContext::loadFile(const QString &pathIn)
     });
 }
 
+// vcr_* functions
+// ==========================
+
+// -> vcr_start_playback
+void EmuContext::vcrStartPlayback(const QString &path, const QVariant &author, const QVariant &description)
+{
+    QThreadPool::globalInstance()->start(
+        [self = QPointer<EmuContext>(this), path = (std::filesystem::path)(std::u16string_view)path,
+            author = author.isNull() ? std::nullopt : std::make_optional(author.toString().toStdString()),
+            description =
+                description.isNull() ? std::nullopt : std::make_optional(description.toString().toStdString())] {
+            self->m_core_ctx->vcr_replace_author_info(path, author, description);
+            const auto result = self->m_core_ctx->vcr_start_playback(path);
+            if (result != CoreResult::Res_Ok) self->startDialogForCoreResult(result);
+        });
+}
+
+// -> vcr_start_recording
+void EmuContext::vcrStartRecording(
+    const QString &path_qstr, uint32_t flags_quint, const QString &author_qstr, const QString &description_qstr)
+{
+    if (path_qstr.isEmpty()) return;
+
+    // operation needs to be executed asynchronously to avoid blocking the UI thread
+    QThreadPool::globalInstance()->start(
+        [self = QPointer<EmuContext>(this), path = (std::filesystem::path)(std::u16string_view)path_qstr,
+            flags = (uint16_t)flags_quint, author = author_qstr.toStdString(),
+            description = description_qstr.toStdString()
+
+    ] {
+            const auto file_info = self->m_core_ctx->vcr_get_generated_file_info(path, flags);
+            const auto any_file_exists = std::filesystem::exists(file_info.movie_path) ||
+                                         (!file_info.st_path.empty() && std::filesystem::exists(file_info.st_path)) ||
+                                         (!file_info.cht_path.empty() && std::filesystem::exists(file_info.cht_path));
+
+            // show warning if *any* files could be overwritten
+            if (any_file_exists)
+            {
+                //% "Overwrite Movie"
+                auto title = qtTrId("core.dialog.movieOverwriteWarning.title");
+                //% "The specified movie file (or one of its accompanying files) already exists."
+                //% " Do you want to overwrite it?"
+                auto content = qtTrId("core.dialog.movieOverwriteWarning");
+                const auto overwrite = self->startAskDialog(title, content, QmlCoreMessageTone::Warn).get();
+
+                if (!overwrite) return;
+            }
+
+            self->m_core_ctx->vr_wait_increment();
+            auto vcr_result = self->m_core_ctx->vcr_start_record(path, flags, author, description);
+            self->m_core_ctx->vr_wait_decrement();
+            if (vcr_result != CoreResult::Res_Ok)
+            {
+                self->startDialogForCoreResult(vcr_result);
+                return;
+            }
+        });
+}
+
+// -> vcr_continue_recording
+void EmuContext::vcrContinueRecording()
+{
+    QPointer<EmuContext> self(this);
+    CoreCtx *coreCtx = m_core_ctx;
+
+    coreCtx->vr_wait_increment();
+    QThreadPool::globalInstance()->start([self, coreCtx] {
+        auto result = coreCtx->vcr_continue_recording();
+        coreCtx->vr_wait_decrement();
+        if (self) self->startDialogForCoreResult(result);
+    });
+}
+
+// -> vcr_stop_all
+void EmuContext::vcrStopAll()
+{
+    m_core_ctx->vr_wait_increment();
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([coreCtx] {
+        coreCtx->vcr_stop_all();
+        coreCtx->vr_wait_decrement();
+    });
+}
+
+// -> vcr_write_backup
+void EmuContext::vcrWriteBackup()
+{
+    QPointer<EmuContext> self(this);
+    CoreCtx *coreCtx = m_core_ctx;
+    QThreadPool::globalInstance()->start([self, coreCtx] {
+        auto result = coreCtx->vcr_write_backup();
+        if (self) self->startDialogForCoreResult(result);
+    });
+}
+
 // vr_* properties
 // ==========================
 
@@ -303,9 +402,14 @@ void EmuContext::setSpeedMode(QmlCoreSpeedMode::Value speedMode)
     }
 }
 
+QmlCoreVCRTask::Value EmuContext::vcrTask() const
+{
+    return QmlCoreVCRTask::from_core(m_core_ctx->vcr_get_task());
+}
+
 // CoreCfg properties
 // ==========================
-int32_t EmuContext::speedModifier()
+int32_t EmuContext::speedModifier() const
 {
     return m_core_cfg->fps_modifier;
 }
@@ -317,6 +421,42 @@ void EmuContext::setSpeedModifier(int32_t valueIn)
         m_core_cfg->fps_modifier = value;
         speedModifierChanged(value);
     }
+}
+
+// -> .vcr_readonly
+bool EmuContext::isVcrReadonly() const
+{
+    return m_core_cfg->vcr_readonly;
+}
+void EmuContext::setVcrReadonly(bool value)
+{
+    if (m_core_cfg->vcr_readonly == value) return;
+    m_core_cfg->vcr_readonly = value;
+    vcrReadonlyChanged(value);
+}
+
+// -> .is_movie_loop_enabled
+bool EmuContext::isMovieLoopEnabled() const
+{
+    return (bool)m_core_cfg->is_movie_loop_enabled;
+}
+void EmuContext::setMovieLoopEnabled(bool value)
+{
+    if (m_core_cfg->is_movie_loop_enabled == value) return;
+    m_core_cfg->is_movie_loop_enabled = value;
+    movieLoopEnabledChanged(value);
+}
+
+// -> .wait_at_movie_end
+bool EmuContext::isWaitAtMovieEnd() const
+{
+    return (bool)m_core_cfg->wait_at_movie_end;
+}
+void EmuContext::setWaitAtMovieEnd(bool value)
+{
+    if (m_core_cfg->wait_at_movie_end == value) return;
+    m_core_cfg->wait_at_movie_end = value;
+    waitAtMovieEndChanged(value);
 }
 
 int EmuContext::registerDialog(std::move_only_function<void(int)> finish)

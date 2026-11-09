@@ -10,12 +10,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Actions
-import Core
-import Views
+import Mupen64.Actions
+import Mupen64.Core
 
 ApplicationWindow {
-    id: mainWindow
+    id: window
     visible: true
     //% "mupen64-rr"
     title: qsTrId("appName")
@@ -24,15 +23,15 @@ ApplicationWindow {
     // =====================================
 
     // ensure window fits content
-    minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
-    minimumHeight: mainStack.implicitHeight + topPadding + bottomPadding
+    minimumWidth: root.implicitWidth + leftPadding + rightPadding
+    minimumHeight: root.implicitHeight + topPadding + bottomPadding
 
     // lock the window size when the emulator is running
     Binding {
         // minSize check is needed to ensure that everything is actually set
-        when: core.launched && mainWindow.minimumWidth > 0 && mainWindow.minimumHeight > 0
-        mainWindow.maximumWidth: mainWindow.minimumWidth
-        mainWindow.maximumHeight: mainWindow.minimumHeight
+        when: core.launched && window.minimumWidth > 0 && window.minimumHeight > 0
+        window.maximumWidth: window.minimumWidth
+        window.maximumHeight: window.minimumHeight
     }
 
     // INITIALIZATION
@@ -61,14 +60,14 @@ ApplicationWindow {
     // =====================================
 
     StackLayout {
-        id: mainStack
+        id: root
         anchors.fill: parent
 
         currentIndex: (core.launched) ? 1 : 0
 
         RomBrowser {
             context: core
-            romManager: romManager
+            romManager: romList
 
             Layout.fillHeight: true
             Layout.fillWidth: true
@@ -96,17 +95,22 @@ ApplicationWindow {
         id: core
 
         // ROM manager
-        romManager: romManager
+        romManager: romList
 
         // Graphics integration
         onGfxRequestSize: (width, height) => coreDisplay.reserveSize(width, height)
         onUpdateScreen: coreDisplay.readPixels()
 
         // Dialog service
-        Component.onDestruction: dialogService.discardDialogs()
-        onOpenInfoDialog: dialogService.queueInfoDialog
-        onOpenAskDialog: dialogService.queueAskDialog
-        onOpenMultiDialog: dialogService.queueMultiDialog
+        onOpenInfoDialog: function (id: int, title: string, content: string, type: int) {
+            dialogService.queueInfoDialog(id, title, content, type);
+        }
+        onOpenAskDialog: function (id: int, title: string, content: string, type: int) {
+            dialogService.queueAskDialog(id, title, content, type);
+        }
+        onOpenMultiDialog: function (id: int, title: string, content: string, choices: list<string>, type: int) {
+            dialogService.queueMultiDialog(id, title, content, choices, type);
+        }
 
         // Config options
         options.coreType: settingsCore.coreType
@@ -132,10 +136,15 @@ ApplicationWindow {
         paths.saveDir: settingsPaths.saveDir
         paths.screenshotDir: settingsPaths.screenshotDir
         paths.backupDir: settingsPaths.backupDir
+
+
+        Component.onDestruction: {
+            dialogService.discardDialogs()
+        }
     }
 
     RomManager {
-        id: romManager
+        id: romList
 
 
         function reloadWithSettings() {
@@ -168,6 +177,7 @@ ApplicationWindow {
         // core objects
         core: core
         dialogService: dialogService
+        settingsCore: settingsCore
         winConfig: winConfig
         menuOpen: menuBar.opened
     }
@@ -175,11 +185,9 @@ ApplicationWindow {
     // Auxiliary dialogs
     // =====================================
 
-    DialogService { id: dialogService }
-
-    Connections {
-        target: dialogService
-        function onDialogFinished(id, result) {
+    DialogService {
+        id: dialogService
+        onDialogFinished: function(id, result) {
             core.finishDialog(id, result);
         }
     }

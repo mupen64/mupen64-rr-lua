@@ -32,4 +32,4 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
         break;
     }
 }
-}
+} // namespace BuiltinTAS::DummyInput

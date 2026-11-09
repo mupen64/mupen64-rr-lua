@@ -7,7 +7,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-import Components
+import Mupen64.Components
 
 // Single-row option with a control on the right side.
 // Designed for use with Config.Bool, Config.Choices, Config.Int, and Config.Double.

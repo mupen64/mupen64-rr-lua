@@ -10,7 +10,7 @@ import QtQml.Models
 import QtQuick
 import QtQuick.Controls
 
-import Core
+import Mupen64.Core
 
 Item {
     id: root
@@ -79,6 +79,7 @@ Item {
         anchors.bottom: root.bottom
 
         model: root.romManager
+        clip: true
 
         selectionBehavior: TableView.SelectRows
         selectionMode: TableView.SingleSelection

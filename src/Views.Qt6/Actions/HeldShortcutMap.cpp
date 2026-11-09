@@ -70,8 +70,7 @@ bool HeldShortcutMap::eventFilter(QObject *, QEvent *event)
         if (matchedNode != m_shortcuts.end())
         {
             // trigger signal "released"
-            if (QObject *object = matchedNode->second.data())
-                QMetaObject::invokeMethod(object, "released");
+            if (QObject *object = matchedNode->second.data()) QMetaObject::invokeMethod(object, "released");
         }
     }
     return false;

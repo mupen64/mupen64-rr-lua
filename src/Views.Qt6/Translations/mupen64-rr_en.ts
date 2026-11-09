@@ -20,273 +20,314 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <translation>Hotkeys</translation>
     </message>
     <message id="appName">
-        <location filename="../Views/MainWindow.qml" line="21"/>
+        <location filename="../Views/MainWindow.qml" line="20"/>
         <source>mupen64-rr</source>
         <translation>mupen64-rr</translation>
     </message>
     <message id="menu.file">
-        <location filename="../Views/Settings/Actions.qml" line="47"/>
+        <location filename="../Views/SettingsActions.qml" line="48"/>
         <source>File</source>
         <translation>File</translation>
     </message>
     <message id="menu.file.loadROM">
-        <location filename="../Views/Settings/Actions.qml" line="51"/>
+        <location filename="../Views/SettingsActions.qml" line="52"/>
         <source>Load ROM...</source>
         <translation>Load ROM...</translation>
     </message>
     <message id="menu.file.closeROM">
-        <location filename="../Views/Settings/Actions.qml" line="57"/>
+        <location filename="../Views/SettingsActions.qml" line="58"/>
         <source>Close ROM</source>
         <translation>Close ROM</translation>
     </message>
     <message id="menu.file.resetROM">
-        <location filename="../Views/Settings/Actions.qml" line="67"/>
+        <location filename="../Views/SettingsActions.qml" line="65"/>
         <source>Reset ROM</source>
         <translation>Reset ROM</translation>
     </message>
     <message id="menu.emu">
-        <location filename="../Views/Settings/Actions.qml" line="79"/>
+        <location filename="../Views/SettingsActions.qml" line="74"/>
         <source>Emulation</source>
         <translation>Emulation</translation>
     </message>
     <message id="menu.emu.pause">
-        <location filename="../Views/Settings/Actions.qml" line="84"/>
+        <location filename="../Views/SettingsActions.qml" line="79"/>
         <source>Pause</source>
         <translation>Pause</translation>
     </message>
     <message id="menu.emu.speedDown">
-        <location filename="../Views/Settings/Actions.qml" line="91"/>
+        <location filename="../Views/SettingsActions.qml" line="86"/>
         <source>Speed Down</source>
         <translation>Speed Down</translation>
     </message>
     <message id="menu.emu.speedUp">
-        <location filename="../Views/Settings/Actions.qml" line="100"/>
+        <location filename="../Views/SettingsActions.qml" line="95"/>
         <source>Speed Up</source>
         <translation>Speed Up</translation>
     </message>
     <message id="menu.emu.speedReset">
-        <location filename="../Views/Settings/Actions.qml" line="107"/>
+        <location filename="../Views/SettingsActions.qml" line="102"/>
         <source>Reset Speed</source>
         <translation>Reset Speed</translation>
     </message>
     <message id="menu.emu.fastForward">
-        <location filename="../Views/Settings/Actions.qml" line="115"/>
+        <location filename="../Views/SettingsActions.qml" line="110"/>
         <source>Fast Forward</source>
         <translation>Fast Forward</translation>
     </message>
     <message id="menu.emu.gsButton">
-        <location filename="../Views/Settings/Actions.qml" line="122"/>
+        <location filename="../Views/SettingsActions.qml" line="117"/>
         <source>GS Button</source>
         <translation>GS Button</translation>
     </message>
     <message id="menu.emu.advance">
-        <location filename="../Views/Settings/Actions.qml" line="132"/>
+        <location filename="../Views/SettingsActions.qml" line="127"/>
         <source>Frame Advance</source>
         <translation>Frame Advance</translation>
     </message>
     <message id="menu.emu.multiAdvance">
-        <location filename="../Views/Settings/Actions.qml" line="145"/>
+        <location filename="../Views/SettingsActions.qml" line="140"/>
         <source>Multi-Frame Advance</source>
         <translation>Multi-Frame Advance</translation>
     </message>
     <message id="menu.emu.multiAdvanceAdd">
-        <location filename="../Views/Settings/Actions.qml" line="156"/>
+        <location filename="../Views/SettingsActions.qml" line="151"/>
         <source>Multi-Frame Advance +1</source>
         <translation>Multi-Frame Advance +1</translation>
     </message>
     <message id="menu.emu.multiAdvanceSub">
-        <location filename="../Views/Settings/Actions.qml" line="166"/>
+        <location filename="../Views/SettingsActions.qml" line="161"/>
         <source>Multi-Frame Advance -1</source>
         <translation>Multi-Frame Advance -1</translation>
     </message>
     <message id="menu.emu.multiAdvanceReset">
-        <location filename="../Views/Settings/Actions.qml" line="176"/>
+        <location filename="../Views/SettingsActions.qml" line="171"/>
         <source>Multi-Frame Advance Reset</source>
         <translation>Multi-Frame Advance Reset</translation>
     </message>
     <message id="menu.emu.saveState">
-        <location filename="../Views/Settings/Actions.qml" line="188"/>
+        <location filename="../Views/SettingsActions.qml" line="183"/>
         <source>Save State</source>
         <translation>Save State</translation>
     </message>
     <message id="menu.emu.saveState.currentSlot">
-        <location filename="../Views/Settings/Actions.qml" line="192"/>
+        <location filename="../Views/SettingsActions.qml" line="187"/>
         <source>Save Current Slot</source>
         <translation>Save Current Slot</translation>
     </message>
     <message id="menu.emu.saveState.file">
-        <location filename="../Views/Settings/Actions.qml" line="198"/>
+        <location filename="../Views/SettingsActions.qml" line="193"/>
         <source>Save as File...</source>
         <translation>Save as File...</translation>
     </message>
     <message id="menu.emu.saveState.slot">
-        <location filename="../Views/Settings/Actions.qml" line="211"/>
+        <location filename="../Views/SettingsActions.qml" line="206"/>
         <source>Slot %1</source>
         <translation>Slot %1</translation>
     </message>
     <message id="menu.emu.loadState">
-        <location filename="../Views/Settings/Actions.qml" line="225"/>
+        <location filename="../Views/SettingsActions.qml" line="220"/>
         <source>Load State</source>
         <translation>Load State</translation>
     </message>
     <message id="menu.emu.loadState.currentSlot">
-        <location filename="../Views/Settings/Actions.qml" line="229"/>
+        <location filename="../Views/SettingsActions.qml" line="224"/>
         <source>Load Current Slot</source>
         <translation>Load Current Slot</translation>
     </message>
     <message id="menu.emu.loadState.file">
-        <location filename="../Views/Settings/Actions.qml" line="239"/>
+        <location filename="../Views/SettingsActions.qml" line="234"/>
         <source>Load from File...</source>
         <translation>Load from File...</translation>
     </message>
     <message id="menu.emu.loadState.slot">
-        <location filename="../Views/Settings/Actions.qml" line="252"/>
+        <location filename="../Views/SettingsActions.qml" line="247"/>
         <source>Slot %1</source>
         <translation>Slot %1</translation>
     </message>
     <message id="menu.emu.currentSlot">
-        <location filename="../Views/Settings/Actions.qml" line="265"/>
+        <location filename="../Views/SettingsActions.qml" line="260"/>
         <source>Current State Slot</source>
         <translation>Current State Slot</translation>
     </message>
     <message id="menu.emu.currentState.slot">
-        <location filename="../Views/Settings/Actions.qml" line="282"/>
+        <location filename="../Views/SettingsActions.qml" line="277"/>
         <source>Slot %1</source>
         <translation>Slot %1</translation>
     </message>
     <message id="menu.opts">
-        <location filename="../Views/Settings/Actions.qml" line="298"/>
+        <location filename="../Views/SettingsActions.qml" line="293"/>
         <source>Options</source>
         <translation>Options</translation>
     </message>
     <message id="menu.opts.settings">
-        <location filename="../Views/Settings/Actions.qml" line="302"/>
+        <location filename="../Views/SettingsActions.qml" line="297"/>
         <source>Settings...</source>
         <translation>Settings...</translation>
     </message>
+    <message id="menu.movie">
+        <location filename="../Views/SettingsActions.qml" line="304"/>
+        <source>Movie</source>
+        <translation>Movie</translation>
+    </message>
+    <message id="menu.movie.startRecording">
+        <location filename="../Views/SettingsActions.qml" line="308"/>
+        <source>Start Movie Recording</source>
+        <translation>Start Movie Recording</translation>
+    </message>
+    <message id="menu.movie.startPlayback">
+        <location filename="../Views/SettingsActions.qml" line="315"/>
+        <source>Start Movie Playback</source>
+        <translation>Start Movie Playback</translation>
+    </message>
+    <message id="menu.movie.stopMovie">
+        <location filename="../Views/SettingsActions.qml" line="322"/>
+        <source>Stop Movie</source>
+        <translation>Stop Movie</translation>
+    </message>
+    <message id="menu.movie.createBackup">
+        <location filename="../Views/SettingsActions.qml" line="328"/>
+        <source>Create Movie Backup</source>
+        <translation>Create Movie Backup</translation>
+    </message>
+    <message id="menu.movie.loopPlayback">
+        <location filename="../Views/SettingsActions.qml" line="336"/>
+        <source>Loop Movie Playback</source>
+        <oldsource>Loop Playback</oldsource>
+        <translation>Loop Movie Playback</translation>
+    </message>
+    <message id="menu.movie.readOnly">
+        <location filename="../Views/SettingsActions.qml" line="343"/>
+        <source>Read-Only</source>
+        <translation>Read-Only</translation>
+    </message>
+    <message id="menu.movie.waitAtEnd">
+        <location filename="../Views/SettingsActions.qml" line="350"/>
+        <source>Wait at End</source>
+        <translation>Wait at End</translation>
+    </message>
     <message id="dialogs.loadROM.title">
-        <location filename="../Views/Settings/Actions.qml" line="313"/>
+        <location filename="../Views/SettingsActions.qml" line="360"/>
         <source>Load ROM...</source>
         <translation>Load ROM...</translation>
     </message>
     <message id="formats.rom">
-        <location filename="../Views/Settings/Actions.qml" line="316"/>
+        <location filename="../Views/SettingsActions.qml" line="363"/>
         <source>N64 ROMs</source>
         <translation>N64 ROMs</translation>
     </message>
     <message id="dialogs.loadState.title">
-        <location filename="../Views/Settings/Actions.qml" line="325"/>
+        <location filename="../Views/SettingsActions.qml" line="372"/>
         <source>Load State...</source>
         <translation>Load State...</translation>
     </message>
     <message id="formats.state">
-        <location filename="../Views/Settings/Actions.qml" line="328"/>
-        <location filename="../Views/Settings/Actions.qml" line="338"/>
+        <location filename="../Views/SettingsActions.qml" line="375"/>
+        <location filename="../Views/SettingsActions.qml" line="386"/>
         <source>Savestates</source>
         <translation>Savestates</translation>
     </message>
     <message id="dialogs.saveState.title">
-        <location filename="../Views/Settings/Actions.qml" line="336"/>
+        <location filename="../Views/SettingsActions.qml" line="384"/>
         <source>Save State...</source>
         <translation>Save State...</translation>
     </message>
     <message id="config.core.coreType">
-        <location filename="../Views/Config/EmulationPage.qml" line="25"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="25"/>
         <source>Core Type</source>
         <translation>Core Type</translation>
     </message>
     <message id="config.core.stUndoLoad">
-        <location filename="../Views/Config/EmulationPage.qml" line="35"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="35"/>
         <source>Savestate Undo Load</source>
         <translation>Savestate Undo Load</translation>
     </message>
     <message id="config.core.maxLag">
-        <location filename="../Views/Config/EmulationPage.qml" line="40"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="40"/>
         <source>Max Lag</source>
         <translation>Max Lag</translation>
     </message>
     <message id="config.core.wiiVCEmulation">
-        <location filename="../Views/Config/EmulationPage.qml" line="48"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="48"/>
         <source>Wii VC Emulation</source>
         <translation>Wii VC Emulation</translation>
     </message>
     <message id="config.core.rcpLagEmulation">
-        <location filename="../Views/Config/EmulationPage.qml" line="53"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="53"/>
         <source>RCP Lag Emulation</source>
         <translation>RCP Lag Emulation</translation>
     </message>
     <message id="config.core.cpuCF">
-        <location filename="../Views/Config/EmulationPage.qml" line="58"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="58"/>
         <source>CPU Counter Factor</source>
         <translation>CPU Counter Factor</translation>
     </message>
     <message id="config.core.rcpLagFactor">
-        <location filename="../Views/Config/EmulationPage.qml" line="67"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="67"/>
         <source>RCP Lag Factor</source>
         <translation>RCP Lag Factor</translation>
     </message>
     <message id="config.core.floatExceptionEmulation">
-        <location filename="../Views/Config/EmulationPage.qml" line="76"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="76"/>
         <source>Float Exception Emulation</source>
         <translation>Float Exception Emulation</translation>
     </message>
     <message id="config.core.useSummercart">
-        <location filename="../Views/Config/EmulationPage.qml" line="81"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="81"/>
         <source>Use Summercart</source>
         <translation>Use Summercart</translation>
     </message>
     <message id="config.core.stScreenshot">
-        <location filename="../Views/Config/EmulationPage.qml" line="86"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="86"/>
         <source>Save Screenshot</source>
         <translation>Save Screenshot</translation>
     </message>
     <message id="config.core.stLZ4">
-        <location filename="../Views/Config/EmulationPage.qml" line="91"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="91"/>
         <source>Save using LZ4</source>
         <translation>Save using LZ4</translation>
     </message>
     <message id="config.core.romCacheSize">
-        <location filename="../Views/Config/EmulationPage.qml" line="96"/>
+        <location filename="../Views/ConfigEmulationPage.qml" line="96"/>
         <source>ROM Cache Size</source>
         <translation>ROM Cache Size</translation>
     </message>
     <message id="config.paths.romDir">
-        <location filename="../Views/Config/FoldersPage.qml" line="21"/>
+        <location filename="../Views/ConfigFoldersPage.qml" line="21"/>
         <source>ROM Directory</source>
         <translation>ROM Directory</translation>
     </message>
     <message id="dialogs.pickRomDir.title">
-        <location filename="../Views/Config/FoldersPage.qml" line="24"/>
+        <location filename="../Views/ConfigFoldersPage.qml" line="24"/>
         <source>Set ROM Directory...</source>
         <translation>Set ROM Directory...</translation>
     </message>
     <message id="config.paths.saveDir">
-        <location filename="../Views/Config/FoldersPage.qml" line="28"/>
+        <location filename="../Views/ConfigFoldersPage.qml" line="28"/>
         <source>Save Directory</source>
         <translation>Save Directory</translation>
     </message>
     <message id="dialogs.pickSaveDir.title">
-        <location filename="../Views/Config/FoldersPage.qml" line="31"/>
+        <location filename="../Views/ConfigFoldersPage.qml" line="31"/>
         <source>Set Save Directory...</source>
         <translation>Set Save Directory...</translation>
     </message>
     <message id="config.paths.screenshotDir">
-        <location filename="../Views/Config/FoldersPage.qml" line="35"/>
+        <location filename="../Views/ConfigFoldersPage.qml" line="35"/>
         <source>Screenshot Directory</source>
         <translation>Screenshot Directory</translation>
     </message>
     <message id="dialogs.pickScreenshotDir.title">
-        <location filename="../Views/Config/FoldersPage.qml" line="38"/>
+        <location filename="../Views/ConfigFoldersPage.qml" line="38"/>
         <source>Set Screenshot Directory...</source>
         <translation>Set Screenshot Directory...</translation>
     </message>
     <message id="config.paths.backupDir">
-        <location filename="../Views/Config/FoldersPage.qml" line="42"/>
+        <location filename="../Views/ConfigFoldersPage.qml" line="42"/>
         <source>ROM Directory</source>
         <translation>ROM Directory</translation>
     </message>
     <message id="dialogs.pickBackupDir.title">
-        <location filename="../Views/Config/FoldersPage.qml" line="45"/>
+        <location filename="../Views/ConfigFoldersPage.qml" line="45"/>
         <source>Set ROM Directory...</source>
         <translation>Set ROM Directory...</translation>
     </message>
@@ -307,24 +348,109 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <translation>Recording (no modifiers)...</translation>
     </message>
     <message id="misc.units.MiB">
-        <location filename="../Core/RomManager.cpp" line="69"/>
+        <location filename="../Core/RomManager.cpp" line="98"/>
         <source>%1 MB</source>
         <translation>%1 MB</translation>
     </message>
     <message id="romBrowser.headers.romName">
-        <location filename="../Core/RomManager.cpp" line="87"/>
+        <location filename="../Core/RomManager.cpp" line="116"/>
         <source>ROM Name</source>
         <translation>ROM Name</translation>
     </message>
     <message id="romBrowser.headers.filename">
-        <location filename="../Core/RomManager.cpp" line="90"/>
+        <location filename="../Core/RomManager.cpp" line="119"/>
         <source>Filename</source>
         <translation>Filename</translation>
     </message>
     <message id="romBrowser.headers.size">
-        <location filename="../Core/RomManager.cpp" line="93"/>
+        <location filename="../Core/RomManager.cpp" line="122"/>
         <source>Size</source>
         <translation>Size</translation>
+    </message>
+    <message id="tasinput.sensitivity">
+        <location filename="../../Plugins.Qt6.TASInput/JoystickSection.qml" line="59"/>
+        <source>Sensitivity</source>
+        <translation>Sensitivity</translation>
+    </message>
+    <message id="tasinput.position">
+        <location filename="../../Plugins.Qt6.TASInput/JoystickSection.qml" line="95"/>
+        <source>Position</source>
+        <translation>Position</translation>
+    </message>
+    <message id="tasinput.title">
+        <location filename="../../Plugins.Qt6.TASInput/MainWindow.qml" line="16"/>
+        <source>TASInput (P%1)</source>
+        <translation>TASInput (P%1)</translation>
+    </message>
+    <message id="core.dialog.movieOverwriteWarning.title">
+        <location filename="../Core/EmuContext.cpp" line="294"/>
+        <source>Overwrite Movie</source>
+        <translation>Overwrite Movie</translation>
+    </message>
+    <message id="core.dialog.movieOverwriteWarning">
+        <location filename="../Core/EmuContext.cpp" line="297"/>
+        <source>The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?</source>
+        <translation>The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?</translation>
+    </message>
+    <message id="dialogs.movie.recTitle">
+        <location filename="../Views/MovieDialog.qml" line="23"/>
+        <source>Record Movie</source>
+        <translation>Record Movie</translation>
+    </message>
+    <message id="dialogs.movie.playTitle">
+        <location filename="../Views/MovieDialog.qml" line="25"/>
+        <source>Play Movie</source>
+        <translation>Play Movie</translation>
+    </message>
+    <message id="dialogs.movie.path">
+        <location filename="../Views/MovieDialog.qml" line="57"/>
+        <source>Path:</source>
+        <translation>Path:</translation>
+    </message>
+    <message id="dialogs.movie.author">
+        <location filename="../Views/MovieDialog.qml" line="77"/>
+        <source>Author:</source>
+        <translation>Author:</translation>
+    </message>
+    <message id="dialogs.movie.description">
+        <location filename="../Views/MovieDialog.qml" line="94"/>
+        <source>Description:</source>
+        <translation>Description:</translation>
+    </message>
+    <message id="dialogs.movie.startFrom">
+        <location filename="../Views/MovieDialog.qml" line="145"/>
+        <source>Start from</source>
+        <translation>Start from</translation>
+    </message>
+    <message id="dialogs.movie.startFrom.save">
+        <location filename="../Views/MovieDialog.qml" line="152"/>
+        <source>Savestate</source>
+        <translation>Savestate</translation>
+    </message>
+    <message id="dialogs.movie.startFrom.reset">
+        <location filename="../Views/MovieDialog.qml" line="157"/>
+        <source>Reset</source>
+        <translation>Reset</translation>
+    </message>
+    <message id="dialogs.movie.startFrom.eeprom">
+        <location filename="../Views/MovieDialog.qml" line="162"/>
+        <source>EEPROM</source>
+        <translation>EEPROM</translation>
+    </message>
+    <message id="formats.m64">
+        <location filename="../Views/MovieDialog.qml" line="178"/>
+        <source>Mupen64 Movie</source>
+        <translation>Mupen64 Movie</translation>
+    </message>
+    <message id="dialogs.movie.tableHeaders.name">
+        <location filename="../Core/MovieMetadata.cpp" line="122"/>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message id="dialogs.movie.tableHeaders.value">
+        <location filename="../Core/MovieMetadata.cpp" line="125"/>
+        <source>Value</source>
+        <translation>Value</translation>
     </message>
 </context>
 </TS>

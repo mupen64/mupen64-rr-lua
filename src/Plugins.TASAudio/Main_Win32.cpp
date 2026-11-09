@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifdef _WIN32
+#ifdef MUPEN64RR_BUILD_WIN32
 
 #include "Main_Win32.hpp"
 #include "Config.hpp"
@@ -24,6 +24,6 @@ EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle parent_window)
         if (g_backend.has_value()) g_backend->merge_cfg_live(cfg);
     }
 }
-}
+} // namespace BuiltinTAS::TASAudio
 
 #endif

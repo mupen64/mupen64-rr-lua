@@ -177,3 +177,43 @@ class QmlCoreSpeedMode : public QObject
     static Value from_core(::CoreSpeedMode result) { return (Value)(int)result; }
     static ::CoreSpeedMode to_core(Value value) { return (::CoreSpeedMode)(int)value; }
 };
+
+class QmlVCRStartFrom : public QObject
+{
+    Q_OBJECT
+    QML_SINGLETON
+    QML_NAMED_ELEMENT(VCRStartFrom)
+  public:
+    enum Value
+    {
+        Snapshot = static_cast<int>(MOVIE_START_FROM_SNAPSHOT),
+        Nothing = static_cast<int>(MOVIE_START_FROM_NOTHING),
+        Eeprom = static_cast<int>(MOVIE_START_FROM_EEPROM),
+    };
+    Q_FLAG(Value)
+
+    // static Value from_core(::CoreSpeedMode result) { return (Value)(int)result; }
+    // static ::CoreSpeedMode to_core(Value value) { return (::CoreSpeedMode)(int)value; }
+};
+
+class QmlCoreVCRTask : public QObject
+{
+    Q_OBJECT
+    QML_SINGLETON
+    QML_NAMED_ELEMENT(VCRTask)
+  public:
+    enum Value
+    {
+        Idle = static_cast<int>(CoreVCRTask::Idle),
+        StartRecordingFromReset = static_cast<int>(CoreVCRTask::StartRecordingFromReset),
+        StartRecordingFromSnapshot = static_cast<int>(CoreVCRTask::StartRecordingFromSnapshot),
+        Recording = static_cast<int>(CoreVCRTask::Recording),
+        StartPlaybackFromReset = static_cast<int>(CoreVCRTask::StartPlaybackFromReset),
+        StartPlaybackFromSnapshot = static_cast<int>(CoreVCRTask::StartPlaybackFromSnapshot),
+        Playback = static_cast<int>(CoreVCRTask::Playback),
+    };
+    Q_ENUM(Value)
+
+    static Value from_core(::CoreVCRTask result) { return (Value)(int)result; }
+    static ::CoreVCRTask to_core(Value value) { return (::CoreVCRTask)(int)value; }
+};

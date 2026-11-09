@@ -87,10 +87,6 @@ else()
 endif()
 
 target_compile_features(Mupen64RR_Plugins_TASVideo PRIVATE cxx_std_26)
-target_compile_definitions(Mupen64RR_Plugins_TASVideo PRIVATE
-    MUPEN64RR_BUILD_WIN32=$<BOOL:${MUPEN64RR_BUILD_WIN32}>
-    MUPEN64RR_BUILD_QT6=$<BOOL:${MUPEN64RR_BUILD_QT6}>
-)
 set_target_properties(Mupen64RR_Plugins_TASVideo PROPERTIES
     OUTPUT_NAME "TASVideo"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"

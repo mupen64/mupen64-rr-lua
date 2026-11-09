@@ -1126,37 +1126,55 @@ bool Status::show_context_menu(int x, int y)
 
     // HACK: disable topmost so menu doesnt appear under tasinput
     hmenu = CreatePopupMenu();
-#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(InputConfig, x), y)
-    ADD_ITEM(hmenu, relative_mode, "Relative");
-    ADD_ITEM(hmenu, approach_mode, "Approach");
-    ADD_ITEM(hmenu, wrap_joystick, "Wrap joystick");
-    ADD_ITEM(hmenu, disallow_joystick_reset, "Disallow joystick reset");
-    ADD_ITEM(hmenu, input_when_emu_unfocused, "Input when emulator unfocused");
+    AppendMenu(hmenu, new_config.relative_mode ? MF_CHECKED : 0, 1, "Relative");
+    AppendMenu(hmenu, new_config.approach_mode ? MF_CHECKED : 0, 2, "Approach");
+    AppendMenu(hmenu, new_config.wrap_joystick ? MF_CHECKED : 0, 3, "Wrap joystick");
+    AppendMenu(hmenu, new_config.disallow_joystick_reset ? MF_CHECKED : 0, 4, "Disallow joystick reset");
+    AppendMenu(hmenu, new_config.input_when_emu_unfocused ? MF_CHECKED : 0, 5, "Input when emulator unfocused");
     AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
-    ADD_ITEM(hmenu, always_on_top, "Always on top");
-    ADD_ITEM(hmenu, float_from_parent, "Float from parent");
-    ADD_ITEM(hmenu, titlebar, "Titlebar");
-    ADD_ITEM(hmenu, client_drag, "Client drag");
+    AppendMenu(hmenu, new_config.always_on_top ? MF_CHECKED : 0, 6, "Always on top");
+    AppendMenu(hmenu, new_config.float_from_parent ? MF_CHECKED : 0, 7, "Float from parent");
+    AppendMenu(hmenu, new_config.titlebar ? MF_CHECKED : 0, 8, "Titlebar");
+    AppendMenu(hmenu, new_config.client_drag ? MF_CHECKED : 0, 9, "Client drag");
 
     int offset = TrackPopupMenuEx(hmenu, TPM_RETURNCMD | TPM_NONOTIFY, x, y, hwnd, 0);
 
-    if (offset != 0)
+    switch (offset)
     {
-        // offset is the offset into menu config struct of the field which was selected by user, we need to convert it
-        // from byte offset to int-width offset
-        auto arr = reinterpret_cast<int32_t *>(&new_config);
-        arr[offset / sizeof(int32_t)] ^= true;
+    case 1:
+        new_config.relative_mode = !new_config.relative_mode;
+        break;
+    case 2:
+        new_config.approach_mode = !new_config.approach_mode;
+        break;
+    case 3:
+        new_config.wrap_joystick = !new_config.wrap_joystick;
+        break;
+    case 4:
+        new_config.disallow_joystick_reset = !new_config.disallow_joystick_reset;
+        break;
+    case 5:
+        new_config.input_when_emu_unfocused = !new_config.input_when_emu_unfocused;
+        break;
+    case 6:
+        new_config.always_on_top = !new_config.always_on_top;
+        break;
+    case 7:
+        new_config.float_from_parent = !new_config.float_from_parent;
+        break;
+    case 8:
+        new_config.titlebar = !new_config.titlebar;
+        break;
+    case 9:
+        new_config.client_drag = !new_config.client_drag;
+        break;
+    default:
+        break;
     }
 
     // Apply mutually exclusive relative/approach toggle
-    if (new_config.relative_mode && !prev_config.relative_mode)
-    {
-        new_config.approach_mode = false;
-    }
-    if (new_config.approach_mode && !prev_config.approach_mode)
-    {
-        new_config.relative_mode = false;
-    }
+    if (new_config.relative_mode && !prev_config.relative_mode) new_config.approach_mode = false;
+    if (new_config.approach_mode && !prev_config.approach_mode) new_config.relative_mode = false;
 
     for (auto &status_dlg : status)
     {
@@ -1375,4 +1393,4 @@ EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons)
 {
     status[index].set_visuals_lazy(buttons, false);
 }
-}
+} // namespace BuiltinTAS::TASInput

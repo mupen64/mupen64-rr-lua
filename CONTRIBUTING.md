@@ -31,7 +31,7 @@ sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate l
 yay -S --needed libsafec
 
 # Qt frontend
-sudo pacman -S --needed qt6-base qt6-declarative
+sudo pacman -S --needed qt6-base qt6-declarative qt6-tools
 
 # MinGW cross-compilation
 sudo pacman -S mingw-w64-gcc vcpkg

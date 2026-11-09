@@ -13,4 +13,4 @@ EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle parent_window)
 {
     ::TASVideo::ConfigDialog::show(parent_window.hwnd());
 }
-}
+} // namespace BuiltinTAS::TASVideo

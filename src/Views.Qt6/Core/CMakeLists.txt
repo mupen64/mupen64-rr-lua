@@ -6,7 +6,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 qt_add_library(Mupen64RR_Views_Qt6_Core STATIC)
 mupen64rr_reuse_common_pch(Mupen64RR_Views_Qt6_Core)
-qt_add_qml_module(Mupen64RR_Views_Qt6_Core URI "Core"
+qt_add_qml_module(Mupen64RR_Views_Qt6_Core
+    URI "Mupen64.Core"
     IMPORTS
         TARGET Mupen64RR_Views_Qt6_Utils
     SOURCES
@@ -17,6 +18,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Core URI "Core"
         "DefaultPaths.hpp"
         "EmuContext.hpp"
         "EmuDisplay.hpp"
+        "MovieMetadata.hpp"
         "RomManager.hpp"
 
         "plugin/BuiltinTAS.cpp"
@@ -26,6 +28,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Core URI "Core"
         "DefaultPaths.cpp"
         "EmuContext.cpp"
         "EmuDisplay.cpp"
+        "MovieMetadata.cpp"
         "RomManager.cpp"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Core PUBLIC cxx_std_26)
@@ -41,6 +44,7 @@ target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
     Qt6::Quick
 
     vendor::decan
+    vendor::nontype_functional
 )
 
 target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
@@ -51,4 +55,6 @@ target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
     Mupen64RR_Plugins_TASVideo
     Mupen64RR_Plugins_TASAudio
     Mupen64RR_Plugins_TASRSP
+
+    Mupen64RR_Plugins_Qt6_TASInput
 )

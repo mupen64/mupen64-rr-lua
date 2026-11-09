@@ -7,8 +7,8 @@
 import QtQuick
 import QtQuick.Controls
 
-import Actions
-import Components
+import Mupen64.Actions
+import Mupen64.Components
 
 DialogBase {
     id: dialog

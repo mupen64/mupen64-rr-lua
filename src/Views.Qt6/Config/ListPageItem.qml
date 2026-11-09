@@ -9,9 +9,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs
 
-import Utils
-import Components
-import Config as Config
+import Mupen64.Utils
+import Mupen64.Components
+import Mupen64.Config as Config
 
 DelegateChooser {
     id: root

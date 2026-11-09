@@ -42,9 +42,13 @@ class EmuContext : public QQuickItem
     Q_PROPERTY(bool coreExecuting READ isCoreExecuting NOTIFY coreExecutingChanged)
     Q_PROPERTY(bool gsButton READ isGSButton WRITE setGSButton NOTIFY gsButtonChanged)
     Q_PROPERTY(QmlCoreSpeedMode::Value speedMode READ speedMode WRITE setSpeedMode NOTIFY speedModeChanged)
+    Q_PROPERTY(QmlCoreVCRTask::Value vcrTask READ vcrTask NOTIFY vcrTaskChanged)
 
     // CoreCfg properties
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
+    Q_PROPERTY(bool vcrReadonly READ isVcrReadonly WRITE setVcrReadonly NOTIFY vcrReadonlyChanged)
+    Q_PROPERTY(bool movieLoopEnabled READ isMovieLoopEnabled WRITE setMovieLoopEnabled NOTIFY movieLoopEnabledChanged)
+    Q_PROPERTY(bool waitAtMovieEnd READ isWaitAtMovieEnd WRITE setWaitAtMovieEnd NOTIFY waitAtMovieEndChanged)
 
     // Auxiliary services
     Q_PROPERTY(RomManager *romManager READ romManager WRITE setRomManager NOTIFY romManagerChanged REQUIRED)
@@ -99,6 +103,25 @@ class EmuContext : public QQuickItem
     // -> st_do_file
     Q_INVOKABLE void loadFile(const QString &path);
 
+    // vcr_* functions
+    // ==========================
+
+    // -> vcr_start_playback
+    Q_INVOKABLE void vcrStartPlayback(const QString &path, const QVariant &author, const QVariant &description);
+
+    // -> vcr_start_recording
+    Q_INVOKABLE void vcrStartRecording(
+        const QString &path, uint32_t flags, const QString &author, const QString &description);
+
+    // -> vcr_continue_recording
+    Q_INVOKABLE void vcrContinueRecording();
+
+    // -> vcr_stop_all
+    Q_INVOKABLE void vcrStopAll();
+
+    // -> vcr_write_backup
+    Q_INVOKABLE void vcrWriteBackup();
+
     // vr_* properties
     // ==========================
 
@@ -123,12 +146,26 @@ class EmuContext : public QQuickItem
     // -> vr_set_speed_mode
     void setSpeedMode(QmlCoreSpeedMode::Value speedMode);
 
+    QmlCoreVCRTask::Value vcrTask() const;
+
     // CoreCfg properties
     // ==========================
 
     // -> .fps_modifier
-    int32_t speedModifier();
+    int32_t speedModifier() const;
     void setSpeedModifier(int32_t value);
+
+    // -> .vcr_readonly
+    bool isVcrReadonly() const;
+    void setVcrReadonly(bool value);
+
+    // -> .is_movie_loop_enabled
+    bool isMovieLoopEnabled() const;
+    void setMovieLoopEnabled(bool value);
+
+    // -> .wait_at_movie_end
+    bool isWaitAtMovieEnd() const;
+    void setWaitAtMovieEnd(bool value);
 
     // Misc. functions
     // ==========================
@@ -190,11 +227,23 @@ class EmuContext : public QQuickItem
     // -> set_speed_mode() called
     void speedModeChanged(QmlCoreSpeedMode::Value value);
 
+    // -> callbacks.task_changed
+    void vcrTaskChanged(QmlCoreVCRTask::Value value);
+
     // CoreCfg properties
     // ==========================
 
     // -> .fps_modifier changed
     void speedModifierChanged(int32_t value);
+
+    // -> .is_movie_loop_enabled
+    void movieLoopEnabledChanged(bool value);
+
+    // -> .vcr_readonly
+    void vcrReadonlyChanged(bool value);
+
+    // -> .wait_at_movie_end
+    void waitAtMovieEndChanged(bool value);
 
     // extra properties
     // ==========================
