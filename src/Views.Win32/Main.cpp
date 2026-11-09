@@ -6,6 +6,7 @@
 
 #include "Common.hpp"
 
+#include <Common/I18n.hpp>
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
@@ -52,7 +53,6 @@ constexpr UINT_PTR sdl_timer_id = 1;
 MMRESULT g_ui_timer;
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
-bool g_emu_starting;
 DWORD g_ui_thread_id{};
 static std::unordered_map<HWND, std::array<bool, 3>> awaiting_triple_click;
 ULONG_PTR gdi_plus_token;
@@ -282,8 +282,6 @@ static std::string get_titlebar_text()
 {
     auto text = get_mupen_name();
 
-    if (g_emu_starting) text += " - Starting...";
-
     if (g_main_ctx.core_ctx->vr_get_launched())
         text += std::format(" - {}", IOUtils::rom_name_to_string(g_main_ctx.core_ctx->vr_get_rom_header()->nom));
 
@@ -494,14 +492,6 @@ void on_seek_completed()
 void on_warp_modify_status_changed(bool value)
 {
     LuaRealmManager::instance().call_warp_modify_status_changed(value);
-}
-
-void on_emu_starting_changed(bool value)
-{
-    g_main_ctx.dispatcher->invoke([=] {
-        g_emu_starting = value;
-        update_titlebar();
-    });
 }
 
 WindowInfo get_window_info()
@@ -1226,6 +1216,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     set_error_mode();
     setlocale(LC_CTYPE, ".UTF-8");
     setlocale(LC_NUMERIC, "C"); // Lua scripts expect `.` decimal separator
+    I18n::get().set_locale("en-us");
 
     g_main_ctx.wine = is_running_under_wine();
 
@@ -1308,7 +1299,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::subscribe<Messenger::Message::WarpModifyStatusChanged>(on_warp_modify_status_changed);
     Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>([] { AppActions::update_core_fast_forward(); });
     Messenger::subscribe<Messenger::Message::SeekStatusChanged>([] { AppActions::update_core_fast_forward(); });
-    Messenger::subscribe<Messenger::Message::EmuStartingChanged>(on_emu_starting_changed);
 
     Statusbar::create();
     RomBrowser::create();

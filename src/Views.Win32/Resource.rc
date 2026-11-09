@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+29001 RCDATA "icons/symbols/circle_48dp_000000_FILL1_wght700_GRAD0_opsz48.png"
+29002 RCDATA "icons/symbols/play_arrow_48dp_000000_FILL1_wght700_GRAD0_opsz48.png"
+29003 RCDATA "icons/symbols/radio_button_checked_48dp_000000_FILL1_wght700_GRAD0_opsz48.png"
+29004 RCDATA "icons/symbols/fast_forward_48dp_000000_FILL1_wght700_GRAD0_opsz48.png"
+29005 RCDATA "icons/symbols/hourglass_empty_48dp_000000_FILL1_wght700_GRAD0_opsz48.png"
+29006 RCDATA "icons/symbols/lock_48dp_000000_FILL1_wght700_GRAD0_opsz48.png"
+29007 RCDATA "icons/symbols/edit_48dp_000000_FILL1_wght700_GRAD0_opsz48.png"
+
 // Microsoft Visual C++ generated resource script.
 //
 #pragma code_page(65001)

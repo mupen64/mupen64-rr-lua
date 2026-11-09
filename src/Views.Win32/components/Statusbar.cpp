@@ -5,257 +5,320 @@
  */
 
 #include "Common.hpp"
-#include <Common.Views/Config.hpp>
 #include <Common.Views/Messages.hpp>
+#include <Common/I18n.hpp>
+#include <Common.Views/ActionManager.hpp>
+#include <action/AppActions.hpp>
 #include <components/Statusbar.hpp>
+#include <wil/resource.h>
+#include <atomic>
+#include <array>
 
-struct Segment
+namespace
 {
-    std::vector<Statusbar::Section> sections;
-    size_t width;
-};
+HWND statusbar_hwnd;
+HWND tooltip_hwnd;
+std::atomic_bool starting{}, state_pending{};
+std::atomic_uint64_t rerecords{};
+std::array<wil::unique_hicon, 7> icons{};
+std::array<int, 7> previous_edges{};
+int previous_parts{}, previous_symbol = -2, previous_mode_symbol = -1;
+std::array<std::wstring, 7> texts{}, tips{};
 
-static const std::vector<Segment> EMU_PARTS = {
-    Segment{
-        .sections = {Statusbar::Section::Notification},
-        .width = 150,
-    },
-    Segment{
-        .sections = {Statusbar::Section::VCR},
-        .width = 160,
-    },
-    Segment{
-        .sections = {Statusbar::Section::Readonly},
-        .width = 80,
-    },
-    Segment{
-        .sections = {Statusbar::Section::Input},
-        .width = 80,
-    },
-    Segment{
-        .sections = {Statusbar::Section::Rerecords},
-        .width = 70,
-    },
-    Segment{
-        .sections = {Statusbar::Section::FPS},
-        .width = 80,
-    },
-    Segment{
-        .sections = {Statusbar::Section::VIs},
-        .width = 80,
-    },
-    Segment{
-        .sections = {Statusbar::Section::Slot},
-        .width = 50,
-    },
-    Segment{
-        .sections = {Statusbar::Section::MultiFrameAdvanceCount},
-        .width = 60,
-    },
-};
-static const std::vector<Segment> IDLE_PARTS;
-
-static HWND statusbar_hwnd;
-
-static const std::vector<Segment> &get_current_parts()
+std::string shortcut(const std::string &path, std::string_view label_key)
 {
-    return g_main_ctx.core_ctx->vr_get_launched() ? EMU_PARTS : IDLE_PARTS;
+    const auto it = g_config.hotkeys.find(ActionManager::normalize_filter(path));
+    return std::format("{}: {}", I18n::get().get(label_key),
+        it == g_config.hotkeys.end() || it->second.is_empty() ? I18n::get().get("statusbar.shortcut.unassigned")
+                                                              : it->second.to_string());
 }
 
-static size_t section_to_segment_index(const Statusbar::Section section)
+void refresh_icons()
 {
-    size_t i = 0;
-
-    for (const auto &part : get_current_parts())
-    {
-        if (std::ranges::any_of(part.sections, [=](const auto s) { return s == section; }))
-        {
-            return i;
-        }
-
-        i++;
-    }
-
-    return SIZE_MAX;
-}
-
-static void refresh_segments()
-{
-    const auto &parts = get_current_parts();
-
-    std::vector<int32_t> sizes;
-    for (const auto &part : parts)
-    {
-        sizes.emplace_back(static_cast<int32_t>(part.width));
-    }
-
-    RECT rect{};
-    GetClientRect(g_main_ctx.hwnd, &rect);
-
-    if (parts.empty())
-    {
-        set_statusbar_parts(statusbar_hwnd, {-1});
+    static COLORREF previous_background = CLR_INVALID, previous_foreground = CLR_INVALID;
+    static int previous_width{}, previous_height{};
+    const auto background = WinDarkMode::theme_data().bg_color;
+    const auto foreground = WinDarkMode::theme_data().text_1_color;
+    const int width = GetSystemMetrics(SM_CXSMICON), height = GetSystemMetrics(SM_CYSMICON);
+    if (background == previous_background && foreground == previous_foreground && width == previous_width &&
+        height == previous_height)
         return;
-    }
-
-    // Compute the desired size of the statusbar and use that for the scaling factor
-    auto desired_size = std::accumulate(sizes.begin(), sizes.end(), 0);
-
-    auto scale = static_cast<float>(rect.right - rect.left) / static_cast<float>(desired_size);
-
-    if (!g_config.statusbar_scale_down)
+    const bool dark = WinDarkMode::effective_theme() == WinDarkMode::EffectiveTheme::Dark;
+    // Solid-color contrast against #f0f0f0 / #383838: at least 4.59:1 / 4.30:1.
+    const std::array<COLORREF, 5> colors = dark ? std::array<COLORREF, 5>{RGB(75, 205, 115), RGB(95, 170, 255),
+                                                      RGB(255, 110, 110), RGB(245, 185, 65), RGB(245, 185, 65)}
+                                                : std::array<COLORREF, 5>{RGB(20, 125, 55), RGB(25, 100, 195),
+                                                      RGB(190, 35, 35), RGB(145, 90, 0), RGB(145, 90, 0)};
+    SendMessage(statusbar_hwnd, SB_SETICON, 0, 0);
+    SendMessage(statusbar_hwnd, SB_SETICON, 1, 0);
+    for (size_t i = 0; i < icons.size(); ++i)
     {
-        scale = std::max(scale, 1.0f);
+        icons[i] = load_tinted_png_icon(
+            g_main_ctx.hinst, 29001 + static_cast<int>(i), {width, height}, i < colors.size() ? colors[i] : foreground);
     }
-
-    if (!g_config.statusbar_scale_up)
-    {
-        scale = std::min(scale, 1.0f);
-    }
-
-    for (auto &size : sizes)
-    {
-        size = static_cast<int>(size * scale);
-    }
-
-    set_statusbar_parts(statusbar_hwnd, sizes);
+    previous_background = background;
+    previous_foreground = foreground;
+    previous_width = width;
+    previous_height = height;
+    previous_symbol = -2;
+    previous_mode_symbol = -1;
 }
 
-static void emu_launched_changed(bool value)
+void refresh()
 {
-    static auto previous_value = value;
-
-    if (!statusbar_hwnd)
+    if (!statusbar_hwnd || !g_main_ctx.core_ctx) return;
+    refresh_icons();
+    const auto &core = g_main_ctx.core_ctx;
+    const auto task = core->vcr_get_task();
+    const bool active = task != CoreVCRTask::Idle;
+    const bool launched = core->vr_get_launched();
+    int symbol = -1;
+    std::string state, state_tip;
+    if (starting || state_pending || (active && task != CoreVCRTask::Recording && task != CoreVCRTask::Playback))
     {
-        previous_value = value;
-        return;
+        state = I18n::get().get("statusbar.state.loading");
+        symbol = 4;
+        state_tip = I18n::get().get("statusbar.state.loading.tooltip");
     }
-
-    // We don't want to keep the weird crap from previous state, so let's clear everything
-    for (int i = 0; i < 255; ++i)
+    else if (active && core->vcr_get_warp_modify_status())
     {
-        SendMessage(statusbar_hwnd, SB_SETTEXT, i, (LPARAM) "");
+        state = I18n::get().get("statusbar.state.modifying");
+        symbol = 3;
+        state_tip = I18n::get().get("statusbar.state.modifying.tooltip");
     }
-
-    // When starting the emu, we want to scale the statusbar segments to the window size
-    if (value)
+    else if (active && core->vcr_is_seeking())
     {
-        // Update this at first start, otherwise it doesnt initially appear
-        Messenger::broadcast<Messenger::Message::SlotChanged>((size_t)g_config.st_slot);
-        Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
+        state = I18n::get().get("statusbar.state.seeking");
+        symbol = 3;
+        state_tip = I18n::get().get("statusbar.state.seeking.tooltip");
     }
+    else if (task == CoreVCRTask::Recording)
+    {
+        state = I18n::get().get("statusbar.state.recording");
+        symbol = 2;
+        state_tip = I18n::get().get("statusbar.state.recording.tooltip");
+    }
+    else if (task == CoreVCRTask::Playback)
+    {
+        state = I18n::get().get("statusbar.state.playing");
+        symbol = 1;
+        state_tip = I18n::get().get("statusbar.state.playing.tooltip");
+    }
+    else if (launched)
+    {
+        state = I18n::get().get("statusbar.state.emulating");
+        symbol = 0;
+        state_tip = I18n::get().get("statusbar.state.emulating.tooltip");
+    }
+    else
+        state_tip = I18n::get().get("statusbar.state.stopped.tooltip");
+    if (launched && core->vr_get_paused()) state_tip += "\n\n" + I18n::get().get("statusbar.state.paused.tooltip");
 
-    refresh_segments();
+    const bool readonly = g_config.core.vcr_readonly;
+    const auto slot = g_config.st_slot + 1;
+    const auto count = static_cast<int64_t>(g_config.multi_frame_advance_count);
+    const auto magnitude = count < 0 ? -count : count;
+    float fps{}, vis{};
+    static ULONGLONG last_timing{};
+    static std::string timing;
+    if (timing.empty() || GetTickCount64() - last_timing >= 1000 || !launched)
+    {
+        if (launched) core->vr_get_timings(fps, vis);
+        timing = I18n::get().format("statusbar.timings", fps, vis);
+        last_timing = GetTickCount64();
+    }
+    std::array<std::wstring, 7> next = {IOUtils::to_wide_string(state), L"",
+        IOUtils::to_wide_string(I18n::get().format("statusbar.slot", slot)), IOUtils::to_wide_string(timing),
+        IOUtils::to_wide_string(I18n::get().format("statusbar.mfa", count)), L"", L""};
+    if (active)
+    {
+        const auto sample =
+            static_cast<int64_t>(core->vcr_get_seek_info().current_sample) - (g_config.vcr_0_index ? 1 : 0);
+        next[5] = IOUtils::to_wide_string(std::format("{}/{} ({}/{})", core->vcr_get_current_vi(),
+            core->vcr_get_length_vis(), std::max<int64_t>(0, sample), core->vcr_get_length_samples()));
+        next[6] = IOUtils::to_wide_string(I18n::get().format("statusbar.rerecords", rerecords.load()));
+    }
+    std::array<std::wstring, 7> next_tips = {IOUtils::to_wide_string(state_tip),
+        IOUtils::to_wide_string(
+            I18n::get().format(readonly ? "statusbar.readonly.tooltip" : "statusbar.readwrite.tooltip",
+                shortcut(AppActions::READONLY, "statusbar.shortcut.switch_mode"))),
+        IOUtils::to_wide_string(I18n::get().format("statusbar.slot.tooltip", slot,
+            shortcut(AppActions::SAVE_CURRENT_SLOT, "statusbar.shortcut.save_slot"),
+            shortcut(AppActions::LOAD_CURRENT_SLOT, "statusbar.shortcut.load_slot"))),
+        IOUtils::to_wide_string(I18n::get().get("statusbar.timings.tooltip")),
+        IOUtils::to_wide_string(
+            I18n::get().format(count < 0 ? "statusbar.mfa.rewind.tooltip" : "statusbar.mfa.advance.tooltip", magnitude,
+                shortcut(AppActions::MULTI_FRAME_ADVANCE, "statusbar.shortcut.mfa"))),
+        IOUtils::to_wide_string(I18n::get().get("statusbar.movie.tooltip")),
+        IOUtils::to_wide_string(I18n::get().get("statusbar.rerecords.tooltip"))};
 
-    previous_value = value;
+    const int parts = active ? 7 : 5;
+    auto dc = GetDC(statusbar_hwnd);
+    const auto font = reinterpret_cast<HFONT>(SendMessage(statusbar_hwnd, WM_GETFONT, 0, 0));
+    const auto old_font = SelectObject(dc, font);
+    std::array<int, 7> edges{};
+    int borders[3]{};
+    SendMessage(statusbar_hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(borders));
+    int state_text_width = 0;
+    for (const auto key : {"statusbar.state.emulating", "statusbar.state.playing", "statusbar.state.recording",
+             "statusbar.state.seeking", "statusbar.state.modifying", "statusbar.state.loading"})
+    {
+        const auto label = IOUtils::to_wide_string(I18n::get().get(key));
+        SIZE size{};
+        GetTextExtentPoint32W(dc, label.c_str(), static_cast<int>(label.size()), &size);
+        state_text_width = std::max(state_text_width, static_cast<int>(size.cx));
+    }
+    int edge = 0;
+    for (int i = 0; i < parts; ++i)
+    {
+        SIZE size{};
+        GetTextExtentPoint32W(dc, next[i].c_str(), static_cast<int>(next[i].size()), &size);
+        if (i == 0)
+            edge += state_text_width + 18 + GetSystemMetrics(SM_CXSMICON) + 4;
+        else if (i == 1)
+            edge += GetSystemMetrics(SM_CXSMICON) + 2 * borders[0] + 5;
+        else
+            edge += size.cx + 18;
+        edges[i] = edge;
+    }
+    SelectObject(dc, old_font);
+    ReleaseDC(statusbar_hwnd, dc);
+    if (previous_parts != parts || previous_edges != edges)
+    {
+        SendMessage(statusbar_hwnd, SB_SETPARTS, parts, reinterpret_cast<LPARAM>(edges.data()));
+        previous_parts = parts;
+        previous_edges = edges;
+    }
+    tips = std::move(next_tips);
+    for (int i = 0; i < 7; ++i)
+    {
+        TOOLINFOW tool{sizeof(tool)};
+        tool.hwnd = statusbar_hwnd;
+        tool.uId = i + 1;
+        if (i < parts) SendMessage(statusbar_hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&tool.rect));
+        tool.lpszText = tips[i].data();
+        SendMessageW(tooltip_hwnd, TTM_NEWTOOLRECTW, 0, reinterpret_cast<LPARAM>(&tool));
+        SendMessageW(tooltip_hwnd, TTM_UPDATETIPTEXTW, 0, reinterpret_cast<LPARAM>(&tool));
+        if (i >= parts) continue;
+        if (texts[i] != next[i])
+            SendMessageW(statusbar_hwnd, SB_SETTEXTW, i, reinterpret_cast<LPARAM>(next[i].c_str()));
+    }
+    if (previous_symbol != symbol)
+    {
+        SendMessage(
+            statusbar_hwnd, SB_SETICON, 0, reinterpret_cast<LPARAM>(symbol < 0 ? nullptr : icons[symbol].get()));
+        previous_symbol = symbol;
+    }
+    const int mode_symbol = readonly ? 5 : 6;
+    if (previous_mode_symbol != mode_symbol)
+    {
+        SendMessage(statusbar_hwnd, SB_SETICON, 1, reinterpret_cast<LPARAM>(icons[mode_symbol].get()));
+        previous_mode_symbol = mode_symbol;
+    }
+    texts = std::move(next);
 }
 
-static void create()
+void CALLBACK tick(HWND, UINT, UINT_PTR, DWORD)
 {
-    // undocumented behaviour of CCS_BOTTOM: it skips applying SBARS_SIZEGRIP in style pre-computation phase
+    refresh();
+}
+
+LRESULT CALLBACK statusbar_subclass(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR)
+{
+    if (message == WM_LBUTTONUP)
+    {
+        RECT mode_rect{};
+        const POINT position{GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+        if (SendMessage(hwnd, SB_GETRECT, 1, reinterpret_cast<LPARAM>(&mode_rect)) && PtInRect(&mode_rect, position))
+            ActionManager::invoke(AppActions::READONLY);
+    }
+    else if (message == WM_NCDESTROY)
+    {
+        RemoveWindowSubclass(hwnd, statusbar_subclass, id);
+    }
+    return DefSubclassProc(hwnd, message, wparam, lparam);
+}
+
+void create_bar()
+{
     statusbar_hwnd = CreateWindowEx(0, STATUSCLASSNAME, nullptr, WS_CHILD | WS_VISIBLE | CCS_BOTTOM, 0, 0, 0, 0,
-        g_main_ctx.hwnd, (HMENU)IDC_MAIN_STATUS, g_main_ctx.hinst, nullptr);
-}
-
-static void statusbar_visibility_changed(bool value)
-{
-    if (statusbar_hwnd)
+        g_main_ctx.hwnd, reinterpret_cast<HMENU>(IDC_MAIN_STATUS), g_main_ctx.hinst, nullptr);
+    SetWindowSubclass(statusbar_hwnd, statusbar_subclass, 0, 0);
+    texts = {};
+    tips = {};
+    previous_parts = 0;
+    previous_symbol = -2;
+    previous_mode_symbol = -1;
+    tooltip_hwnd = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASSW, nullptr, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, statusbar_hwnd, nullptr, g_main_ctx.hinst, nullptr);
+    SendMessage(tooltip_hwnd, TTM_SETMAXTIPWIDTH, 0, 420);
+    for (int i = 0; i < 7; ++i)
     {
-        DestroyWindow(statusbar_hwnd);
-        statusbar_hwnd = nullptr;
+        TOOLINFOW tool{sizeof(tool)};
+        tool.uFlags = TTF_SUBCLASS;
+        tool.hwnd = statusbar_hwnd;
+        tool.uId = i + 1;
+        tool.lpszText = tips[i].data();
+        SendMessageW(tooltip_hwnd, TTM_ADDTOOLW, 0, reinterpret_cast<LPARAM>(&tool));
     }
-
-    if (value)
-    {
-        create();
-    }
+    refresh();
+    SetTimer(statusbar_hwnd, 1, 100, tick);
 }
-
-static void on_readonly_changed(bool value)
-{
-    post(value ? "Read-only" : "Read/write", Statusbar::Section::Readonly);
-}
-
-static void on_rerecords_changed(uint64_t value)
-{
-    const auto str = std::format("{} rr", format_short(value));
-    post(str, Statusbar::Section::Rerecords);
-}
-
-static void on_task_changed(CoreVCRTask value)
-{
-    if (value == CoreVCRTask::Idle)
-    {
-        post("", Statusbar::Section::Rerecords);
-    }
-}
-
-static void on_slot_changed(size_t value)
-{
-    post(std::format("Slot {}", value + 1), Statusbar::Section::Slot);
-}
-
-static void on_size_changed(const std::pair<int32_t, int32_t> &)
-{
-    refresh_segments();
-}
-
-static void on_multi_frame_advance_count_changed()
-{
-    post(std::format("MFA {}x", g_config.multi_frame_advance_count), Statusbar::Section::MultiFrameAdvanceCount);
-}
-
-static void fix_segments()
-{
-    std::unordered_map<Statusbar::Section, std::string> section_text;
-
-    for (int i = 0; i <= static_cast<int32_t>(Statusbar::Section::Last); ++i)
-    {
-        const auto section = static_cast<Statusbar::Section>(i);
-
-        const auto segment_index = section_to_segment_index(section);
-
-        if (segment_index == SIZE_MAX)
-        {
-            continue;
-        }
-
-        const auto len = SendMessage(statusbar_hwnd, SB_GETTEXTLENGTH, segment_index, 0);
-
-        auto str = (char *)calloc(len + 1, sizeof(char));
-
-        SendMessage(statusbar_hwnd, SB_GETTEXT, segment_index, (LPARAM)str);
-
-        section_text[section] = str;
-
-        free(str);
-    }
-
-    refresh_segments();
-
-    for (int i = 0; i < 255; ++i)
-    {
-        SendMessage(statusbar_hwnd, SB_SETTEXT, i, (LPARAM) "");
-    }
-
-    for (const auto pair : section_text)
-    {
-        post(pair.second, pair.first);
-    }
-}
+} // namespace
 
 void Statusbar::create()
 {
-    ::create();
-    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(emu_launched_changed);
-    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(statusbar_visibility_changed);
-    Messenger::subscribe<Messenger::Message::ReadonlyChanged>(on_readonly_changed);
-    Messenger::subscribe<Messenger::Message::TaskChanged>(on_task_changed);
-    Messenger::subscribe<Messenger::Message::RerecordsChanged>(on_rerecords_changed);
-    Messenger::subscribe<Messenger::Message::SlotChanged>(on_slot_changed);
-    Messenger::subscribe<Messenger::Message::MultiFrameAdvanceCountChanged>(on_multi_frame_advance_count_changed);
-    Messenger::subscribe<Messenger::Message::SizeChanged>(on_size_changed);
-    Messenger::subscribe<Messenger::Message::ConfigLoaded>(fix_segments);
+    auto &translations = I18n::get();
+    translations.add("statusbar.state.loading", "Loading", "en-us");
+    translations.add(
+        "statusbar.state.loading.tooltip", "An emulator, movie, or savestate operation is in progress.", "en-us");
+    translations.add("statusbar.state.modifying", "Modifying", "en-us");
+    translations.add("statusbar.state.modifying.tooltip", "Applying modified movie inputs.", "en-us");
+    translations.add("statusbar.state.seeking", "Seeking", "en-us");
+    translations.add("statusbar.state.seeking.tooltip", "Seeking to the requested movie frame.", "en-us");
+    translations.add("statusbar.state.recording", "Recording", "en-us");
+    translations.add("statusbar.state.recording.tooltip", "Recording controller input to the movie.", "en-us");
+    translations.add("statusbar.state.playing", "Playing", "en-us");
+    translations.add("statusbar.state.playing.tooltip", "Playing controller input from the movie.", "en-us");
+    translations.add("statusbar.state.emulating", "Emulating", "en-us");
+    translations.add("statusbar.state.emulating.tooltip", "The emulator is running without an active movie.", "en-us");
+    translations.add("statusbar.state.stopped.tooltip", "The emulator is stopped.", "en-us");
+    translations.add("statusbar.state.paused.tooltip", "Emulation is paused.", "en-us");
+    translations.add("statusbar.shortcut.unassigned", "Unassigned", "en-us");
+    translations.add("statusbar.shortcut.switch_mode", "Switch mode", "en-us");
+    translations.add("statusbar.shortcut.save_slot", "Save slot", "en-us");
+    translations.add("statusbar.shortcut.load_slot", "Load slot", "en-us");
+    translations.add("statusbar.shortcut.mfa", "Multi-Frame Advance", "en-us");
+    translations.add("statusbar.slot", "Slot {}", "en-us");
+    translations.add("statusbar.timings", "FPS: {:.1f} VI/s: {:.1f}", "en-us");
+    translations.add("statusbar.mfa", "MFA: {}x", "en-us");
+    translations.add("statusbar.rerecords", "RR: {}", "en-us");
+    translations.add("statusbar.readonly.tooltip",
+        "Read-Only Mode\n\nLoading a savestate from a currently playing movie will continue playback from that "
+        "frame.\n\n{}",
+        "en-us");
+    translations.add("statusbar.readwrite.tooltip",
+        "Read-Write Mode\n\nLoading a savestate from a currently playing movie will begin recording from that "
+        "frame.\n\n{}",
+        "en-us");
+    translations.add("statusbar.slot.tooltip",
+        "The current state slot is {}.\n\nSaving and loading states will use this slot.\n\n{}\n{}", "en-us");
+    translations.add("statusbar.timings.tooltip", "Frames per second and vertical interrupts per second.", "en-us");
+    translations.add("statusbar.mfa.rewind.tooltip", "Multi-Frame Advance will rewind by {} frames.\n\n{}", "en-us");
+    translations.add("statusbar.mfa.advance.tooltip", "Multi-Frame Advance will advance by {} frames.\n\n{}", "en-us");
+    translations.add(
+        "statusbar.movie.tooltip", "Current/total vertical interrupts (current/total input samples).", "en-us");
+    translations.add("statusbar.rerecords.tooltip", "Movie rerecord count.", "en-us");
+    create_bar();
+    Messenger::subscribe<Messenger::Message::EmuStartingChanged>([](bool value) { starting = value; });
+    Messenger::subscribe<Messenger::Message::RerecordsChanged>([](uint64_t value) { rerecords = value; });
+    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>([](bool value) {
+        if (statusbar_hwnd) DestroyWindow(statusbar_hwnd);
+        statusbar_hwnd = nullptr;
+        if (value) create_bar();
+    });
+    // Core callbacks may run off the UI thread; the timer consumes only this atomic flag.
+    g_main_ctx.core.st_pending_changed = [](bool value) { state_pending = value; };
 }
 
 HWND Statusbar::hwnd()
@@ -263,14 +326,7 @@ HWND Statusbar::hwnd()
     return statusbar_hwnd;
 }
 
-void Statusbar::post(const std::string &text, const Section section)
+void Statusbar::post(const std::string &, Section)
 {
-    const auto segment_index = section_to_segment_index(section);
-
-    if (segment_index == SIZE_MAX)
-    {
-        return;
-    }
-
-    SendMessage(statusbar_hwnd, SB_SETTEXT, segment_index, (LPARAM)text.c_str());
+    // Compatibility for Lua and legacy notification callers. The bar now displays application state.
 }
