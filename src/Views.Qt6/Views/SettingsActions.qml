@@ -322,6 +322,7 @@ ActionManager {
         key: QT_TRID_NOOP("menu.movie.stopMovie")
         defaultShortcut: "Ctrl+Shift+C"
         enabled: root.core.launched
+        onTriggered: root.core.vcrStopAll()
     }
     EmuAction {
         //% "Create Movie Backup"
@@ -329,6 +330,7 @@ ActionManager {
         addSeparator: true
         defaultShortcut: "Ctrl+Shift+B"
         enabled: root.core.launched
+        onTriggered: root.core.vcrWriteBackup()
     }
     EmuAction {
         id: actVcrLoopPlayback
@@ -393,15 +395,15 @@ ActionManager {
     MovieDialog {
         id: diaMovieRecord
         forPlayback: false
+
+        onAccepted: root.core.vcrStartRecording(currentPath, currentStartFlags, currentAuthor, currentDescription)
     }
 
     MovieDialog {
         id: diaMoviePlayback
         forPlayback: true
 
-        onAccepted: {
-            root.core.vcrStartPlayback(currentPath, currentAuthor, currentDescription);
-        }
+        onAccepted: root.core.vcrStartPlayback(currentPath, currentAuthor, currentDescription)
     }
 
     // Bindings
