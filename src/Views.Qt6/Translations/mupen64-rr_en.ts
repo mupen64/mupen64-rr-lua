@@ -403,22 +403,42 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <translation>Play Movie</translation>
     </message>
     <message id="dialogs.movie.path">
-        <location filename="../Views/MovieDialog.qml" line="52"/>
+        <location filename="../Views/MovieDialog.qml" line="57"/>
         <source>Path:</source>
         <translation>Path:</translation>
     </message>
     <message id="dialogs.movie.author">
-        <location filename="../Views/MovieDialog.qml" line="72"/>
+        <location filename="../Views/MovieDialog.qml" line="77"/>
         <source>Author:</source>
         <translation>Author:</translation>
     </message>
     <message id="dialogs.movie.description">
-        <location filename="../Views/MovieDialog.qml" line="85"/>
+        <location filename="../Views/MovieDialog.qml" line="94"/>
         <source>Description:</source>
         <translation>Description:</translation>
     </message>
+    <message id="dialogs.movie.startFrom">
+        <location filename="../Views/MovieDialog.qml" line="145"/>
+        <source>Start from</source>
+        <translation>Start from</translation>
+    </message>
+    <message id="dialogs.movie.startFrom.save">
+        <location filename="../Views/MovieDialog.qml" line="152"/>
+        <source>Savestate</source>
+        <translation>Savestate</translation>
+    </message>
+    <message id="dialogs.movie.startFrom.reset">
+        <location filename="../Views/MovieDialog.qml" line="157"/>
+        <source>Reset</source>
+        <translation>Reset</translation>
+    </message>
+    <message id="dialogs.movie.startFrom.eeprom">
+        <location filename="../Views/MovieDialog.qml" line="162"/>
+        <source>EEPROM</source>
+        <translation>EEPROM</translation>
+    </message>
     <message id="formats.m64">
-        <location filename="../Views/MovieDialog.qml" line="138"/>
+        <location filename="../Views/MovieDialog.qml" line="178"/>
         <source>Mupen64 Movie</source>
         <translation>Mupen64 Movie</translation>
     </message>

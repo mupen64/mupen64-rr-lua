@@ -398,6 +398,10 @@ ActionManager {
     MovieDialog {
         id: diaMoviePlayback
         forPlayback: true
+
+        onAccepted: {
+            root.core.vcrStartPlayback(currentPath, currentAuthor, currentDescription);
+        }
     }
 
     // Bindings

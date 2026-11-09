@@ -146,7 +146,6 @@ Qt::ItemFlags RomManager::flags(const QModelIndex &index) const
 
 Q_INVOKABLE void RomManager::reloadRomList(const QString &romDir, bool recursive)
 {
-    std::println("loading: {}", m_loading);
     if (isLoading()) return;
 
     // set loading flag now, it will be reset once the load is done

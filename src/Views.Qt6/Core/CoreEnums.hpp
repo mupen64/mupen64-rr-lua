@@ -177,3 +177,21 @@ class QmlCoreSpeedMode : public QObject
     static Value from_core(::CoreSpeedMode result) { return (Value)(int)result; }
     static ::CoreSpeedMode to_core(Value value) { return (::CoreSpeedMode)(int)value; }
 };
+
+class QmlVcrStartFrom : public QObject
+{
+    Q_OBJECT
+    QML_SINGLETON
+    QML_NAMED_ELEMENT(VcrStartFrom)
+  public:
+    enum Value
+    {
+        Snapshot = static_cast<int>(MOVIE_START_FROM_SNAPSHOT),
+        Nothing = static_cast<int>(MOVIE_START_FROM_NOTHING),
+        Eeprom = static_cast<int>(MOVIE_START_FROM_EEPROM),
+    };
+    Q_FLAG(Value)
+
+    // static Value from_core(::CoreSpeedMode result) { return (Value)(int)result; }
+    // static ::CoreSpeedMode to_core(Value value) { return (::CoreSpeedMode)(int)value; }
+};

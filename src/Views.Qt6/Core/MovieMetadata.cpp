@@ -264,15 +264,15 @@ void MovieMetadata::loadMovie(const QString &path)
 
             auto author = QString::fromUtf8(header.author);
             auto description = QString::fromUtf8(header.description);
+            auto startFlags = (int) header.start_flags;
             auto extra_data = MovieMetadata::extractExtraData(core_ctx, header, inputs);
 
-            QMetaObject::invokeMethod(self, &MovieMetadata::updateValues, author, description, extra_data);
+            QMetaObject::invokeMethod(self, &MovieMetadata::updateValues, author, description, startFlags, extra_data);
         });
 }
 
-void MovieMetadata::updateValues(QAnyStringView author, QAnyStringView description, const ExtraDataList &extraData)
+void MovieMetadata::updateValues(QAnyStringView author, QAnyStringView description, int startFlags, const ExtraDataList &extraData)
 {
-    std::println("extra data len: {}", extraData.size());
     beginResetModel();
     m_extraData = extraData;
     endResetModel();
@@ -289,6 +289,11 @@ void MovieMetadata::updateValues(QAnyStringView author, QAnyStringView descripti
     {
         m_description = std::move(description_str);
         descriptionChanged();
+    }
+    if (startFlags != m_startFlags)
+    {
+        m_startFlags = startFlags;
+        startFlagsChanged();
     }
 
     valuesUpdated();

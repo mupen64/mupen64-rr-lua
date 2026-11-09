@@ -24,6 +24,7 @@ class MovieMetadata : public QAbstractTableModel
     Q_PROPERTY(bool loading READ isLoading NOTIFY loadingChanged)
     Q_PROPERTY(QString author READ author NOTIFY authorChanged)
     Q_PROPERTY(QString description READ description NOTIFY descriptionChanged)
+    Q_PROPERTY(int startFlags READ startFlags NOTIFY startFlagsChanged)
   public:
     MovieMetadata(QObject *parent = nullptr);
 
@@ -38,6 +39,7 @@ class MovieMetadata : public QAbstractTableModel
     bool isLoading() const { return m_loading; }
     QString author() const { return m_author; }
     QString description() const { return m_description; }
+    int startFlags() const { return m_startFlags; }
 
     Q_INVOKABLE void loadMovie(const QString& path);
 
@@ -45,6 +47,7 @@ class MovieMetadata : public QAbstractTableModel
     void loadingChanged();
     void authorChanged();
     void descriptionChanged();
+    void startFlagsChanged();
 
     void valuesUpdated();
 
@@ -61,10 +64,11 @@ class MovieMetadata : public QAbstractTableModel
         loadingChanged();
     }
 
-    Q_INVOKABLE void updateValues(QAnyStringView author, QAnyStringView description, const ExtraDataList &extraData);
+    Q_INVOKABLE void updateValues(QAnyStringView author, QAnyStringView description, int startFlags, const ExtraDataList &extraData);
 
-    QString m_author;
-    QString m_description;
+    QString m_author {};
+    QString m_description {};
+    int m_startFlags {0};
     ExtraDataList m_extraData;
 
     bool m_loading;

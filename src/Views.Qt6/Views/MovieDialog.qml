@@ -30,6 +30,12 @@ ApplicationWindow {
 
     property bool forPlayback
     property string currentPath
+    property string currentAuthor
+    property string currentDescription
+    property int currentStartFlags
+
+    signal accepted()
+    signal rejected()
 
     modality: Qt.WindowModal
     // popupType: Dialog.Window
@@ -79,7 +85,11 @@ ApplicationWindow {
                 id: fieldAuthor
                 Layout.fillWidth: true
                 Layout.horizontalStretchFactor: 1
+                Layout.minimumHeight: 50
                 wrapMode: TextArea.WordWrap
+
+                text: root.currentAuthor
+                onEditingFinished: root.currentAuthor = text
             }
 
             Label {
@@ -92,7 +102,11 @@ ApplicationWindow {
                 id: fieldDescription
                 Layout.fillWidth: true
                 Layout.horizontalStretchFactor: 1
+                Layout.minimumHeight: 50
                 wrapMode: TextArea.WordWrap
+
+                text: root.currentDescription
+                onEditingFinished: root.currentDescription = text
             }
         }
         RowLayout {
@@ -107,12 +121,21 @@ ApplicationWindow {
                     anchors.left: tableRoot.left
                     anchors.right: tableRoot.right
 
-
+                    clip: true
                     syncView: table
                 }
                 TableView {
                     id: table
                     Layout.fillHeight: true
+
+                    flickableDirection: Flickable.HorizontalAndVerticalFlick
+                    acceptedButtons: Qt.NoButton
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
+                    ScrollBar.horizontal: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
 
                     anchors.top: tableHeader.bottom
                     anchors.left: tableRoot.left
@@ -126,9 +149,66 @@ ApplicationWindow {
                 }
             }
             ColumnLayout {
+                uniformCellSizes: true
+                Layout.maximumWidth: 150
                 GroupBox {
-                    title: "Start from"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    //% "Start from"
+                    title: qsTrId("dialogs.movie.startFrom")
+
+                    ColumnLayout {
+                        ButtonGroup {
+                            id: groupStartFrom
+                            onClicked: function (button: AbstractButton) {
+                                root.currentStartFlags = button.value
+                            }
+
+                            checkedButton: {
+                                const result = buttons.find(btn => btn.value == root.currentStartFlags);
+                                return result ?? null;
+                            }
+                        }
+                        RadioButton {
+                            ButtonGroup.group: groupStartFrom
+                            //% "Savestate"
+                            text: qsTrId("dialogs.movie.startFrom.save")
+                            enabled: !root.forPlayback
+
+                            readonly property int value: VcrStartFrom.Snapshot
+                        }
+                        RadioButton {
+                            ButtonGroup.group: groupStartFrom
+                            //% "Reset"
+                            text: qsTrId("dialogs.movie.startFrom.reset")
+                            enabled: !root.forPlayback
+
+                            readonly property int value: VcrStartFrom.Nothing
+                        }
+                        RadioButton {
+                            ButtonGroup.group: groupStartFrom
+                            //% "EEPROM"
+                            text: qsTrId("dialogs.movie.startFrom.eeprom")
+                            enabled: !root.forPlayback
+
+                            readonly property int value: VcrStartFrom.Eeprom
+                        }
+                    }
                 }
+            }
+        }
+        DialogButtonBox {
+            Layout.fillWidth: true
+            alignment: Qt.AlignRight
+            standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
+
+            onAccepted: {
+                root.close();
+                root.accepted();
+            }
+            onRejected: {
+                root.close();
+                root.rejected();
             }
         }
     }
@@ -152,8 +232,9 @@ ApplicationWindow {
     MovieMetadata {
         id: metadata
         onValuesUpdated: {
-            fieldAuthor.text = author;
-            fieldDescription.text = description;
+            root.currentAuthor = author;
+            root.currentDescription = description;
+            root.currentStartFlags = startFlags;
         }
     }
 }
