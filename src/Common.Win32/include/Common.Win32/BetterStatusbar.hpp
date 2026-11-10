@@ -249,14 +249,14 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts)
     {
         SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
         if (layout_changed)
-            InvalidateRect(hwnd, nullptr, FALSE);
+            InvalidateRect(hwnd, nullptr, TRUE);
         else
             for (size_t i = 0; i < parts.size(); ++i)
             {
                 if (!text_changed[i] && !icon_changed[i]) continue;
                 RECT rect{};
                 SendMessage(hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&rect));
-                InvalidateRect(hwnd, &rect, FALSE);
+                InvalidateRect(hwnd, &rect, TRUE);
             }
     }
     ctx->font = font;
