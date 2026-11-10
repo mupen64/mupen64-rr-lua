@@ -585,12 +585,11 @@ std::vector<OptionGroup> get_static_option_groups()
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Enum,
         .group_id = interface_group.id,
         .name = "Toast Mode",
-        .tooltip = "The way toasts are displayed.\nWindow - Toasts are shown in non-modal windows.\nStatusbar - Toasts "
-                   "are shown in the statusbar.\nDialog - Toasts are shown in modal dialogs.",
+        .tooltip = "The way toasts are displayed.\nWindow - Toasts are shown in non-modal windows.\n"
+                   "Dialog - Toasts are shown in modal dialogs.",
         GENPROPS(int32_t, toast_mode),
         .possible_values = {
             std::make_pair("Window", (int32_t)Config::ToastMode::Window),
-            std::make_pair("Statusbar", (int32_t)Config::ToastMode::Statusbar),
             std::make_pair("Dialog", (int32_t)Config::ToastMode::Dialog),
         }});
     interface_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,

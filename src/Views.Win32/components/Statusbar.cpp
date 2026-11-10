@@ -159,8 +159,9 @@ void refresh()
     }
     parts[0].icon = symbol < 0 ? nullptr : icons[symbol].get();
     parts[0].reserve_icon = true;
-    for (const auto key : {"statusbar.state.emulating", "statusbar.state.playing", "statusbar.state.recording",
-             "statusbar.state.seeking", "statusbar.state.modifying", "statusbar.state.loading", "statusbar.state.stopped"})
+    for (const auto key :
+        {"statusbar.state.emulating", "statusbar.state.playing", "statusbar.state.recording", "statusbar.state.seeking",
+            "statusbar.state.modifying", "statusbar.state.loading", "statusbar.state.stopped"})
         parts[0].sizing_labels.push_back(IOUtils::to_wide_string(I18n::get().get(key)));
     parts[1].icon = icons[readonly ? 5 : 6].get();
     parts[1].reserve_icon = true;
@@ -242,9 +243,4 @@ void Statusbar::create()
 HWND Statusbar::hwnd()
 {
     return statusbar_hwnd;
-}
-
-void Statusbar::post(const std::string &, Section)
-{
-    // Compatibility for Lua and legacy notification callers. The bar now displays application state.
 }

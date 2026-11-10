@@ -51,11 +51,9 @@ struct Config
     enum class ToastMode : uint8_t
     {
         // Toasts are shown in non-modal windows.
-        Window,
-        // Toasts are shown in the statusbar.
-        Statusbar,
+        Window = 0,
         // Toasts are shown in modal dialogs.
-        Dialog
+        Dialog = 2
     };
 
     /// <summary>

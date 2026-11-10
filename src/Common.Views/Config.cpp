@@ -314,6 +314,10 @@ static std::filesystem::path get_config_path()
  */
 static void config_patch(Config &cfg)
 {
+    if (cfg.toast_mode != static_cast<int32_t>(Config::ToastMode::Window) &&
+        cfg.toast_mode != static_cast<int32_t>(Config::ToastMode::Dialog))
+        cfg.toast_mode = AppConfig::default_config().toast_mode;
+
 #ifdef _WIN32
     if (!MonitorFromPoint({cfg.window_x, cfg.window_y}, MONITOR_DEFAULTTONULL))
     {

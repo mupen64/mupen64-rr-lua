@@ -6,9 +6,9 @@
 
 #pragma once
 
+#include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Messages.hpp>
 #include <plugin/Plugin.hpp>
-#include <components/Statusbar.hpp>
 #include <lua/LuaRealmManager.hpp>
 
 namespace LuaCore::Emu
@@ -336,7 +336,7 @@ static int ConsoleWriteLua(lua_State *L)
 
 static int StatusbarWrite(lua_State *L)
 {
-    Statusbar::post(lua_tostring(L, 1));
+    DialogService::show_notification(luaL_checkstring(L, 1));
     return 0;
 }
 } // namespace LuaCore::Emu
