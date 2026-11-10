@@ -907,7 +907,6 @@ static CoreResult init_core()
     g_main_ctx.core.show_dialog = [](const char *str, const char *title, CoreMessageTone type) {
         DialogService::show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
     };
-    g_main_ctx.core.show_statusbar = [](const char *str) { DialogService::show_statusbar(str); };
     g_main_ctx.core.show_notification = [](const char *str, const char *title, CoreMessageTone tone) {
         DialogService::show_notification(str, title ? std::make_optional(title) : std::nullopt, tone);
     };

@@ -183,11 +183,6 @@ extern "C"
             [](const auto &...) {};
 
         /**
-         * \brief Shows text in the notification section of the statusbar.
-         */
-        std::function<void(const char *str)> show_statusbar = [](const auto &...) {};
-
-        /**
          * \brief Shows a notification.
          * \param str The notification content.
          * \param title The notification title.

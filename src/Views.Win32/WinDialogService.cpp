@@ -147,11 +147,6 @@ void show_dialog(std::string_view str, std::optional<std::string_view> title, Co
     }
 }
 
-void show_statusbar(std::string_view str)
-{
-    DialogService::show_notification(std::string(str), std::nullopt, CoreMessageTone::Info);
-}
-
 void show_notification(
     std::string str, std::optional<std::string> title, CoreMessageTone type, std::optional<std::string> subtitle)
 {
