@@ -10,6 +10,7 @@
 #include <Common.Views/ActionManager.hpp>
 #include <action/AppActions.hpp>
 #include <components/Statusbar.hpp>
+#include <CaptureManager.hpp>
 #include <wil/resource.h>
 #include <Common.Win32/BetterStatusbar.hpp>
 #include <atomic>
@@ -20,7 +21,7 @@ namespace
 HWND statusbar_hwnd;
 std::atomic_bool starting{}, state_pending{};
 std::atomic_uint64_t rerecords{};
-std::array<wil::unique_hicon, 10> icons{};
+std::array<wil::unique_hicon, 12> icons{};
 
 std::string shortcut(const std::string &path, std::string_view label_key)
 {
@@ -49,8 +50,8 @@ void refresh_icons()
     BetterStatusbar::clear_icons(statusbar_hwnd);
     for (size_t i = 0; i < icons.size(); ++i)
     {
-        icons[i] = load_tinted_png_icon(
-            g_main_ctx.hinst, 29001 + static_cast<int>(i), {width, height}, i < colors.size() ? colors[i] : foreground);
+        const auto tint = i == 10 ? colors[2] : i < colors.size() ? colors[i] : foreground;
+        icons[i] = load_tinted_png_icon(g_main_ctx.hinst, 29001 + static_cast<int>(i), {width, height}, tint);
     }
     previous_background = background;
     previous_foreground = foreground;
@@ -151,10 +152,10 @@ void refresh()
         IOUtils::to_wide_string(I18n::get().get("statusbar.movie.tooltip")),
         IOUtils::to_wide_string(I18n::get().get("statusbar.rerecords.tooltip"))};
 
-    std::array<BetterStatusbar::Part, 8> parts;
+    std::array<BetterStatusbar::Part, 9> parts;
     for (size_t i = 0; i < next.size(); ++i)
     {
-        const auto part_index = i < 2 ? i : i + 1;
+        const auto part_index = i < 2 ? i : i + 2;
         parts[part_index].text = std::move(next[i]);
         parts[part_index].tooltip = std::move(next_tips[i]);
     }
@@ -175,7 +176,16 @@ void refresh()
         g_config.core.is_movie_loop_enabled ? "statusbar.loop.tooltip" : "statusbar.loop.disabled.tooltip",
         shortcut(AppActions::LOOP_MOVIE_PLAYBACK, "statusbar.shortcut.loop")));
     parts[2].on_click = [] { ActionManager::invoke(AppActions::LOOP_MOVIE_PLAYBACK); };
-    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 8 : 6));
+    const bool capturing = CaptureManager::is_capturing();
+    parts[3].reserve_icon = true;
+    parts[3].padding = 5;
+    parts[3].icon = icons[capturing ? 10 : 11].get();
+    parts[3].tooltip = IOUtils::to_wide_string(
+        I18n::get().format(capturing ? "statusbar.capture.active.tooltip" : "statusbar.capture.inactive.tooltip",
+            shortcut(AppActions::VIDEO_CAPTURE_START, "statusbar.shortcut.capture.start"),
+            shortcut(AppActions::VIDEO_CAPTURE_STOP, "statusbar.shortcut.capture.stop")));
+    if (!capturing) parts[3].on_click = [] { ActionManager::invoke(AppActions::VIDEO_CAPTURE_START); };
+    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 9 : 7));
 }
 
 void CALLBACK tick(HWND, UINT, UINT_PTR, DWORD)
@@ -217,6 +227,12 @@ void Statusbar::create()
     translations.add("statusbar.shortcut.load_slot", "Load slot", "en-us");
     translations.add("statusbar.shortcut.mfa", "Multi-Frame Advance", "en-us");
     translations.add("statusbar.shortcut.loop", "Toggle movie loop", "en-us");
+    translations.add("statusbar.shortcut.capture.start", "Start capture", "en-us");
+    translations.add("statusbar.shortcut.capture.stop", "Stop capture", "en-us");
+    translations.add("statusbar.capture.active.tooltip",
+        "Video capture is active.\n\nEmulator video and audio are being saved to a video file.\n\n{}\n{}", "en-us");
+    translations.add("statusbar.capture.inactive.tooltip",
+        "Video capture is inactive.\n\nClick to start capture.\n\n{}\n{}", "en-us");
     translations.add("statusbar.loop.disabled.tooltip",
         "Movie looping is disabled.\n\nPlayback will stop when the movie ends.\n\nClick to toggle movie looping.\n\n{}",
         "en-us");
