@@ -7,6 +7,7 @@ add_library(Mupen64RR_Common_Win32 INTERFACE
     "include/Common.Win32/Common.hpp"
     "include/Common.Win32/WinFilePicker.hpp"
     "include/Common.Win32/JoystickControl.hpp"
+    "include/Common.Win32/BetterStatusbar.hpp"
     "include/Common.Win32/SettingsListView.hpp"
     "include/Common.Win32/ResizeAnchor.hpp"
 )

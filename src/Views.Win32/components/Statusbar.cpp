@@ -11,19 +11,16 @@
 #include <action/AppActions.hpp>
 #include <components/Statusbar.hpp>
 #include <wil/resource.h>
+#include <Common.Win32/BetterStatusbar.hpp>
 #include <atomic>
 #include <array>
 
 namespace
 {
 HWND statusbar_hwnd;
-HWND tooltip_hwnd;
 std::atomic_bool starting{}, state_pending{};
 std::atomic_uint64_t rerecords{};
 std::array<wil::unique_hicon, 7> icons{};
-std::array<int, 7> previous_edges{};
-int previous_parts{}, previous_symbol = -2, previous_mode_symbol = -1;
-std::array<std::wstring, 7> texts{}, tips{};
 
 std::string shortcut(const std::string &path, std::string_view label_key)
 {
@@ -49,8 +46,7 @@ void refresh_icons()
                                                       RGB(255, 110, 110), RGB(245, 185, 65), RGB(245, 185, 65)}
                                                 : std::array<COLORREF, 5>{RGB(20, 125, 55), RGB(25, 100, 195),
                                                       RGB(190, 35, 35), RGB(145, 90, 0), RGB(145, 90, 0)};
-    SendMessage(statusbar_hwnd, SB_SETICON, 0, 0);
-    SendMessage(statusbar_hwnd, SB_SETICON, 1, 0);
+    BetterStatusbar::clear_icons(statusbar_hwnd);
     for (size_t i = 0; i < icons.size(); ++i)
     {
         icons[i] = load_tinted_png_icon(
@@ -60,8 +56,6 @@ void refresh_icons()
     previous_foreground = foreground;
     previous_width = width;
     previous_height = height;
-    previous_symbol = -2;
-    previous_mode_symbol = -1;
 }
 
 void refresh()
@@ -118,14 +112,15 @@ void refresh()
     const auto slot = g_config.st_slot + 1;
     const auto count = static_cast<int64_t>(g_config.multi_frame_advance_count);
     const auto magnitude = count < 0 ? -count : count;
-    float fps{}, vis{};
-    static ULONGLONG last_timing{};
+    static ULONGLONG last_timing_update{};
     static std::string timing;
-    if (timing.empty() || GetTickCount64() - last_timing >= 1000 || !launched)
+    const auto now = GetTickCount64();
+    if (timing.empty() || now - last_timing_update >= 1000)
     {
+        float fps{}, vis{};
         if (launched) core->vr_get_timings(fps, vis);
         timing = I18n::get().format("statusbar.timings", fps, vis);
-        last_timing = GetTickCount64();
+        last_timing_update = now;
     }
     std::array<std::wstring, 7> next = {IOUtils::to_wide_string(state), L"",
         IOUtils::to_wide_string(I18n::get().format("statusbar.slot", slot)), IOUtils::to_wide_string(timing),
@@ -152,70 +147,22 @@ void refresh()
         IOUtils::to_wide_string(I18n::get().get("statusbar.movie.tooltip")),
         IOUtils::to_wide_string(I18n::get().get("statusbar.rerecords.tooltip"))};
 
-    const int parts = active ? 7 : 5;
-    auto dc = GetDC(statusbar_hwnd);
-    const auto font = reinterpret_cast<HFONT>(SendMessage(statusbar_hwnd, WM_GETFONT, 0, 0));
-    const auto old_font = SelectObject(dc, font);
-    std::array<int, 7> edges{};
-    int borders[3]{};
-    SendMessage(statusbar_hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(borders));
-    int state_text_width = 0;
+    std::array<BetterStatusbar::Part, 7> parts;
+    for (size_t i = 0; i < parts.size(); ++i)
+    {
+        parts[i].text = std::move(next[i]);
+        parts[i].tooltip = std::move(next_tips[i]);
+    }
+    parts[0].icon = symbol < 0 ? nullptr : icons[symbol].get();
+    parts[0].reserve_icon = true;
     for (const auto key : {"statusbar.state.emulating", "statusbar.state.playing", "statusbar.state.recording",
              "statusbar.state.seeking", "statusbar.state.modifying", "statusbar.state.loading"})
-    {
-        const auto label = IOUtils::to_wide_string(I18n::get().get(key));
-        SIZE size{};
-        GetTextExtentPoint32W(dc, label.c_str(), static_cast<int>(label.size()), &size);
-        state_text_width = std::max(state_text_width, static_cast<int>(size.cx));
-    }
-    int edge = 0;
-    for (int i = 0; i < parts; ++i)
-    {
-        SIZE size{};
-        GetTextExtentPoint32W(dc, next[i].c_str(), static_cast<int>(next[i].size()), &size);
-        if (i == 0)
-            edge += state_text_width + 18 + GetSystemMetrics(SM_CXSMICON) + 4;
-        else if (i == 1)
-            edge += GetSystemMetrics(SM_CXSMICON) + 2 * borders[0] + 5;
-        else
-            edge += size.cx + 18;
-        edges[i] = edge;
-    }
-    SelectObject(dc, old_font);
-    ReleaseDC(statusbar_hwnd, dc);
-    if (previous_parts != parts || previous_edges != edges)
-    {
-        SendMessage(statusbar_hwnd, SB_SETPARTS, parts, reinterpret_cast<LPARAM>(edges.data()));
-        previous_parts = parts;
-        previous_edges = edges;
-    }
-    tips = std::move(next_tips);
-    for (int i = 0; i < 7; ++i)
-    {
-        TOOLINFOW tool{sizeof(tool)};
-        tool.hwnd = statusbar_hwnd;
-        tool.uId = i + 1;
-        if (i < parts) SendMessage(statusbar_hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&tool.rect));
-        tool.lpszText = tips[i].data();
-        SendMessageW(tooltip_hwnd, TTM_NEWTOOLRECTW, 0, reinterpret_cast<LPARAM>(&tool));
-        SendMessageW(tooltip_hwnd, TTM_UPDATETIPTEXTW, 0, reinterpret_cast<LPARAM>(&tool));
-        if (i >= parts) continue;
-        if (texts[i] != next[i])
-            SendMessageW(statusbar_hwnd, SB_SETTEXTW, i, reinterpret_cast<LPARAM>(next[i].c_str()));
-    }
-    if (previous_symbol != symbol)
-    {
-        SendMessage(
-            statusbar_hwnd, SB_SETICON, 0, reinterpret_cast<LPARAM>(symbol < 0 ? nullptr : icons[symbol].get()));
-        previous_symbol = symbol;
-    }
-    const int mode_symbol = readonly ? 5 : 6;
-    if (previous_mode_symbol != mode_symbol)
-    {
-        SendMessage(statusbar_hwnd, SB_SETICON, 1, reinterpret_cast<LPARAM>(icons[mode_symbol].get()));
-        previous_mode_symbol = mode_symbol;
-    }
-    texts = std::move(next);
+        parts[0].sizing_labels.push_back(IOUtils::to_wide_string(I18n::get().get(key)));
+    parts[1].icon = icons[readonly ? 5 : 6].get();
+    parts[1].reserve_icon = true;
+    parts[1].padding = 5;
+    parts[1].on_click = [] { ActionManager::invoke(AppActions::READONLY); };
+    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 7 : 5));
 }
 
 void CALLBACK tick(HWND, UINT, UINT_PTR, DWORD)
@@ -223,46 +170,12 @@ void CALLBACK tick(HWND, UINT, UINT_PTR, DWORD)
     refresh();
 }
 
-LRESULT CALLBACK statusbar_subclass(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR)
-{
-    if (message == WM_LBUTTONUP)
-    {
-        RECT mode_rect{};
-        const POINT position{GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
-        if (SendMessage(hwnd, SB_GETRECT, 1, reinterpret_cast<LPARAM>(&mode_rect)) && PtInRect(&mode_rect, position))
-            ActionManager::invoke(AppActions::READONLY);
-    }
-    else if (message == WM_NCDESTROY)
-    {
-        RemoveWindowSubclass(hwnd, statusbar_subclass, id);
-    }
-    return DefSubclassProc(hwnd, message, wparam, lparam);
-}
-
 void create_bar()
 {
-    statusbar_hwnd = CreateWindowEx(0, STATUSCLASSNAME, nullptr, WS_CHILD | WS_VISIBLE | CCS_BOTTOM, 0, 0, 0, 0,
-        g_main_ctx.hwnd, reinterpret_cast<HMENU>(IDC_MAIN_STATUS), g_main_ctx.hinst, nullptr);
-    SetWindowSubclass(statusbar_hwnd, statusbar_subclass, 0, 0);
-    texts = {};
-    tips = {};
-    previous_parts = 0;
-    previous_symbol = -2;
-    previous_mode_symbol = -1;
-    tooltip_hwnd = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASSW, nullptr, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, statusbar_hwnd, nullptr, g_main_ctx.hinst, nullptr);
-    SendMessage(tooltip_hwnd, TTM_SETMAXTIPWIDTH, 0, 420);
-    for (int i = 0; i < 7; ++i)
-    {
-        TOOLINFOW tool{sizeof(tool)};
-        tool.uFlags = TTF_SUBCLASS;
-        tool.hwnd = statusbar_hwnd;
-        tool.uId = i + 1;
-        tool.lpszText = tips[i].data();
-        SendMessageW(tooltip_hwnd, TTM_ADDTOOLW, 0, reinterpret_cast<LPARAM>(&tool));
-    }
+    statusbar_hwnd = BetterStatusbar::create(g_main_ctx.hwnd, g_main_ctx.hinst, IDC_MAIN_STATUS);
+    if (!statusbar_hwnd) return;
     refresh();
-    SetTimer(statusbar_hwnd, 1, 100, tick);
+    SetTimer(statusbar_hwnd, 1, 1000 / 60, tick);
 }
 } // namespace
 
