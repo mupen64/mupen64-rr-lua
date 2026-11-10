@@ -20,7 +20,7 @@ namespace
 HWND statusbar_hwnd;
 std::atomic_bool starting{}, state_pending{};
 std::atomic_uint64_t rerecords{};
-std::array<wil::unique_hicon, 7> icons{};
+std::array<wil::unique_hicon, 8> icons{};
 
 std::string shortcut(const std::string &path, std::string_view label_key)
 {
@@ -105,7 +105,11 @@ void refresh()
         state_tip = I18n::get().get("statusbar.state.emulating.tooltip");
     }
     else
+    {
+        state = I18n::get().get("statusbar.state.stopped");
+        symbol = 7;
         state_tip = I18n::get().get("statusbar.state.stopped.tooltip");
+    }
     if (launched && core->vr_get_paused()) state_tip += "\n\n" + I18n::get().get("statusbar.state.paused.tooltip");
 
     const bool readonly = g_config.core.vcr_readonly;
@@ -156,7 +160,7 @@ void refresh()
     parts[0].icon = symbol < 0 ? nullptr : icons[symbol].get();
     parts[0].reserve_icon = true;
     for (const auto key : {"statusbar.state.emulating", "statusbar.state.playing", "statusbar.state.recording",
-             "statusbar.state.seeking", "statusbar.state.modifying", "statusbar.state.loading"})
+             "statusbar.state.seeking", "statusbar.state.modifying", "statusbar.state.loading", "statusbar.state.stopped"})
         parts[0].sizing_labels.push_back(IOUtils::to_wide_string(I18n::get().get(key)));
     parts[1].icon = icons[readonly ? 5 : 6].get();
     parts[1].reserve_icon = true;
@@ -195,6 +199,7 @@ void Statusbar::create()
     translations.add("statusbar.state.playing.tooltip", "Playing controller input from the movie.", "en-us");
     translations.add("statusbar.state.emulating", "Emulating", "en-us");
     translations.add("statusbar.state.emulating.tooltip", "The emulator is running without an active movie.", "en-us");
+    translations.add("statusbar.state.stopped", "Not Running", "en-us");
     translations.add("statusbar.state.stopped.tooltip", "The emulator is stopped.", "en-us");
     translations.add("statusbar.state.paused.tooltip", "Emulation is paused.", "en-us");
     translations.add("statusbar.shortcut.unassigned", "Unassigned", "en-us");
