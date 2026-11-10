@@ -21,7 +21,7 @@ namespace
 HWND statusbar_hwnd;
 std::atomic_bool starting{}, state_pending{};
 std::atomic_uint64_t rerecords{};
-std::array<wil::unique_hicon, 12> icons{};
+std::array<wil::unique_hicon, 14> icons{};
 
 std::string shortcut(const std::string &path, std::string_view label_key)
 {
@@ -50,8 +50,9 @@ void refresh_icons()
     BetterStatusbar::clear_icons(statusbar_hwnd);
     for (size_t i = 0; i < icons.size(); ++i)
     {
-        const auto tint = i == 10 ? colors[2] : i < colors.size() ? colors[i] : foreground;
-        icons[i] = load_tinted_png_icon(g_main_ctx.hinst, 29001 + static_cast<int>(i), {width, height}, tint);
+        const auto tint = i == 10 || i == 13 ? colors[2] : i < colors.size() ? colors[i] : foreground;
+        const auto resource_id = i == 13 ? 29013 : 29001 + static_cast<int>(i);
+        icons[i] = load_tinted_png_icon(g_main_ctx.hinst, resource_id, {width, height}, tint);
     }
     previous_background = background;
     previous_foreground = foreground;
@@ -152,10 +153,10 @@ void refresh()
         IOUtils::to_wide_string(I18n::get().get("statusbar.movie.tooltip")),
         IOUtils::to_wide_string(I18n::get().get("statusbar.rerecords.tooltip"))};
 
-    std::array<BetterStatusbar::Part, 9> parts;
+    std::array<BetterStatusbar::Part, 10> parts;
     for (size_t i = 0; i < next.size(); ++i)
     {
-        const auto part_index = i < 2 ? i : i + 2;
+        const auto part_index = i < 2 ? i : i + 3;
         parts[part_index].text = std::move(next[i]);
         parts[part_index].tooltip = std::move(next_tips[i]);
     }
@@ -185,7 +186,21 @@ void refresh()
             shortcut(AppActions::VIDEO_CAPTURE_START, "statusbar.shortcut.capture.start"),
             shortcut(AppActions::VIDEO_CAPTURE_STOP, "statusbar.shortcut.capture.stop")));
     if (!capturing) parts[3].on_click = [] { ActionManager::invoke(AppActions::VIDEO_CAPTURE_START); };
-    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 9 : 7));
+    const auto speed = g_config.core.fps_modifier / 100.0;
+    std::string target_rate;
+    if (launched)
+    {
+        const auto base_vis = core->vr_get_vis_per_second(core->vr_get_rom_header()->Country_code);
+        target_rate = I18n::get().format("statusbar.speed.target", base_vis * speed) + "\n\n";
+    }
+    parts[4].text = IOUtils::to_wide_string(I18n::get().format("statusbar.speed", speed));
+    parts[4].icon = icons[g_config.core.fps_modifier == 100 ? 12 : 13].get();
+    parts[4].tooltip = IOUtils::to_wide_string(I18n::get().format("statusbar.speed.tooltip", target_rate,
+        shortcut(AppActions::SPEED_UP, "statusbar.shortcut.speed.up"),
+        shortcut(AppActions::SPEED_DOWN, "statusbar.shortcut.speed.down"),
+        shortcut(AppActions::SPEED_RESET, "statusbar.shortcut.speed.reset")));
+    parts[4].on_click = [] { ActionManager::invoke(AppActions::SPEED_RESET); };
+    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 10 : 8));
 }
 
 void CALLBACK tick(HWND, UINT, UINT_PTR, DWORD)
@@ -227,6 +242,13 @@ void Statusbar::create()
     translations.add("statusbar.shortcut.load_slot", "Load slot", "en-us");
     translations.add("statusbar.shortcut.mfa", "Multi-Frame Advance", "en-us");
     translations.add("statusbar.shortcut.loop", "Toggle movie loop", "en-us");
+    translations.add("statusbar.speed", "{:g}x", "en-us");
+    translations.add("statusbar.speed.tooltip",
+        "Emulator speed multiplier.\n\n{}Click to reset speed to 1x.\n\n{}\n{}\n{}", "en-us");
+    translations.add("statusbar.speed.target", "Target rate: {:.1f} VI/s", "en-us");
+    translations.add("statusbar.shortcut.speed.up", "Speed up", "en-us");
+    translations.add("statusbar.shortcut.speed.down", "Speed down", "en-us");
+    translations.add("statusbar.shortcut.speed.reset", "Reset speed", "en-us");
     translations.add("statusbar.shortcut.capture.start", "Start capture", "en-us");
     translations.add("statusbar.shortcut.capture.stop", "Stop capture", "en-us");
     translations.add("statusbar.capture.active.tooltip",

@@ -343,15 +343,6 @@ void on_capturing_changed(bool value)
     });
 }
 
-void on_speed_modifier_changed(int32_t value)
-{
-    const auto vis_per_second =
-        g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
-    const auto effective_vis_per_second = (double)vis_per_second * ((double)value / 100.0);
-
-    DialogService::show_notification(std::format("Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
-}
-
 void on_vis_since_input_poll_exceeded()
 {
     if (g_vis_since_input_poll_warning_dismissed)
@@ -1161,7 +1152,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::subscribe<Messenger::Message::CapturingChanged>(on_capturing_changed);
     Messenger::subscribe<Messenger::Message::TaskChanged>(on_task_changed);
     Messenger::subscribe<Messenger::Message::ScriptStarted>(on_script_started);
-    Messenger::subscribe<Messenger::Message::SpeedModifierChanged>(on_speed_modifier_changed);
     Messenger::subscribe<Messenger::Message::LagLimitExceeded>(on_vis_since_input_poll_exceeded);
     Messenger::subscribe<Messenger::Message::ConfigLoaded>(on_config_loaded);
     Messenger::subscribe<Messenger::Message::ConfigNeedsPatching>(on_config_needs_patching);
