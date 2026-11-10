@@ -370,7 +370,7 @@ static void undo_load_state()
 
         if (buf.empty())
         {
-            DialogService::show_notification("No load to undo");
+            DialogService::show_notification("No load to undo", std::nullopt, CoreMessageTone::Warn);
             return;
         }
 
@@ -379,7 +379,7 @@ static void undo_load_state()
             [](const CoreSTCallbackInfo &info, auto) {
                 if (info.result == CoreResult::Res_Ok)
                 {
-                    DialogService::show_notification("Undid load");
+                    DialogService::show_notification("Undid load", std::nullopt, CoreMessageTone::Info);
                     return;
                 }
 
@@ -388,7 +388,7 @@ static void undo_load_state()
                     return;
                 }
 
-                DialogService::show_notification("Failed to undo load");
+                DialogService::show_notification("Failed to undo load", std::nullopt, CoreMessageTone::Error);
             },
             false);
     });

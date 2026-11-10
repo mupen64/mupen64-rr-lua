@@ -336,7 +336,7 @@ static int ConsoleWriteLua(lua_State *L)
 
 static int StatusbarWrite(lua_State *L)
 {
-    DialogService::show_notification(luaL_checkstring(L, 1));
+    DialogService::show_notification(luaL_checkstring(L, 1), std::nullopt, CoreMessageTone::Info);
     return 0;
 }
 } // namespace LuaCore::Emu

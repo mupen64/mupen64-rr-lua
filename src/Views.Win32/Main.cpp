@@ -158,7 +158,8 @@ void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8
                 break;
             default:
                 DialogService::show_notification(
-                    std::format("Failed to {} slot {}", info.job == CoreSTJob::Save ? "save" : "load", slot + 1));
+                    std::format("Failed to {} slot {}", info.job == CoreSTJob::Save ? "save" : "load", slot + 1),
+                    std::nullopt, CoreMessageTone::Error);
                 break;
             }
             return;
