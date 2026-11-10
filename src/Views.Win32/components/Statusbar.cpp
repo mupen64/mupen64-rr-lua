@@ -263,7 +263,7 @@ void Statusbar::create()
         "looping.\n\n{}",
         "en-us");
     translations.add("statusbar.slot", "Slot {}", "en-us");
-    translations.add("statusbar.timings", "FPS: {:.1f} VI/s: {:.1f}", "en-us");
+    translations.add("statusbar.timings", "FPS: {:.1f} · VI/s: {:.1f}", "en-us");
     translations.add("statusbar.mfa", "MFA: {}x", "en-us");
     translations.add("statusbar.rerecords", "RR: {}", "en-us");
     translations.add("statusbar.readonly.tooltip",
