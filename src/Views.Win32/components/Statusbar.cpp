@@ -21,7 +21,7 @@ namespace
 HWND statusbar_hwnd;
 std::atomic_bool starting{}, state_pending{};
 std::atomic_uint64_t rerecords{};
-std::array<wil::unique_hicon, 14> icons{};
+std::array<wil::unique_hicon, 16> icons{};
 
 std::string shortcut(const std::string &path, std::string_view label_key)
 {
@@ -50,8 +50,11 @@ void refresh_icons()
     BetterStatusbar::clear_icons(statusbar_hwnd);
     for (size_t i = 0; i < icons.size(); ++i)
     {
-        const auto tint = i == 10 || i == 13 ? colors[2] : i < colors.size() ? colors[i] : foreground;
-        const auto resource_id = i == 13 ? 29013 : 29001 + static_cast<int>(i);
+        const auto tint = i == 14              ? colors[0]
+                          : i == 10 || i == 13 ? colors[2]
+                          : i < colors.size()  ? colors[i]
+                                               : foreground;
+        const auto resource_id = i >= 13 ? 29000 + static_cast<int>(i) : 29001 + static_cast<int>(i);
         icons[i] = load_tinted_png_icon(g_main_ctx.hinst, resource_id, {width, height}, tint);
     }
     previous_background = background;
@@ -153,10 +156,10 @@ void refresh()
         IOUtils::to_wide_string(I18n::get().get("statusbar.movie.tooltip")),
         IOUtils::to_wide_string(I18n::get().get("statusbar.rerecords.tooltip"))};
 
-    std::array<BetterStatusbar::Part, 10> parts;
+    std::array<BetterStatusbar::Part, 11> parts;
     for (size_t i = 0; i < next.size(); ++i)
     {
-        const auto part_index = i < 2 ? i : i + 3;
+        const auto part_index = i < 2 ? i : i + 4;
         parts[part_index].text = std::move(next[i]);
         parts[part_index].tooltip = std::move(next_tips[i]);
     }
@@ -193,14 +196,25 @@ void refresh()
         const auto base_vis = core->vr_get_vis_per_second(core->vr_get_rom_header()->Country_code);
         target_rate = I18n::get().format("statusbar.speed.target", base_vis * speed) + "\n\n";
     }
-    parts[4].text = IOUtils::to_wide_string(I18n::get().format("statusbar.speed", speed));
-    parts[4].icon = icons[g_config.core.fps_modifier == 100 ? 12 : 13].get();
-    parts[4].tooltip = IOUtils::to_wide_string(I18n::get().format("statusbar.speed.tooltip", target_rate,
+    parts[5].text = IOUtils::to_wide_string(I18n::get().format("statusbar.speed", speed));
+    parts[5].icon = icons[g_config.core.fps_modifier == 100 ? 12 : 13].get();
+    parts[5].tooltip = IOUtils::to_wide_string(I18n::get().format("statusbar.speed.tooltip", target_rate,
         shortcut(AppActions::SPEED_UP, "statusbar.shortcut.speed.up"),
         shortcut(AppActions::SPEED_DOWN, "statusbar.shortcut.speed.down"),
         shortcut(AppActions::SPEED_RESET, "statusbar.shortcut.speed.reset")));
-    parts[4].on_click = [] { ActionManager::invoke(AppActions::SPEED_RESET); };
-    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 10 : 8));
+    parts[5].on_click = [] { ActionManager::invoke(AppActions::SPEED_RESET); };
+    const bool cheats_active = core->cht_has_active();
+    parts[4].reserve_icon = true;
+    parts[4].padding = 5;
+    parts[4].icon = icons[cheats_active ? 14 : 15].get();
+    auto cheats_tooltip =
+        I18n::get().get(cheats_active ? "statusbar.cheats.active.tooltip" : "statusbar.cheats.inactive.tooltip");
+    if (core->cht_has_override()) cheats_tooltip += "\n\n" + I18n::get().get("statusbar.cheats.override.tooltip");
+    if (launched) cheats_tooltip += "\n\n" + I18n::get().get("statusbar.cheats.open.tooltip");
+    cheats_tooltip += "\n\n" + shortcut(AppActions::CHEATS, "statusbar.shortcut.cheats");
+    parts[4].tooltip = IOUtils::to_wide_string(cheats_tooltip);
+    parts[4].on_click = [] { ActionManager::invoke(AppActions::CHEATS); };
+    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 11 : 9));
 }
 
 void CALLBACK tick(HWND, UINT, UINT_PTR, DWORD)
@@ -242,6 +256,12 @@ void Statusbar::create()
     translations.add("statusbar.shortcut.load_slot", "Load slot", "en-us");
     translations.add("statusbar.shortcut.mfa", "Multi-Frame Advance", "en-us");
     translations.add("statusbar.shortcut.loop", "Toggle movie loop", "en-us");
+    translations.add("statusbar.shortcut.cheats", "Open Cheats", "en-us");
+    translations.add("statusbar.cheats.active.tooltip", "One or more cheats are enabled.", "en-us");
+    translations.add("statusbar.cheats.inactive.tooltip", "No cheats are enabled.", "en-us");
+    translations.add(
+        "statusbar.cheats.override.tooltip", "Cheats are currently managed by the core and can't be changed.", "en-us");
+    translations.add("statusbar.cheats.open.tooltip", "Click to open the Cheats dialog.", "en-us");
     translations.add("statusbar.speed", "{:g}x", "en-us");
     translations.add("statusbar.speed.tooltip",
         "Emulator speed multiplier.\n\n{}Click to reset speed to 1x.\n\n{}\n{}\n{}", "en-us");

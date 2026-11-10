@@ -791,6 +791,18 @@ extern "C"
         std::function<void(std::vector<CoreCheat> &)> cht_get_list;
 
         /**
+         * \brief Gets whether the effective cheat list contains an active cheat.
+         * \remarks This function is thread-safe.
+         */
+        std::function<bool()> cht_has_active;
+
+        /**
+         * \brief Gets whether the effective cheat list is managed by a core override.
+         * \remarks This function is thread-safe.
+         */
+        std::function<bool()> cht_has_override;
+
+        /**
          * \brief Sets the cheat list.
          * \remarks If a core cheat override is active, cht_set_list will do nothing.
          */
