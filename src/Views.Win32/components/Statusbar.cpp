@@ -194,11 +194,11 @@ void Statusbar::create()
     translations.add("statusbar.state.seeking", "Seeking", "en-us");
     translations.add("statusbar.state.seeking.tooltip", "Seeking to the requested movie frame.", "en-us");
     translations.add("statusbar.state.recording", "Recording", "en-us");
-    translations.add("statusbar.state.recording.tooltip", "Recording controller input to the movie.", "en-us");
+    translations.add("statusbar.state.recording.tooltip", "Recording a movie.", "en-us");
     translations.add("statusbar.state.playing", "Playing", "en-us");
-    translations.add("statusbar.state.playing.tooltip", "Playing controller input from the movie.", "en-us");
+    translations.add("statusbar.state.playing.tooltip", "Playing a movie.", "en-us");
     translations.add("statusbar.state.emulating", "Emulating", "en-us");
-    translations.add("statusbar.state.emulating.tooltip", "The emulator is running without an active movie.", "en-us");
+    translations.add("statusbar.state.emulating.tooltip", "The emulator is running.", "en-us");
     translations.add("statusbar.state.stopped", "Not Running", "en-us");
     translations.add("statusbar.state.stopped.tooltip", "The emulator is stopped.", "en-us");
     translations.add("statusbar.state.paused.tooltip", "Emulation is paused.", "en-us");
