@@ -372,11 +372,6 @@ void on_vis_since_input_poll_exceeded()
     g_vis_since_input_poll_warning_dismissed = true;
 }
 
-void on_movie_loop_changed(bool value)
-{
-    DialogService::show_notification(value ? "Movies restart after ending" : "Movies stop after ending");
-}
-
 void on_config_loaded()
 {
     RomBrowser::build();
@@ -1164,7 +1159,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(on_emu_launched_changed);
     Messenger::subscribe<Messenger::Message::EmuStopping>(on_emu_stopping);
     Messenger::subscribe<Messenger::Message::CapturingChanged>(on_capturing_changed);
-    Messenger::subscribe<Messenger::Message::MovieLoopChanged>(on_movie_loop_changed);
     Messenger::subscribe<Messenger::Message::TaskChanged>(on_task_changed);
     Messenger::subscribe<Messenger::Message::ScriptStarted>(on_script_started);
     Messenger::subscribe<Messenger::Message::SpeedModifierChanged>(on_speed_modifier_changed);

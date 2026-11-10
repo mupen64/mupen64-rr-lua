@@ -20,7 +20,7 @@ namespace
 HWND statusbar_hwnd;
 std::atomic_bool starting{}, state_pending{};
 std::atomic_uint64_t rerecords{};
-std::array<wil::unique_hicon, 8> icons{};
+std::array<wil::unique_hicon, 10> icons{};
 
 std::string shortcut(const std::string &path, std::string_view label_key)
 {
@@ -151,11 +151,12 @@ void refresh()
         IOUtils::to_wide_string(I18n::get().get("statusbar.movie.tooltip")),
         IOUtils::to_wide_string(I18n::get().get("statusbar.rerecords.tooltip"))};
 
-    std::array<BetterStatusbar::Part, 7> parts;
-    for (size_t i = 0; i < parts.size(); ++i)
+    std::array<BetterStatusbar::Part, 8> parts;
+    for (size_t i = 0; i < next.size(); ++i)
     {
-        parts[i].text = std::move(next[i]);
-        parts[i].tooltip = std::move(next_tips[i]);
+        const auto part_index = i < 2 ? i : i + 1;
+        parts[part_index].text = std::move(next[i]);
+        parts[part_index].tooltip = std::move(next_tips[i]);
     }
     parts[0].icon = symbol < 0 ? nullptr : icons[symbol].get();
     parts[0].reserve_icon = true;
@@ -167,7 +168,14 @@ void refresh()
     parts[1].reserve_icon = true;
     parts[1].padding = 5;
     parts[1].on_click = [] { ActionManager::invoke(AppActions::READONLY); };
-    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 7 : 5));
+    parts[2].reserve_icon = true;
+    parts[2].padding = 5;
+    parts[2].icon = icons[g_config.core.is_movie_loop_enabled ? 9 : 8].get();
+    parts[2].tooltip = IOUtils::to_wide_string(I18n::get().format(
+        g_config.core.is_movie_loop_enabled ? "statusbar.loop.tooltip" : "statusbar.loop.disabled.tooltip",
+        shortcut(AppActions::LOOP_MOVIE_PLAYBACK, "statusbar.shortcut.loop")));
+    parts[2].on_click = [] { ActionManager::invoke(AppActions::LOOP_MOVIE_PLAYBACK); };
+    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 8 : 6));
 }
 
 void CALLBACK tick(HWND, UINT, UINT_PTR, DWORD)
@@ -208,6 +216,14 @@ void Statusbar::create()
     translations.add("statusbar.shortcut.save_slot", "Save slot", "en-us");
     translations.add("statusbar.shortcut.load_slot", "Load slot", "en-us");
     translations.add("statusbar.shortcut.mfa", "Multi-Frame Advance", "en-us");
+    translations.add("statusbar.shortcut.loop", "Toggle movie loop", "en-us");
+    translations.add("statusbar.loop.disabled.tooltip",
+        "Movie looping is disabled.\n\nPlayback will stop when the movie ends.\n\nClick to toggle movie looping.\n\n{}",
+        "en-us");
+    translations.add("statusbar.loop.tooltip",
+        "Movie looping is enabled.\n\nPlayback will restart when the movie ends.\n\nClick to toggle movie "
+        "looping.\n\n{}",
+        "en-us");
     translations.add("statusbar.slot", "Slot {}", "en-us");
     translations.add("statusbar.timings", "FPS: {:.1f} VI/s: {:.1f}", "en-us");
     translations.add("statusbar.mfa", "MFA: {}x", "en-us");
