@@ -45,9 +45,10 @@ ApplicationWindow {
             id: buttons
         }
         CheckBox {
-            checked: gamepad.enabled
-            onToggled: gamepad.enabled = checked
-            enabled: gamepad.connected
+            // the option lives in the port settings: it survives restarts, and stays reachable
+            // when no pad happens to be connected at startup
+            checked: settings.gamepadEnabled
+            onToggled: settings.gamepadEnabled = checked
             text: gamepad.connected
                 //% "Gamepad: %1"
                 ? qsTrId("tasinput.gamepadConnected").arg(gamepad.deviceName)
@@ -58,6 +59,7 @@ ApplicationWindow {
 
     GamepadManager {
         id: gamepad
+        enabled: settings.gamepadEnabled
 
         readonly property var buttonStates: ["stateA", "stateB", "stateZ", "stateS", "stateL", "stateR", "stateDU", "stateDD", "stateDL", "stateDR", "stateCU", "stateCD", "stateCL", "stateCR"]
 
@@ -74,6 +76,7 @@ ApplicationWindow {
         id: settings
         location: root.configUrl
         category: `port${root.port}`
+        property bool gamepadEnabled: true
     }
 
     Connections {
