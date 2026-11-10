@@ -507,7 +507,6 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
         if (!CoreUtils::show_error_dialog_for_result(vcr_result))
         {
             g_config.last_movie_author = author;
-            DialogService::show_notification("Recording replay");
         }
     });
 }
@@ -735,12 +734,7 @@ static void start_capture_direct(const ActionManager::action_argument_map &param
     const auto path = params.at("path");
     const auto ask_preset = params.at("ask_preset") == "1";
 
-    CaptureManager::start_capture(path, (Config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
-        if (result)
-        {
-            DialogService::show_notification("Capture started...");
-        }
-    });
+    CaptureManager::start_capture(path, (Config::EncoderType)g_config.encoder_type, ask_preset);
 }
 
 static void start_capture_normal()
@@ -779,12 +773,7 @@ static void start_capture_from_preset()
 
 static void stop_capture()
 {
-    CaptureManager::stop_capture([](const auto result) {
-        if (result)
-        {
-            DialogService::show_notification("Capture stopped");
-        }
-    });
+    CaptureManager::stop_capture();
 }
 
 #pragma endregion

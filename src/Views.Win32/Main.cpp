@@ -154,12 +154,7 @@ void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8
             switch (info.result)
             {
             case CoreResult::Res_Ok:
-                DialogService::show_notification(
-                    std::format("{} slot {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", slot + 1));
-                break;
             case CoreResult::Res_Cancelled:
-                DialogService::show_notification(
-                    std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
                 break;
             default:
                 DialogService::show_notification(
@@ -172,12 +167,7 @@ void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8
         switch (info.result)
         {
         case CoreResult::Res_Ok:
-            DialogService::show_notification(std::format(
-                "{} {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", info.params.path.filename().string()));
-            break;
         case CoreResult::Res_Cancelled:
-            DialogService::show_notification(
-                std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
             break;
         default: {
             const auto message =
@@ -242,14 +232,6 @@ void on_task_changed(CoreVCRTask value)
 {
     g_main_ctx.dispatcher->invoke([=] {
         static auto previous_value = value;
-        if (!vcr_is_task_recording(value) && vcr_is_task_recording(previous_value))
-        {
-            DialogService::show_notification("Recording stopped");
-        }
-        if (!task_is_playback(value) && task_is_playback(previous_value))
-        {
-            DialogService::show_notification("Playback stopped");
-        }
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) ||
             task_is_playback(value) && !task_is_playback(previous_value) &&
