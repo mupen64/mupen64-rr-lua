@@ -190,7 +190,9 @@ void refresh()
         I18n::get().format(capturing ? "statusbar.capture.active.tooltip" : "statusbar.capture.inactive.tooltip",
             shortcut(AppActions::VIDEO_CAPTURE_START, "statusbar.shortcut.capture.start"),
             shortcut(AppActions::VIDEO_CAPTURE_STOP, "statusbar.shortcut.capture.stop")));
-    if (!capturing) parts[3].on_click = [] { ActionManager::invoke(AppActions::VIDEO_CAPTURE_START); };
+    parts[3].on_click = [capturing] {
+        ActionManager::invoke(capturing ? AppActions::VIDEO_CAPTURE_STOP : AppActions::VIDEO_CAPTURE_START);
+    };
     const auto speed = g_config.core.fps_modifier / 100.0;
     std::string target_rate;
     if (launched)
@@ -292,7 +294,9 @@ void Statusbar::create()
     translations.add("statusbar.shortcut.capture.start", "Start capture", "en-us");
     translations.add("statusbar.shortcut.capture.stop", "Stop capture", "en-us");
     translations.add("statusbar.capture.active.tooltip",
-        "Video capture is active.\n\nEmulator video and audio are being saved to a video file.\n\n{}\n{}", "en-us");
+        "Video capture is active.\n\nEmulator video and audio are being saved to a video file.\n\nClick to stop "
+        "capture.\n\n{}\n{}",
+        "en-us");
     translations.add("statusbar.capture.inactive.tooltip",
         "Video capture is inactive.\n\nClick to start capture.\n\n{}\n{}", "en-us");
     translations.add("statusbar.loop.disabled.tooltip",
