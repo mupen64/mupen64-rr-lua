@@ -32,6 +32,7 @@ struct Part
     std::vector<std::wstring> sizing_labels;
     bool reserve_icon{};
     int padding = 16;
+    int width{};
     std::function<void()> on_click;
 };
 
@@ -172,9 +173,14 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts)
         text_changed[i] = !entry.initialized || previous.text != next.text;
         icon_changed[i] = !entry.initialized || previous.icon != next.icon;
         tip_changed[i] = !entry.initialized || previous.tooltip != next.tooltip;
-        if (metrics_changed || !entry.initialized || previous.sizing_labels != next.sizing_labels ||
-            previous.reserve_icon != next.reserve_icon || previous.padding != next.padding ||
-            bool(previous.icon) != bool(next.icon) || (next.sizing_labels.empty() && text_changed[i]))
+        if (next.width > 0)
+        {
+            entry.width = next.width;
+        }
+        else if (metrics_changed || !entry.initialized || previous.width > 0 ||
+                 previous.sizing_labels != next.sizing_labels ||
+                 previous.reserve_icon != next.reserve_icon || previous.padding != next.padding ||
+                 bool(previous.icon) != bool(next.icon) || (next.sizing_labels.empty() && text_changed[i]))
         {
             if (!dc)
             {
@@ -242,6 +248,7 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts)
         entry.part.sizing_labels = parts[i].sizing_labels;
         entry.part.reserve_icon = parts[i].reserve_icon;
         entry.part.padding = parts[i].padding;
+        entry.part.width = parts[i].width;
         entry.part.on_click = parts[i].on_click;
         entry.initialized = true;
     }

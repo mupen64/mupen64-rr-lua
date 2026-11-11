@@ -10,6 +10,7 @@
 #include <Common.Views/ActionManager.hpp>
 #include <action/AppActions.hpp>
 #include <components/Statusbar.hpp>
+#include <components/StatusbarOld.hpp>
 #include <CaptureManager.hpp>
 #include <wil/resource.h>
 #include <Common.Win32/BetterStatusbar.hpp>
@@ -22,6 +23,7 @@ HWND statusbar_hwnd;
 std::atomic_bool starting{}, state_pending{};
 std::atomic_uint64_t rerecords{};
 std::array<wil::unique_hicon, 16> icons{};
+bool legacy_active{};
 
 std::string shortcut(const std::string &path, std::string_view label_key)
 {
@@ -229,6 +231,24 @@ void create_bar()
     refresh();
     SetTimer(statusbar_hwnd, 1, 1000 / 60, tick);
 }
+
+void destroy_bar()
+{
+    if (statusbar_hwnd) DestroyWindow(statusbar_hwnd);
+    statusbar_hwnd = nullptr;
+}
+
+void recreate(const bool visible)
+{
+    destroy_bar();
+    StatusbarOld::destroy_window();
+    legacy_active = g_config.use_legacy_statusbar;
+    if (!visible) return;
+    if (legacy_active)
+        StatusbarOld::create_window();
+    else
+        create_bar();
+}
 } // namespace
 
 void Statusbar::create()
@@ -302,13 +322,14 @@ void Statusbar::create()
     translations.add(
         "statusbar.movie.tooltip", "Current/total vertical interrupts (current/total input samples).", "en-us");
     translations.add("statusbar.rerecords.tooltip", "Movie rerecord count.", "en-us");
-    create_bar();
+    StatusbarOld::init();
+    recreate(true);
     Messenger::subscribe<Messenger::Message::EmuStartingChanged>([](bool value) { starting = value; });
     Messenger::subscribe<Messenger::Message::RerecordsChanged>([](uint64_t value) { rerecords = value; });
-    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>([](bool value) {
-        if (statusbar_hwnd) DestroyWindow(statusbar_hwnd);
-        statusbar_hwnd = nullptr;
-        if (value) create_bar();
+    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(recreate);
+    Messenger::subscribe<Messenger::Message::ConfigLoaded>([] {
+        if (static_cast<bool>(g_config.use_legacy_statusbar) == legacy_active) return;
+        Messenger::broadcast<Messenger::Message::StatusbarVisibilityChanged>((bool)g_config.is_statusbar_enabled);
     });
     // Core callbacks may run off the UI thread; the timer consumes only this atomic flag.
     g_main_ctx.core.st_pending_changed = [](bool value) { state_pending = value; };
@@ -316,5 +337,5 @@ void Statusbar::create()
 
 HWND Statusbar::hwnd()
 {
-    return statusbar_hwnd;
+    return legacy_active ? StatusbarOld::hwnd() : statusbar_hwnd;
 }

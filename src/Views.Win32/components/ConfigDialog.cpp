@@ -606,18 +606,23 @@ std::vector<OptionGroup> get_static_option_groups()
 
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
+        .name = "Legacy statusbar",
+        .tooltip = "Use the legacy text-only statusbar instead of the default one.",
+        GENPROPS(int32_t, use_legacy_statusbar)});
+    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
+        .group_id = statusbar_group.id,
         .name = "Zero-index",
         .tooltip = "Show indicies in the statusbar, such as VCR frame counts, relative to 0 instead of 1.",
         GENPROPS(int32_t, vcr_0_index)});
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Scale down to fit window",
-        .tooltip = "Whether the statusbar is allowed to scale its segments down.",
+        .tooltip = "Whether the statusbar is allowed to scale its segments down.\nOnly applies to the legacy statusbar.",
         GENPROPS(int32_t, statusbar_scale_down)});
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Scale up to fill window",
-        .tooltip = "Whether the statusbar is allowed to scale its segments up.",
+        .tooltip = "Whether the statusbar is allowed to scale its segments up.\nOnly applies to the legacy statusbar.",
         GENPROPS(int32_t, statusbar_scale_up)});
     piano_roll_group.items.emplace_back(OptionItem{
         .type = OptionItem::Type::Bool,

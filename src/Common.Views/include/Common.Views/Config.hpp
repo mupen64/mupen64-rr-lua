@@ -98,6 +98,11 @@ struct Config
     /// </summary>
     int32_t statusbar_scale_up;
 
+    /// <summary>
+    /// Whether to use the legacy text-only statusbar instead of the default one.
+    /// </summary>
+    int32_t use_legacy_statusbar = 0;
+
     std::string rom_directory = ".\\roms\\";
     std::string plugins_directory = ".\\plugin\\";
     std::string saves_directory = ".\\save\\";
