@@ -140,8 +140,11 @@ void refresh()
     {
         const auto sample =
             static_cast<int64_t>(core->vcr_get_seek_info().current_sample) - (g_config.vcr_0_index ? 1 : 0);
-        next[5] = IOUtils::to_wide_string(std::format("{}/{} ({}/{})", core->vcr_get_current_vi(),
-            core->vcr_get_length_vis(), std::max<int64_t>(0, sample), core->vcr_get_length_samples()));
+        const auto samples = std::format("{}/{}", std::max<int64_t>(0, sample), core->vcr_get_length_samples());
+        next[5] = IOUtils::to_wide_string(
+            g_config.statusbar_show_movie_vis
+                ? std::format("{}/{} ({})", core->vcr_get_current_vi(), core->vcr_get_length_vis(), samples)
+                : samples);
         next[6] = IOUtils::to_wide_string(I18n::get().format("statusbar.rerecords", rerecords.load()));
     }
     std::array<std::wstring, 7> next_tips = {IOUtils::to_wide_string(state_tip),
@@ -155,7 +158,8 @@ void refresh()
         IOUtils::to_wide_string(
             I18n::get().format(count < 0 ? "statusbar.mfa.rewind.tooltip" : "statusbar.mfa.advance.tooltip", magnitude,
                 shortcut(AppActions::MULTI_FRAME_ADVANCE, "statusbar.shortcut.mfa"))),
-        IOUtils::to_wide_string(I18n::get().get("statusbar.movie.tooltip")),
+        IOUtils::to_wide_string(I18n::get().get(
+            g_config.statusbar_show_movie_vis ? "statusbar.movie.vis.tooltip" : "statusbar.movie.tooltip")),
         IOUtils::to_wide_string(I18n::get().get("statusbar.rerecords.tooltip"))};
 
     std::array<BetterStatusbar::Part, 11> parts;
@@ -175,6 +179,7 @@ void refresh()
     parts[1].reserve_icon = true;
     parts[1].padding = 5;
     parts[1].on_click = [] { ActionManager::invoke(AppActions::READONLY); };
+    parts[9].on_click = [] { g_config.statusbar_show_movie_vis ^= 1; };
     parts[2].reserve_icon = true;
     parts[2].padding = 5;
     parts[2].icon = icons[g_config.core.is_movie_loop_enabled ? 9 : 8].get();
@@ -323,8 +328,11 @@ void Statusbar::create()
     translations.add("statusbar.timings.tooltip", "Frames per second and vertical interrupts per second.", "en-us");
     translations.add("statusbar.mfa.rewind.tooltip", "Multi-Frame Advance will rewind by {} frames.\n\n{}", "en-us");
     translations.add("statusbar.mfa.advance.tooltip", "Multi-Frame Advance will advance by {} frames.\n\n{}", "en-us");
-    translations.add(
-        "statusbar.movie.tooltip", "Current/total vertical interrupts (current/total input samples).", "en-us");
+    translations.add("statusbar.movie.tooltip",
+        "Current/total input samples.\n\nClick to also show vertical interrupts.", "en-us");
+    translations.add("statusbar.movie.vis.tooltip",
+        "Current/total vertical interrupts (current/total input samples).\n\nClick to hide vertical interrupts.",
+        "en-us");
     translations.add("statusbar.rerecords.tooltip", "Movie rerecord count.", "en-us");
     StatusbarOld::init();
     recreate(true);

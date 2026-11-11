@@ -611,6 +611,12 @@ std::vector<OptionGroup> get_static_option_groups()
         GENPROPS(int32_t, use_legacy_statusbar)});
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
+        .name = "Show movie VIs",
+        .tooltip = "Show vertical interrupts in addition to input samples in the statusbar's movie segment.\n"
+                   "Can also be toggled by clicking the segment.",
+        GENPROPS(int32_t, statusbar_show_movie_vis)});
+    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
+        .group_id = statusbar_group.id,
         .name = "Zero-index",
         .tooltip = "Show indicies in the statusbar, such as VCR frame counts, relative to 0 instead of 1.",
         GENPROPS(int32_t, vcr_0_index)});

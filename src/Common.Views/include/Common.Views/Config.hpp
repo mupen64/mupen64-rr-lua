@@ -103,6 +103,11 @@ struct Config
     /// </summary>
     int32_t use_legacy_statusbar = 0;
 
+    /// <summary>
+    /// Whether the statusbar's movie segment shows vertical interrupts in addition to input samples.
+    /// </summary>
+    int32_t statusbar_show_movie_vis = 0;
+
     std::string rom_directory = ".\\roms\\";
     std::string plugins_directory = ".\\plugin\\";
     std::string saves_directory = ".\\save\\";
