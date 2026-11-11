@@ -31,7 +31,7 @@ struct Part
     HICON icon{};
     std::vector<std::wstring> sizing_labels;
     bool reserve_icon{};
-    int padding = 16;
+    int padding = 8;
     int width{};
     std::function<void()> on_click;
 };

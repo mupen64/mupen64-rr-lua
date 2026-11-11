@@ -175,6 +175,8 @@ void refresh()
         {"statusbar.state.emulating", "statusbar.state.playing", "statusbar.state.recording", "statusbar.state.seeking",
             "statusbar.state.modifying", "statusbar.state.loading", "statusbar.state.stopped"})
         parts[0].sizing_labels.push_back(IOUtils::to_wide_string(I18n::get().get(key)));
+    parts[7].width = 165;
+    parts[8].width = 65;
     parts[1].icon = icons[readonly ? 5 : 6].get();
     parts[1].reserve_icon = true;
     parts[1].padding = 5;
@@ -264,7 +266,7 @@ void Statusbar::create()
     translations.add("statusbar.state.loading", "Loading", "en-us");
     translations.add(
         "statusbar.state.loading.tooltip", "An emulator, movie, or savestate operation is in progress.", "en-us");
-    translations.add("statusbar.state.modifying", "Modifying", "en-us");
+    translations.add("statusbar.state.modifying", "Warping", "en-us");
     translations.add("statusbar.state.modifying.tooltip", "Applying modified movie inputs.", "en-us");
     translations.add("statusbar.state.seeking", "Seeking", "en-us");
     translations.add("statusbar.state.seeking.tooltip", "Seeking to the requested movie frame.", "en-us");
@@ -272,9 +274,9 @@ void Statusbar::create()
     translations.add("statusbar.state.recording.tooltip", "Recording a movie.", "en-us");
     translations.add("statusbar.state.playing", "Playing", "en-us");
     translations.add("statusbar.state.playing.tooltip", "Playing a movie.", "en-us");
-    translations.add("statusbar.state.emulating", "Emulating", "en-us");
+    translations.add("statusbar.state.emulating", "Running", "en-us");
     translations.add("statusbar.state.emulating.tooltip", "The emulator is running.", "en-us");
-    translations.add("statusbar.state.stopped", "Not Running", "en-us");
+    translations.add("statusbar.state.stopped", "Stopped", "en-us");
     translations.add("statusbar.state.stopped.tooltip", "The emulator is stopped.", "en-us");
     translations.add("statusbar.state.paused.tooltip", "Emulation is paused.", "en-us");
     translations.add("statusbar.shortcut.unassigned", "Unassigned", "en-us");
