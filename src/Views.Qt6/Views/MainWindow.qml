@@ -12,6 +12,7 @@ import QtQuick.Layouts
 
 import Mupen64.Actions
 import Mupen64.Core
+import Mupen64.Lua
 
 ApplicationWindow {
     id: window
@@ -84,7 +85,7 @@ ApplicationWindow {
                 anchors.top: parent.top
                 anchors.left: parent.left
             }
-            // TODO: Lua canvas management
+            // TODO: Lua canvas management (separate PR)
         }
     }
 
@@ -179,6 +180,7 @@ ApplicationWindow {
         dialogService: dialogService
         settingsCore: settingsCore
         winConfig: winConfig
+        winLua: diaLuaManager
         menuOpen: menuBar.opened
     }
 
@@ -197,5 +199,15 @@ ApplicationWindow {
         settingsActions: settingsActions
         settingsCore: settingsCore
         settingsPaths: settingsPaths
+    }
+
+    LuaInstanceManager {
+        id: luaManager
+        context: core
+    }
+
+    LuaScriptManager {
+        id: diaLuaManager
+        instanceManager: luaManager
     }
 }
