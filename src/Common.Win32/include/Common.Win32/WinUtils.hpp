@@ -14,6 +14,7 @@
 #include <string>
 
 #include <Common.Win32/Common.hpp>
+#include <wil/resource.h>
 #include <spdlog/spdlog.h>
 #include <Common.Views/IDialogService.hpp>
 
@@ -538,6 +539,84 @@ inline LRESULT CALLBACK no_resize_subclass_proc(
 inline void attach_no_resize_subproc(const HWND hwnd)
 {
     SetWindowSubclass(hwnd, no_resize_subclass_proc, 0, 0);
+}
+
+/**
+ * \brief Loads an embedded PNG's alpha mask as a scaled, uniformly tinted icon.
+ * \param module The module containing the PNG as an RCDATA resource.
+ * \param resource_id The resource identifier of the PNG.
+ * \param size The icon dimensions in pixels; both must be positive.
+ * \param tint The color replacing the source RGB channels; source alpha is preserved.
+ * \return An owning icon handle, or an empty handle on failure.
+ * \remark GDI+ must be initialized. The icon uses premultiplied BGRA for DrawIconEx.
+ */
+inline wil::unique_hicon load_tinted_png_icon(HINSTANCE module, int resource_id, SIZE size, COLORREF tint)
+{
+    if (size.cx <= 0 || size.cy <= 0) return {};
+    const auto resource = FindResource(module, MAKEINTRESOURCE(resource_id), RT_RCDATA);
+    if (!resource) return {};
+    const auto data = LoadResource(module, resource);
+    if (!data) return {};
+    const auto bytes = static_cast<const BYTE *>(LockResource(data));
+    if (!bytes) return {};
+    Microsoft::WRL::ComPtr<IStream> stream;
+    stream.Attach(SHCreateMemStream(bytes, SizeofResource(module, resource)));
+    if (!stream) return {};
+    wil::unique_hicon icon;
+    {
+        const int width = size.cx;
+        const int height = size.cy;
+        Gdiplus::Bitmap source(stream.Get());
+        if (source.GetLastStatus() != Gdiplus::Ok) return {};
+        Gdiplus::Bitmap bitmap(width, height, PixelFormat32bppARGB);
+        if (bitmap.GetLastStatus() != Gdiplus::Ok) return {};
+        {
+            Gdiplus::Graphics graphics(&bitmap);
+            graphics.Clear(Gdiplus::Color(0, 0, 0, 0));
+            graphics.SetCompositingMode(Gdiplus::CompositingModeSourceCopy);
+            graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+            graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
+            graphics.DrawImage(&source, 0, 0, width, height);
+        }
+        BITMAPINFO info{};
+        info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        info.bmiHeader.biWidth = width;
+        info.bmiHeader.biHeight = -height;
+        info.bmiHeader.biPlanes = 1;
+        info.bmiHeader.biBitCount = 32;
+        info.bmiHeader.biCompression = BI_RGB;
+        void *bits = nullptr;
+        const auto color = CreateDIBSection(nullptr, &info, DIB_RGB_COLORS, &bits, nullptr, 0);
+        const auto mask = CreateBitmap(width, height, 1, 1, nullptr);
+        if (color && mask)
+        {
+            // A zero AND mask lets DrawIconEx use the 32-bit alpha channel.
+            const auto mask_dc = CreateCompatibleDC(nullptr);
+            const auto old = SelectObject(mask_dc, mask);
+            PatBlt(mask_dc, 0, 0, width, height, BLACKNESS);
+            SelectObject(mask_dc, old);
+            DeleteDC(mask_dc);
+            auto pixels = static_cast<DWORD *>(bits);
+            for (int y = 0; y < height; ++y)
+                for (int x = 0; x < width; ++x)
+                {
+                    Gdiplus::Color pixel;
+                    bitmap.GetPixel(x, y, &pixel);
+                    const DWORD alpha = pixel.GetAlpha();
+                    const auto premultiply = [alpha](BYTE channel) { return (channel * alpha + 127) / 255; };
+                    pixels[y * width + x] = (alpha << 24) | (premultiply(GetRValue(tint)) << 16) |
+                        (premultiply(GetGValue(tint)) << 8) | premultiply(GetBValue(tint));
+                }
+            ICONINFO icon_info{};
+            icon_info.fIcon = TRUE;
+            icon_info.hbmColor = color;
+            icon_info.hbmMask = mask;
+            icon.reset(CreateIconIndirect(&icon_info));
+        }
+        if (mask) DeleteObject(mask);
+        if (color) DeleteObject(color);
+    }
+    return icon;
 }
 
 /**

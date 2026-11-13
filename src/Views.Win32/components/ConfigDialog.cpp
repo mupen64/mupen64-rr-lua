@@ -585,12 +585,11 @@ std::vector<OptionGroup> get_static_option_groups()
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Enum,
         .group_id = interface_group.id,
         .name = "Toast Mode",
-        .tooltip = "The way toasts are displayed.\nWindow - Toasts are shown in non-modal windows.\nStatusbar - Toasts "
-                   "are shown in the statusbar.\nDialog - Toasts are shown in modal dialogs.",
+        .tooltip = "The way toasts are displayed.\nWindow - Toasts are shown in non-modal windows.\n"
+                   "Dialog - Toasts are shown in modal dialogs.",
         GENPROPS(int32_t, toast_mode),
         .possible_values = {
             std::make_pair("Window", (int32_t)Config::ToastMode::Window),
-            std::make_pair("Statusbar", (int32_t)Config::ToastMode::Statusbar),
             std::make_pair("Dialog", (int32_t)Config::ToastMode::Dialog),
         }});
     interface_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
@@ -605,17 +604,17 @@ std::vector<OptionGroup> get_static_option_groups()
         .tooltip = "Automatically increment the save slot upon saving a state.",
         GENPROPS(int32_t, increment_slot)});
 
-    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Enum,
+    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
-        .name = "Layout",
-        .tooltip = "The statusbar layout preset.\nClassic - The legacy layout\nModern - The new layout containing "
-                   "additional information\nModern+ - The new layout, but with a section for read-only status",
-        GENPROPS(int32_t, statusbar_layout),
-        .possible_values = {
-            std::make_pair("Classic", (int32_t)Config::StatusbarLayout::Classic),
-            std::make_pair("Modern", (int32_t)Config::StatusbarLayout::Modern),
-            std::make_pair("Modern+", (int32_t)Config::StatusbarLayout::ModernWithReadOnly),
-        }});
+        .name = "Legacy statusbar",
+        .tooltip = "Use the legacy text-only statusbar instead of the default one.",
+        GENPROPS(int32_t, use_legacy_statusbar)});
+    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
+        .group_id = statusbar_group.id,
+        .name = "Show movie VIs",
+        .tooltip = "Show vertical interrupts in addition to input samples in the statusbar's movie segment.\n"
+                   "Can also be toggled by clicking the segment.",
+        GENPROPS(int32_t, statusbar_show_movie_vis)});
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Zero-index",
@@ -624,12 +623,12 @@ std::vector<OptionGroup> get_static_option_groups()
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Scale down to fit window",
-        .tooltip = "Whether the statusbar is allowed to scale its segments down.",
+        .tooltip = "Whether the statusbar is allowed to scale its segments down.\nOnly applies to the legacy statusbar.",
         GENPROPS(int32_t, statusbar_scale_down)});
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Scale up to fill window",
-        .tooltip = "Whether the statusbar is allowed to scale its segments up.",
+        .tooltip = "Whether the statusbar is allowed to scale its segments up.\nOnly applies to the legacy statusbar.",
         GENPROPS(int32_t, statusbar_scale_up)});
     piano_roll_group.items.emplace_back(OptionItem{
         .type = OptionItem::Type::Bool,

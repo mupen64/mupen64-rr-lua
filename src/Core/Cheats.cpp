@@ -9,10 +9,22 @@
 #include <Memory/Memory.hpp>
 #include <Cheats.hpp>
 #include <R4300/R4300.hpp>
+#include <algorithm>
+#include <atomic>
 
 static std::recursive_mutex cheats_mutex;
 static std::vector<CoreCheat> host_cheats;
 static std::stack<std::vector<CoreCheat>> cheat_stack;
+static std::atomic_bool has_active_cheat{};
+static std::atomic_bool has_cheat_override{};
+
+static void update_active_cheat()
+{
+    const auto &cheats = cheat_stack.empty() ? host_cheats : cheat_stack.top();
+    has_cheat_override.store(!cheat_stack.empty(), std::memory_order_relaxed);
+    has_active_cheat.store(
+        std::ranges::any_of(cheats, [](const auto &cheat) { return cheat.active; }), std::memory_order_relaxed);
+}
 
 bool cht_compile(std::string_view code, CoreCheat &cheat)
 {
@@ -229,6 +241,16 @@ void cht_get_list(std::vector<CoreCheat> &list)
     list = cheat_stack.empty() ? host_cheats : cheat_stack.top();
 }
 
+bool cht_has_active()
+{
+    return has_active_cheat.load(std::memory_order_relaxed);
+}
+
+bool cht_has_override()
+{
+    return has_cheat_override.load(std::memory_order_relaxed);
+}
+
 void cht_set_list(const std::vector<CoreCheat> &list)
 {
     std::scoped_lock lock(cheats_mutex);
@@ -240,6 +262,7 @@ void cht_set_list(const std::vector<CoreCheat> &list)
     }
 
     host_cheats = list;
+    update_active_cheat();
 }
 
 void cht_layer_push(const std::vector<CoreCheat> &cheats)
@@ -249,6 +272,7 @@ void cht_layer_push(const std::vector<CoreCheat> &cheats)
     g_core->log_info(std::format("cht_layer_push pushing {} cheats", cheats.size()));
 
     cheat_stack.push(cheats);
+    update_active_cheat();
 }
 
 void cht_layer_pop()
@@ -258,6 +282,7 @@ void cht_layer_pop()
     if (!cheat_stack.empty())
     {
         cheat_stack.pop();
+        update_active_cheat();
     }
 }
 

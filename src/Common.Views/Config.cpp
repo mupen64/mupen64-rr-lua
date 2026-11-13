@@ -145,7 +145,8 @@ static void json_read_file(json &j)
     FRONTEND_VALUE(is_unfocused_pause_enabled)
     FRONTEND_VALUE(is_statusbar_enabled)
     FRONTEND_VALUE(statusbar_scale_up)
-    FRONTEND_VALUE(statusbar_layout)
+    FRONTEND_VALUE(use_legacy_statusbar)
+    FRONTEND_VALUE(statusbar_show_movie_vis)
     FRONTEND_VALUE(rom_directory)
     FRONTEND_VALUE(plugins_directory)
     FRONTEND_VALUE(saves_directory)
@@ -244,7 +245,8 @@ static void json_write_file(json &j)
     FRONTEND_VALUE(is_unfocused_pause_enabled)
     FRONTEND_VALUE(is_statusbar_enabled)
     FRONTEND_VALUE(statusbar_scale_up)
-    FRONTEND_VALUE(statusbar_layout)
+    FRONTEND_VALUE(use_legacy_statusbar)
+    FRONTEND_VALUE(statusbar_show_movie_vis)
     FRONTEND_VALUE(rom_directory)
     FRONTEND_VALUE(plugins_directory)
     FRONTEND_VALUE(saves_directory)
@@ -316,6 +318,10 @@ static std::filesystem::path get_config_path()
  */
 static void config_patch(Config &cfg)
 {
+    if (cfg.toast_mode != static_cast<int32_t>(Config::ToastMode::Window) &&
+        cfg.toast_mode != static_cast<int32_t>(Config::ToastMode::Dialog))
+        cfg.toast_mode = AppConfig::default_config().toast_mode;
+
 #ifdef _WIN32
     if (!MonitorFromPoint({cfg.window_x, cfg.window_y}, MONITOR_DEFAULTTONULL))
     {

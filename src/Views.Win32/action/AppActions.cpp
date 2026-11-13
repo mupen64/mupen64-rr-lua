@@ -23,7 +23,6 @@
 #include <components/RecentItems.hpp>
 #include <components/RomBrowser.hpp>
 #include <components/Seeker.hpp>
-#include <components/Statusbar.hpp>
 #include <components/UpdateChecker.hpp>
 #include <components/Validators.hpp>
 #include <lua/LuaDialog.hpp>
@@ -371,7 +370,7 @@ static void undo_load_state()
 
         if (buf.empty())
         {
-            Statusbar::post("No load to undo");
+            DialogService::show_notification("No load to undo", std::nullopt, CoreMessageTone::Warn);
             return;
         }
 
@@ -380,7 +379,6 @@ static void undo_load_state()
             [](const CoreSTCallbackInfo &info, auto) {
                 if (info.result == CoreResult::Res_Ok)
                 {
-                    Statusbar::post("Undid load");
                     return;
                 }
 
@@ -389,7 +387,7 @@ static void undo_load_state()
                     return;
                 }
 
-                Statusbar::post("Failed to undo load");
+                DialogService::show_notification("Failed to undo load", std::nullopt, CoreMessageTone::Error);
             },
             false);
     });
@@ -508,7 +506,6 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
         if (!CoreUtils::show_error_dialog_for_result(vcr_result))
         {
             g_config.last_movie_author = author;
-            Statusbar::post("Recording replay");
         }
     });
 }
@@ -736,12 +733,7 @@ static void start_capture_direct(const ActionManager::action_argument_map &param
     const auto path = params.at("path");
     const auto ask_preset = params.at("ask_preset") == "1";
 
-    CaptureManager::start_capture(path, (Config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
-        if (result)
-        {
-            Statusbar::post("Capture started...");
-        }
-    });
+    CaptureManager::start_capture(path, (Config::EncoderType)g_config.encoder_type, ask_preset);
 }
 
 static void start_capture_normal()
@@ -780,12 +772,7 @@ static void start_capture_from_preset()
 
 static void stop_capture()
 {
-    CaptureManager::stop_capture([](const auto result) {
-        if (result)
-        {
-            Statusbar::post("Capture stopped");
-        }
-    });
+    CaptureManager::stop_capture();
 }
 
 #pragma endregion

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <format>
 #include <shared_mutex>
 #include <string>
 #include <string_view>
@@ -59,6 +60,21 @@ class I18n
     std::string get(std::string_view key, std::string_view locale) const;
 
     /**
+     * \brief Formats a translation from the current locale, returning the raw key if missing.
+     * \threadsafety This function is thread-safe.
+     * \param key The translation key.
+     * \param args Values substituted into the translated format string.
+     * \return The formatted translation.
+     * \throws std::format_error If the translated format string is invalid for the arguments.
+     */
+    template <typename... Args> std::string format(std::string_view key, Args &&...args) const
+    {
+        const auto translation = get(key);
+        if (translation == key) return translation;
+        return std::vformat(translation, std::make_format_args(args...));
+    }
+
+    /**
      * \brief Checks whether a translation exists for the current locale.
      * \threadsafety This function is thread-safe.
      * \param key The translation key.
@@ -68,6 +84,9 @@ class I18n
 
   private:
     I18n() = default;
+
+    // The caller must hold m_mutex.
+    std::string get_locked(std::string_view key, std::string_view locale) const;
 
     mutable std::shared_mutex m_mutex;
     std::unordered_map<std::string, std::unordered_map<std::string, std::string>> m_translations;

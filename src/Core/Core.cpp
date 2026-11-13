@@ -149,6 +149,8 @@ CoreResult core_create(CoreParams *params, CoreCtx **ctx)
     g_ctx.cht_compile = cht_compile;
     g_ctx.cht_get_override_stack = cht_get_override_stack;
     g_ctx.cht_get_list = cht_get_list;
+    g_ctx.cht_has_active = cht_has_active;
+    g_ctx.cht_has_override = cht_has_override;
     g_ctx.cht_set_list = cht_set_list;
 
     *ctx = &g_ctx;

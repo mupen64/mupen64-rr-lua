@@ -45,24 +45,15 @@ struct Config
         FFmpeg
     };
 
-    enum class StatusbarLayout
-    {
-        Classic,
-        Modern,
-        ModernWithReadOnly
-    };
-
     /**
      * \brief Describes how toasts are shown.
      */
     enum class ToastMode : uint8_t
     {
         // Toasts are shown in non-modal windows.
-        Window,
-        // Toasts are shown in the statusbar.
-        Statusbar,
+        Window = 0,
         // Toasts are shown in modal dialogs.
-        Dialog
+        Dialog = 2
     };
 
     /// <summary>
@@ -108,9 +99,14 @@ struct Config
     int32_t statusbar_scale_up;
 
     /// <summary>
-    /// The statusbar layout.
+    /// Whether to use the legacy text-only statusbar instead of the default one.
     /// </summary>
-    int32_t statusbar_layout = (int32_t)StatusbarLayout::Modern;
+    int32_t use_legacy_statusbar = 0;
+
+    /// <summary>
+    /// Whether the statusbar's movie segment shows vertical interrupts in addition to input samples.
+    /// </summary>
+    int32_t statusbar_show_movie_vis = 0;
 
     std::string rom_directory = ".\\roms\\";
     std::string plugins_directory = ".\\plugin\\";

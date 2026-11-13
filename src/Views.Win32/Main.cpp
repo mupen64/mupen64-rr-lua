@@ -6,6 +6,7 @@
 
 #include "Common.hpp"
 
+#include <Common/I18n.hpp>
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
@@ -45,14 +46,12 @@
 
 MainContext g_main_ctx{};
 
-bool g_frame_changed = true;
 static bool g_sdl_initialized = false;
 
 constexpr UINT_PTR sdl_timer_id = 1;
 MMRESULT g_ui_timer;
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
-bool g_emu_starting;
 DWORD g_ui_thread_id{};
 static std::unordered_map<HWND, std::array<bool, 3>> awaiting_triple_click;
 ULONG_PTR gdi_plus_token;
@@ -123,85 +122,6 @@ std::string get_mupen_name(bool simple)
     return BASE_NAME CURRENT_VERSION VERSION_SUFFIX ARCH_INFO BUILD_TARGET_INFO;
 }
 
-const char *get_input_text()
-{
-    static char text[1024]{};
-    memset(text, 0, sizeof(text));
-
-    CoreButtons b = g_main_ctx.last_controller_data[0];
-    sprintf(text, "(%d, %d) ", b.x, b.y);
-    if (b.start) strcat(text, "S");
-    if (b.z) strcat(text, "Z");
-    if (b.a) strcat(text, "A");
-    if (b.b) strcat(text, "B");
-    if (b.l) strcat(text, "L");
-    if (b.r) strcat(text, "R");
-    if (b.cu || b.cd || b.cl || b.cr)
-    {
-        strcat(text, " C");
-        if (b.cu) strcat(text, "^");
-        if (b.cd) strcat(text, "v");
-        if (b.cl) strcat(text, "<");
-        if (b.cr) strcat(text, ">");
-    }
-    if (b.du || b.dd || b.dl || b.dr)
-    {
-        strcat(text, "D");
-        if (b.du) strcat(text, "^");
-        if (b.dd) strcat(text, "v");
-        if (b.dl) strcat(text, "<");
-        if (b.dr) strcat(text, ">");
-    }
-    return text;
-}
-
-const char *get_status_text()
-{
-    static char text[1024]{};
-    memset(text, 0, sizeof(text));
-
-    const CoreVCRSeekInfo info = g_main_ctx.core_ctx->vcr_get_seek_info();
-
-    const auto index_adjustment = g_config.vcr_0_index ? 1 : 0;
-    const auto current_sample = info.current_sample;
-    const auto current_vi = g_main_ctx.core_ctx->vcr_get_current_vi();
-    const auto is_before_start = static_cast<int64_t>(current_sample) - static_cast<int64_t>(index_adjustment) < 0;
-
-    if (g_main_ctx.core_ctx->vcr_get_warp_modify_status())
-    {
-        sprintf(text, "Warping (%.2f%%)",
-            (double)current_sample / (double)g_main_ctx.core_ctx->vcr_get_length_samples() * 100.0);
-        return text;
-    }
-
-    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Recording)
-    {
-        if (is_before_start)
-        {
-            memset(text, 0, sizeof(text));
-        }
-        else
-        {
-            sprintf(text, "%d (%d) ", current_vi, current_sample - index_adjustment);
-        }
-    }
-
-    if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Playback)
-    {
-        if (is_before_start)
-        {
-            memset(text, 0, sizeof(text));
-        }
-        else
-        {
-            sprintf(text, "%d / %d (%d / %d) ", current_vi, g_main_ctx.core_ctx->vcr_get_length_vis(),
-                current_sample - index_adjustment, g_main_ctx.core_ctx->vcr_get_length_samples());
-        }
-    }
-
-    return text;
-}
-
 std::filesystem::path get_summercart_path()
 {
     return AppConfig::save_directory() / "card.vhd";
@@ -234,14 +154,12 @@ void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8
             switch (info.result)
             {
             case CoreResult::Res_Ok:
-                Statusbar::post(std::format("{} slot {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", slot + 1));
-                break;
             case CoreResult::Res_Cancelled:
-                Statusbar::post(std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
                 break;
             default:
-                Statusbar::post(
-                    std::format("Failed to {} slot {}", info.job == CoreSTJob::Save ? "save" : "load", slot + 1));
+                DialogService::show_notification(
+                    std::format("Failed to {} slot {}", info.job == CoreSTJob::Save ? "save" : "load", slot + 1),
+                    std::nullopt, CoreMessageTone::Error);
                 break;
             }
             return;
@@ -250,11 +168,7 @@ void st_callback_wrapper(const CoreSTCallbackInfo &info, const std::vector<uint8
         switch (info.result)
         {
         case CoreResult::Res_Ok:
-            Statusbar::post(std::format(
-                "{} {}", info.job == CoreSTJob::Save ? "Saved" : "Loaded", info.params.path.filename().string()));
-            break;
         case CoreResult::Res_Cancelled:
-            Statusbar::post(std::format("Cancelled {}", info.job == CoreSTJob::Save ? "save" : "load"));
             break;
         default: {
             const auto message =
@@ -281,8 +195,6 @@ void ai_len_changed()
 static std::string get_titlebar_text()
 {
     auto text = get_mupen_name();
-
-    if (g_emu_starting) text += " - Starting...";
 
     if (g_main_ctx.core_ctx->vr_get_launched())
         text += std::format(" - {}", IOUtils::rom_name_to_string(g_main_ctx.core_ctx->vr_get_rom_header()->nom));
@@ -321,14 +233,6 @@ void on_task_changed(CoreVCRTask value)
 {
     g_main_ctx.dispatcher->invoke([=] {
         static auto previous_value = value;
-        if (!vcr_is_task_recording(value) && vcr_is_task_recording(previous_value))
-        {
-            Statusbar::post("Recording stopped");
-        }
-        if (!task_is_playback(value) && task_is_playback(previous_value))
-        {
-            Statusbar::post("Playback stopped");
-        }
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) ||
             task_is_playback(value) && !task_is_playback(previous_value) &&
@@ -422,20 +326,6 @@ void on_capturing_changed(bool value)
     });
 }
 
-void on_speed_modifier_changed(int32_t value)
-{
-    const auto vis_per_second =
-        g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
-    const auto effective_vis_per_second = (double)vis_per_second * ((double)value / 100.0);
-
-    Statusbar::post(std::format("Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
-}
-
-void on_emu_paused_changed(bool)
-{
-    g_frame_changed = true;
-}
-
 void on_vis_since_input_poll_exceeded()
 {
     if (g_vis_since_input_poll_warning_dismissed)
@@ -454,11 +344,6 @@ void on_vis_since_input_poll_exceeded()
         });
     }
     g_vis_since_input_poll_warning_dismissed = true;
-}
-
-void on_movie_loop_changed(bool value)
-{
-    Statusbar::post(value ? "Movies restart after ending" : "Movies stop after ending");
 }
 
 void on_config_loaded()
@@ -494,14 +379,6 @@ void on_seek_completed()
 void on_warp_modify_status_changed(bool value)
 {
     LuaRealmManager::instance().call_warp_modify_status_changed(value);
-}
-
-void on_emu_starting_changed(bool value)
-{
-    g_main_ctx.dispatcher->invoke([=] {
-        g_emu_starting = value;
-        update_titlebar();
-    });
 }
 
 WindowInfo get_window_info()
@@ -925,46 +802,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
     g_main_ctx.core_ctx->vr_invalidate_visuals();
-
-    static std::chrono::high_resolution_clock::time_point last_statusbar_update =
-        std::chrono::high_resolution_clock::now();
-    std::chrono::high_resolution_clock::time_point time = std::chrono::high_resolution_clock::now();
-
-    if (g_frame_changed)
-    {
-        Statusbar::post(get_input_text(), Statusbar::Section::Input);
-
-        if (CaptureManager::is_capturing())
-        {
-            if (g_main_ctx.core_ctx->vcr_get_task() == CoreVCRTask::Idle)
-            {
-                Statusbar::post(std::format("{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
-            }
-            else
-            {
-                Statusbar::post(std::format("{}({})", get_status_text(), CaptureManager::get_video_frame()),
-                    Statusbar::Section::VCR);
-            }
-        }
-        else
-        {
-            Statusbar::post(get_status_text(), Statusbar::Section::VCR);
-        }
-
-        g_frame_changed = false;
-    }
-
-    // We throttle FPS and VI/s visual updates to 1 per second, so no unstable values are displayed
-    if (time - last_statusbar_update > std::chrono::seconds(1))
-    {
-        float fps, vis;
-        g_main_ctx.core_ctx->vr_get_timings(fps, vis);
-
-        Statusbar::post(std::format("FPS: {:.1f}", fps), Statusbar::Section::FPS);
-        Statusbar::post(std::format("VI/s: {:.1f}", vis), Statusbar::Section::VIs);
-
-        last_statusbar_update = time;
-    }
 }
 
 static CoreResult init_core()
@@ -982,7 +819,6 @@ static CoreResult init_core()
         LuaRealmManager::instance().call_input(input, index);
         if (CaptureManager::is_capturing()) CaptureManager::input();
     };
-    g_main_ctx.core.callbacks.frame = [] { g_frame_changed = true; };
     g_main_ctx.core.callbacks.interval = [] { LuaRealmManager::instance().call_interval(); };
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;
     g_main_ctx.core.callbacks.play_movie = [] { LuaRealmManager::instance().call_play_movie(); };
@@ -1071,7 +907,6 @@ static CoreResult init_core()
     g_main_ctx.core.show_dialog = [](const char *str, const char *title, CoreMessageTone type) {
         DialogService::show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
     };
-    g_main_ctx.core.show_statusbar = [](const char *str) { DialogService::show_statusbar(str); };
     g_main_ctx.core.show_notification = [](const char *str, const char *title, CoreMessageTone tone) {
         DialogService::show_notification(str, title ? std::make_optional(title) : std::nullopt, tone);
     };
@@ -1226,6 +1061,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     set_error_mode();
     setlocale(LC_CTYPE, ".UTF-8");
     setlocale(LC_NUMERIC, "C"); // Lua scripts expect `.` decimal separator
+    I18n::get().set_locale("en-us");
 
     g_main_ctx.wine = is_running_under_wine();
 
@@ -1295,12 +1131,9 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(on_emu_launched_changed);
     Messenger::subscribe<Messenger::Message::EmuStopping>(on_emu_stopping);
-    Messenger::subscribe<Messenger::Message::EmuPausedChanged>(on_emu_paused_changed);
     Messenger::subscribe<Messenger::Message::CapturingChanged>(on_capturing_changed);
-    Messenger::subscribe<Messenger::Message::MovieLoopChanged>(on_movie_loop_changed);
     Messenger::subscribe<Messenger::Message::TaskChanged>(on_task_changed);
     Messenger::subscribe<Messenger::Message::ScriptStarted>(on_script_started);
-    Messenger::subscribe<Messenger::Message::SpeedModifierChanged>(on_speed_modifier_changed);
     Messenger::subscribe<Messenger::Message::LagLimitExceeded>(on_vis_since_input_poll_exceeded);
     Messenger::subscribe<Messenger::Message::ConfigLoaded>(on_config_loaded);
     Messenger::subscribe<Messenger::Message::ConfigNeedsPatching>(on_config_needs_patching);
@@ -1308,7 +1141,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::subscribe<Messenger::Message::WarpModifyStatusChanged>(on_warp_modify_status_changed);
     Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>([] { AppActions::update_core_fast_forward(); });
     Messenger::subscribe<Messenger::Message::SeekStatusChanged>([] { AppActions::update_core_fast_forward(); });
-    Messenger::subscribe<Messenger::Message::EmuStartingChanged>(on_emu_starting_changed);
 
     Statusbar::create();
     RomBrowser::create();

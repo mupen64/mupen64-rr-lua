@@ -11,6 +11,8 @@ void cht_execute();
 bool cht_compile(std::string_view code, CoreCheat &cheat);
 void cht_get_override_stack(std::stack<std::vector<CoreCheat>> &stack);
 void cht_get_list(std::vector<CoreCheat> &list);
+bool cht_has_active();
+bool cht_has_override();
 void cht_set_list(const std::vector<CoreCheat> &list);
 
 /**

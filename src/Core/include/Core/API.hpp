@@ -183,11 +183,6 @@ extern "C"
             [](const auto &...) {};
 
         /**
-         * \brief Shows text in the notification section of the statusbar.
-         */
-        std::function<void(const char *str)> show_statusbar = [](const auto &...) {};
-
-        /**
          * \brief Shows a notification.
          * \param str The notification content.
          * \param title The notification title.
@@ -245,6 +240,11 @@ extern "C"
          */
         std::function<void(const CoreSTCallbackInfo &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
             [](const CoreSTCallbackInfo &, const std::vector<uint8_t> &) {};
+
+        /*
+         * \brief Reports whether savestate operations are pending.
+         */
+        std::function<void(bool)> st_pending_changed = [](bool) {};
 
         std::function<void()> video_process_dlist;
         std::function<void()> video_process_rdp_list;
@@ -789,6 +789,18 @@ extern "C"
          * overrides.
          */
         std::function<void(std::vector<CoreCheat> &)> cht_get_list;
+
+        /**
+         * \brief Gets whether the effective cheat list contains an active cheat.
+         * \remarks This function is thread-safe.
+         */
+        std::function<bool()> cht_has_active;
+
+        /**
+         * \brief Gets whether the effective cheat list is managed by a core override.
+         * \remarks This function is thread-safe.
+         */
+        std::function<bool()> cht_has_override;
 
         /**
          * \brief Sets the cheat list.
