@@ -554,7 +554,7 @@ void EmuContext::readVideoOutput(QImage &image)
     // reallocate if needed
     if (image.width() != width || image.height() != height)
     {
-        image = QImage(width, height, QImage::Format_ARGB32);
+        image = QImage(width, height, QImage::Format_RGB32);
         // make the image orange in case read_video isn't working
         image.fill(0x00FF8000);
     }
