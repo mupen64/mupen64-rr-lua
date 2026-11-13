@@ -28,7 +28,7 @@ struct MenuItem
     bool m_has_separator{};
 
   public:
-    explicit MenuItem(const std::string &path);
+    explicit MenuItem(const std::string &path, bool has_separator = false);
 
     /**
      * \brief Performs a depth-first iteration over the menu item tree, applying the given action to each item. The
@@ -63,12 +63,10 @@ struct ActionMenuGlobalContext
 
 static ActionMenuGlobalContext g_am_ctx{};
 
-MenuItem::MenuItem(const std::string &path)
+MenuItem::MenuItem(const std::string &path, const bool has_separator)
 {
     this->m_path = path;
-
-    const auto name = ActionManager::get_segments(path).back();
-    this->m_has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
+    this->m_has_separator = has_separator;
 }
 
 void MenuItem::iterate_children_and_self(const std::function<void(MenuItem &item)> &action)
@@ -220,9 +218,9 @@ static bool handle_menu_interaction(ActionMenuContext &ctx, const size_t id)
 /**
  * \brief Determines whether the action represented by the given path segments should be visible in the menu.
  */
-static bool is_visible_in_menu(const std::vector<std::string> &action_path_segments)
+static bool is_visible_in_menu(const std::string &path)
 {
-    return !action_path_segments.back().starts_with(ActionManager::MENU_HIDDEN_PREFIX);
+    return !ActionManager::get_menu_hidden(path);
 }
 
 /**
@@ -273,7 +271,7 @@ static void build_initial_menu_tree(ActionMenuContext &ctx)
         std::string path_up_to_here;
         path_up_to_here.reserve(parts.size() * 20);
 
-        if (!is_visible_in_menu(parts))
+        if (!is_visible_in_menu(path))
         {
             continue;
         }
@@ -293,7 +291,8 @@ static void build_initial_menu_tree(ActionMenuContext &ctx)
             }
             else
             {
-                current->children.emplace_back(path_up_to_here);
+                current->children.emplace_back(
+                    path_up_to_here, i == parts.size() - 1 && ActionManager::get_has_separator(path));
                 current = &current->children.back();
             }
 
