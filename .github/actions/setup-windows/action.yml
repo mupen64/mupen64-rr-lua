@@ -27,6 +27,11 @@ runs:
       shell: powershell
       run: |
         $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
+        echo "items on path:"
+        foreach ($path in ($env:PATH -split ';')) {
+          echo "- $path"
+        }
+        gcm ninja
         echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
     - name: Create vcpkg cache directory
