@@ -44,13 +44,57 @@ struct Entry
     Part part;
     int width{};
     bool initialized{};
+    RECT rect{};
     HFONT fitted_font{};
     int fitted_width = -1;
     int fitted_height = -1;
+};
 
-    ~Entry()
+struct FontCache
+{
+    HFONT base_font{};
+    LOGFONTW description{};
+    int height{};
+    std::vector<HFONT> fonts;
+
+    FontCache() = default;
+    FontCache(const FontCache &) = delete;
+    FontCache &operator=(const FontCache &) = delete;
+
+    ~FontCache() { clear(); }
+
+    void clear()
     {
-        if (fitted_font) DeleteObject(fitted_font);
+        for (const auto font : fonts)
+            if (font) DeleteObject(font);
+        fonts.clear();
+        base_font = nullptr;
+    }
+
+    bool initialize(HDC dc)
+    {
+        const auto font = reinterpret_cast<HFONT>(GetCurrentObject(dc, OBJ_FONT));
+        if (base_font == font) return true;
+        TEXTMETRICW metrics{};
+        if (!GetObjectW(font, sizeof(description), &description) || !GetTextMetricsW(dc, &metrics)) return false;
+        height = std::max(1L, metrics.tmHeight - metrics.tmInternalLeading);
+        fonts.resize(height);
+        base_font = font;
+        return true;
+    }
+
+    HFONT get(int candidate_height)
+    {
+        auto &font = fonts[candidate_height];
+        if (!font)
+        {
+            auto candidate = description;
+            candidate.lfHeight = -candidate_height;
+            candidate.lfWidth =
+                description.lfWidth ? std::max(1, MulDiv(description.lfWidth, candidate_height, height)) : 0;
+            font = CreateFontIndirectW(&candidate);
+        }
+        return font;
     }
 };
 
@@ -60,14 +104,28 @@ struct Context
     std::vector<std::unique_ptr<Entry>> entries;
     std::vector<int> edges;
     HFONT font{};
+    FontCache fitted_fonts;
+    int borders[3]{};
     bool sizing_dirty = true;
+    bool rects_dirty = true;
+
+    void reset_fitted_fonts()
+    {
+        for (auto &entry : entries)
+        {
+            entry->fitted_font = nullptr;
+            entry->fitted_width = -1;
+        }
+        fitted_fonts.clear();
+    }
 };
 
-inline void select_fitted_font(HDC dc, Entry &entry, int width, int height)
+inline void select_fitted_font(HDC dc, Context &ctx, Entry &entry, int width, int height)
 {
+    const auto original_font = reinterpret_cast<HFONT>(GetCurrentObject(dc, OBJ_FONT));
+    if (ctx.fitted_fonts.base_font && ctx.fitted_fonts.base_font != original_font) ctx.reset_fitted_fonts();
     if (entry.fitted_width != width || entry.fitted_height != height)
     {
-        if (entry.fitted_font) DeleteObject(entry.fitted_font);
         entry.fitted_font = nullptr;
         entry.fitted_width = width;
         entry.fitted_height = height;
@@ -77,34 +135,25 @@ inline void select_fitted_font(HDC dc, Entry &entry, int width, int height)
         GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &size);
         if (size.cx > width || size.cy > height)
         {
-            const auto original_font = GetCurrentObject(dc, OBJ_FONT);
-            LOGFONTW font{};
-            TEXTMETRICW metrics{};
-            if (GetObjectW(original_font, sizeof(font), &font) && GetTextMetricsW(dc, &metrics))
+            auto &fonts = ctx.fitted_fonts;
+            if (fonts.initialize(dc))
             {
-                const int original_height = std::max(1L, metrics.tmHeight - metrics.tmInternalLeading);
-                const int original_width = font.lfWidth;
-                int low = 1, high = original_height - 1;
+                int low = 1, high = fonts.height - 1;
                 while (low <= high)
                 {
                     const int candidate_height = low + (high - low) / 2;
-                    font.lfHeight = -candidate_height;
-                    font.lfWidth =
-                        original_width ? std::max(1, MulDiv(original_width, candidate_height, original_height)) : 0;
-                    const auto candidate = CreateFontIndirectW(&font);
+                    const auto candidate = fonts.get(candidate_height);
                     if (!candidate) break;
                     SelectObject(dc, candidate);
                     GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &size);
                     SelectObject(dc, original_font);
                     if ((size.cx <= width && size.cy <= height) || candidate_height == 1)
                     {
-                        if (entry.fitted_font) DeleteObject(entry.fitted_font);
                         entry.fitted_font = candidate;
                         low = candidate_height + 1;
                     }
                     else
                     {
-                        DeleteObject(candidate);
                         high = candidate_height - 1;
                     }
                 }
@@ -120,12 +169,13 @@ inline LRESULT CALLBACK parent_subclass_proc(
     if (message == WM_DRAWITEM)
     {
         const auto *draw = reinterpret_cast<const DRAWITEMSTRUCT *>(lparam);
-        const auto *ctx = reinterpret_cast<const Context *>(data);
+        auto *ctx = reinterpret_cast<Context *>(data);
         if (draw && draw->hwndItem == reinterpret_cast<HWND>(id) && draw->itemID < ctx->entries.size())
         {
             auto &entry = *ctx->entries[draw->itemID];
             const auto &part = entry.part;
             auto rect = draw->rcItem;
+            if ((part.text.empty() && !part.icon) || !RectVisible(draw->hDC, &rect)) return TRUE;
             const int saved = SaveDC(draw->hDC);
             if (!saved) return TRUE;
             IntersectClipRect(draw->hDC, rect.left, rect.top, rect.right, rect.bottom);
@@ -148,7 +198,7 @@ inline LRESULT CALLBACK parent_subclass_proc(
             rect.right -= inset;
             if (!part.text.empty() && rect.right > rect.left && height > 0)
             {
-                select_fitted_font(draw->hDC, entry, rect.right - rect.left, height);
+                select_fitted_font(draw->hDC, *ctx, entry, rect.right - rect.left, height);
                 DrawTextW(draw->hDC, part.text.c_str(), static_cast<int>(part.text.size()), &rect,
                     DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
             }
@@ -163,9 +213,14 @@ inline LRESULT CALLBACK subclass_proc(
     HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR data)
 {
     auto *ctx = reinterpret_cast<Context *>(data);
-    if (message == WM_SIZE || message == WM_SETFONT || message == WM_THEMECHANGED ||
-        message == WM_DPICHANGED_AFTERPARENT)
+    if (message == WM_SIZE) ctx->rects_dirty = true;
+    if (message == WM_SETFONT || message == WM_THEMECHANGED || message == WM_DPICHANGED_AFTERPARENT ||
+        message == WM_SYSCOLORCHANGE || message == WM_SETTINGCHANGE)
+    {
         ctx->sizing_dirty = true;
+        ctx->rects_dirty = true;
+        ctx->reset_fitted_fonts();
+    }
     if (message == WM_LBUTTONUP)
     {
         const POINT point{GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
@@ -245,8 +300,7 @@ inline void clear_icons(HWND hwnd)
         if (!part.icon) continue;
         part.icon = nullptr;
         RECT rect{};
-        SendMessage(hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&rect));
-        InvalidateRect(hwnd, &rect, TRUE);
+        if (SendMessage(hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&rect))) InvalidateRect(hwnd, &rect, FALSE);
     }
 }
 
@@ -264,6 +318,7 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
     if (!ctx || parts.size() > 255) return false;
     const auto font = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
     const bool metrics_changed = ctx->sizing_dirty || font != ctx->font;
+    if (font != ctx->font) ctx->reset_fitted_fonts();
     while (ctx->entries.size() > parts.size())
     {
         TOOLINFOW tool{sizeof(tool)};
@@ -274,23 +329,22 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
     }
     while (ctx->entries.size() < parts.size()) ctx->entries.push_back(std::make_unique<Internal::Entry>());
 
-    std::vector<bool> text_changed(parts.size()), icon_changed(parts.size()), tip_changed(parts.size());
+    std::vector<bool> text_changed(parts.size()), visual_changed(parts.size()), tip_changed(parts.size());
     std::vector<int> edges;
+    edges.reserve(parts.size());
     HDC dc{};
     HGDIOBJ old_font{};
-    int borders[3]{};
-    SendMessage(hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(borders));
+    if (metrics_changed) SendMessage(hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(ctx->borders));
+    const auto &borders = ctx->borders;
     int edge = 0;
-    bool visual_changed = false;
     for (size_t i = 0; i < parts.size(); ++i)
     {
         auto &entry = *ctx->entries[i];
         const auto &next = parts[i];
         const auto &previous = entry.part;
-        text_changed[i] = !entry.initialized || previous.text != next.text ||
-                          previous.reserve_icon != next.reserve_icon || bool(previous.icon) != bool(next.icon);
-        icon_changed[i] =
-            metrics_changed || !entry.initialized || previous.icon != next.icon || previous.padding != next.padding;
+        text_changed[i] = !entry.initialized || previous.text != next.text;
+        visual_changed[i] = metrics_changed || text_changed[i] || previous.icon != next.icon ||
+                            previous.reserve_icon != next.reserve_icon || previous.padding != next.padding;
         tip_changed[i] = !entry.initialized || previous.tooltip != next.tooltip;
         if (next.width > 0)
         {
@@ -323,7 +377,6 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
                           (has_icon ? GetSystemMetrics(SM_CXSMICON) + (text_width ? 4 : 0) : 0);
         }
         edges.push_back(edge += std::max(1, entry.width));
-        visual_changed = visual_changed || text_changed[i] || icon_changed[i];
     }
     if (dc)
     {
@@ -339,7 +392,7 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
             part_edge = static_cast<int>(static_cast<int64_t>(part_edge) * available_width / edge);
     }
     const bool layout_changed = edges != ctx->edges;
-    const bool batch_redraw = (visual_changed || layout_changed) && IsWindowVisible(hwnd);
+    const bool batch_redraw = layout_changed && IsWindowVisible(hwnd);
     if (batch_redraw) SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
     if (layout_changed)
     {
@@ -362,16 +415,17 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
         tool.uFlags = TTF_SUBCLASS;
         if (tip_changed[i]) entry.part.tooltip = parts[i].tooltip;
         tool.lpszText = entry.part.tooltip.data();
-        if (!entry.initialized || layout_changed || metrics_changed)
+        if (!entry.initialized || layout_changed || metrics_changed || ctx->rects_dirty)
         {
-            SendMessage(hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&tool.rect));
+            SendMessage(hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&entry.rect));
+            tool.rect = entry.rect;
             SendMessageW(
                 ctx->tooltip, entry.initialized ? TTM_NEWTOOLRECTW : TTM_ADDTOOLW, 0, reinterpret_cast<LPARAM>(&tool));
         }
         if (entry.initialized && tip_changed[i])
             SendMessageW(ctx->tooltip, TTM_UPDATETIPTEXTW, 0, reinterpret_cast<LPARAM>(&tool));
 
-        if (text_changed[i] || icon_changed[i] || layout_changed) entry.fitted_width = -1;
+        if (text_changed[i] || metrics_changed) entry.fitted_width = -1;
         entry.part.text = parts[i].text;
         entry.part.icon = parts[i].icon;
         entry.part.sizing_labels = parts[i].sizing_labels;
@@ -379,28 +433,20 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
         entry.part.padding = parts[i].padding;
         entry.part.width = parts[i].width;
         entry.part.on_click = parts[i].on_click;
+        if (!entry.initialized) SendMessageW(hwnd, SB_SETTEXTW, i | SBT_OWNERDRAW, 0);
         entry.initialized = true;
-        if (text_changed[i])
+    }
+    if (batch_redraw) SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
+    if (layout_changed)
+        InvalidateRect(hwnd, nullptr, TRUE);
+    else
+        for (size_t i = 0; i < parts.size(); ++i)
         {
-            SendMessageW(hwnd, SB_SETTEXTW, i | SBT_OWNERDRAW, 0);
+            if (visual_changed[i]) InvalidateRect(hwnd, &ctx->entries[i]->rect, FALSE);
         }
-    }
-    if (batch_redraw)
-    {
-        SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
-        if (layout_changed)
-            InvalidateRect(hwnd, nullptr, TRUE);
-        else
-            for (size_t i = 0; i < parts.size(); ++i)
-            {
-                if (!text_changed[i] && !icon_changed[i]) continue;
-                RECT rect{};
-                SendMessage(hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&rect));
-                InvalidateRect(hwnd, &rect, TRUE);
-            }
-    }
     ctx->font = font;
     ctx->sizing_dirty = false;
+    ctx->rects_dirty = false;
     return true;
 }
 } // namespace BetterStatusbar
