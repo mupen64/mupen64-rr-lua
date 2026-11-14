@@ -6,7 +6,6 @@
 
 #include "Common.hpp"
 #include "Toasts.hpp"
-#include "Statusbar.hpp"
 
 namespace
 {
@@ -283,11 +282,6 @@ void show(const ToastData &data)
     {
     case Config::ToastMode::Window:
         g_main_ctx.dispatcher->invoke([&] { show_impl(data); });
-        return;
-    case Config::ToastMode::Statusbar:
-        Statusbar::post(data.subtitle && !data.subtitle->empty() ? std::format("{} - {}", data.content, *data.subtitle)
-                                                                 : data.content,
-            Statusbar::Section::Notification);
         return;
     case Config::ToastMode::Dialog:
         DialogService::show_dialog(fallback_content, data.title, data.tone);

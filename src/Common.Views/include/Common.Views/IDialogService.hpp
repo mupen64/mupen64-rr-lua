@@ -57,12 +57,6 @@ void show_dialog(std::string_view str, std::optional<std::string_view> title = s
     CoreMessageTone type = CoreMessageTone::Warn, void *hwnd = nullptr);
 
 /**
- * \brief Shows text in the statusbar.
- * \param str The text.
- */
-void show_statusbar(std::string_view str);
-
-/**
  * \brief Shows a non-modal notification to the user.
  * \param str The notification text.
  * \param title The notification title. If `std::nullopt`, no title will be shown.

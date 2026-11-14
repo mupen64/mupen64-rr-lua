@@ -8,7 +8,6 @@
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 
-#include <components/Statusbar.hpp>
 #include <components/Toasts.hpp>
 
 namespace
@@ -146,11 +145,6 @@ void show_dialog(std::string_view str, std::optional<std::string_view> title, Co
         MessageBox(static_cast<HWND>(hwnd ? hwnd : g_main_ctx.hwnd), std::string(str).c_str(),
             title ? std::string(*title).c_str() : nullptr, icon);
     }
-}
-
-void show_statusbar(std::string_view str)
-{
-    Statusbar::post(std::string(str));
 }
 
 void show_notification(

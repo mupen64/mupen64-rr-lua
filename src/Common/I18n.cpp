@@ -29,19 +29,19 @@ void I18n::set_locale(std::string locale)
 std::string I18n::get(std::string_view key) const
 {
     std::shared_lock lock(m_mutex);
-    const auto locale = m_translations.find(m_locale);
-    if (locale == m_translations.end()) return std::string(key);
-
-    const auto translation = locale->second.find(std::string(key));
-    return translation == locale->second.end() ? std::string(key) : translation->second;
+    return get_locked(key, m_locale);
 }
 
 std::string I18n::get(std::string_view key, std::string_view locale) const
 {
     std::shared_lock lock(m_mutex);
+    return get_locked(key, locale);
+}
+
+std::string I18n::get_locked(std::string_view key, std::string_view locale) const
+{
     const auto translations = m_translations.find(std::string(locale));
     if (translations == m_translations.end()) return std::string(key);
-
     const auto translation = translations->second.find(std::string(key));
     return translation == translations->second.end() ? std::string(key) : translation->second;
 }

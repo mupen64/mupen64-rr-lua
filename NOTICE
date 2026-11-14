@@ -26,3 +26,9 @@ The following assets are licensed under GPL-2.0:
 - test/roms/m64p_test_rom.v64
 
 See https://github.com/mupen64plus/mupen64plus-rom.
+
+The following assets are licensed under Apache License 2.0:
+
+- src/Views.Win32/icons/symbols/*
+
+See https://github.com/google/material-design-icons.
