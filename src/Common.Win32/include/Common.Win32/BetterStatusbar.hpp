@@ -8,6 +8,7 @@
 
 #include <Common.Win32/Common.hpp>
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <span>
@@ -43,6 +44,14 @@ struct Entry
     Part part;
     int width{};
     bool initialized{};
+    HFONT fitted_font{};
+    int fitted_width = -1;
+    int fitted_height = -1;
+
+    ~Entry()
+    {
+        if (fitted_font) DeleteObject(fitted_font);
+    }
 };
 
 struct Context
@@ -53,6 +62,102 @@ struct Context
     HFONT font{};
     bool sizing_dirty = true;
 };
+
+inline void select_fitted_font(HDC dc, Entry &entry, int width, int height)
+{
+    if (entry.fitted_width != width || entry.fitted_height != height)
+    {
+        if (entry.fitted_font) DeleteObject(entry.fitted_font);
+        entry.fitted_font = nullptr;
+        entry.fitted_width = width;
+        entry.fitted_height = height;
+
+        SIZE size{};
+        const auto &text = entry.part.text;
+        GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &size);
+        if (size.cx > width || size.cy > height)
+        {
+            const auto original_font = GetCurrentObject(dc, OBJ_FONT);
+            LOGFONTW font{};
+            TEXTMETRICW metrics{};
+            if (GetObjectW(original_font, sizeof(font), &font) && GetTextMetricsW(dc, &metrics))
+            {
+                const int original_height = std::max(1L, metrics.tmHeight - metrics.tmInternalLeading);
+                const int original_width = font.lfWidth;
+                int low = 1, high = original_height - 1;
+                while (low <= high)
+                {
+                    const int candidate_height = low + (high - low) / 2;
+                    font.lfHeight = -candidate_height;
+                    font.lfWidth =
+                        original_width ? std::max(1, MulDiv(original_width, candidate_height, original_height)) : 0;
+                    const auto candidate = CreateFontIndirectW(&font);
+                    if (!candidate) break;
+                    SelectObject(dc, candidate);
+                    GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &size);
+                    SelectObject(dc, original_font);
+                    if ((size.cx <= width && size.cy <= height) || candidate_height == 1)
+                    {
+                        if (entry.fitted_font) DeleteObject(entry.fitted_font);
+                        entry.fitted_font = candidate;
+                        low = candidate_height + 1;
+                    }
+                    else
+                    {
+                        DeleteObject(candidate);
+                        high = candidate_height - 1;
+                    }
+                }
+            }
+        }
+    }
+    if (entry.fitted_font) SelectObject(dc, entry.fitted_font);
+}
+
+inline LRESULT CALLBACK parent_subclass_proc(
+    HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR data)
+{
+    if (message == WM_DRAWITEM)
+    {
+        const auto *draw = reinterpret_cast<const DRAWITEMSTRUCT *>(lparam);
+        const auto *ctx = reinterpret_cast<const Context *>(data);
+        if (draw && draw->hwndItem == reinterpret_cast<HWND>(id) && draw->itemID < ctx->entries.size())
+        {
+            auto &entry = *ctx->entries[draw->itemID];
+            const auto &part = entry.part;
+            auto rect = draw->rcItem;
+            const int saved = SaveDC(draw->hDC);
+            if (!saved) return TRUE;
+            IntersectClipRect(draw->hDC, rect.left, rect.top, rect.right, rect.bottom);
+            SelectObject(draw->hDC, reinterpret_cast<HFONT>(SendMessage(draw->hwndItem, WM_GETFONT, 0, 0)));
+            SetBkMode(draw->hDC, TRANSPARENT);
+            const int width = std::max(0L, rect.right - rect.left);
+            const int height = std::max(0L, rect.bottom - rect.top);
+            const bool has_icon = part.reserve_icon || part.icon;
+            const int icon_size =
+                has_icon ? std::min({GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), width, height}) : 0;
+            const int inset =
+                std::min(std::max(0, part.padding / 2), std::max(0, (width - std::max(1, icon_size)) / 2));
+            if (part.icon && icon_size > 0)
+            {
+                const int x = part.text.empty() ? rect.left + (width - icon_size) / 2 : rect.left + inset;
+                DrawIconEx(draw->hDC, x, rect.top + (height - icon_size) / 2, part.icon, icon_size, icon_size, 0,
+                    nullptr, DI_NORMAL);
+            }
+            rect.left += inset + icon_size + (has_icon && !part.text.empty() ? 4 : 0);
+            rect.right -= inset;
+            if (!part.text.empty() && rect.right > rect.left && height > 0)
+            {
+                select_fitted_font(draw->hDC, entry, rect.right - rect.left, height);
+                DrawTextW(draw->hDC, part.text.c_str(), static_cast<int>(part.text.size()), &rect,
+                    DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+            }
+            RestoreDC(draw->hDC, saved);
+            return TRUE;
+        }
+    }
+    return DefSubclassProc(hwnd, message, wparam, lparam);
+}
 
 inline LRESULT CALLBACK subclass_proc(
     HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR data)
@@ -79,6 +184,7 @@ inline LRESULT CALLBACK subclass_proc(
     if (message == WM_NCDESTROY)
     {
         RemoveWindowSubclass(hwnd, subclass_proc, id);
+        RemoveWindowSubclass(GetParent(hwnd), parent_subclass_proc, reinterpret_cast<UINT_PTR>(hwnd));
         if (IsWindow(ctx->tooltip)) DestroyWindow(ctx->tooltip);
         delete ctx;
     }
@@ -114,6 +220,13 @@ inline HWND create(HWND parent, HINSTANCE instance, int id)
         return nullptr;
     }
     SendMessage(ctx->tooltip, TTM_SETMAXTIPWIDTH, 0, 420);
+    if (!SetWindowSubclass(parent, Internal::parent_subclass_proc, reinterpret_cast<UINT_PTR>(hwnd),
+            reinterpret_cast<DWORD_PTR>(ctx.get())))
+    {
+        ctx.release();
+        DestroyWindow(hwnd);
+        return nullptr;
+    }
     ctx.release();
     return hwnd;
 }
@@ -130,18 +243,22 @@ inline void clear_icons(HWND hwnd)
     {
         auto &part = ctx->entries[i]->part;
         if (!part.icon) continue;
-        SendMessage(hwnd, SB_SETICON, i, 0);
         part.icon = nullptr;
+        RECT rect{};
+        SendMessage(hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&rect));
+        InvalidateRect(hwnd, &rect, TRUE);
     }
 }
 
 /**
- * \brief Replaces the displayed.
+ * \brief Replaces the displayed parts.
  * \param hwnd The control handle.
  * \param parts The parts in display order, with omitted parts hidden.
+ * \param scale_down Whether to proportionally shrink parts to fit the control.
+ * \param scale_up Whether to proportionally expand parts to fill the control.
  * \return Whether the control exists and the part count is supported.
  */
-inline bool set_parts(HWND hwnd, std::span<const Part> parts)
+inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = false, bool scale_up = false)
 {
     const auto ctx = Internal::get_ctx(hwnd);
     if (!ctx || parts.size() > 255) return false;
@@ -170,17 +287,19 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts)
         auto &entry = *ctx->entries[i];
         const auto &next = parts[i];
         const auto &previous = entry.part;
-        text_changed[i] = !entry.initialized || previous.text != next.text;
-        icon_changed[i] = !entry.initialized || previous.icon != next.icon;
+        text_changed[i] = !entry.initialized || previous.text != next.text ||
+                          previous.reserve_icon != next.reserve_icon || bool(previous.icon) != bool(next.icon);
+        icon_changed[i] =
+            metrics_changed || !entry.initialized || previous.icon != next.icon || previous.padding != next.padding;
         tip_changed[i] = !entry.initialized || previous.tooltip != next.tooltip;
         if (next.width > 0)
         {
             entry.width = next.width;
         }
         else if (metrics_changed || !entry.initialized || previous.width > 0 ||
-                 previous.sizing_labels != next.sizing_labels ||
-                 previous.reserve_icon != next.reserve_icon || previous.padding != next.padding ||
-                 bool(previous.icon) != bool(next.icon) || (next.sizing_labels.empty() && text_changed[i]))
+                 previous.sizing_labels != next.sizing_labels || previous.reserve_icon != next.reserve_icon ||
+                 previous.padding != next.padding || bool(previous.icon) != bool(next.icon) ||
+                 (next.sizing_labels.empty() && text_changed[i]))
         {
             if (!dc)
             {
@@ -201,13 +320,21 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts)
             entry.width = text_width + next.padding + 2 * borders[0] +
                           (has_icon ? GetSystemMetrics(SM_CXSMICON) + (text_width ? 4 : 0) : 0);
         }
-        edges.push_back(edge += entry.width);
+        edges.push_back(edge += std::max(1, entry.width));
         visual_changed = visual_changed || text_changed[i] || icon_changed[i];
     }
     if (dc)
     {
         SelectObject(dc, old_font);
         ReleaseDC(hwnd, dc);
+    }
+    RECT client{};
+    GetClientRect(hwnd, &client);
+    const int available_width = std::max(0L, client.right - client.left);
+    if (edge > 0 && ((scale_down && available_width < edge) || (scale_up && available_width > edge)))
+    {
+        for (auto &part_edge : edges)
+            part_edge = static_cast<int>(static_cast<int64_t>(part_edge) * available_width / edge);
     }
     const bool layout_changed = edges != ctx->edges;
     const bool batch_redraw = (visual_changed || layout_changed) && IsWindowVisible(hwnd);
@@ -241,8 +368,8 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts)
         }
         if (entry.initialized && tip_changed[i])
             SendMessageW(ctx->tooltip, TTM_UPDATETIPTEXTW, 0, reinterpret_cast<LPARAM>(&tool));
-        if (text_changed[i]) SendMessageW(hwnd, SB_SETTEXTW, i, reinterpret_cast<LPARAM>(parts[i].text.c_str()));
-        if (icon_changed[i]) SendMessage(hwnd, SB_SETICON, i, reinterpret_cast<LPARAM>(parts[i].icon));
+
+        if (text_changed[i] || icon_changed[i] || layout_changed) entry.fitted_width = -1;
         entry.part.text = parts[i].text;
         entry.part.icon = parts[i].icon;
         entry.part.sizing_labels = parts[i].sizing_labels;
@@ -251,6 +378,10 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts)
         entry.part.width = parts[i].width;
         entry.part.on_click = parts[i].on_click;
         entry.initialized = true;
+        if (text_changed[i])
+        {
+            SendMessageW(hwnd, SB_SETTEXTW, i | SBT_OWNERDRAW, 0);
+        }
     }
     if (batch_redraw)
     {

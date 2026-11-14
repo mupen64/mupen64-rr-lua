@@ -176,7 +176,7 @@ void refresh()
             "statusbar.state.modifying", "statusbar.state.loading", "statusbar.state.stopped"})
         parts[0].sizing_labels.push_back(IOUtils::to_wide_string(I18n::get().get(key)));
     parts[7].width = 165;
-    parts[8].width = 65;
+
     parts[1].icon = icons[readonly ? 5 : 6].get();
     parts[1].reserve_icon = true;
     parts[1].padding = 5;
@@ -225,7 +225,8 @@ void refresh()
     cheats_tooltip += "\n\n" + shortcut(AppActions::CHEATS, "statusbar.shortcut.cheats");
     parts[4].tooltip = IOUtils::to_wide_string(cheats_tooltip);
     parts[4].on_click = [] { ActionManager::invoke(AppActions::CHEATS); };
-    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 11 : 9));
+    BetterStatusbar::set_parts(statusbar_hwnd, std::span<const BetterStatusbar::Part>(parts.data(), active ? 11 : 9),
+        g_config.statusbar_scale_down, g_config.statusbar_scale_up);
 }
 
 void CALLBACK tick(HWND, UINT, UINT_PTR, DWORD)
@@ -330,8 +331,8 @@ void Statusbar::create()
     translations.add("statusbar.timings.tooltip", "Frames per second and vertical interrupts per second.", "en-us");
     translations.add("statusbar.mfa.rewind.tooltip", "Multi-Frame Advance will rewind by {} frames.\n\n{}", "en-us");
     translations.add("statusbar.mfa.advance.tooltip", "Multi-Frame Advance will advance by {} frames.\n\n{}", "en-us");
-    translations.add("statusbar.movie.tooltip",
-        "Current/total input samples.\n\nClick to also show vertical interrupts.", "en-us");
+    translations.add(
+        "statusbar.movie.tooltip", "Current/total input samples.\n\nClick to also show vertical interrupts.", "en-us");
     translations.add("statusbar.movie.vis.tooltip",
         "Current/total vertical interrupts (current/total input samples).\n\nClick to hide vertical interrupts.",
         "en-us");

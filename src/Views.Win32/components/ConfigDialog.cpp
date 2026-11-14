@@ -623,12 +623,12 @@ std::vector<OptionGroup> get_static_option_groups()
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Scale down to fit window",
-        .tooltip = "Whether the statusbar is allowed to scale its segments down.\nOnly applies to the legacy statusbar.",
+        .tooltip = "Whether the statusbar is allowed to scale its segments down.",
         GENPROPS(int32_t, statusbar_scale_down)});
     statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Scale up to fill window",
-        .tooltip = "Whether the statusbar is allowed to scale its segments up.\nOnly applies to the legacy statusbar.",
+        .tooltip = "Whether the statusbar is allowed to scale its segments up.",
         GENPROPS(int32_t, statusbar_scale_up)});
     piano_roll_group.items.emplace_back(OptionItem{
         .type = OptionItem::Type::Bool,

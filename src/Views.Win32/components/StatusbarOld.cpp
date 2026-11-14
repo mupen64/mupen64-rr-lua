@@ -12,7 +12,6 @@
 #include <CaptureManager.hpp>
 #include <array>
 #include <atomic>
-#include <numeric>
 
 namespace
 {
@@ -101,18 +100,6 @@ std::string get_vcr_text()
     return text;
 }
 
-float get_segment_scale()
-{
-    RECT rect{};
-    GetClientRect(g_main_ctx.hwnd, &rect);
-
-    constexpr auto desired_width = std::accumulate(SEGMENT_WIDTHS.begin(), SEGMENT_WIDTHS.end(), 0);
-    auto scale = static_cast<float>(rect.right - rect.left) / static_cast<float>(desired_width);
-    if (!g_config.statusbar_scale_down) scale = std::max(scale, 1.0f);
-    if (!g_config.statusbar_scale_up) scale = std::min(scale, 1.0f);
-    return scale;
-}
-
 void refresh()
 {
     if (!statusbar_hwnd || !g_main_ctx.core_ctx) return;
@@ -147,14 +134,13 @@ void refresh()
     text[FPS] = fps_text;
     text[VIs] = vis_text;
 
-    const auto scale = get_segment_scale();
     std::array<BetterStatusbar::Part, Section::Count> parts;
     for (size_t i = 0; i < parts.size(); ++i)
     {
         parts[i].text = IOUtils::to_wide_string(text[i]);
-        parts[i].width = std::max(1, static_cast<int>(static_cast<float>(SEGMENT_WIDTHS[i]) * scale));
+        parts[i].width = SEGMENT_WIDTHS[i];
     }
-    BetterStatusbar::set_parts(statusbar_hwnd, parts);
+    BetterStatusbar::set_parts(statusbar_hwnd, parts, g_config.statusbar_scale_down, g_config.statusbar_scale_up);
 }
 
 void CALLBACK tick(HWND, UINT, UINT_PTR, DWORD)
