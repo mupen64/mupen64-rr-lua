@@ -5,7 +5,7 @@
  */
 
 /*
- * WinDarkMode - 2.0.0
+ * WinDarkMode - next
  * https://github.com/abart27/WinDarkMode
  */
 
@@ -1123,6 +1123,30 @@ struct StatusBarThemer
                     LineTo(hdc, rc_part.right - 1, rc_part.bottom - 2);
                 }
 
+                const LRESULT text_info = SendMessageW(hwnd, SB_GETTEXTLENGTHW, static_cast<WPARAM>(i), 0);
+                if (HIWORD(text_info) & SBT_OWNERDRAW)
+                {
+                    DRAWITEMSTRUCT draw_item{};
+                    draw_item.CtlID = static_cast<UINT>(GetDlgCtrlID(hwnd));
+                    draw_item.itemID = static_cast<UINT>(i);
+                    draw_item.itemAction = ODA_DRAWENTIRE;
+                    draw_item.hwndItem = hwnd;
+                    draw_item.hDC = hdc;
+                    draw_item.rcItem = rc_part;
+                    InflateRect(&draw_item.rcItem, -borders[0], -borders[1]);
+                    draw_item.itemData =
+                        static_cast<ULONG_PTR>(SendMessageW(hwnd, SB_GETTEXTW, static_cast<WPARAM>(i), 0));
+
+                    const int saved_dc = SaveDC(hdc);
+                    if (!saved_dc) continue;
+                    IntersectClipRect(hdc, draw_item.rcItem.left, draw_item.rcItem.top, draw_item.rcItem.right,
+                        draw_item.rcItem.bottom);
+                    SendMessageW(GetParent(hwnd), WM_DRAWITEM, static_cast<WPARAM>(draw_item.CtlID),
+                        reinterpret_cast<LPARAM>(&draw_item));
+                    RestoreDC(hdc, saved_dc);
+                    continue;
+                }
+
                 HICON h_icon = reinterpret_cast<HICON>(SendMessage(hwnd, SB_GETICON, static_cast<WPARAM>(i), 0));
 
                 RECT rc_text = rc_part;
@@ -1136,7 +1160,6 @@ struct StatusBarThemer
                     rc_text.left += icon_size + borders[2];
                 }
 
-                const LRESULT text_info = SendMessageW(hwnd, SB_GETTEXTLENGTHW, static_cast<WPARAM>(i), 0);
                 const int text_len = LOWORD(text_info);
 
                 if (text_len > 0)
