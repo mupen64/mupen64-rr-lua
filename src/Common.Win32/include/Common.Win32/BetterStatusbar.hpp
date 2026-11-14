@@ -317,7 +317,9 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
             else
                 for (const auto &label : next.sizing_labels) measure(label);
             const bool has_icon = next.reserve_icon || next.icon;
-            entry.width = text_width + next.padding + 2 * borders[0] +
+            // SB_GETRECT starts after the outer border or inter-part gap, not at the previous edge.
+            const int leading_space = i == 0 ? borders[0] : borders[2];
+            entry.width = leading_space + text_width + next.padding + 2 * borders[0] +
                           (has_icon ? GetSystemMetrics(SM_CXSMICON) + (text_width ? 4 : 0) : 0);
         }
         edges.push_back(edge += std::max(1, entry.width));
