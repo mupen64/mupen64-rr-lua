@@ -1089,8 +1089,8 @@ struct StatusBarThemer
             int borders[3]{};
             SendMessage(hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(borders));
 
-            HPEN divider_pen = CreatePen(PS_SOLID, 1, theme_data.statusbar_divider_color);
-            HPEN old_pen = static_cast<HPEN>(SelectObject(hdc, divider_pen));
+            HPEN old_pen = static_cast<HPEN>(SelectObject(hdc, GetStockObject(DC_PEN)));
+            const COLORREF old_pen_color = SetDCPenColor(hdc, theme_data.statusbar_border_color);
 
             HFONT h_font = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
             HFONT h_old_font = static_cast<HFONT>(SelectObject(hdc, h_font));
@@ -1098,27 +1098,21 @@ struct StatusBarThemer
             SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, theme_data.text_1_color);
 
-            HPEN sep_pen = CreatePen(PS_SOLID, 1, theme_data.statusbar_border_color);
-            HPEN tmp_pen = static_cast<HPEN>(SelectObject(hdc, sep_pen));
             MoveToEx(hdc, rc_client.left, rc_client.top, nullptr);
             LineTo(hdc, rc_client.right, rc_client.top);
-            SelectObject(hdc, tmp_pen);
-            DeleteObject(sep_pen);
+            SetDCPenColor(hdc, theme_data.statusbar_divider_color);
 
+            std::wstring text;
             for (int i = 0; i < part_count; ++i)
             {
                 RECT rc_part{};
                 SendMessage(hwnd, SB_GETRECT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(&rc_part));
 
-                RECT rc_intersect{};
-                if (!IntersectRect(&rc_intersect, &ps.rcPaint, &rc_part)) continue;
-
-                FillRect(hdc, &rc_part, theme_data.bg_brush);
+                if (!RectVisible(hdc, &rc_part)) continue;
 
                 const bool is_last_part = (i == part_count - 1);
                 if (!is_last_part)
                 {
-                    SelectObject(hdc, divider_pen);
                     MoveToEx(hdc, rc_part.right - 1, rc_part.top + 2, nullptr);
                     LineTo(hdc, rc_part.right - 1, rc_part.bottom - 2);
                 }
@@ -1164,7 +1158,7 @@ struct StatusBarThemer
 
                 if (text_len > 0)
                 {
-                    std::wstring text(static_cast<size_t>(text_len) + 1, L'\0');
+                    text.resize(static_cast<size_t>(text_len) + 1);
                     SendMessageW(hwnd, SB_GETTEXTW, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(text.data()));
                     text.resize(static_cast<size_t>(text_len));
 
@@ -1180,7 +1174,8 @@ struct StatusBarThemer
                 constexpr int DOT = 2;
                 constexpr int GAP = 2;
                 constexpr int ROWS = 3;
-                HBRUSH dot_brush = CreateSolidBrush(theme_data.statusbar_grip_color);
+                HBRUSH dot_brush = static_cast<HBRUSH>(GetStockObject(DC_BRUSH));
+                const COLORREF old_brush_color = SetDCBrushColor(hdc, theme_data.statusbar_grip_color);
 
                 const int base_x = rc_client.right - 2;
                 const int base_y = rc_client.bottom - 2;
@@ -1196,12 +1191,12 @@ struct StatusBarThemer
                     }
                 }
 
-                DeleteObject(dot_brush);
+                SetDCBrushColor(hdc, old_brush_color);
             }
 
             SelectObject(hdc, h_old_font);
             SelectObject(hdc, old_pen);
-            DeleteObject(divider_pen);
+            SetDCPenColor(hdc, old_pen_color);
             EndPaint(hwnd, &ps);
             return 0;
         }
