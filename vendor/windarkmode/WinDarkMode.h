@@ -5,7 +5,7 @@
  */
 
 /*
- * WinDarkMode - 2.0.0
+ * WinDarkMode - next
  * https://github.com/abart27/WinDarkMode
  */
 
@@ -1089,8 +1089,8 @@ struct StatusBarThemer
             int borders[3]{};
             SendMessage(hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(borders));
 
-            HPEN divider_pen = CreatePen(PS_SOLID, 1, theme_data.statusbar_divider_color);
-            HPEN old_pen = static_cast<HPEN>(SelectObject(hdc, divider_pen));
+            HPEN old_pen = static_cast<HPEN>(SelectObject(hdc, GetStockObject(DC_PEN)));
+            const COLORREF old_pen_color = SetDCPenColor(hdc, theme_data.statusbar_border_color);
 
             HFONT h_font = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
             HFONT h_old_font = static_cast<HFONT>(SelectObject(hdc, h_font));
@@ -1098,29 +1098,47 @@ struct StatusBarThemer
             SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, theme_data.text_1_color);
 
-            HPEN sep_pen = CreatePen(PS_SOLID, 1, theme_data.statusbar_border_color);
-            HPEN tmp_pen = static_cast<HPEN>(SelectObject(hdc, sep_pen));
             MoveToEx(hdc, rc_client.left, rc_client.top, nullptr);
             LineTo(hdc, rc_client.right, rc_client.top);
-            SelectObject(hdc, tmp_pen);
-            DeleteObject(sep_pen);
+            SetDCPenColor(hdc, theme_data.statusbar_divider_color);
 
+            std::wstring text;
             for (int i = 0; i < part_count; ++i)
             {
                 RECT rc_part{};
                 SendMessage(hwnd, SB_GETRECT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(&rc_part));
 
-                RECT rc_intersect{};
-                if (!IntersectRect(&rc_intersect, &ps.rcPaint, &rc_part)) continue;
-
-                FillRect(hdc, &rc_part, theme_data.bg_brush);
+                if (!RectVisible(hdc, &rc_part)) continue;
 
                 const bool is_last_part = (i == part_count - 1);
                 if (!is_last_part)
                 {
-                    SelectObject(hdc, divider_pen);
                     MoveToEx(hdc, rc_part.right - 1, rc_part.top + 2, nullptr);
                     LineTo(hdc, rc_part.right - 1, rc_part.bottom - 2);
+                }
+
+                const LRESULT text_info = SendMessageW(hwnd, SB_GETTEXTLENGTHW, static_cast<WPARAM>(i), 0);
+                if (HIWORD(text_info) & SBT_OWNERDRAW)
+                {
+                    DRAWITEMSTRUCT draw_item{};
+                    draw_item.CtlID = static_cast<UINT>(GetDlgCtrlID(hwnd));
+                    draw_item.itemID = static_cast<UINT>(i);
+                    draw_item.itemAction = ODA_DRAWENTIRE;
+                    draw_item.hwndItem = hwnd;
+                    draw_item.hDC = hdc;
+                    draw_item.rcItem = rc_part;
+                    InflateRect(&draw_item.rcItem, -borders[0], -borders[1]);
+                    draw_item.itemData =
+                        static_cast<ULONG_PTR>(SendMessageW(hwnd, SB_GETTEXTW, static_cast<WPARAM>(i), 0));
+
+                    const int saved_dc = SaveDC(hdc);
+                    if (!saved_dc) continue;
+                    IntersectClipRect(hdc, draw_item.rcItem.left, draw_item.rcItem.top, draw_item.rcItem.right,
+                        draw_item.rcItem.bottom);
+                    SendMessageW(GetParent(hwnd), WM_DRAWITEM, static_cast<WPARAM>(draw_item.CtlID),
+                        reinterpret_cast<LPARAM>(&draw_item));
+                    RestoreDC(hdc, saved_dc);
+                    continue;
                 }
 
                 HICON h_icon = reinterpret_cast<HICON>(SendMessage(hwnd, SB_GETICON, static_cast<WPARAM>(i), 0));
@@ -1136,12 +1154,11 @@ struct StatusBarThemer
                     rc_text.left += icon_size + borders[2];
                 }
 
-                const LRESULT text_info = SendMessageW(hwnd, SB_GETTEXTLENGTHW, static_cast<WPARAM>(i), 0);
                 const int text_len = LOWORD(text_info);
 
                 if (text_len > 0)
                 {
-                    std::wstring text(static_cast<size_t>(text_len) + 1, L'\0');
+                    text.resize(static_cast<size_t>(text_len) + 1);
                     SendMessageW(hwnd, SB_GETTEXTW, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(text.data()));
                     text.resize(static_cast<size_t>(text_len));
 
@@ -1157,7 +1174,8 @@ struct StatusBarThemer
                 constexpr int DOT = 2;
                 constexpr int GAP = 2;
                 constexpr int ROWS = 3;
-                HBRUSH dot_brush = CreateSolidBrush(theme_data.statusbar_grip_color);
+                HBRUSH dot_brush = static_cast<HBRUSH>(GetStockObject(DC_BRUSH));
+                const COLORREF old_brush_color = SetDCBrushColor(hdc, theme_data.statusbar_grip_color);
 
                 const int base_x = rc_client.right - 2;
                 const int base_y = rc_client.bottom - 2;
@@ -1173,12 +1191,12 @@ struct StatusBarThemer
                     }
                 }
 
-                DeleteObject(dot_brush);
+                SetDCBrushColor(hdc, old_brush_color);
             }
 
             SelectObject(hdc, h_old_font);
             SelectObject(hdc, old_pen);
-            DeleteObject(divider_pen);
+            SetDCPenColor(hdc, old_pen_color);
             EndPaint(hwnd, &ps);
             return 0;
         }
