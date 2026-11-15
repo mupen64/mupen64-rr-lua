@@ -63,7 +63,7 @@ jobs:
       run: |
         cmake_debug="Debug"
         cmake_release="RelWithDebInfo"
-        cmake --preset sys-linux-release "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+        cmake --preset sys-linux "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
 
     - name: CMake build
       working-directory: ${{env.GITHUB_WORKSPACE}}
