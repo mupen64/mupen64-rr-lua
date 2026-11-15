@@ -88,10 +88,6 @@ class LuaInstance : public QObject
     void stopped();
 
   private:
-    void registerGlobalAPIs();
-    void registerEmuAPIs();
-    void registerMemoryAPIs();
-
     void applySandbox();
     void invokeCallback(LuaCallbackKey key, int nargs = 0);
 

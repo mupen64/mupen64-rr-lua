@@ -16,9 +16,14 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Lua
 
         "LuaInstance.cpp"
         "LuaInstanceManager.cpp"
+        "LuaInternal.cpp"
+        "LuaInternal.hpp"
+        "LuaGlobal.cpp"
+        "LuaEmu.cpp"
+        "LuaMemory.cpp"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Lua PUBLIC cxx_std_26)
-target_include_directories(Mupen64RR_Views_Qt6_Lua PUBLIC "." "../Core")
+target_include_directories(Mupen64RR_Views_Qt6_Lua PUBLIC ".")
 target_link_libraries(Mupen64RR_Views_Qt6_Lua PUBLIC
     Mupen64RR_Common
     Mupen64RR_Common_Views

@@ -4,258 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "LuaInstance.hpp"
-#include "EmuContext.hpp"
-#include <Core/API.hpp>
+#include "LuaInternal.hpp"
 
-#include <QGuiApplication>
-#include <QColor>
-#include <QDateTime>
-#include <QDebug>
 #include <QFile>
 #include <QFileInfo>
-#include <QPalette>
-#include <QStyleHints>
-#include <QUrl>
-
-namespace
-{
-
-LuaInstance *getInstance(lua_State *L)
-{
-    lua_getfield(L, LUA_REGISTRYINDEX, "__lua_instance");
-    auto *inst = static_cast<LuaInstance *>(lua_touserdata(L, -1));
-    lua_pop(L, 1);
-    return inst;
-}
-
-int lua_global_print(lua_State *L)
-{
-    auto *inst = getInstance(L);
-    if (!inst) return 0;
-
-    int n = lua_gettop(L);
-    QString out;
-    for (int i = 1; i <= n; ++i)
-    {
-        if (i > 1) out += '\t';
-        size_t len = 0;
-        const char *s = luaL_tolstring(L, i, &len);
-        if (s) out += QString::fromUtf8(s, static_cast<qsizetype>(len));
-        lua_pop(L, 1);
-    }
-    out += '\n';
-    inst->appendLog(out);
-    return 0;
-}
-
-int register_callback_helper(lua_State *L, LuaCallbackKey key)
-{
-    auto *inst = getInstance(L);
-    if (!inst) return 0;
-
-    if (!lua_isfunction(L, 1))
-    {
-        return luaL_error(L, "callback must be a function");
-    }
-
-    bool unregister = lua_toboolean(L, 2);
-    if (unregister)
-    {
-        inst->unregisterCallback(key, 1);
-    }
-    else
-    {
-        inst->registerCallback(key, 1);
-    }
-    return 0;
-}
-
-int emu_atstop(lua_State *L)
-{
-    return register_callback_helper(L, LuaCallbackKey::Stop);
-}
-int emu_framecount(lua_State *L)
-{
-    auto *ctx = EmuContext::rawContext();
-    if (ctx && ctx->vcr_get_current_vi)
-    {
-        lua_pushinteger(L, ctx->vcr_get_current_vi());
-    }
-    else
-    {
-        lua_pushinteger(L, 0);
-    }
-    return 1;
-}
-
-int emu_samplecount(lua_State *L)
-{
-    auto *ctx = EmuContext::rawContext();
-    if (ctx && ctx->vcr_get_seek_info)
-    {
-        lua_pushinteger(L, ctx->vcr_get_seek_info().current_sample);
-    }
-    else
-    {
-        lua_pushinteger(L, 0);
-    }
-    return 1;
-}
-
-int emu_pause(lua_State *L)
-{
-    if (auto *ctx = EmuContext::instance())
-    {
-        bool p = lua_toboolean(L, 1);
-        ctx->setPaused(p);
-    }
-    return 0;
-}
-
-int emu_getpause(lua_State *L)
-{
-    if (auto *ctx = EmuContext::instance())
-    {
-        lua_pushboolean(L, ctx->isPaused());
-    }
-    else
-    {
-        lua_pushboolean(L, false);
-    }
-    return 1;
-}
-
-int emu_speed(lua_State *L)
-{
-    if (auto *ctx = EmuContext::instance())
-    {
-        int spd = static_cast<int>(luaL_checkinteger(L, 1));
-        ctx->setSpeedModifier(spd);
-    }
-    return 0;
-}
-
-int emu_getspeed(lua_State *L)
-{
-    if (auto *ctx = EmuContext::instance())
-    {
-        lua_pushinteger(L, ctx->speedModifier());
-    }
-    else
-    {
-        lua_pushinteger(L, 100);
-    }
-    return 1;
-}
-
-int emu_get_hint(lua_State *L)
-{
-    auto *inst = getInstance(L);
-    if (!inst) return 0;
-    const char *key = luaL_checkstring(L, 1);
-    std::string val = inst->queryHint(key);
-    lua_pushstring(L, val.c_str());
-    return 1;
-}
-
-int emu_set_hint(lua_State *L)
-{
-    auto *inst = getInstance(L);
-    if (!inst) return 0;
-    const char *key = luaL_checkstring(L, 1);
-    const char *val = luaL_optstring(L, 2, "");
-    inst->setHint(key, val);
-    return 0;
-}
-
-int emu_get_pref(lua_State *L)
-{
-    const char *pref = luaL_checkstring(L, 1);
-    if (std::strcmp(pref, "theme") == 0)
-    {
-        bool isDark = qGuiApp ? (qGuiApp->palette().color(QPalette::Window).lightness() < 128) : true;
-        lua_pushstring(L, isDark ? "dark" : "light");
-        return 1;
-    }
-    else if (std::strcmp(pref, "accent_color") == 0)
-    {
-        QColor accent = qGuiApp ? qGuiApp->palette().color(QPalette::Highlight) : QColor(0, 120, 215);
-        lua_createtable(L, 0, 4);
-        lua_pushnumber(L, accent.redF());
-        lua_setfield(L, -2, "r");
-        lua_pushnumber(L, accent.greenF());
-        lua_setfield(L, -2, "g");
-        lua_pushnumber(L, accent.blueF());
-        lua_setfield(L, -2, "b");
-        lua_pushnumber(L, accent.alphaF());
-        lua_setfield(L, -2, "a");
-        return 1;
-    }
-    else if (std::strcmp(pref, "reduced_motion") == 0)
-    {
-        lua_pushboolean(L, false);
-        return 1;
-    }
-    else if (std::strcmp(pref, "caret_blink_time") == 0)
-    {
-        lua_pushinteger(L, qGuiApp ? qGuiApp->styleHints()->cursorFlashTime() : 500);
-        return 1;
-    }
-    lua_pushnil(L);
-    return 1;
-}
-
-template <typename T> int memory_read(lua_State *L)
-{
-    uint32_t addr = static_cast<uint32_t>(luaL_checkinteger(L, 1));
-    auto *ctx = EmuContext::rawContext();
-    if (!ctx || !ctx->rdram)
-    {
-        return luaL_error(L, "Core or RDRAM not available");
-    }
-    auto val = core_rdram_load<T>((uint8_t *)ctx->rdram, addr);
-    if (!val.has_value())
-    {
-        return luaL_error(L, "address out of bounds");
-    }
-    if constexpr (std::is_floating_point_v<T>)
-    {
-        lua_pushnumber(L, static_cast<lua_Number>(val.value()));
-    }
-    else
-    {
-        lua_pushinteger(L, static_cast<lua_Integer>(val.value()));
-    }
-    return 1;
-}
-
-template <typename T> int memory_write(lua_State *L)
-{
-    uint32_t addr = static_cast<uint32_t>(luaL_checkinteger(L, 1));
-    T val{};
-    if constexpr (std::is_floating_point_v<T>)
-    {
-        val = static_cast<T>(luaL_checknumber(L, 2));
-    }
-    else
-    {
-        val = static_cast<T>(luaL_checkinteger(L, 2));
-    }
-
-    auto *ctx = EmuContext::rawContext();
-    if (!ctx || !ctx->rdram)
-    {
-        return luaL_error(L, "Core or RDRAM not available");
-    }
-    bool ok = core_rdram_store<T>((uint8_t *)ctx->rdram, addr, val);
-    if (!ok)
-    {
-        return luaL_error(L, "address out of bounds");
-    }
-    return 0;
-}
-
-} // namespace
 
 LuaInstance::LuaInstance(QObject *parent) : QObject(parent)
 {
@@ -394,59 +146,6 @@ void LuaInstance::invokeCallback(LuaCallbackKey key, int nargs)
     if (nargs > 0) lua_pop(m_l, nargs);
 }
 
-void LuaInstance::registerGlobalAPIs()
-{
-    lua_register(m_l, "print", lua_global_print);
-    lua_register(m_l, "console", lua_global_print);
-}
-
-void LuaInstance::registerEmuAPIs()
-{
-    lua_newtable(m_l);
-
-    const luaL_Reg emuFuncs[] = {
-        {"atstop", emu_atstop},
-        {"framecount", emu_framecount},
-        {"samplecount", emu_samplecount},
-        {"pause", emu_pause},
-        {"getpause", emu_getpause},
-        {"speed", emu_speed},
-        {"getspeed", emu_getspeed},
-        {"get_hint", emu_get_hint},
-        {"set_hint", emu_set_hint},
-        {"get_pref", emu_get_pref},
-        {nullptr, nullptr},
-    };
-
-    luaL_setfuncs(m_l, emuFuncs, 0);
-    lua_setglobal(m_l, "emu");
-}
-
-void LuaInstance::registerMemoryAPIs()
-{
-    lua_newtable(m_l);
-
-    const luaL_Reg memFuncs[] = {
-        {"readbyte", memory_read<uint8_t>},
-        {"readbytesigned", memory_read<int8_t>},
-        {"readword", memory_read<uint16_t>},
-        {"readwordsigned", memory_read<int16_t>},
-        {"readdword", memory_read<uint32_t>},
-        {"readdwordsigned", memory_read<int32_t>},
-        {"readfloat", memory_read<float>},
-        {"readdouble", memory_read<double>},
-        {"writebyte", memory_write<uint8_t>},
-        {"writeword", memory_write<uint16_t>},
-        {"writedword", memory_write<uint32_t>},
-        {"writefloat", memory_write<float>},
-        {"writedouble", memory_write<double>},
-        {nullptr, nullptr},
-    };
-
-    luaL_setfuncs(m_l, memFuncs, 0);
-    lua_setglobal(m_l, "memory");
-}
-
 void LuaInstance::applySandbox()
 {
     const char *sandboxScript = R"(
@@ -478,11 +177,7 @@ bool LuaInstance::start()
         return false;
     }
 
-    QString localPath = m_path;
-    if (localPath.startsWith("file:///"))
-    {
-        localPath = QUrl(localPath).toLocalFile();
-    }
+    const QString &localPath = m_path;
 
     if (!QFile::exists(localPath))
     {
@@ -506,9 +201,9 @@ bool LuaInstance::start()
     lua_pushlightuserdata(m_l, this);
     lua_setfield(m_l, LUA_REGISTRYINDEX, "__lua_instance");
 
-    registerGlobalAPIs();
-    registerEmuAPIs();
-    registerMemoryAPIs();
+    LuaInternal::registerGlobalAPIs(m_l);
+    LuaInternal::registerEmuAPIs(m_l);
+    LuaInternal::registerMemoryAPIs(m_l);
 
     if (!m_trusted)
     {

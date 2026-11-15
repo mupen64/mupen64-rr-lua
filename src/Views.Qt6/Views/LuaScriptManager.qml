@@ -12,6 +12,7 @@ import QtQuick.Layouts
 import QtQuick.Dialogs as Dialogs
 
 import Mupen64.Lua
+import Mupen64.Utils
 
 ApplicationWindow {
     id: window
@@ -34,16 +35,8 @@ ApplicationWindow {
         title: qsTrId("lua.manager.chooseScript")
         nameFilters: ["Lua scripts (*.lua)", "All files (*)"]
         onAccepted: {
-            // note: toLocalFile() on the dialog's url fails with the platform file picker; decode the url manually
-            let urlStr = fileDialog.selectedFile.toString()
-            let localPath = ""
-            if (urlStr.startsWith("file://")) {
-                localPath = decodeURIComponent(urlStr.substring(7))
-                // drive letter on Windows: file:///C:/... -> C:/...
-                if (localPath.length >= 3 && localPath[0] === '/' && localPath[2] === ':') {
-                    localPath = localPath.substring(1)
-                }
-            }
+            let localPath = Paths.toLocalFile(fileDialog.selectedFile)
+            if (!localPath) return
             window.instanceManager.addInstance(localPath, false)
         }
     }
@@ -221,12 +214,12 @@ ApplicationWindow {
                     Layout.fillWidth: true
 
                     Label {
-                        //% "Console for"
+                        //% "Console for %1"
                         property string consoleForLabel: qsTrId("lua.manager.consoleFor")
                         //% "Console"
                         property string consoleLabel: qsTrId("lua.manager.console")
                         text: window.selectedInstance
-                            ? consoleForLabel + " " + window.selectedInstance.name
+                            ? consoleForLabel.arg(window.selectedInstance.name)
                             : consoleLabel
                         font.bold: true
                     }
