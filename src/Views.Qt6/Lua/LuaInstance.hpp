@@ -9,7 +9,6 @@
 #include <QObject>
 #include <QPointer>
 #include <QString>
-#include <QUrl>
 #include <qqmlintegration.h>
 
 #include <functional>
