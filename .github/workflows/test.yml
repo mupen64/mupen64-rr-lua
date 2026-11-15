@@ -15,9 +15,9 @@ jobs:
       matrix:
         arch: [x86, x64]
         build_type: [debug, release]
-    
+
     runs-on: windows-latest
-    
+
     env:
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
@@ -44,15 +44,14 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: ctest --test-dir build
 
-  
+
   test-linux:
     name: Linux
     strategy:
       matrix:
         build_type: [debug, release]
 
-    # TODO: switch this to ubuntu-latest once this leaves preview.
-    runs-on: [ubuntu-26.04] 
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v6
@@ -64,12 +63,12 @@ jobs:
       run: |
         cmake_debug="Debug"
         cmake_release="RelWithDebInfo"
-        cmake --preset sys-linux-release "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+        cmake --preset sys-linux "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
 
     - name: CMake build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: cmake --build build
-      
+
     - name: CMake test
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: ctest --test-dir build
