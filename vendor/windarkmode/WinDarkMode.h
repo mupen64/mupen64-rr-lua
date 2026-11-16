@@ -5,7 +5,7 @@
  */
 
 /*
- * WinDarkMode - 2.0.0
+ * WinDarkMode - next
  * https://github.com/abart27/WinDarkMode
  */
 
@@ -552,18 +552,18 @@ struct TabControlThemer
                 SelectObject(hdc, old_pen);
                 DeleteObject(tab_pen);
 
-                TCHAR label[256]{};
-                TCITEM tci{};
+                wchar_t label[256]{};
+                TCITEMW tci{};
                 tci.mask = TCIF_TEXT;
                 tci.pszText = label;
                 tci.cchTextMax = static_cast<int>(std::size(label)) - 1;
-                TabCtrl_GetItem(hwnd, i, &tci);
+                SendMessageW(hwnd, TCM_GETITEMW, i, reinterpret_cast<LPARAM>(&tci));
 
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, theme_data.text_1_color);
                 HFONT hFont = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
                 HFONT hOldFont = static_cast<HFONT>(SelectObject(hdc, hFont));
-                DrawText(hdc, label, -1, &rc_item, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+                DrawTextW(hdc, label, -1, &rc_item, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
                 SelectObject(hdc, hOldFont);
             }
 
@@ -669,15 +669,15 @@ struct ListBoxThemer
                 FillRect(hdc, &rc, selected ? theme_data.tab_normal_brush : theme_data.listbox_bg_brush);
                 SetTextColor(hdc, enabled ? theme_data.text_1_color : theme_data.disabled_text_color);
 
-                const LRESULT length = SendMessage(hwnd, LB_GETTEXTLEN, i, 0);
+                const LRESULT length = SendMessageW(hwnd, LB_GETTEXTLEN, i, 0);
                 if (length != LB_ERR)
                 {
-                    std::basic_string<TCHAR> text(static_cast<size_t>(length) + 1, TEXT('\0'));
-                    if (SendMessage(hwnd, LB_GETTEXT, i, reinterpret_cast<LPARAM>(text.data())) != LB_ERR)
+                    std::wstring text(static_cast<size_t>(length) + 1, L'\0');
+                    if (SendMessageW(hwnd, LB_GETTEXT, i, reinterpret_cast<LPARAM>(text.data())) != LB_ERR)
                     {
                         RECT text_rc = rc;
                         text_rc.left += 2;
-                        DrawText(hdc, text.c_str(), -1, &text_rc,
+                        DrawTextW(hdc, text.c_str(), -1, &text_rc,
                             DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX |
                                 ((style & LBS_USETABSTOPS) ? DT_EXPANDTABS : 0) |
                                 ((GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_RTLREADING) ? DT_RTLREADING : 0));
@@ -866,16 +866,16 @@ struct GroupBoxThemer
             HFONT hFont = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
             HFONT hOldFont = static_cast<HFONT>(SelectObject(hdc, hFont));
 
-            TEXTMETRIC tm{};
-            GetTextMetrics(hdc, &tm);
+            TEXTMETRICW tm{};
+            GetTextMetricsW(hdc, &tm);
             const int text_y_offset = tm.tmHeight / 2;
 
-            TCHAR label[256]{};
-            GetWindowText(hwnd, label, static_cast<int>(std::size(label)));
+            wchar_t label[256]{};
+            GetWindowTextW(hwnd, label, static_cast<int>(std::size(label)));
 
             const int text_padding = 4;
             SIZE text_size{};
-            GetTextExtentPoint32(hdc, label, lstrlen(label), &text_size);
+            GetTextExtentPoint32W(hdc, label, lstrlenW(label), &text_size);
 
             FillRect(hdc, &rc, theme_data.bg_brush);
 
@@ -900,7 +900,7 @@ struct GroupBoxThemer
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, theme_data.text_1_color);
                 RECT text_rc = {text_x, rc.top, text_x + text_size.cx, rc.top + tm.tmHeight};
-                DrawText(hdc, label, -1, &text_rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
+                DrawTextW(hdc, label, -1, &text_rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
             }
 
             SelectObject(hdc, hOldFont);
@@ -1011,8 +1011,8 @@ struct ButtonThemer
                 CloseThemeData(hTheme);
             }
 
-            TCHAR label[256] = {};
-            GetWindowText(hwnd, label, _countof(label));
+            wchar_t label[256] = {};
+            GetWindowTextW(hwnd, label, _countof(label));
             if (label[0])
             {
                 const RECT text_rc = {rc.left + glyph_size.cx + 4, rc.top, rc.right, rc.bottom};
@@ -1020,7 +1020,7 @@ struct ButtonThemer
                 const HFONT hOldFont = hFont ? reinterpret_cast<HFONT>(SelectObject(hdc, hFont)) : nullptr;
                 SetTextColor(hdc, enabled ? theme_data.text_1_color : theme_data.disabled_text_color);
                 SetBkMode(hdc, TRANSPARENT);
-                DrawText(hdc, label, -1, const_cast<LPRECT>(&text_rc), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+                DrawTextW(hdc, label, -1, const_cast<LPRECT>(&text_rc), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
                 if (hOldFont) SelectObject(hdc, hOldFont);
             }
 
@@ -1089,8 +1089,8 @@ struct StatusBarThemer
             int borders[3]{};
             SendMessage(hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(borders));
 
-            HPEN divider_pen = CreatePen(PS_SOLID, 1, theme_data.statusbar_divider_color);
-            HPEN old_pen = static_cast<HPEN>(SelectObject(hdc, divider_pen));
+            HPEN old_pen = static_cast<HPEN>(SelectObject(hdc, GetStockObject(DC_PEN)));
+            const COLORREF old_pen_color = SetDCPenColor(hdc, theme_data.statusbar_border_color);
 
             HFONT h_font = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
             HFONT h_old_font = static_cast<HFONT>(SelectObject(hdc, h_font));
@@ -1098,29 +1098,47 @@ struct StatusBarThemer
             SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, theme_data.text_1_color);
 
-            HPEN sep_pen = CreatePen(PS_SOLID, 1, theme_data.statusbar_border_color);
-            HPEN tmp_pen = static_cast<HPEN>(SelectObject(hdc, sep_pen));
             MoveToEx(hdc, rc_client.left, rc_client.top, nullptr);
             LineTo(hdc, rc_client.right, rc_client.top);
-            SelectObject(hdc, tmp_pen);
-            DeleteObject(sep_pen);
+            SetDCPenColor(hdc, theme_data.statusbar_divider_color);
 
+            std::wstring text;
             for (int i = 0; i < part_count; ++i)
             {
                 RECT rc_part{};
                 SendMessage(hwnd, SB_GETRECT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(&rc_part));
 
-                RECT rc_intersect{};
-                if (!IntersectRect(&rc_intersect, &ps.rcPaint, &rc_part)) continue;
-
-                FillRect(hdc, &rc_part, theme_data.bg_brush);
+                if (!RectVisible(hdc, &rc_part)) continue;
 
                 const bool is_last_part = (i == part_count - 1);
                 if (!is_last_part)
                 {
-                    SelectObject(hdc, divider_pen);
                     MoveToEx(hdc, rc_part.right - 1, rc_part.top + 2, nullptr);
                     LineTo(hdc, rc_part.right - 1, rc_part.bottom - 2);
+                }
+
+                const LRESULT text_info = SendMessageW(hwnd, SB_GETTEXTLENGTHW, static_cast<WPARAM>(i), 0);
+                if (HIWORD(text_info) & SBT_OWNERDRAW)
+                {
+                    DRAWITEMSTRUCT draw_item{};
+                    draw_item.CtlID = static_cast<UINT>(GetDlgCtrlID(hwnd));
+                    draw_item.itemID = static_cast<UINT>(i);
+                    draw_item.itemAction = ODA_DRAWENTIRE;
+                    draw_item.hwndItem = hwnd;
+                    draw_item.hDC = hdc;
+                    draw_item.rcItem = rc_part;
+                    InflateRect(&draw_item.rcItem, -borders[0], -borders[1]);
+                    draw_item.itemData =
+                        static_cast<ULONG_PTR>(SendMessageW(hwnd, SB_GETTEXTW, static_cast<WPARAM>(i), 0));
+
+                    const int saved_dc = SaveDC(hdc);
+                    if (!saved_dc) continue;
+                    IntersectClipRect(hdc, draw_item.rcItem.left, draw_item.rcItem.top, draw_item.rcItem.right,
+                        draw_item.rcItem.bottom);
+                    SendMessageW(GetParent(hwnd), WM_DRAWITEM, static_cast<WPARAM>(draw_item.CtlID),
+                        reinterpret_cast<LPARAM>(&draw_item));
+                    RestoreDC(hdc, saved_dc);
+                    continue;
                 }
 
                 HICON h_icon = reinterpret_cast<HICON>(SendMessage(hwnd, SB_GETICON, static_cast<WPARAM>(i), 0));
@@ -1136,17 +1154,16 @@ struct StatusBarThemer
                     rc_text.left += icon_size + borders[2];
                 }
 
-                const LRESULT text_info = SendMessage(hwnd, SB_GETTEXTLENGTH, static_cast<WPARAM>(i), 0);
                 const int text_len = LOWORD(text_info);
 
                 if (text_len > 0)
                 {
-                    std::basic_string<TCHAR> text(static_cast<size_t>(text_len) + 1, TEXT('\0'));
-                    SendMessage(hwnd, SB_GETTEXT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(text.data()));
+                    text.resize(static_cast<size_t>(text_len) + 1);
+                    SendMessageW(hwnd, SB_GETTEXTW, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(text.data()));
                     text.resize(static_cast<size_t>(text_len));
 
                     rc_text.right -= borders[0];
-                    DrawText(hdc, text.c_str(), static_cast<int>(text.size()), &rc_text,
+                    DrawTextW(hdc, text.c_str(), static_cast<int>(text.size()), &rc_text,
                         DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
                 }
             }
@@ -1157,7 +1174,8 @@ struct StatusBarThemer
                 constexpr int DOT = 2;
                 constexpr int GAP = 2;
                 constexpr int ROWS = 3;
-                HBRUSH dot_brush = CreateSolidBrush(theme_data.statusbar_grip_color);
+                HBRUSH dot_brush = static_cast<HBRUSH>(GetStockObject(DC_BRUSH));
+                const COLORREF old_brush_color = SetDCBrushColor(hdc, theme_data.statusbar_grip_color);
 
                 const int base_x = rc_client.right - 2;
                 const int base_y = rc_client.bottom - 2;
@@ -1173,12 +1191,12 @@ struct StatusBarThemer
                     }
                 }
 
-                DeleteObject(dot_brush);
+                SetDCBrushColor(hdc, old_brush_color);
             }
 
             SelectObject(hdc, h_old_font);
             SelectObject(hdc, old_pen);
-            DeleteObject(divider_pen);
+            SetDCPenColor(hdc, old_pen_color);
             EndPaint(hwnd, &ps);
             return 0;
         }
@@ -1206,27 +1224,27 @@ struct StatusBarThemer
 
 struct ControlThemer
 {
-    LPCTSTR class_name;
+    LPCWSTR class_name;
     void (*update)(HWND hwnd, bool dark);
 };
 
 inline void update_control(HWND hwnd, bool dark, const std::vector<HWND> &exclude)
 {
-    TCHAR cls[32]{};
-    GetClassName(hwnd, cls, std::size(cls));
-    const std::basic_string<TCHAR> class_name(cls);
+    wchar_t cls[32]{};
+    GetClassNameW(hwnd, cls, std::size(cls));
+    const std::wstring class_name(cls);
 
     if (std::find(exclude.begin(), exclude.end(), hwnd) != exclude.end()) return;
 
     _AllowDarkModeForWindow(hwnd, dark);
 
     static constexpr ControlThemer themers[] = {
-        {WC_HEADER, HeaderThemer::update},
-        {WC_LISTVIEW, ListViewThemer::update},
-        {WC_LISTBOX, ListBoxThemer::update},
-        {WC_TABCONTROL, TabControlThemer::update},
-        {WC_BUTTON, ButtonThemer::update},
-        {STATUSCLASSNAME, StatusBarThemer::update},
+        {WC_HEADERW, HeaderThemer::update},
+        {WC_LISTVIEWW, ListViewThemer::update},
+        {WC_LISTBOXW, ListBoxThemer::update},
+        {WC_TABCONTROLW, TabControlThemer::update},
+        {WC_BUTTONW, ButtonThemer::update},
+        {STATUSCLASSNAMEW, StatusBarThemer::update},
     };
     for (const auto &themer : themers)
     {
@@ -1262,8 +1280,10 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
     case WM_SETTINGCHANGE: {
         if (theme != Theme::System) break;
 
-        const auto lparam_str = reinterpret_cast<LPCTSTR>(lParam);
-        const bool theme_changed = lParam && lstrcmpi(lparam_str, TEXT("ImmersiveColorSet")) == 0;
+        const bool theme_changed = lParam &&
+                                   (IsWindowUnicode(hwnd)
+                                           ? lstrcmpiW(reinterpret_cast<LPCWSTR>(lParam), L"ImmersiveColorSet") == 0
+                                           : lstrcmpiA(reinterpret_cast<LPCSTR>(lParam), "ImmersiveColorSet") == 0);
         if (theme_changed) _RefreshImmersiveColorPolicyState();
         _GetIsImmersiveColorUsingHighContrast(IHCM_REFRESH);
         if (theme_changed)
@@ -1346,25 +1366,25 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
             FillRect(
                 udmi->um.hdc, &udmi->dis.rcItem, (hot || selected) ? theme_data.tab_normal_brush : theme_data.bg_brush);
 
-            TCHAR text[256]{};
-            MENUITEMINFO mii{};
+            wchar_t text[256]{};
+            MENUITEMINFOW mii{};
             mii.cbSize = sizeof(mii);
             mii.fMask = MIIM_STRING;
             mii.dwTypeData = text;
             mii.cch = static_cast<UINT>(std::size(text));
-            GetMenuItemInfo(udmi->um.hmenu, static_cast<UINT>(udmi->umi.iPosition), TRUE, &mii);
+            GetMenuItemInfoW(udmi->um.hmenu, static_cast<UINT>(udmi->umi.iPosition), TRUE, &mii);
 
-            NONCLIENTMETRICS ncm{};
+            NONCLIENTMETRICSW ncm{};
             ncm.cbSize = sizeof(ncm);
-            SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-            HFONT hFont = CreateFontIndirect(&ncm.lfMenuFont);
+            SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
+            HFONT hFont = CreateFontIndirectW(&ncm.lfMenuFont);
             HFONT hOldFont = static_cast<HFONT>(SelectObject(udmi->um.hdc, hFont));
 
             SetBkMode(udmi->um.hdc, TRANSPARENT);
             SetTextColor(udmi->um.hdc, theme_data.text_1_color);
             const UINT dt_flags =
                 DT_CENTER | DT_VCENTER | DT_SINGLELINE | ((udmi->dis.itemState & ODS_NOACCEL) ? DT_HIDEPREFIX : 0U);
-            DrawText(udmi->um.hdc, text, -1, &udmi->dis.rcItem, dt_flags);
+            DrawTextW(udmi->um.hdc, text, -1, &udmi->dis.rcItem, dt_flags);
 
             SelectObject(udmi->um.hdc, hOldFont);
             DeleteObject(hFont);

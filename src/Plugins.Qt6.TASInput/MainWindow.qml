@@ -44,12 +44,39 @@ ApplicationWindow {
         ButtonsSection {
             id: buttons
         }
+        CheckBox {
+            // the option lives in the port settings: it survives restarts, and stays reachable
+            // when no pad happens to be connected at startup
+            checked: settings.gamepadEnabled
+            onToggled: settings.gamepadEnabled = checked
+            text: gamepad.connected
+                //% "Gamepad: %1"
+                ? qsTrId("tasinput.gamepadConnected").arg(gamepad.deviceName)
+                //% "No gamepad connected"
+                : qsTrId("tasinput.gamepadNone")
+        }
+    }
+
+    GamepadManager {
+        id: gamepad
+        enabled: settings.gamepadEnabled
+
+        readonly property var buttonStates: ["stateA", "stateB", "stateZ", "stateS", "stateL", "stateR", "stateDU", "stateDD", "stateDL", "stateDR", "stateCU", "stateCD", "stateCL", "stateCR"]
+
+        onButtonEdge: function (button, pressed) {
+            buttons[buttonStates[button]] = pressed;
+        }
+        onStickMoved: function (x, y) {
+            joystick.posX = x;
+            joystick.posY = y;
+        }
     }
 
     Settings {
         id: settings
         location: root.configUrl
         category: `port${root.port}`
+        property bool gamepadEnabled: true
     }
 
     Connections {
@@ -57,6 +84,8 @@ ApplicationWindow {
         target: root.backend
         function onRequestInput(port: int) {
             if (port != root.port) return;
+
+            gamepad.poll();
 
             // buttons need to be updated
             buttons.doPollUpdate();

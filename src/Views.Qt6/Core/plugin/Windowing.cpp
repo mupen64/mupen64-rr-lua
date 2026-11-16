@@ -10,6 +10,7 @@
 #include <memory>
 
 #include <QObject>
+#include <QColorSpace>
 #include <QGuiApplication>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
@@ -85,6 +86,8 @@ M64RRSpec::GraphicsResult new_gl_context(M64RRSpec::GLSurfaceFormat *format, M64
             if (format->stencil_bits >= 0) qt_format.setStencilBufferSize(format->stencil_bits);
 
             if (format->msaa_samples >= 0) qt_format.setSamples(format->msaa_samples);
+
+            qt_format.setColorSpace(QColorSpace::SRgbLinear);
 
             // create surface and OpenGL context
             std::unique_ptr<QOffscreenSurface> surface{new QOffscreenSurface};
