@@ -231,6 +231,35 @@ void get_video_dimensions(int32_t *width, int32_t *height)
     }
 }
 
+// Same mapping as the core's (R4300/Rom.cpp), which assumes PAL for unknown country codes.
+static CoreSystemType system_type_from_ccode(const uint16_t country_code)
+{
+    switch (country_code & 0xFF)
+    {
+    case 0x37:
+    case 0x41:
+    case 0x45:
+    case 0x4a:
+        return CoreSystemType::NTSC;
+    default:
+        return CoreSystemType::PAL;
+    }
+}
+
+static int compute_audio_freq(const CoreSystemType type)
+{
+    switch (type)
+    {
+    case CoreSystemType::NTSC:
+        return (int)(48681812 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
+    case CoreSystemType::PAL:
+        return (int)(49656530 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
+    default:
+        assert(false);
+        return m_audio_freq;
+    }
+}
+
 bool stop_capture_impl()
 {
     std::lock_guard lock(m_mutex);
@@ -314,6 +343,14 @@ bool start_capture_impl(
     free(m_video_buf);
     get_video_dimensions(&m_video_width, &m_video_height);
     m_video_buf = (uint8_t *)malloc(m_video_width * m_video_height * 4);
+
+    // The game's first DAC rate write may come after the capture started (or never, if a savestate or a movie
+    // restored the register), so read the current rate rather than the last change event.
+    if (g_main_ctx.core_ctx->ai_register->ai_dacrate != 0)
+    {
+        const auto type = system_type_from_ccode(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+        m_audio_freq = compute_audio_freq(type);
+    }
 
     m_encoder_params = Encoder::Params{
         .path = m_current_path,
@@ -437,21 +474,20 @@ void ai_len_changed()
 
 void ai_dacrate_changed(CoreSystemType type)
 {
+    std::lock_guard lock(m_mutex);
+
     m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
 
-    switch (type)
-    {
-    case CoreSystemType::NTSC:
-        m_audio_freq = (int)(48681812 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
-        break;
-    case CoreSystemType::PAL:
-        m_audio_freq = (int)(49656530 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
-        break;
-    default:
-        assert(false);
-        break;
-    }
+    m_audio_freq = compute_audio_freq(type);
     g_view_logger->info("[CaptureManager] m_audio_freq: {}", m_audio_freq);
+
+    if (m_capturing && (uint32_t)m_audio_freq != m_encoder_params.arate)
+    {
+        g_view_logger->warn(
+            "[CaptureManager]: The audio rate changed to {} Hz during capture, but the stream keeps its starting rate "
+            "of {} Hz.",
+            m_audio_freq, m_encoder_params.arate);
+    }
 }
 
 size_t get_video_frame()
