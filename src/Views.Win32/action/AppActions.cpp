@@ -649,11 +649,18 @@ static void show_ram_start()
 
     if (result == 0)
     {
-        auto exe_filename = IOUtils::exe_path().stem();
+        const auto exe_path = IOUtils::exe_path();
+        const auto rdram = reinterpret_cast<std::uintptr_t>(g_main_ctx.core_ctx->rdram);
+        const auto module_base = reinterpret_cast<std::uintptr_t>(GetModuleHandle(nullptr));
+        const bool in_module = rdram >= module_base && rdram - module_base <= UINT32_MAX;
 
-        const auto stroop_line = std::format("<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" "
+        const auto ram_start = in_module ? std::format("{:#010x}", rdram - module_base) : ram_start_str;
+        const auto dll_attribute =
+            in_module ? std::format(" offsetDll=\"{}\"", exe_path.filename().string()) : std::string();
+
+        const auto stroop_line = std::format("<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\"{} "
                                              "endianness=\"little\" autoDetect=\"true\"/>",
-            exe_filename.string(), ram_start_str);
+            exe_path.stem().string(), ram_start, dll_attribute);
         copy_to_clipboard(g_main_ctx.hwnd, stroop_line);
     }
 }
