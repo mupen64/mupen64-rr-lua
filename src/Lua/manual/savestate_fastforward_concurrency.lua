@@ -6,7 +6,7 @@
 
 -- Start the script and ensure there's no error.
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 emu.set_ff(true)
 emu.pause(true)

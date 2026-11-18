@@ -5,9 +5,11 @@
  */
 #pragma once
 
-#include <span>
+#include <string_view>
 
-namespace LuaResources {
+namespace LuaResources
+{
 std::string_view sandbox();
 std::string_view api();
-}
+std::string_view inspect();
+} // namespace LuaResources

@@ -30,7 +30,8 @@ void registerMemoryAPIs(lua_State *L);
 /**
  * Executes a std::string_view, much like `luaL_dostring`.
  */
-inline int doStringView(lua_State* L, std::string_view str) {
+inline int doStringView(lua_State *L, std::string_view str)
+{
     // analogous to luaL_loadstring() || lua_pcall()
     return luaL_loadbuffer(L, str.data(), str.size(), nullptr) || lua_pcall(L, 0, LUA_MULTRET, 0);
 }

@@ -87,7 +87,6 @@ class LuaInstance : public QObject
     void stopped();
 
   private:
-    void applySandbox();
     void invokeCallback(LuaCallbackKey key, int nargs = 0);
 
     lua_State *m_l{nullptr};

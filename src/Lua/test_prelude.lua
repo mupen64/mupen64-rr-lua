@@ -4,22 +4,14 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
-local function trim_to_nth_last_component(path, n)
-    local components = {}
-    for component in path:gmatch("[^\\]+") do
-        table.insert(components, component)
-    end
+-- Normalize separators so path handling works the same on every platform.
+local source_path = debug.getinfo(1).source:sub(2):gsub("\\", "/")
 
-    local trimmed = table.concat(components, "\\", 1, #components - n)
-    if path:sub(2, 2) == ":" then
-        trimmed = trimmed .. "\\"
-    end
-    return trimmed
-end
-
-path_root = trim_to_nth_last_component(debug.getinfo(1).source:sub(2), 3)
-cpath = trim_to_nth_last_component(debug.getinfo(1).source:sub(2), 1)
-lib_path = path_root .. "\\vendor\\lua-modules\\"
+-- Repository root, with a trailing separator.
+path_root = assert(source_path:match("^(.-)src/Lua/[^/]+$"))
+-- Directory containing this file, with a trailing separator.
+cpath = assert(source_path:match("^(.-)[^/]*$"))
+lib_path = path_root .. "vendor/lua-modules/"
 
 ---@module "retest"
 retest = dofile(lib_path .. 'retest.lua')

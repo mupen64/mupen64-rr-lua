@@ -147,23 +147,6 @@ void LuaInstance::invokeCallback(LuaCallbackKey key, int nargs)
     if (nargs > 0) lua_pop(m_l, nargs);
 }
 
-void LuaInstance::applySandbox()
-{
-    LuaInternal::doStringView(m_l, LuaResources::sandbox());
-    // const char *sandboxScript = R"(
-    //     os.execute = nil
-    //     os.remove = nil
-    //     os.rename = nil
-    //     os.tmpname = nil
-    //     os.exit = nil
-    //     io = nil
-    //     package.loadlib = nil
-    //     package.cpath = nil
-    //     debug = nil
-    // )";
-    // luaL_dostring(m_l, sandboxScript);
-}
-
 bool LuaInstance::start()
 {
     if (m_running) return false;
@@ -203,17 +186,34 @@ bool LuaInstance::start()
     lua_pushlightuserdata(m_l, this);
     lua_setfield(m_l, LUA_REGISTRYINDEX, "__lua_instance");
 
-    LuaInternal::registerGlobalAPIs(m_l);
-    LuaInternal::registerEmuAPIs(m_l);
-    LuaInternal::registerMemoryAPIs(m_l);
+    // Mirrors LuaRealm::start() on Windows. Each step must succeed before the next one runs: in particular, the user
+    // script must never run if a prelude failed, as that could compromise the sandbox.
+    const bool ok = [&] {
+        // API definitions and stubs; the native functions registered below replace them.
+        if (LuaInternal::doStringView(m_l, LuaResources::api())) return false;
 
-    if (!m_trusted)
-    {
-        applySandbox();
-    }
+        LuaInternal::registerGlobalAPIs(m_l);
+        LuaInternal::registerEmuAPIs(m_l);
+        LuaInternal::registerMemoryAPIs(m_l);
 
-    int status = luaL_dofile(m_l, localPath.toUtf8().constData());
-    if (status != LUA_OK)
+        if (LuaInternal::doStringView(m_l, LuaResources::inspect())) return false;
+
+        lua_getglobal(m_l, "__mupen_apply_shims");
+        if (!lua_isfunction(m_l, -1))
+        {
+            lua_pushstring(m_l, "__mupen_apply_shims is not defined");
+            return false;
+        }
+        if (lua_pcall(m_l, 0, 0, 0)) return false;
+        lua_pushnil(m_l);
+        lua_setglobal(m_l, "__mupen_apply_shims");
+
+        if (!m_trusted && LuaInternal::doStringView(m_l, LuaResources::sandbox())) return false;
+
+        return luaL_dofile(m_l, localPath.toUtf8().constData()) == LUA_OK;
+    }();
+
+    if (!ok)
     {
         const char *msg = lua_tostring(m_l, -1);
         QString err = QString::fromUtf8(msg ? msg : "Unknown Lua error");

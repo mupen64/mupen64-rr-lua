@@ -40,9 +40,11 @@ target_link_libraries(Mupen64RR_Views_Qt6_Lua PUBLIC
 
 # add Lua resources; disable compression to allow zero-copy loading at runtime
 set(lua_dir "${PROJECT_SOURCE_DIR}/src/Lua")
-qt_add_resources(Mupen64RR_Views_Qt6_Lua
+set(lua_inspect "${PROJECT_SOURCE_DIR}/vendor/lua-modules/inspect.lua")
+set_source_files_properties("${lua_inspect}" PROPERTIES QT_RESOURCE_ALIAS "inspect.lua")
+qt_add_resources(Mupen64RR_Views_Qt6_Lua "Mupen64RR_Views_Qt6_Lua_Scripts"
     PREFIX "/lua"
     BASE "${lua_dir}"
-    FILES "${lua_dir}/sandbox.lua" "${lua_dir}/api.lua"
+    FILES "${lua_dir}/sandbox.lua" "${lua_dir}/api.lua" "${lua_inspect}"
     OPTIONS "-no-compress"
 )
