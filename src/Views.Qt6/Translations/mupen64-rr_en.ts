@@ -20,214 +20,224 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <translation>Hotkeys</translation>
     </message>
     <message id="appName">
-        <location filename="../Views/MainWindow.qml" line="20"/>
+        <location filename="../Views/MainWindow.qml" line="21"/>
         <source>mupen64-rr</source>
         <translation>mupen64-rr</translation>
     </message>
     <message id="menu.file">
-        <location filename="../Views/SettingsActions.qml" line="49"/>
+        <location filename="../Views/SettingsActions.qml" line="50"/>
         <source>File</source>
         <translation>File</translation>
     </message>
     <message id="menu.file.loadROM">
-        <location filename="../Views/SettingsActions.qml" line="53"/>
+        <location filename="../Views/SettingsActions.qml" line="54"/>
         <source>Load ROM...</source>
         <translation>Load ROM...</translation>
     </message>
     <message id="menu.file.closeROM">
-        <location filename="../Views/SettingsActions.qml" line="59"/>
+        <location filename="../Views/SettingsActions.qml" line="60"/>
         <source>Close ROM</source>
         <translation>Close ROM</translation>
     </message>
     <message id="menu.file.resetROM">
-        <location filename="../Views/SettingsActions.qml" line="66"/>
+        <location filename="../Views/SettingsActions.qml" line="67"/>
         <source>Reset ROM</source>
         <translation>Reset ROM</translation>
     </message>
     <message id="menu.emu">
-        <location filename="../Views/SettingsActions.qml" line="75"/>
+        <location filename="../Views/SettingsActions.qml" line="76"/>
         <source>Emulation</source>
         <translation>Emulation</translation>
     </message>
     <message id="menu.emu.pause">
-        <location filename="../Views/SettingsActions.qml" line="80"/>
+        <location filename="../Views/SettingsActions.qml" line="81"/>
         <source>Pause</source>
         <translation>Pause</translation>
     </message>
     <message id="menu.emu.speedDown">
-        <location filename="../Views/SettingsActions.qml" line="87"/>
+        <location filename="../Views/SettingsActions.qml" line="88"/>
         <source>Speed Down</source>
         <translation>Speed Down</translation>
     </message>
     <message id="menu.emu.speedUp">
-        <location filename="../Views/SettingsActions.qml" line="96"/>
+        <location filename="../Views/SettingsActions.qml" line="97"/>
         <source>Speed Up</source>
         <translation>Speed Up</translation>
     </message>
     <message id="menu.emu.speedReset">
-        <location filename="../Views/SettingsActions.qml" line="103"/>
+        <location filename="../Views/SettingsActions.qml" line="104"/>
         <source>Reset Speed</source>
         <translation>Reset Speed</translation>
     </message>
     <message id="menu.emu.fastForward">
-        <location filename="../Views/SettingsActions.qml" line="111"/>
+        <location filename="../Views/SettingsActions.qml" line="112"/>
         <source>Fast Forward</source>
         <translation>Fast Forward</translation>
     </message>
     <message id="menu.emu.gsButton">
-        <location filename="../Views/SettingsActions.qml" line="118"/>
+        <location filename="../Views/SettingsActions.qml" line="119"/>
         <source>GS Button</source>
         <translation>GS Button</translation>
     </message>
     <message id="menu.emu.advance">
-        <location filename="../Views/SettingsActions.qml" line="128"/>
+        <location filename="../Views/SettingsActions.qml" line="129"/>
         <source>Frame Advance</source>
         <translation>Frame Advance</translation>
     </message>
     <message id="menu.emu.multiAdvance">
-        <location filename="../Views/SettingsActions.qml" line="141"/>
+        <location filename="../Views/SettingsActions.qml" line="142"/>
         <source>Multi-Frame Advance</source>
         <translation>Multi-Frame Advance</translation>
     </message>
     <message id="menu.emu.multiAdvanceAdd">
-        <location filename="../Views/SettingsActions.qml" line="152"/>
+        <location filename="../Views/SettingsActions.qml" line="153"/>
         <source>Multi-Frame Advance +1</source>
         <translation>Multi-Frame Advance +1</translation>
     </message>
     <message id="menu.emu.multiAdvanceSub">
-        <location filename="../Views/SettingsActions.qml" line="162"/>
+        <location filename="../Views/SettingsActions.qml" line="163"/>
         <source>Multi-Frame Advance -1</source>
         <translation>Multi-Frame Advance -1</translation>
     </message>
     <message id="menu.emu.multiAdvanceReset">
-        <location filename="../Views/SettingsActions.qml" line="172"/>
+        <location filename="../Views/SettingsActions.qml" line="173"/>
         <source>Multi-Frame Advance Reset</source>
         <translation>Multi-Frame Advance Reset</translation>
     </message>
     <message id="menu.emu.saveState">
-        <location filename="../Views/SettingsActions.qml" line="184"/>
+        <location filename="../Views/SettingsActions.qml" line="185"/>
         <source>Save State</source>
         <translation>Save State</translation>
     </message>
     <message id="menu.emu.saveState.currentSlot">
-        <location filename="../Views/SettingsActions.qml" line="188"/>
+        <location filename="../Views/SettingsActions.qml" line="189"/>
         <source>Save Current Slot</source>
         <translation>Save Current Slot</translation>
     </message>
     <message id="menu.emu.saveState.file">
-        <location filename="../Views/SettingsActions.qml" line="194"/>
+        <location filename="../Views/SettingsActions.qml" line="195"/>
         <source>Save as File...</source>
         <translation>Save as File...</translation>
     </message>
     <message id="menu.emu.saveState.slot">
-        <location filename="../Views/SettingsActions.qml" line="207"/>
+        <location filename="../Views/SettingsActions.qml" line="208"/>
         <source>Slot %1</source>
         <translation>Slot %1</translation>
     </message>
     <message id="menu.emu.loadState">
-        <location filename="../Views/SettingsActions.qml" line="221"/>
+        <location filename="../Views/SettingsActions.qml" line="222"/>
         <source>Load State</source>
         <translation>Load State</translation>
     </message>
     <message id="menu.emu.loadState.currentSlot">
-        <location filename="../Views/SettingsActions.qml" line="225"/>
+        <location filename="../Views/SettingsActions.qml" line="226"/>
         <source>Load Current Slot</source>
         <translation>Load Current Slot</translation>
     </message>
     <message id="menu.emu.loadState.file">
-        <location filename="../Views/SettingsActions.qml" line="235"/>
+        <location filename="../Views/SettingsActions.qml" line="236"/>
         <source>Load from File...</source>
         <translation>Load from File...</translation>
     </message>
     <message id="menu.emu.loadState.slot">
-        <location filename="../Views/SettingsActions.qml" line="248"/>
+        <location filename="../Views/SettingsActions.qml" line="249"/>
         <source>Slot %1</source>
         <translation>Slot %1</translation>
     </message>
     <message id="menu.emu.currentSlot">
-        <location filename="../Views/SettingsActions.qml" line="261"/>
+        <location filename="../Views/SettingsActions.qml" line="262"/>
         <source>Current State Slot</source>
         <translation>Current State Slot</translation>
     </message>
     <message id="menu.emu.currentState.slot">
-        <location filename="../Views/SettingsActions.qml" line="278"/>
+        <location filename="../Views/SettingsActions.qml" line="279"/>
         <source>Slot %1</source>
         <translation>Slot %1</translation>
     </message>
     <message id="menu.opts">
-        <location filename="../Views/SettingsActions.qml" line="294"/>
+        <location filename="../Views/SettingsActions.qml" line="295"/>
         <source>Options</source>
         <translation>Options</translation>
     </message>
     <message id="menu.opts.settings">
-        <location filename="../Views/SettingsActions.qml" line="298"/>
+        <location filename="../Views/SettingsActions.qml" line="299"/>
         <source>Settings...</source>
         <translation>Settings...</translation>
     </message>
     <message id="menu.movie">
-        <location filename="../Views/SettingsActions.qml" line="305"/>
+        <location filename="../Views/SettingsActions.qml" line="306"/>
         <source>Movie</source>
         <translation>Movie</translation>
     </message>
     <message id="menu.movie.startRecording">
-        <location filename="../Views/SettingsActions.qml" line="309"/>
+        <location filename="../Views/SettingsActions.qml" line="310"/>
         <source>Start Movie Recording</source>
         <translation>Start Movie Recording</translation>
     </message>
     <message id="menu.movie.startPlayback">
-        <location filename="../Views/SettingsActions.qml" line="316"/>
+        <location filename="../Views/SettingsActions.qml" line="317"/>
         <source>Start Movie Playback</source>
         <translation>Start Movie Playback</translation>
     </message>
     <message id="menu.movie.stopMovie">
-        <location filename="../Views/SettingsActions.qml" line="323"/>
+        <location filename="../Views/SettingsActions.qml" line="324"/>
         <source>Stop Movie</source>
         <translation>Stop Movie</translation>
     </message>
     <message id="menu.movie.createBackup">
-        <location filename="../Views/SettingsActions.qml" line="330"/>
+        <location filename="../Views/SettingsActions.qml" line="331"/>
         <source>Create Movie Backup</source>
         <translation>Create Movie Backup</translation>
     </message>
     <message id="menu.movie.loopPlayback">
-        <location filename="../Views/SettingsActions.qml" line="339"/>
+        <location filename="../Views/SettingsActions.qml" line="340"/>
         <source>Loop Movie Playback</source>
         <oldsource>Loop Playback</oldsource>
         <translation>Loop Movie Playback</translation>
     </message>
     <message id="menu.movie.readOnly">
-        <location filename="../Views/SettingsActions.qml" line="346"/>
+        <location filename="../Views/SettingsActions.qml" line="347"/>
         <source>Read-Only</source>
         <translation>Read-Only</translation>
     </message>
     <message id="menu.movie.waitAtEnd">
-        <location filename="../Views/SettingsActions.qml" line="353"/>
+        <location filename="../Views/SettingsActions.qml" line="354"/>
         <source>Wait at End</source>
         <translation>Wait at End</translation>
     </message>
+    <message id="menu.lua">
+        <location filename="../Views/SettingsActions.qml" line="360"/>
+        <source>Lua</source>
+        <translation>Lua</translation>
+    </message>
+    <message id="menu.lua.manageScripts">
+        <location filename="../Views/SettingsActions.qml" line="364"/>
+        <source>Script Manager...</source>
+        <translation>Script Manager...</translation>
+    </message>
     <message id="dialogs.loadROM.title">
-        <location filename="../Views/SettingsActions.qml" line="363"/>
+        <location filename="../Views/SettingsActions.qml" line="378"/>
         <source>Load ROM...</source>
         <translation>Load ROM...</translation>
     </message>
     <message id="formats.rom">
-        <location filename="../Views/SettingsActions.qml" line="366"/>
+        <location filename="../Views/SettingsActions.qml" line="381"/>
         <source>N64 ROMs</source>
         <translation>N64 ROMs</translation>
     </message>
     <message id="dialogs.loadState.title">
-        <location filename="../Views/SettingsActions.qml" line="375"/>
+        <location filename="../Views/SettingsActions.qml" line="390"/>
         <source>Load State...</source>
         <translation>Load State...</translation>
     </message>
     <message id="formats.state">
-        <location filename="../Views/SettingsActions.qml" line="378"/>
-        <location filename="../Views/SettingsActions.qml" line="389"/>
+        <location filename="../Views/SettingsActions.qml" line="393"/>
+        <location filename="../Views/SettingsActions.qml" line="404"/>
         <source>Savestates</source>
         <translation>Savestates</translation>
     </message>
     <message id="dialogs.saveState.title">
-        <location filename="../Views/SettingsActions.qml" line="387"/>
+        <location filename="../Views/SettingsActions.qml" line="402"/>
         <source>Save State...</source>
         <translation>Save State...</translation>
     </message>
@@ -461,6 +471,108 @@ Auto-filled by qt_translate_identity.py. DO NOT MODIFY.
         <location filename="../Core/MovieMetadata.cpp" line="130"/>
         <source>Value</source>
         <translation>Value</translation>
+    </message>
+    <message id="lua.manager.title">
+        <location filename="../Views/LuaScriptManager.qml" line="20"/>
+        <source>Lua Script Manager</source>
+        <translation>Lua Script Manager</translation>
+    </message>
+    <message id="lua.manager.chooseScript">
+        <location filename="../Views/LuaScriptManager.qml" line="35"/>
+        <source>Choose Script</source>
+        <translation>Choose Script</translation>
+    </message>
+    <message id="lua.manager.add">
+        <location filename="../Views/LuaScriptManager.qml" line="65"/>
+        <source>Add...</source>
+        <translation>Add...</translation>
+    </message>
+    <message id="lua.manager.remove">
+        <location filename="../Views/LuaScriptManager.qml" line="71"/>
+        <source>Remove</source>
+        <translation>Remove</translation>
+    </message>
+    <message id="lua.manager.startAll">
+        <location filename="../Views/LuaScriptManager.qml" line="82"/>
+        <source>Start All</source>
+        <translation>Start All</translation>
+    </message>
+    <message id="lua.manager.stopAll">
+        <location filename="../Views/LuaScriptManager.qml" line="88"/>
+        <source>Stop All</source>
+        <translation>Stop All</translation>
+    </message>
+    <message id="lua.manager.stop">
+        <location filename="../Views/LuaScriptManager.qml" line="172"/>
+        <source>Stop</source>
+        <translation>Stop</translation>
+    </message>
+    <message id="lua.manager.start">
+        <location filename="../Views/LuaScriptManager.qml" line="174"/>
+        <source>Start</source>
+        <translation>Start</translation>
+    </message>
+    <message id="lua.manager.trusted">
+        <location filename="../Views/LuaScriptManager.qml" line="192"/>
+        <source>Trusted (disable sandbox)</source>
+        <translation>Trusted (disable sandbox)</translation>
+    </message>
+    <message id="lua.manager.consoleFor">
+        <location filename="../Views/LuaScriptManager.qml" line="218"/>
+        <source>Console for %1</source>
+        <translation>Console for %1</translation>
+    </message>
+    <message id="lua.manager.console">
+        <location filename="../Views/LuaScriptManager.qml" line="220"/>
+        <source>Console</source>
+        <translation>Console</translation>
+    </message>
+    <message id="lua.manager.restart">
+        <location filename="../Views/LuaScriptManager.qml" line="231"/>
+        <source>Restart</source>
+        <translation>Restart</translation>
+    </message>
+    <message id="lua.manager.clearOutput">
+        <location filename="../Views/LuaScriptManager.qml" line="242"/>
+        <source>Clear Output</source>
+        <translation>Clear Output</translation>
+    </message>
+</context>
+<context>
+    <name>LuaInstance</name>
+    <message>
+        <location filename="../Lua/LuaInstance.cpp" line="30"/>
+        <source>Untitled Script</source>
+        <translation>Untitled Script</translation>
+    </message>
+    <message>
+        <location filename="../Lua/LuaInstance.cpp" line="174"/>
+        <source>Script path is empty</source>
+        <translation>Script path is empty</translation>
+    </message>
+    <message>
+        <location filename="../Lua/LuaInstance.cpp" line="184"/>
+        <source>Script file does not exist: %1</source>
+        <translation>Script file does not exist: %1</translation>
+    </message>
+    <message>
+        <location filename="../Lua/LuaInstance.cpp" line="193"/>
+        <source>Failed to allocate Lua state</source>
+        <translation>Failed to allocate Lua state</translation>
+    </message>
+    <message>
+        <location filename="../Lua/LuaInstance.cpp" line="228"/>
+        <source>Script started: %1
+</source>
+        <translation>Script started: %1
+</translation>
+    </message>
+    <message>
+        <location filename="../Lua/LuaInstance.cpp" line="258"/>
+        <source>Script stopped: %1
+</source>
+        <translation>Script stopped: %1
+</translation>
     </message>
 </context>
 </TS>
