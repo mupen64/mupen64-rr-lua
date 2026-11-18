@@ -5,6 +5,7 @@
  */
 #include "LuaInstance.hpp"
 #include "LuaInternal.hpp"
+#include "Resources.hpp"
 
 #include <QFile>
 #include <QFileInfo>
@@ -148,18 +149,19 @@ void LuaInstance::invokeCallback(LuaCallbackKey key, int nargs)
 
 void LuaInstance::applySandbox()
 {
-    const char *sandboxScript = R"(
-        os.execute = nil
-        os.remove = nil
-        os.rename = nil
-        os.tmpname = nil
-        os.exit = nil
-        io = nil
-        package.loadlib = nil
-        package.cpath = nil
-        debug = nil
-    )";
-    luaL_dostring(m_l, sandboxScript);
+    LuaInternal::doStringView(m_l, LuaResources::sandbox());
+    // const char *sandboxScript = R"(
+    //     os.execute = nil
+    //     os.remove = nil
+    //     os.rename = nil
+    //     os.tmpname = nil
+    //     os.exit = nil
+    //     io = nil
+    //     package.loadlib = nil
+    //     package.cpath = nil
+    //     debug = nil
+    // )";
+    // luaL_dostring(m_l, sandboxScript);
 }
 
 bool LuaInstance::start()

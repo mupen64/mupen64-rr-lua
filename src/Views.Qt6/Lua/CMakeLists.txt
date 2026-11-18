@@ -13,6 +13,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Lua
     SOURCES
         "LuaInstance.hpp"
         "LuaInstanceManager.hpp"
+        "Resources.hpp"
 
         "LuaInstance.cpp"
         "LuaInstanceManager.cpp"
@@ -21,6 +22,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Lua
         "LuaGlobal.cpp"
         "LuaEmu.cpp"
         "LuaMemory.cpp"
+        "Resources.cpp"
 )
 target_compile_features(Mupen64RR_Views_Qt6_Lua PUBLIC cxx_std_26)
 target_include_directories(Mupen64RR_Views_Qt6_Lua PUBLIC ".")
@@ -34,4 +36,13 @@ target_link_libraries(Mupen64RR_Views_Qt6_Lua PUBLIC
     Qt6::Quick
     Qt6::QuickControls2
     Lua::Lua
+)
+
+# add Lua resources; disable compression to allow zero-copy loading at runtime
+set(lua_dir "${PROJECT_SOURCE_DIR}/src/Lua")
+qt_add_resources(Mupen64RR_Views_Qt6_Lua
+    PREFIX "/lua"
+    BASE "${lua_dir}"
+    FILES "${lua_dir}/sandbox.lua" "${lua_dir}/api.lua"
+    OPTIONS "-no-compress"
 )
