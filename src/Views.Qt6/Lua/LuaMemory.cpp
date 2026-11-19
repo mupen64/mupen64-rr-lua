@@ -65,6 +65,63 @@ template <typename T> int memory_write(lua_State *L)
     return 0;
 }
 
+int memory_read_qword(lua_State *L)
+{
+    uint32_t addr = static_cast<uint32_t>(luaL_checkinteger(L, 1));
+    auto *ctx = EmuContext::rawContext();
+    if (!ctx || !ctx->rdram)
+    {
+        return luaL_error(L, "Core or RDRAM not available");
+    }
+    auto val = core_rdram_load<uint64_t>((uint8_t *)ctx->rdram, addr);
+    if (!val.has_value())
+    {
+        return luaL_error(L, "address out of bounds");
+    }
+
+    // push uint64_t result to table
+    uint64_t val_data = val.value();
+    lua_createtable(L, 2, 0);
+    // set element 1
+    lua_pushinteger(L, 1);
+    lua_pushinteger(L, static_cast<uint32_t>(val_data));
+    lua_settable(L, -3);
+    // set element 2
+    lua_pushinteger(L, 2);
+    lua_pushinteger(L, static_cast<uint32_t>(val_data >> 32));
+    lua_settable(L, -3);
+    return 1;
+}
+
+int memory_write_qword(lua_State *L)
+{
+    uint32_t addr = static_cast<uint32_t>(luaL_checkinteger(L, 1));
+
+    // read uint64_t from table
+    uint64_t val = 0;
+    // read element 1
+    lua_pushinteger(L, 1);
+    lua_gettable(L, 2);
+    val = static_cast<uint64_t>(static_cast<uint32_t>(luaL_checkinteger(L, -1)));
+    lua_pop(L, 1);
+    // read element 2
+    lua_pushinteger(L, 2);
+    lua_gettable(L, 2);
+    val |= static_cast<uint64_t>(static_cast<uint32_t>(luaL_checkinteger(L, -1))) << 32;
+    lua_pop(L, 1);
+
+    auto *ctx = EmuContext::rawContext();
+    if (!ctx || !ctx->rdram)
+    {
+        return luaL_error(L, "Core or RDRAM not available");
+    }
+    bool ok = core_rdram_store<uint64_t>((uint8_t *)ctx->rdram, addr, val);
+    if (!ok)
+    {
+        return luaL_error(L, "address out of bounds");
+    }
+    return 0;
+}
 } // namespace
 
 void registerMemoryAPIs(lua_State *L)
@@ -78,11 +135,14 @@ void registerMemoryAPIs(lua_State *L)
         {"readwordsigned", memory_read<int16_t>},
         {"readdword", memory_read<uint32_t>},
         {"readdwordsigned", memory_read<int32_t>},
+        {"readqword", memory_read_qword},
+        {"readqwordsigned", memory_read_qword},
         {"readfloat", memory_read<float>},
         {"readdouble", memory_read<double>},
         {"writebyte", memory_write<uint8_t>},
         {"writeword", memory_write<uint16_t>},
         {"writedword", memory_write<uint32_t>},
+        {"writeqword", memory_write_qword},
         {"writefloat", memory_write<float>},
         {"writedouble", memory_write<double>},
         {nullptr, nullptr},
