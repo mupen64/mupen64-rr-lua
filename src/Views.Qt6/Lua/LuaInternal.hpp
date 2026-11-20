@@ -30,6 +30,9 @@ void registerMemoryAPIs(lua_State *L);
 /// Registers the `joypad` table.
 void registerJoypadAPIs(lua_State *L);
 
+/// Registers the `wgui` and `painter` tables.
+void registerGuiAPIs(lua_State *L);
+
 /**
  * Executes a std::string_view, much like `luaL_dostring`.
  */
