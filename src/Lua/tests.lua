@@ -6,14 +6,15 @@
 
 ---
 --- Describes the automated testing suite for the Mupen64 Lua API.
---- Assumes an x86 Windows environment with no Lua trust.
+--- Assumes no Lua trust. Native test library loading requires a build in the "build" directory.
 ---
 
-dofile(debug.getinfo(1).source:sub(2):gsub("[^\\]+$", "") .. 'test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)[^/]*$")) .. "test_prelude.lua")
 
-local testlib_path = path_root .. "build\\test\\out\\"
-local testlib_dll_path = testlib_path .. "luatestlib.dll"
-package.cpath = testlib_path .. "?.dll;" .. package.cpath
+local is_windows = package.config:sub(1, 1) == "\\"
+local testlib_path = path_root .. "build/test/out/"
+local testlib_dll_path = testlib_path .. (is_windows and "luatestlib.dll" or "libluatestlib.so")
+package.cpath = testlib_path .. (is_windows and "?.dll;" or "lib?.so;") .. package.cpath
 
 retest.attach_coverage(
     {

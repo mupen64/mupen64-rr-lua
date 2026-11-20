@@ -6,4 +6,4 @@
 
 -- Empty script used for benchmarking Lua overhead.
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")

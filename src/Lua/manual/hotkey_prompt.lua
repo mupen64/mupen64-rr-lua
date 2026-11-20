@@ -10,7 +10,7 @@
 -- 2. Choosing a hotkey prints it
 -- 3. Cancelling the prompt prints nil
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 local hotkey = hotkey.prompt("Choose a hotkey")
 

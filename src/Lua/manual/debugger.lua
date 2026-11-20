@@ -6,7 +6,7 @@
 
 -- Start this script while in a level in SM64 and ensure that the breakpoint is hit.
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 local bp
 

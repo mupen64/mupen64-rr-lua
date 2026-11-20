@@ -21,7 +21,7 @@
 -- In a wider sense, this pertains to doing VCR work in the `input` core callback.
 --
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 local function evil()
     for i = 1, 100, 1 do

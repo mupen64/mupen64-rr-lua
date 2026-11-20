@@ -13,6 +13,7 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Views
         "ConfigHotkeysPage.qml"
         "ConfigWindow.qml"
         "DialogService.qml"
+        "LuaScriptManager.qml"
         "MainWindow.qml"
         "MovieDialog.qml"
         "RomBrowser.qml"
@@ -21,6 +22,8 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Views
         "SettingsCore.qml"
         "SettingsPaths.qml"
         "SimpleTableCell.qml"
+    IMPORTS
+        TARGET Mupen64RR_Views_Qt6_Lua
 )
 target_link_libraries(Mupen64RR_Views_Qt6_Views PUBLIC
     Qt6::Quick Qt6::QuickControls2

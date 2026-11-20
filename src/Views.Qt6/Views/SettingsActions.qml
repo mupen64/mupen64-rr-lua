@@ -20,6 +20,7 @@ ActionManager {
     required property SettingsCore settingsCore
     required property DialogService dialogService
     required property ConfigWindow winConfig
+    property ApplicationWindow winLua: null
 
     property bool menuOpen: false
 
@@ -354,6 +355,20 @@ ActionManager {
         checkable: true
     }
 
+    EmuMenu {
+        //% "Lua"
+        key: QT_TRID_NOOP("menu.lua")
+    }
+    EmuAction {
+        //% "Script Manager..."
+        key: QT_TRID_NOOP("menu.lua.manageScripts")
+        defaultShortcut: "Ctrl+L"
+        onTriggered: {
+            if (root.winLua)
+                root.winLua.show();
+        }
+    }
+
     // Dialogs
     // ================================
 
@@ -421,7 +436,8 @@ ActionManager {
             diaMovieRecord.visible,
             diaMoviePlayback.visible,
             // config dialog
-            root.winConfig.visible
+            root.winConfig.visible,
+            root.winLua?.visible ?? false
         ].some(value => value)
 
         // Tie relevant core states to their UI actions

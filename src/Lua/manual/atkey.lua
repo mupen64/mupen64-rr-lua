@@ -6,7 +6,7 @@
 
 -- Demonstrates the `emu.main_window():atkey` callback.
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 emu.main_window():atkey(function(args)
     print(args)

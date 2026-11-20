@@ -17,10 +17,12 @@
 #include <QQuickStyle>
 
 // Q_IMPORT_QML_PLUGIN(Mupen64ActionsPlugin)
-// Q_IMPORT_QML_PLUGIN(Mupen64CorePlugin)
 // Q_IMPORT_QML_PLUGIN(Mupen64ComponentsPlugin)
 // Q_IMPORT_QML_PLUGIN(Mupen64ConfigPlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64CorePlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64LuaPlugin)
 // Q_IMPORT_QML_PLUGIN(Mupen64UtilsPlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64ViewsPlugin)
 
 namespace
 {
