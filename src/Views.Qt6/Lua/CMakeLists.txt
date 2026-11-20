@@ -17,6 +17,8 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Lua
         "LuaCanvas.hpp"
         "LuaCanvasManager.hpp"
         "LuaPainter.hpp"
+        "LuaWindow.hpp"
+        "LuaAction.hpp"
         "Resources.hpp"
 
         "LuaInstance.cpp"
@@ -24,6 +26,8 @@ qt_add_qml_module(Mupen64RR_Views_Qt6_Lua
         "LuaCanvas.cpp"
         "LuaCanvasManager.cpp"
         "LuaPainter.cpp"
+        "LuaWindow.cpp"
+        "LuaAction.cpp"
         "LuaInternal.cpp"
         "LuaInternal.hpp"
         "LuaGlobal.cpp"

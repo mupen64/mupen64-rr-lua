@@ -5,6 +5,7 @@
  */
 #include "LuaInternal.hpp"
 #include "EmuContext.hpp"
+#include "LuaWindow.hpp"
 
 #include <QColor>
 #include <QGuiApplication>
@@ -68,6 +69,14 @@ int emu_atinterval(lua_State *L)
 int emu_atreset(lua_State *L)
 {
     return register_callback_helper(L, LuaCallbackKey::Reset);
+}
+int emu_atkey(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Key);
+}
+int emu_atmouse(lua_State *L)
+{
+    return register_callback_helper(L, LuaCallbackKey::Mouse);
 }
 int emu_atloadstate(lua_State *L)
 {
@@ -256,6 +265,8 @@ void registerEmuAPIs(lua_State *L)
         {"atstop", emu_atstop},
         {"atinterval", emu_atinterval},
         {"atreset", emu_atreset},
+        {"atkey", emu_atkey},
+        {"atmouse", emu_atmouse},
         {"atloadstate", emu_atloadstate},
         {"framecount", emu_framecount},
         {"samplecount", emu_samplecount},
@@ -269,6 +280,8 @@ void registerEmuAPIs(lua_State *L)
         {"get_hint", emu_get_hint},
         {"set_hint", emu_set_hint},
         {"get_pref", emu_get_pref},
+        {"create_window", LuaWindowApi::create},
+        {"main_window", LuaWindowApi::main},
         {nullptr, nullptr},
     };
 
