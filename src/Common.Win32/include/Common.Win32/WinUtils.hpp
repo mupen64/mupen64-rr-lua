@@ -605,7 +605,7 @@ inline wil::unique_hicon load_tinted_png_icon(HINSTANCE module, int resource_id,
                     const DWORD alpha = pixel.GetAlpha();
                     const auto premultiply = [alpha](BYTE channel) { return (channel * alpha + 127) / 255; };
                     pixels[y * width + x] = (alpha << 24) | (premultiply(GetRValue(tint)) << 16) |
-                        (premultiply(GetGValue(tint)) << 8) | premultiply(GetBValue(tint));
+                                            (premultiply(GetGValue(tint)) << 8) | premultiply(GetBValue(tint));
                 }
             ICONINFO icon_info{};
             icon_info.fIcon = TRUE;
