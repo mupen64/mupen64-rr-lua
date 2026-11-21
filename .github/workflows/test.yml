@@ -34,7 +34,9 @@ jobs:
         run: |
           $cmake_debug="Debug"
           $cmake_release="RelWithDebInfo"
-          cmake --preset vcpkg-win64-${{ matrix.arch }} "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+          cmake --preset vcpkg-win64-${{ matrix.arch }} \
+            "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}" \
+            -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -63,7 +65,9 @@ jobs:
       run: |
         cmake_debug="Debug"
         cmake_release="RelWithDebInfo"
-        cmake --preset sys-linux "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+        cmake --preset sys-linux \
+          "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}" \
+          -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
 
     - name: CMake build
       working-directory: ${{env.GITHUB_WORKSPACE}}
