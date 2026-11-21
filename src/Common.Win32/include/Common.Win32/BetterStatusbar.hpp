@@ -44,6 +44,12 @@ struct Entry
     Part part;
     int width{};
     bool initialized{};
+    bool text_changed : 1 {};
+    bool visual_changed : 1 {};
+    bool tip_changed : 1 {};
+    bool labels_changed : 1 {};
+    SIZE measured_text{};
+    HFONT measured_font{};
     RECT rect{};
     HFONT fitted_font{};
     int fitted_width = -1;
@@ -103,6 +109,7 @@ struct Context
     HWND tooltip{};
     std::vector<std::unique_ptr<Entry>> entries;
     std::vector<int> edges;
+    std::vector<int> candidate_edges;
     HFONT font{};
     FontCache fitted_fonts;
     int borders[3]{};
@@ -113,6 +120,7 @@ struct Context
     {
         for (auto &entry : entries)
         {
+            entry->measured_font = nullptr;
             entry->fitted_font = nullptr;
             entry->fitted_width = -1;
         }
@@ -130,9 +138,12 @@ inline void select_fitted_font(HDC dc, Context &ctx, Entry &entry, int width, in
         entry.fitted_width = width;
         entry.fitted_height = height;
 
-        SIZE size{};
         const auto &text = entry.part.text;
-        GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &size);
+        SIZE size{};
+        if (entry.measured_font && entry.measured_font == original_font)
+            size = entry.measured_text;
+        else
+            GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &size);
         if (size.cx > width || size.cy > height)
         {
             auto &fonts = ctx.fitted_fonts;
@@ -179,8 +190,6 @@ inline LRESULT CALLBACK parent_subclass_proc(
             const int saved = SaveDC(draw->hDC);
             if (!saved) return TRUE;
             IntersectClipRect(draw->hDC, rect.left, rect.top, rect.right, rect.bottom);
-            SelectObject(draw->hDC, reinterpret_cast<HFONT>(SendMessage(draw->hwndItem, WM_GETFONT, 0, 0)));
-            SetBkMode(draw->hDC, TRANSPARENT);
             const int width = std::max(0L, rect.right - rect.left);
             const int height = std::max(0L, rect.bottom - rect.top);
             const bool has_icon = part.reserve_icon || part.icon;
@@ -198,6 +207,8 @@ inline LRESULT CALLBACK parent_subclass_proc(
             rect.right -= inset;
             if (!part.text.empty() && rect.right > rect.left && height > 0)
             {
+                SelectObject(draw->hDC, reinterpret_cast<HFONT>(SendMessage(draw->hwndItem, WM_GETFONT, 0, 0)));
+                SetBkMode(draw->hDC, TRANSPARENT);
                 select_fitted_font(draw->hDC, *ctx, entry, rect.right - rect.left, height);
                 DrawTextW(draw->hDC, part.text.c_str(), static_cast<int>(part.text.size()), &rect,
                     DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
@@ -329,11 +340,12 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
     }
     while (ctx->entries.size() < parts.size()) ctx->entries.push_back(std::make_unique<Internal::Entry>());
 
-    std::vector<bool> text_changed(parts.size()), visual_changed(parts.size()), tip_changed(parts.size());
-    std::vector<int> edges;
+    auto &edges = ctx->candidate_edges;
+    edges.clear();
     edges.reserve(parts.size());
     HDC dc{};
     HGDIOBJ old_font{};
+    HFONT measurement_font{};
     if (metrics_changed) SendMessage(hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(ctx->borders));
     const auto &borders = ctx->borders;
     int edge = 0;
@@ -342,35 +354,49 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
         auto &entry = *ctx->entries[i];
         const auto &next = parts[i];
         const auto &previous = entry.part;
-        text_changed[i] = !entry.initialized || previous.text != next.text;
-        visual_changed[i] = metrics_changed || text_changed[i] || previous.icon != next.icon ||
-                            previous.reserve_icon != next.reserve_icon || previous.padding != next.padding;
-        tip_changed[i] = !entry.initialized || previous.tooltip != next.tooltip;
+        entry.text_changed = !entry.initialized || previous.text != next.text;
+        entry.labels_changed = previous.sizing_labels != next.sizing_labels;
+        const bool has_icon = next.reserve_icon || next.icon;
+        const bool icon_space_changed = has_icon != (previous.reserve_icon || previous.icon);
+        entry.visual_changed = metrics_changed || entry.text_changed || previous.icon != next.icon ||
+                               icon_space_changed || previous.padding != next.padding;
+        entry.tip_changed = !entry.initialized || previous.tooltip != next.tooltip;
+        if (entry.text_changed || metrics_changed) entry.measured_font = nullptr;
         if (next.width > 0)
         {
             entry.width = next.width;
         }
-        else if (metrics_changed || !entry.initialized || previous.width > 0 ||
-                 previous.sizing_labels != next.sizing_labels || previous.reserve_icon != next.reserve_icon ||
-                 previous.padding != next.padding || bool(previous.icon) != bool(next.icon) ||
-                 (next.sizing_labels.empty() && text_changed[i]))
+        else if (metrics_changed || !entry.initialized || previous.width > 0 || entry.labels_changed ||
+                 icon_space_changed || previous.padding != next.padding ||
+                 (next.sizing_labels.empty() && entry.text_changed))
         {
             if (!dc)
             {
                 dc = GetDC(hwnd);
                 old_font = SelectObject(dc, font);
+                measurement_font = old_font ? font : reinterpret_cast<HFONT>(GetCurrentObject(dc, OBJ_FONT));
             }
             int text_width = 0;
-            const auto measure = [&](const std::wstring &text) {
-                SIZE size{};
-                GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &size);
-                text_width = std::max(text_width, static_cast<int>(size.cx));
+            const auto measure = [&](const std::wstring &text, SIZE &size) {
+                return GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &size);
             };
             if (next.sizing_labels.empty())
-                measure(next.text);
+            {
+                entry.measured_font = nullptr;
+                if (measure(next.text, entry.measured_text))
+                {
+                    text_width = entry.measured_text.cx;
+                    entry.measured_font = measurement_font;
+                }
+            }
             else
-                for (const auto &label : next.sizing_labels) measure(label);
-            const bool has_icon = next.reserve_icon || next.icon;
+            {
+                for (const auto &label : next.sizing_labels)
+                {
+                    SIZE size{};
+                    if (measure(label, size)) text_width = std::max(text_width, static_cast<int>(size.cx));
+                }
+            }
             // SB_GETRECT starts after the outer border or inter-part gap, not at the previous edge.
             const int leading_space = i == 0 ? borders[0] : borders[2];
             entry.width = leading_space + text_width + next.padding + 2 * borders[0] +
@@ -404,7 +430,7 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
             SendMessageW(hwnd, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(L""));
             SendMessage(hwnd, SB_SETICON, 0, 0);
         }
-        ctx->edges = std::move(edges);
+        ctx->edges.swap(edges);
     }
     for (size_t i = 0; i < parts.size(); ++i)
     {
@@ -413,7 +439,7 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
         tool.hwnd = hwnd;
         tool.uId = i + 1;
         tool.uFlags = TTF_SUBCLASS;
-        if (tip_changed[i]) entry.part.tooltip = parts[i].tooltip;
+        if (entry.tip_changed) entry.part.tooltip = parts[i].tooltip;
         tool.lpszText = entry.part.tooltip.data();
         if (!entry.initialized || layout_changed || metrics_changed || ctx->rects_dirty)
         {
@@ -422,13 +448,13 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
             SendMessageW(
                 ctx->tooltip, entry.initialized ? TTM_NEWTOOLRECTW : TTM_ADDTOOLW, 0, reinterpret_cast<LPARAM>(&tool));
         }
-        if (entry.initialized && tip_changed[i])
+        if (entry.initialized && entry.tip_changed)
             SendMessageW(ctx->tooltip, TTM_UPDATETIPTEXTW, 0, reinterpret_cast<LPARAM>(&tool));
 
-        if (text_changed[i] || metrics_changed) entry.fitted_width = -1;
-        entry.part.text = parts[i].text;
+        if (entry.text_changed || metrics_changed) entry.fitted_width = -1;
+        if (entry.text_changed) entry.part.text = parts[i].text;
         entry.part.icon = parts[i].icon;
-        entry.part.sizing_labels = parts[i].sizing_labels;
+        if (entry.labels_changed) entry.part.sizing_labels = parts[i].sizing_labels;
         entry.part.reserve_icon = parts[i].reserve_icon;
         entry.part.padding = parts[i].padding;
         entry.part.width = parts[i].width;
@@ -440,9 +466,9 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
     if (layout_changed)
         InvalidateRect(hwnd, nullptr, TRUE);
     else
-        for (size_t i = 0; i < parts.size(); ++i)
+        for (const auto &entry : ctx->entries)
         {
-            if (visual_changed[i]) InvalidateRect(hwnd, &ctx->entries[i]->rect, TRUE);
+            if (entry->visual_changed) InvalidateRect(hwnd, &entry->rect, TRUE);
         }
     ctx->font = font;
     ctx->sizing_dirty = false;
