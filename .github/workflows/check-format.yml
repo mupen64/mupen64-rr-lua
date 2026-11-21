@@ -24,7 +24,7 @@ jobs:
           working-directory: ${{ env.GITHUB_WORKSPACE }}
           run: |
             shopt -s globstar nullglob
-            python3 tools/run_clang_format.py \
+            python3 tools/run_clang_format.py --color=always \
               src/**/*{.c,.h,.cpp,.hpp}
         - name: check copyright headers
           shell: bash

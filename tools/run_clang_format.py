@@ -1,9 +1,16 @@
-#!/usr/bin/env python
+#
+#  Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+#
+#  SPDX-License-Identifier: GPL-2.0-or-later
+#
+
+# Note: this script is taken from https://github.com/Sarcasm/run-clang-format
+# It has not been modified in any substantial manner. See license below.
 
 # MIT License
+# =============================================================================
 #
 # Copyright (c) 2017 Guillaume Papin
-# Source available here: https://github.com/Sarcasm/run-clang-format
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -153,7 +160,7 @@ def run_clang_format_diff(args, file):
             original = f.readlines()
     except IOError as exc:
         raise DiffError(str(exc))
-    
+
     if args.in_place:
         invocation = [args.clang_format_executable, '-i', file]
     else:

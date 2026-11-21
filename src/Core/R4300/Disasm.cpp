@@ -10,7 +10,6 @@
 
 #include <Core/API.hpp>
 
-
 typedef enum INSTSETOP_t
 {
     INSTSETOP_UNDEF,

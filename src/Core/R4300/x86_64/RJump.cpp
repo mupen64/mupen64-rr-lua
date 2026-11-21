@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-
 #include <R4300/Recomp.hpp>
 
 #ifdef _WIN32

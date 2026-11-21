@@ -15,8 +15,10 @@ Checks: >
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -misc-use-anonymous-namespace,
+  -performance-enum-size,
   -performance-noexcept-move-constructor,
   -performance-no-int-to-ptr,
+  -portability-avoid-pragma-once,
   -readability-braces-around-statements,
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
@@ -86,3 +88,9 @@ CheckOptions:
   # Enum constants
   - key: readability-identifier-naming.EnumConstantCase
     value: CamelCase
+
+  # === Includes ===
+  - key: misc-include-cleaner.MissingIncludes
+    value: true
+  - key: misc-include-cleaner.UnusedIncludes
+    value: true

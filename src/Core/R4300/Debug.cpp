@@ -14,7 +14,6 @@
 #include <R4300/Debug.hpp>
 #include <R4300/Disasm.hpp>
 
-
 struct Breakpoint
 {
     CoreBreakpointId id;

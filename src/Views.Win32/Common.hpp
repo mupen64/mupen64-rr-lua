@@ -17,9 +17,9 @@
 #pragma warning(push, 0)
 extern "C"
 {
-    #include <lua.h>
-    #include <lauxlib.h>
-    #include <lualib.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 }
 #include <spdlog/logger.h>
 
