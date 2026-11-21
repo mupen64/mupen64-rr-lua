@@ -113,7 +113,7 @@ inline auto split_string(std::string_view str, std::string_view delim)
 // Case-insensitive comparison of C strings.
 inline int c_icmp(const char *a, const char *b)
 {
-#if defined(_WIN32)
+#ifdef _WIN32
     return _stricmp(a, b);
 #elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
     return strcasecmp(a, b);
@@ -125,7 +125,7 @@ inline int c_icmp(const char *a, const char *b)
 // Case-insensitive comparison of C strings. (with a length limit)
 inline int c_nicmp(const char *a, const char *b, size_t n)
 {
-#if defined(_WIN32)
+#ifdef _WIN32
     return _strnicmp(a, b, n);
 #elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
     return strncasecmp(a, b, n);
@@ -145,7 +145,7 @@ inline std::string_view ctrim_string(std::string_view str)
     const auto not_isspace = [](char c) { return !isspace((unsigned char)c); };
 
     // search from the start for non-whitespace
-    auto start_iter = std::ranges::find_if(str, not_isspace);
+    const auto* start_iter = std::ranges::find_if(str, not_isspace);
     if (start_iter == str.end()) return ""sv;
     auto str2 = str.substr(start_iter - str.begin());
 

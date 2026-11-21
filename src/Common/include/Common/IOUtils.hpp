@@ -21,6 +21,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <iconv.h>
+#include <safeclib/safe_lib.h>
 #else
 #error Unsupported platform!
 #endif
@@ -61,7 +62,7 @@ inline bool write_entire_file(const std::filesystem::path &path, std::span<const
         return false;
     }
 
-    out.write(reinterpret_cast<const char *>(data.data()), data.size());
+    out.write(reinterpret_cast<const char *>(data.data()), static_cast<std::streamsize>(data.size()));
     return out.good();
 }
 
@@ -106,7 +107,7 @@ inline int file_contents_equal(const std::filesystem::path &path1, const std::fi
 // IOSTREAM UTILITIES
 // ==============================
 
-template <class IStreamT, class CharT = typename IStreamT::char_type, class Traits = typename IStreamT::traits_type>
+template <class IStreamT, class CharT = IStreamT::char_type, class Traits = IStreamT::traits_type>
     requires(std::derived_from<IStreamT, std::basic_istream<CharT, Traits>>)
 inline auto iter_lines(IStreamT &stream);
 
@@ -116,7 +117,7 @@ class IOLineSentinel
 {
 };
 
-template <class IStreamT, class CharT = typename IStreamT::char_type, class Traits = typename IStreamT::traits_type>
+template <class IStreamT, class CharT = IStreamT::char_type, class Traits = IStreamT::traits_type>
     requires(std::derived_from<IStreamT, std::basic_istream<CharT, Traits>>)
 class IOLineIterator
 {
@@ -316,7 +317,7 @@ inline std::string rom_name_to_string(const uint8_t str[20])
     return rom_name_to_string(reinterpret_cast<const char *>(str));
 }
 
-#elif defined(__linux__)
+#elifdef __linux__
 
 // SHIFT-JIS DECODING via iconv.h
 // ====================================
@@ -441,7 +442,7 @@ inline std::filesystem::path compute_exe_path()
         throw std::system_error((int)GetLastError(), std::system_category());
     }
     return std::filesystem::path(path_buffer);
-#elif defined(__linux__)
+#elifdef __linux__
     return std::filesystem::read_symlink("/proc/self/exe");
 #else
 #error TODO: compute_exe_path() not defined on this platform
@@ -471,14 +472,14 @@ inline std::filesystem::path compute_config_path()
 
     auto dir = std::filesystem::path(path_buffer) / "mupen64-rr-lua";
     return dir;
-#elif defined(__linux__)
-    const char *env_config = getenv("XDG_CONFIG_HOME");
+#elifdef __linux__
+    const char *env_config = getenv("XDG_CONFIG_HOME"); // NOLINT(concurrency-mt-unsafe)
     if (env_config != nullptr)
     {
         return std::filesystem::path(env_config) / "mupen64-rr-lua";
     }
 
-    const char *env_home = getenv("HOME");
+    const char *env_home = getenv("HOME"); // NOLINT(concurrency-mt-unsafe)
     if (env_home == nullptr) throw std::runtime_error("$HOME is undefined");
 
     return std::filesystem::path(env_home) / ".config/mupen64-rr-lua";

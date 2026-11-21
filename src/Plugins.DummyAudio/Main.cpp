@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Common/DummyPluginStub.hpp>
+#include <Core/Plugin.hpp>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("No Audio")
 

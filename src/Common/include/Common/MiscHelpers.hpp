@@ -36,7 +36,7 @@ inline std::vector<uint8_t> compress_gzip(std::span<const uint8_t> in)
     std::vector<uint8_t> compressed;
     compressed.resize(in.size());
 
-    const auto compressor = libdeflate_alloc_compressor(6);
+    auto* const compressor = libdeflate_alloc_compressor(6);
     const size_t final_size =
         libdeflate_gzip_compress(compressor, in.data(), in.size(), compressed.data(), compressed.size());
     libdeflate_free_compressor(compressor);
@@ -62,7 +62,7 @@ inline std::vector<uint8_t> decompress_gzip(const std::vector<uint8_t> &vec, con
 {
     // The gzip header does not include the uncompressed size, so grow the output buffer until it fits.
     size_t buf_size = std::max(initial_size, size_t{1});
-    auto decompressor = libdeflate_alloc_decompressor();
+    auto* decompressor = libdeflate_alloc_decompressor();
     if (!decompressor) return {};
 
     std::vector<uint8_t> out_vec;
@@ -260,7 +260,8 @@ template <typename T> std::vector<T> erase_indices(const std::vector<T> &data, s
  */
 template <typename T> inline T remap(const T value, const T from1, const T to1, const T from2, const T to2)
 {
-    return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
+    T fraction1 = (value - from1) / (to1 - from1);
+    return (fraction1 * (to2 - from2)) + from2;
 }
 
 /**

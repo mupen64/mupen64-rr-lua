@@ -10,7 +10,6 @@ add_library(Mupen64RR_Common STATIC
     "I18n.cpp"
     "include/Common/Assert.hpp"
     "include/Common/CommonPCH.hpp"
-    "include/Common/DummyPluginStub.hpp"
     "include/Common/IOUtils.hpp"
     "include/Common/MiscHelpers.hpp"
     "include/Common/StrUtils.hpp"

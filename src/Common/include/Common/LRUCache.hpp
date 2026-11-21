@@ -114,9 +114,9 @@ template <typename K, typename V, typename Hash = std::hash<K>> class Cache
     size_t size() const { return m_map.size(); }
 
   private:
-    using ListIterator = typename std::list<std::pair<K, V>>::iterator;
+    using ListIterator = std::list<std::pair<K, V>>::iterator;
 
-    void touch(typename std::unordered_map<K, ListIterator, Hash>::iterator it)
+    void touch(std::unordered_map<K, ListIterator, Hash>::iterator it)
     {
         m_list.splice(m_list.begin(), m_list, it->second);
         it->second = m_list.begin();

@@ -14,16 +14,16 @@
  */
 namespace FNV1A
 {
-constexpr uint64_t fnv_offset_basis = 14695981039346656037ULL;
-constexpr uint64_t fnv_prime = 1099511628211ULL;
+constexpr uint64_t FNV_OFFSET_BASIS = 14695981039346656037ULL;
+constexpr uint64_t FNV_PRIME = 1099511628211ULL;
 
-inline uint64_t hash(std::span<const uint8_t> data, uint64_t hash = fnv_offset_basis)
+inline uint64_t hash(std::span<const uint8_t> data, uint64_t hash = FNV_OFFSET_BASIS)
 {
     const auto *bytes = static_cast<const uint8_t *>(data.data());
     for (size_t i = 0; i < data.size(); ++i)
     {
         hash ^= bytes[i];
-        hash *= fnv_prime;
+        hash *= FNV_PRIME;
     }
     return hash;
 }

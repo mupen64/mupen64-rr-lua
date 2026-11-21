@@ -12,8 +12,10 @@ Checks: >
   -bugprone-macro-parentheses,
   -bugprone-reserved-identifier,-cert-dcl37-c,-cert-dcl51-cpp,
   -cert-dcl21-cpp,
+  -cert-dcl03-c,
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
+  -misc-static-assert,
   -misc-use-anonymous-namespace,
   -performance-enum-size,
   -performance-noexcept-move-constructor,
@@ -29,67 +31,59 @@ Checks: >
   -readability-implicit-bool-conversion,
 WarningsAsErrors: ''
 CheckOptions:
+  # NAMING CONVENTIONS
+  # ======================================
+
   # === Types ===
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
-
   - key: readability-identifier-naming.StructCase
     value: CamelCase
-
   - key: readability-identifier-naming.EnumCase
     value: CamelCase
-
   - key: readability-identifier-naming.ConceptCase
     value: CamelCase
-
 
   # === Functions ===
   - key: readability-identifier-naming.FunctionCase
     value: lower_case
-
   - key: readability-identifier-naming.MethodCase
     value: lower_case
-
 
   # === Parameters ===
   - key: readability-identifier-naming.ParameterCase
     value: lower_case
-
   - key: readability-identifier-naming.ConstantParameterCase
     value: lower_case
 
   # === Local Variables ===
   - key: readability-identifier-naming.VariableCase
     value: lower_case
-
-
-  # === Global Variables ===
-  #- key: readability-identifier-naming.GlobalVariableCase
-  #  value: lower_case
-
-  #- key: readability-identifier-naming.GlobalVariablePrefix
-  #  value: g_
-
-  # Constants
-  - key: readability-identifier-naming.ConstantCase
-    value: UPPER_CASE
-
-  # Constexpr variables (non-local); locals are covered by LocalConstexprVariableCase
-  - key: readability-identifier-naming.ConstexprVariableCase
-    value: lower_case
-
   # Local const variables
   - key: readability-identifier-naming.LocalConstantCase
     value: lower_case
-
   - key: readability-identifier-naming.LocalConstexprVariableCase
     value: lower_case
+
+  # === Global Variables ===
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalVariablePrefix
+    value: g_
+  # Constants
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+  # Constexpr variables (non-local); locals are covered by LocalConstexprVariableCase
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: UPPER_CASE
 
   # Enum constants
   - key: readability-identifier-naming.EnumConstantCase
     value: CamelCase
 
-  # === Includes ===
+  # HEADERS AND INCLUDES
+  # ======================================
+
   - key: misc-include-cleaner.MissingIncludes
     value: true
   - key: misc-include-cleaner.UnusedIncludes
