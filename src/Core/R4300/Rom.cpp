@@ -125,8 +125,8 @@ CoreSystemType rom_system_type_for_country_code(const uint16_t country_code)
 uint32_t rom_get_audio_sample_rate()
 {
     const uint32_t clock = g_sys_type == CoreSystemType::NTSC ? 48681812 : 49656530;
-    const auto dacrate = ai_register.ai_dacrate;
-    return dacrate ? clock / (uint64_t{dacrate} + 1) : 0;
+    const auto dacrate = ai_register.ai_dacrate & 0x3FFFu;
+    return dacrate ? clock / (dacrate + 1) : 0;
 }
 
 void rom_byteswap(uint8_t *rom)
