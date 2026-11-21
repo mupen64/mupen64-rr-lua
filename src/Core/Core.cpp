@@ -19,8 +19,6 @@
 #include <R4300/VCR.hpp>
 #include <Cheats.hpp>
 
-
-
 CoreParams *g_core{};
 CoreCtx g_ctx{};
 

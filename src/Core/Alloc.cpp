@@ -30,7 +30,6 @@ static std::unordered_map<void *, size_t> page_alloc_sizes;
 
 #endif
 
-
 // Buffers that have been superseded by realloc_exec but cannot be freed yet because
 // emitted code may still contain absolute pointers into them (jump targets, call
 // destinations, thunks). They are freed en masse when the emulator core shuts down.

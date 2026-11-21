@@ -32,11 +32,15 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         shell: powershell
         run: |
-          $cmake_debug="Debug"
-          $cmake_release="RelWithDebInfo"
-          cmake --preset vcpkg-win64-${{ matrix.arch }} \
-            "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}" \
-            -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
+          $cmake_debug = "Debug"
+          $cmake_release = "RelWithDebInfo"
+          $cmake_args = @(
+            '--preset'
+            'vcpkg-win64-${{ matrix.arch }}'
+            "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+            "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON"
+          )
+          cmake $cmake_args
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
