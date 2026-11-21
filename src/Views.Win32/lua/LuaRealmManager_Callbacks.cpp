@@ -195,6 +195,38 @@ LuaRealmManager::LuaRealmManager()
         m_callback_count_map.emplace(i, 0);
 }
 
+std::function<void(bool)> LuaRealmManager::completion_callback(lua_State *L, int index)
+{
+    if (lua_isnoneornil(L, index)) return {};
+    luaL_checktype(L, index, LUA_TFUNCTION);
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
+    auto *main = lua_tothread(L, -1);
+    lua_pop(L, 1);
+    auto *realm = LuaRealmManager::instance().get_by_state(main);
+    if (!realm || realm->is_stopping) return {};
+
+    auto *callback = lua_optcallback(L, index);
+
+    return [owner = realm->weak_from_this(), callback](bool success) {
+        g_main_ctx.dispatcher->post([owner, callback, success] {
+            const auto realm = owner.lock();
+            if (!realm || realm->is_stopping) return;
+
+            auto *L = realm->l();
+            lua_pushcallback(L, callback);
+            lua_pushboolean(L, success);
+            if (lua_pcall(L, 1, 0, 0) != LUA_OK)
+            {
+                const char *error = lua_tostring(L, -1);
+                realm->print(
+                    realm.get(), std::string(error ? error : "Lua callback failed with a non-string error") + "\r\n");
+                lua_pop(L, 1);
+            }
+        });
+    };
+}
+
 void LuaRealmManager::call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l)
 {
     RET_IF_NOT_REGISTERED(REG_WINDOWMESSAGE);

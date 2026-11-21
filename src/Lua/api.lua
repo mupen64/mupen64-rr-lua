@@ -2207,6 +2207,16 @@ function iohelper.filediag(filter, type) end
 -- avi functions
 --#region
 
+---Starts recording asynchronously using the configured encoder and saved capture settings.
+---If a recording is already active, it is stopped before the new one starts.
+---@param path string Output path, with the file extension chosen by the encoder.
+---@param callback? fun(success: boolean) Called once when the start request completes.
+function avi.start(path, callback) end
+
+---Stops recording asynchronously. Stopping when idle also succeeds.
+---@param callback? fun(success: boolean) Called once when the stop request completes.
+function avi.stop(callback) end
+
 ---Begins an avi recording using the previously saved capture settings.
 ---It is saved to `filename`.
 ---@param filename string

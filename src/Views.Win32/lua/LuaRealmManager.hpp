@@ -60,6 +60,12 @@ class LuaRealmManager
 
     static LuaRealmManager &instance();
 
+    /**
+     * Converts an optional Lua function into a one-shot boolean completion callback.
+     * Invoke it to queue delivery on the UI thread.
+     */
+    static std::function<void(bool)> completion_callback(lua_State *L, int index);
+
     // The modified control data to be pushed the next frame.
     CoreButtons new_controller_data[4];
 
