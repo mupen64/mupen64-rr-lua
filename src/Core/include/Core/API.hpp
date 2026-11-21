@@ -432,7 +432,7 @@ extern "C"
         std::function<CoreSystemType(uint16_t country_code)> vr_system_type_for_country_code;
 
         /**
-         * \return The current audio sample rate.
+         * \return The current audio sample rate, or zero if the DAC rate is uninitialized.
          */
         std::function<uint32_t()> vr_get_audio_sample_rate;
 

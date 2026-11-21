@@ -6,11 +6,14 @@
 
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 
 class Encoder
 {
   public:
+    static constexpr uint32_t audio_output_rate = 48000;
+
     struct Params
     {
         /**
@@ -29,10 +32,6 @@ class Encoder
          * \brief The video stream's FPS
          */
         uint32_t fps;
-        /**
-         * \brief The audio stream's bitrate
-         */
-        uint32_t arate;
         /**
          * \brief Ask the user for capture settings
          */
@@ -70,9 +69,10 @@ class Encoder
      * \param audio The audio buffer. Must be freed with the provided audio free function.
      * \param length The audio length
      * \param bitrate The audio bitrate
+     * \param source_rate The sample rate of the supplied audio
      * \return Whether the operation succeeded
      */
-    virtual bool append_audio(uint8_t *audio, size_t length, uint8_t bitrate) = 0;
+    virtual bool append_audio(uint8_t *audio, size_t length, uint8_t bitrate, uint32_t source_rate) = 0;
 
     /**
      * \brief Returns the desired extension for the encoder's output file.

@@ -97,8 +97,8 @@ std::optional<std::string> WinVFWEncoder::start(Params params)
     m_sample = 0;
     m_sound_format.wFormatTag = WAVE_FORMAT_PCM;
     m_sound_format.nChannels = 2;
-    m_sound_format.nSamplesPerSec = 44100;
-    m_sound_format.nAvgBytesPerSec = 44100 * (2 * 16 / 8);
+    m_sound_format.nSamplesPerSec = audio_output_rate;
+    m_sound_format.nAvgBytesPerSec = m_sound_format.nSamplesPerSec * (2 * 16 / 8);
     m_sound_format.nBlockAlign = 2 * 16 / 8;
     m_sound_format.wBitsPerSample = 16;
     m_sound_format.cbSize = 0;
@@ -120,10 +120,6 @@ std::optional<std::string> WinVFWEncoder::start(Params params)
         stop_impl();
         return "Failed to set audio stream format.";
     }
-
-    memset(m_sound_buf_empty, 0, sizeof(m_sound_buf_empty));
-    memset(m_sound_buf, 0, sizeof(m_sound_buf));
-    m_last_sound = 0;
 
     return std::nullopt;
 }
@@ -208,40 +204,18 @@ bool WinVFWEncoder::append_video(uint8_t *image)
     return true;
 }
 
-bool WinVFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
+bool WinVFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate, uint32_t source_rate)
 {
-    write_sound(audio, length, bitrate);
-    std::memcpy(&m_last_sound, audio + length - sizeof(uint32_t), sizeof(uint32_t));
+    if (length < 4 || bitrate != 16) return true;
 
-    return true;
-}
+    const std::span input(reinterpret_cast<const short *>(audio), length / sizeof(short));
+    if (!m_resampler.process(input, source_rate, m_sound_format.nSamplesPerSec, true)) return false;
 
-bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
-{
-    if (len <= 0) return true;
-
-    const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / sound_buf_size;
-    need(fill_percentage <= 80, "Audio buffer overflowed");
-
-    memcpy(m_sound_buf + sound_buf_pos, buf, len);
-    sound_buf_pos += len;
-
-    m_in_sample += len / m_sound_format.nBlockAlign;
-    m_audio_frame = (double)m_in_sample * m_params.fps / m_params.arate;
-
-    int expected_len = Resampler::get_resample_len(resampled_freq, m_params.arate, bitrate, sound_buf_pos);
-
-    if (expected_len <= 0 || (expected_len % 8) != 0) return true;
-
-    int resampled_len = Resampler::resample(&m_resampled_sound, resampled_freq, reinterpret_cast<short *>(m_sound_buf),
-        m_params.arate, bitrate, sound_buf_pos);
-
-    if (resampled_len <= 0) return true;
-
-    need((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
-
-    BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, resampled_len / m_sound_format.nBlockAlign,
-                        m_resampled_sound, resampled_len, 0, NULL, NULL));
+    auto output = m_resampler.output();
+    if (output.empty()) return true;
+    const auto frames = static_cast<LONG>(output.size() / 2);
+    const auto bytes = static_cast<LONG>(output.size_bytes());
+    const bool ok = AVIStreamWrite(m_sound_stream, m_sample, frames, output.data(), bytes, 0, nullptr, nullptr) == 0;
 
     if (!ok)
     {
@@ -252,10 +226,10 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
         return false;
     }
 
-    m_sample += resampled_len / m_sound_format.nBlockAlign;
+    m_sample += frames;
+    m_audio_frame += static_cast<double>(frames) * m_params.fps / m_sound_format.nSamplesPerSec;
 
-    m_avi_file_size += resampled_len;
-    sound_buf_pos = 0;
+    m_avi_file_size += bytes;
 
     return true;
 }
