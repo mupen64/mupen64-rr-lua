@@ -61,7 +61,7 @@ endif()
 windeployqt6(
     TARGET Mupen64RR_Views_Qt6
     DEPLOY_TO_BUILD_DIR
-    ARGS --qmldir .
+    ARGS --qmldir "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 # clang-cl generates a faulty UAC manifest section. Since Qt is generating
 # it already, we just ignore it.
