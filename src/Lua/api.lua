@@ -2572,6 +2572,25 @@ function __mupen_apply_shims()
         emu.set_speed_mode(fast_forward and Mupen.CoreSpeedMode.FastForward or Mupen.CoreSpeedMode.Normal)
     end
 
+    ---Starts recording using the saved capture settings.
+    ---@deprecated Use `avi.start` instead.
+    ---@param filename string
+    function avi.startcapture(filename)
+        if avi.capturing() then
+            error("Tried to start AVI capture when one was already in progress", 2)
+        end
+        avi.start(filename)
+    end
+
+    ---Stops the active recording.
+    ---@deprecated Use `avi.stop` instead.
+    function avi.stopcapture()
+        if not avi.capturing() then
+            error("Tried to end AVI capture when none was in progress", 2)
+        end
+        avi.stop()
+    end
+
     ---Saves a savestate to `filename`.
     ---@param filename string
     ---@return nil
