@@ -1,0 +1,88 @@
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  misc-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-macro-parentheses,
+  -bugprone-reserved-identifier,-cert-dcl37-c,-cert-dcl51-cpp,
+  -cert-dcl21-cpp,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -misc-use-anonymous-namespace,
+  -performance-noexcept-move-constructor,
+  -performance-no-int-to-ptr,
+  -readability-braces-around-statements,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-named-parameter,
+  -readability-uppercase-literal-suffix,
+  -readability-use-anyofallof,
+  -readability-implicit-bool-conversion,
+WarningsAsErrors: ''
+CheckOptions:
+  # === Types ===
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.ConceptCase
+    value: CamelCase
+
+
+  # === Functions ===
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+
+
+  # === Parameters ===
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+
+  - key: readability-identifier-naming.ConstantParameterCase
+    value: camelBack
+
+  # === Local Variables ===
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+
+
+  # === Global Variables ===
+  #- key: readability-identifier-naming.GlobalVariableCase
+  #  value: lower_case
+
+  #- key: readability-identifier-naming.GlobalVariablePrefix
+  #  value: g_
+
+  # Constants
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+
+  # Constexpr variables (non-local); locals are covered by LocalConstexprVariableCase
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: lower_case
+
+  # Local const variables
+  - key: readability-identifier-naming.LocalConstantCase
+    value: lower_case
+
+  - key: readability-identifier-naming.LocalConstexprVariableCase
+    value: lower_case
+
+  # Enum constants
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
