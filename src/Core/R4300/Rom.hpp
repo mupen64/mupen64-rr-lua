@@ -24,4 +24,6 @@ void rom_byteswap(uint8_t *rom);
 
 CoreROMHeader *rom_get_rom_header();
 uint32_t rom_get_vis_per_second(uint16_t country_code);
+CoreSystemType rom_system_type_for_country_code(uint16_t country_code);
+uint32_t rom_get_audio_sample_rate();
 std::string rom_country_code_to_country_name(uint16_t country_code);

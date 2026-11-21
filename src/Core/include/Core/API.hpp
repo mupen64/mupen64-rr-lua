@@ -427,6 +427,17 @@ extern "C"
         std::function<uint32_t(uint16_t country_code)> vr_get_vis_per_second;
 
         /**
+         * \param country_code A rom's country code.
+         * \return The rom's system type. Unknown country codes are treated as PAL.
+         */
+        std::function<CoreSystemType(uint16_t country_code)> vr_system_type_for_country_code;
+
+        /**
+         * \return The current audio sample rate, or zero if the DAC rate is uninitialized.
+         */
+        std::function<uint32_t()> vr_get_audio_sample_rate;
+
+        /**
          * \breif Gets the rom header.
          */
         std::function<CoreROMHeader *()> vr_get_rom_header;
