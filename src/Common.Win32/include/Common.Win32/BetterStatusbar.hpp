@@ -262,8 +262,8 @@ inline Context *get_ctx(HWND hwnd)
  */
 inline HWND create(HWND parent, HINSTANCE instance, int id)
 {
-    const auto hwnd = CreateWindowEx(0, STATUSCLASSNAME, nullptr, WS_CHILD | WS_VISIBLE | CCS_BOTTOM, 0, 0, 0, 0,
-        parent, reinterpret_cast<HMENU>(static_cast<INT_PTR>(id)), instance, nullptr);
+    const auto hwnd = CreateWindowEx(WS_EX_COMPOSITED, STATUSCLASSNAME, nullptr, WS_CHILD | WS_VISIBLE | CCS_BOTTOM, 0,
+        0, 0, 0, parent, reinterpret_cast<HMENU>(static_cast<INT_PTR>(id)), instance, nullptr);
     if (!hwnd) return nullptr;
     auto ctx = std::make_unique<Internal::Context>();
     ctx->tooltip = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASSW, nullptr, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
