@@ -6,6 +6,7 @@
 - Added F3DEX3 microcode support to TASVideo
 - Added Lua script-owned window API.
 - Added scoped hotkeys (with Lua API).
+- Added new functions to the `avi` API (`avi.start`, `avi.stop`, `avi.capturing`).
 
 ## 🐞 Bugfixes
 
