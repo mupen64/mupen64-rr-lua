@@ -22,24 +22,36 @@ extern "C"
 #include <lualib.h>
 }
 #include <spdlog/logger.h>
-#include <Common.Win32/Common.hpp>
+
 #include <resource.h>
+
 #include <cwctype>
+
+#include <wrl/client.h>
 #include <WinDarkMode.h>
 using Microsoft::WRL::ComPtr;
 #pragma warning(pop)
 
 #include <Loggers.hpp>
+
+#include <Common.Win32/Common.hpp>
 #include <Common.Win32/WinUtils.hpp>
+
 #include <Main.hpp>
-#include <Common.Views/LuaHelpers.hpp>
+
 #include <lua/LuaTypes.hpp>
+
+#include <Common/IOUtils.hpp>
+#include <Common/StrUtils.hpp>
+#include <Common/VersionNameHelpers.hpp>
+
+#include <Common.Views/App.hpp>
 #include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/LuaHelpers.hpp>
+
 #include <Common.Win32/ResizeAnchor.hpp>
 #include <Common.Win32/JoystickControl.hpp>
-#include <Common/VersionNameHelpers.hpp>
-#include <Common.Views/IDialogService.hpp>
-#include <Common.Views/App.hpp>
 
 // Workaround for broken LVN_GETDISPINFO under MinGW
 // TODO: Remove when fixed

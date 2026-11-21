@@ -3,6 +3,9 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
+
+#include <print>
+
 #include "QtIconImageProvider.hpp"
 #include <Common/VersionNameHelpers.hpp>
 #include <Common.Views/App.hpp>

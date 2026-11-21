@@ -7,6 +7,8 @@
 #include "Main.hpp"
 #include "Config.hpp"
 
+#include <fstream>
+
 #define CONFIG_FILE_NAME "TASRSP.json"
 
 using namespace BuiltinTAS::TASRSP;

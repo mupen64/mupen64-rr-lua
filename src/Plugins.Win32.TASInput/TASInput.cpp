@@ -4,11 +4,17 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "TASInput.hpp"
 #include "Common.hpp"
+
+#include <mutex>
+
+#include <Common/IOUtils.hpp>
+#include <Common.Win32/JoystickControl.hpp>
+
 #include <Combo.hpp>
 #include <ConfigDialog.hpp>
 #include <GamepadManager.hpp>
-#include <Common.Win32/JoystickControl.hpp>
 #include <Main.hpp>
 #include <NewConfig.hpp>
 #include <TASInput.hpp>

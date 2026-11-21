@@ -6,8 +6,13 @@
 
 #pragma once
 
-#include <lua/presenters/Presenter.hpp>
+#include <chrono>
 #include <memory>
+#include <optional>
+#include <stack>
+#include <unordered_map>
+
+#include <lua/presenters/Presenter.hpp>
 
 namespace LuaCore::Painter::Detail
 {

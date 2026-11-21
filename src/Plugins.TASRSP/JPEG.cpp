@@ -7,6 +7,8 @@
 #include "Main.hpp"
 #include "HLE.hpp"
 
+#include <cstring>
+
 using namespace BuiltinTAS::TASRSP;
 
 static struct

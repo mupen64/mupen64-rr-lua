@@ -6,12 +6,14 @@
 
 #include "Main.hpp"
 #include "Main_Win32.hpp"
-#include "Config.hpp"
 
+#include <iostream>
+#include <fstream>
+
+#include "Config.hpp"
 #include "SDLBackend.hpp"
 #include <Core/Types.hpp>
 #include <Core/Plugin.hpp>
-#include <iostream>
 
 namespace BuiltinTAS::TASAudio
 {

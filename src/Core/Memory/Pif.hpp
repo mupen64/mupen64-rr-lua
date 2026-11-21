@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstddef>
+
 void update_pif_write();
 void update_pif_read();
 

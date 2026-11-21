@@ -1,0 +1,61 @@
+InheritParentConfig: true
+CheckOptions:
+  # === Types ===
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.ConceptCase
+    value: CamelCase
+
+
+  # === Functions ===
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+
+
+  # === Parameters ===
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+
+  - key: readability-identifier-naming.ConstantParameterCase
+    value: camelBack
+
+  # === Local Variables ===
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+
+
+  # === Global Variables ===
+  #- key: readability-identifier-naming.GlobalVariableCase
+  #  value: lower_case
+
+  #- key: readability-identifier-naming.GlobalVariablePrefix
+  #  value: g_
+
+  # Constants
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+
+  # Constexpr variables (non-local); locals are covered by LocalConstexprVariableCase
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: lower_case
+
+  # Local const variables
+  - key: readability-identifier-naming.LocalConstantCase
+    value: lower_case
+
+  - key: readability-identifier-naming.LocalConstexprVariableCase
+    value: lower_case
+
+  # Enum constants
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase

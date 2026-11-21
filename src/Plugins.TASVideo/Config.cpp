@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include "Config.hpp"
+
+#include <fstream>
+
+#include "Common.hpp"
 #include "TASVideo.hpp"
 #include "RSP.hpp"
-#include "Textures.h"
+#include "Textures.hpp"
 #include "OpenGL.hpp"
 #include <nlohmann/json.hpp>
 using nlohmann::json;

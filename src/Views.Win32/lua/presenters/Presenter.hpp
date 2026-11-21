@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <Common.Win32/Common.hpp>
+
 /**
  * A presenter is responsible for the following:
  *

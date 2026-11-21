@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include <R4300/Recomp.hpp>
+#include <R4300/Recomph.hpp>
+
+#include <cstring>
+
 #include <Core.hpp>
 #include <Memory/Memory.hpp>
 #include <R4300/Macros.hpp>
 #include <R4300/Ops.hpp>
 #include <R4300/R4300.hpp>
-#include <R4300/Recomp.hpp>
-#include <R4300/Recomph.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/Tracelog.hpp>
 #if defined(_M_X64) || defined(__x86_64__)

@@ -13,6 +13,8 @@
 #include <std23/move_only_function.h>
 #endif
 
+#include <Common/IOUtils.hpp>
+
 #include <QObject>
 #include <QAbstractTableModel>
 #include <QQmlListProperty>

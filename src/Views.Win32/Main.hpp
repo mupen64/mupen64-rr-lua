@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <Core/API.hpp>
 #include <components/Dispatcher.hpp>
 
 #define WM_FOCUS_MAIN_WINDOW (WM_USER + 17)

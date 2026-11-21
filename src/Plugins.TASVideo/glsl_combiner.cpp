@@ -11,7 +11,7 @@
 #include "gSP.hpp"
 #include "GBI.hpp"
 #include "TASVideo.hpp"
-#include "Textures.h"
+#include "Textures.hpp"
 
 struct GLSLProgram
 {

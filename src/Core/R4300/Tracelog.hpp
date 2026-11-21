@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <filesystem>
+
 /**
  * \brief Logs a dynarec-generated instruction
  */

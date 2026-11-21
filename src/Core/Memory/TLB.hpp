@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 typedef struct _tlb
 {
     int16_t mask;

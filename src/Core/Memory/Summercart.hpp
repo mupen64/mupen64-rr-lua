@@ -6,6 +6,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <filesystem>
+
 struct summercart
 {
     char buffer[8192];

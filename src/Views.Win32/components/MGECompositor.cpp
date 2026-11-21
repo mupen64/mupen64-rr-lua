@@ -6,6 +6,9 @@
 
 #include "Common.hpp"
 #include <components/MGECompositor.hpp>
+
+#include <Common/Assert.hpp>
+
 #include <plugin/Plugin.hpp>
 #include <Common.Views/Messages.hpp>
 #include <lua/LuaRealmManager.hpp>

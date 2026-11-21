@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "R4300.hpp"
+
+#include <thread>
+
+#include <Common/IOUtils.hpp>
+#include <Common/MiscHelpers.hpp>
+#include <Common/StrUtils.hpp>
+
 #include "Rom.hpp"
 #include <Core.hpp>
 

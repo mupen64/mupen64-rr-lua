@@ -7,6 +7,9 @@
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/App.hpp>
 
+#include <Common/Assert.hpp>
+#include <Common/StrUtils.hpp>
+
 #include <Common.Views/Messages.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common/LRUCache.hpp>

@@ -5,6 +5,7 @@
  */
 
 #include <Core.hpp>
+
 #include <Memory/Memory.hpp>
 #include <Memory/Pif.hpp>
 #include <Memory/Savestates.hpp>

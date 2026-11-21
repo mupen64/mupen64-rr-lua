@@ -19,14 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - parallel:
-        - name: check against clang-format
-          uses: DoozyX/clang-format-lint-action@v0.20
-          with:
-            source: "./src"
-            exclude: "./lib ./tools"
-            extensions: "c,cpp,h,hpp"
-            clangFormatVersion: 20
-            style: file
+        - name: check clang-format
+          shell: bash
+          working-directory: ${{ env.GITHUB_WORKSPACE }}
+          run: |
+            shopt -s globstar nullglob
+            python3 tools/run_clang_format.py --color=always \
+              src/**/*{.c,.h,.cpp,.hpp}
         - name: check copyright headers
           shell: bash
           working-directory: ${{ env.GITHUB_WORKSPACE }}

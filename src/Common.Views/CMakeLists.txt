@@ -54,6 +54,10 @@ target_link_libraries(Mupen64RR_Common_Views PUBLIC
     PkgConfig::libav
 )
 
+if (MUPEN64RR_BUILD_QT6)
+    qt6_disable_unicode_defines(Mupen64RR_Common_Views)
+endif()
+
 if (WIN32)
     target_link_libraries(Mupen64RR_Common_Views PUBLIC vfw32)
 endif()

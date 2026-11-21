@@ -6,6 +6,12 @@
 
 // #include "../config.h"
 
+#include "Interrupt.hpp"
+
+#include <cassert>
+#include <cmath>
+#include <cstring>
+
 #include <Core.hpp>
 #include <R4300/Interrupt.hpp>
 #include <Memory/Memory.hpp>
