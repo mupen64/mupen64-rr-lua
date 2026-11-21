@@ -21,7 +21,11 @@
     "speexdsp",
     "glew",
     "sdl3",
-    "lz4"
+    "lz4",
+    {
+      "name": "wil",
+      "platform": "windows"
+    }
   ],
   "builtin-baseline": "9633c6d1fb3e11dc6a9114771328bb4815ec3209"
 }

@@ -724,12 +724,14 @@ void st_do_work()
         print_queue();
     }
     g_tasks.clear();
+    g_core->st_pending_changed(false);
 }
 
 void st_on_core_stop()
 {
     std::scoped_lock lock(g_task_mutex);
     g_tasks.clear();
+    g_core->st_pending_changed(false);
     g_undo_savestate.clear();
 }
 
@@ -776,6 +778,7 @@ bool st_do_file(
         .ignore_warnings = ignore_warnings,
     };
 
+    g_core->st_pending_changed(true);
     g_tasks.insert(g_tasks.begin(), task);
     return true;
 }
@@ -815,6 +818,7 @@ bool st_do_memory(
         .ignore_warnings = ignore_warnings,
     };
 
+    g_core->st_pending_changed(true);
     g_tasks.insert(g_tasks.begin(), task);
     return true;
 }

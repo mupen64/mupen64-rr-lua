@@ -2,6 +2,7 @@
 
 ## ✨ Features
 
+- Overhauled the statusbar.
 - Added F3DEX3 microcode support to TASVideo
 - Added Lua script-owned window API.
 - Added scoped hotkeys (with Lua API).
@@ -22,6 +23,7 @@
 ## ⚡ Performance
 
 - Improved Pure Interpreter core performance when breakpoints are present
+- Improved statusbar performance
 
 # 1.5.0-8
 
