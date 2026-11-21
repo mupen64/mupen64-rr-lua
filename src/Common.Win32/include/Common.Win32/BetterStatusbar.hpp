@@ -300,7 +300,7 @@ inline void clear_icons(HWND hwnd)
         if (!part.icon) continue;
         part.icon = nullptr;
         RECT rect{};
-        if (SendMessage(hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&rect))) InvalidateRect(hwnd, &rect, FALSE);
+        if (SendMessage(hwnd, SB_GETRECT, i, reinterpret_cast<LPARAM>(&rect))) InvalidateRect(hwnd, &rect, TRUE);
     }
 }
 
@@ -442,7 +442,7 @@ inline bool set_parts(HWND hwnd, std::span<const Part> parts, bool scale_down = 
     else
         for (size_t i = 0; i < parts.size(); ++i)
         {
-            if (visual_changed[i]) InvalidateRect(hwnd, &ctx->entries[i]->rect, FALSE);
+            if (visual_changed[i]) InvalidateRect(hwnd, &ctx->entries[i]->rect, TRUE);
         }
     ctx->font = font;
     ctx->sizing_dirty = false;
