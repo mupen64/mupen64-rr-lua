@@ -2217,15 +2217,9 @@ function avi.start(path, callback) end
 ---@param callback? fun(success: boolean) Called once when the stop request completes.
 function avi.stop(callback) end
 
----Begins an avi recording using the previously saved capture settings.
----It is saved to `filename`.
----@param filename string
----@return nil
-function avi.startcapture(filename) end
-
----Stops avi recording.
----@return nil
-function avi.stopcapture() end
+---Returns whether a recording is currently active.
+---@return boolean
+function avi.capturing() end
 
 --#endregion
 
