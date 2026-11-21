@@ -17,6 +17,7 @@
 #include <components/Dispatcher.hpp>
 #include <components/MGECompositor.hpp>
 #include <lua/LuaRendererManager.hpp>
+#include <queue>
 
 namespace CaptureManager
 {
@@ -342,31 +343,45 @@ bool start_capture_impl(
     return true;
 }
 
-void start_capture(std::filesystem::path path, Config::EncoderType encoder_type, const bool ask_for_capture_settings,
-    const std::function<void(bool)> &callback)
+static void queue_capture_request(std::function<bool()> operation, const std::function<void(bool)> &callback)
 {
+    static std::mutex queue_mutex;
+    static std::queue<std::function<void()>> requests;
+
+    std::lock_guard lock(queue_mutex);
     g_main_ctx.core_ctx->vr_wait_increment();
-    ThreadPool::submit_task([=] {
-        const auto result = start_capture_impl(path, encoder_type, ask_for_capture_settings);
+    requests.emplace([operation = std::move(operation), callback] {
+        const auto result = operation();
         if (callback)
         {
             callback(result);
         }
         g_main_ctx.core_ctx->vr_wait_decrement();
     });
+
+    if (requests.size() > 1) return;
+    ThreadPool::submit_task([] {
+        std::unique_lock queue_lock(queue_mutex);
+        while (!requests.empty())
+        {
+            auto request = std::move(requests.front());
+            queue_lock.unlock();
+            request();
+            queue_lock.lock();
+            requests.pop();
+        }
+    });
+}
+
+void start_capture(std::filesystem::path path, Config::EncoderType encoder_type, const bool ask_for_capture_settings,
+    const std::function<void(bool)> &callback)
+{
+    queue_capture_request([=] { return start_capture_impl(path, encoder_type, ask_for_capture_settings); }, callback);
 }
 
 void stop_capture(const std::function<void(bool)> &callback)
 {
-    g_main_ctx.core_ctx->vr_wait_increment();
-    ThreadPool::submit_task([=] {
-        const auto result = stop_capture_impl();
-        if (callback)
-        {
-            callback(result);
-        }
-        g_main_ctx.core_ctx->vr_wait_decrement();
-    });
+    queue_capture_request(stop_capture_impl, callback);
 }
 
 void vi()
