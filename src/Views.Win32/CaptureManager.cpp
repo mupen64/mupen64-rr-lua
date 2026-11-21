@@ -25,9 +25,6 @@ constexpr auto readscreen_missing_msg = "The current video plugin doesn't suppor
 
 std::filesystem::path m_current_path;
 
-// 0x30018
-int m_audio_freq = 33000;
-int m_audio_bitrate = 16;
 long double m_video_frame = 0;
 long double m_audio_frame = 0;
 size_t m_total_frames = 0;
@@ -246,7 +243,7 @@ bool stop_capture_impl()
         return false;
     }
 
-    m_encoder.release();
+    m_encoder.reset();
 
     g_main_ctx.dispatcher->invoke([] {
         SelectObject(hy_dc, nullptr);
@@ -320,7 +317,6 @@ bool start_capture_impl(
         .width = (uint32_t)m_video_width,
         .height = (uint32_t)m_video_height,
         .fps = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code),
-        .arate = (uint32_t)m_audio_freq,
         .ask_for_capture_settings = ask_for_capture_settings,
     };
 
@@ -412,46 +408,21 @@ void input()
 void ai_len_changed()
 {
     std::lock_guard lock(m_mutex);
+    if (!m_capturing) return;
 
-    const auto p = reinterpret_cast<short *>(
-        (char *)g_main_ctx.core_ctx->rdram + (g_main_ctx.core_ctx->ai_register->ai_dram_addr & 0xFFFFFF));
-    const auto buf = (char *)p;
-    const int ai_len = (int)g_main_ctx.core_ctx->ai_register->ai_len;
+    const auto core = g_main_ctx.core_ctx;
+    const auto audio = reinterpret_cast<uint8_t *>(core->rdram) + (core->ai_register->ai_dram_addr & 0xFFFFFF);
+    const int length = static_cast<int>(core->ai_register->ai_len);
+    if (length <= 0) return;
 
-    m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
-
-    if (!m_capturing)
-    {
-        return;
-    }
-
-    if (ai_len <= 0) return;
-
-    if (!m_encoder->append_audio(reinterpret_cast<uint8_t *>(buf), ai_len, m_audio_bitrate))
+    const auto bitrate = core->ai_register->ai_bitrate + 1;
+    const auto audio_rate = core->vr_get_audio_sample_rate();
+    if (!m_encoder->append_audio(audio, length, bitrate, audio_rate ? audio_rate : Encoder::audio_output_rate))
     {
         DialogService::show_dialog(
             "Failed to append audio data.\nCapture will be stopped.", "Capture", CoreMessageTone::Error);
         stop_capture();
     }
-}
-
-void ai_dacrate_changed(CoreSystemType type)
-{
-    m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
-
-    switch (type)
-    {
-    case CoreSystemType::NTSC:
-        m_audio_freq = (int)(48681812 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
-        break;
-    case CoreSystemType::PAL:
-        m_audio_freq = (int)(49656530 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
-        break;
-    default:
-        assert(false);
-        break;
-    }
-    g_view_logger->info("[CaptureManager] m_audio_freq: {}", m_audio_freq);
 }
 
 size_t get_video_frame()
@@ -488,7 +459,6 @@ void core_executing_changed(bool value)
 
 void init()
 {
-    Messenger::subscribe<Messenger::Message::DacrateChanged>(ai_dacrate_changed);
     Messenger::subscribe<Messenger::Message::CoreExecutingChanged>(core_executing_changed);
 }
 } // namespace CaptureManager

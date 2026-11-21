@@ -103,6 +103,8 @@ CoreResult core_create(CoreParams *params, CoreCtx **ctx)
     g_ctx.vr_get_gs_button = vr_get_gs_button;
     g_ctx.vr_set_gs_button = vr_set_gs_button;
     g_ctx.vr_get_vis_per_second = rom_get_vis_per_second;
+    g_ctx.vr_system_type_for_country_code = rom_system_type_for_country_code;
+    g_ctx.vr_get_audio_sample_rate = rom_get_audio_sample_rate;
     g_ctx.vr_get_rom_header = rom_get_rom_header;
     g_ctx.vr_country_code_to_country_name = rom_country_code_to_country_name;
     g_ctx.vr_on_speed_modifier_changed = timer_on_speed_modifier_changed;

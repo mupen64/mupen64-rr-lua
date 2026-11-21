@@ -133,10 +133,10 @@ std::optional<std::string> WinFFmpegEncoder::start(Params params)
 
     m_audio_stream = avformat_new_stream(m_fmt_ctx, nullptr);
     m_audio_stream->id = 1;
-    m_audio_stream->time_base = {1, static_cast<int>(m_params.arate)};
+    m_audio_stream->time_base = {1, static_cast<int>(audio_output_rate)};
     m_audio_stream->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
     m_audio_stream->codecpar->codec_id = AV_CODEC_ID_PCM_S16LE;
-    m_audio_stream->codecpar->sample_rate = static_cast<int>(m_params.arate);
+    m_audio_stream->codecpar->sample_rate = static_cast<int>(audio_output_rate);
     m_audio_stream->codecpar->format = AV_SAMPLE_FMT_S16;
     m_audio_stream->codecpar->bits_per_coded_sample = 16;
     AVChannelLayout stereo_layout = AV_CHANNEL_LAYOUT_STEREO;
@@ -172,7 +172,7 @@ std::optional<std::string> WinFFmpegEncoder::start(Params params)
     }
 
     g_view_logger->info("[WinFFmpegEncoder] NUT stream started ({}x{} @ {} fps, {} Hz audio)", m_params.width,
-        m_params.height, m_params.fps, m_params.arate);
+        m_params.height, m_params.fps, audio_output_rate);
 
     return std::nullopt;
 }
@@ -286,14 +286,25 @@ bool WinFFmpegEncoder::append_video(uint8_t *image)
     return true;
 }
 
-bool WinFFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
+bool WinFFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t, uint32_t source_rate)
 {
-    if (length == 0) return true;
+    if (length < 4) return true;
 
-    const AVRational arate_tb = {1, static_cast<int>(m_params.arate)};
+    if (source_rate != audio_output_rate || m_resampler.active())
+    {
+        const std::span input(reinterpret_cast<const short *>(audio), length / sizeof(short));
+        if (!m_resampler.process(input, source_rate, audio_output_rate, false)) return false;
+
+        auto output = m_resampler.output();
+        if (output.empty()) return true;
+        audio = reinterpret_cast<uint8_t *>(output.data());
+        length = output.size_bytes();
+    }
+
+    const AVRational arate_tb = {1, static_cast<int>(audio_output_rate)};
 
     m_in_sample += length / 4;
-    m_audio_frame = static_cast<double>(m_in_sample) * m_params.fps / m_params.arate;
+    m_audio_frame = static_cast<double>(m_in_sample) * m_params.fps / audio_output_rate;
 
     const auto nb_samples = static_cast<int64_t>(length / 4);
     const int64_t pts = av_rescale_q(m_audio_pts, arate_tb, m_audio_stream->time_base);
