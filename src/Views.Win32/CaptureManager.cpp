@@ -315,8 +315,6 @@ bool start_capture_impl(
     get_video_dimensions(&m_video_width, &m_video_height);
     m_video_buf = (uint8_t *)malloc(m_video_width * m_video_height * 4);
 
-    // The game's first DAC rate write may come after the capture started (or never, if a savestate or a movie
-    // restored the register), so read the current rate rather than the last change event.
     if (g_main_ctx.core_ctx->ai_register->ai_dacrate != 0)
     {
         m_audio_sample_rate = (int)g_main_ctx.core_ctx->vr_get_audio_sample_rate();
