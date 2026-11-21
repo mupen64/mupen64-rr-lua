@@ -31,6 +31,11 @@ target_link_libraries(Mupen64RR_Plugins_TASRSP PRIVATE
     nlohmann_json::nlohmann_json
 )
 
+if (MUPEN64RR_BUILD_QT6)
+    qt6_disable_unicode_defines(Mupen64RR_Plugins_TASRSP)
+endif()
+
+
 target_compile_definitions(Mupen64RR_Plugins_TASRSP PRIVATE
     PLUGIN_NAMESPACE=BuiltinTAS::TASRSP
     # g_plugin=M64RRBuiltinTASRSPPlugin

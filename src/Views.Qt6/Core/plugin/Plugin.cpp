@@ -6,6 +6,9 @@
 
 #include "Plugin.hpp"
 
+#include <print>
+#include <Common/MiscHelpers.hpp>
+
 #include <QDir>
 #include <QStandardPaths>
 #include <decan.hpp>

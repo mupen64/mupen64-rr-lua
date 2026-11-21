@@ -86,6 +86,10 @@ else()
     target_link_libraries(Mupen64RR_Plugins_TASVideo PRIVATE Mupen64RR_Plugins_Common)
 endif()
 
+if (MUPEN64RR_BUILD_QT6)
+    qt6_disable_unicode_defines(Mupen64RR_Plugins_TASVideo)
+endif()
+
 target_compile_features(Mupen64RR_Plugins_TASVideo PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR_Plugins_TASVideo PROPERTIES
     OUTPUT_NAME "TASVideo"
