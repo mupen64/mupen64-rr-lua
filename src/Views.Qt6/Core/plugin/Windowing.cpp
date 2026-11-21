@@ -6,6 +6,7 @@
 
 #include "Windowing.hpp"
 
+#include <expected>
 #include <future>
 #include <memory>
 

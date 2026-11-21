@@ -11,7 +11,7 @@
 -- 3. The dialog's title is "input:" and the pre-filled editbox value is "".
 -- 4. When you cancel the dialog, the assertion passes.
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 assert(input.prompt("works", "works2") == "works2")
 assert(input.prompt(nil, nil) == nil)

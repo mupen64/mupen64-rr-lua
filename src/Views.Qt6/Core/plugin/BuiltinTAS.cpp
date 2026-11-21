@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "BuiltinTAS.hpp"
+#include <Common/StrUtils.hpp>
 
 namespace BuiltinTAS
 {

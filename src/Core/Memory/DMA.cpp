@@ -5,6 +5,9 @@
  */
 
 #include "DMA.hpp"
+
+#include <cassert>
+
 #include "FlashRAM.hpp"
 #include "Memory.hpp"
 #include "Pif.hpp"

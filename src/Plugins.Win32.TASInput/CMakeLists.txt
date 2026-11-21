@@ -49,6 +49,10 @@ target_link_libraries(Mupen64RR_Plugins_Win32_TASInput PRIVATE
     shcore
     gdiplus
 )
+# Qt is included by core headers; hence why this is needed
+if (MUPEN64RR_BUILD_QT6)
+    qt6_disable_unicode_defines(Mupen64RR_Plugins_Win32_TASInput)
+endif()
 
 target_compile_definitions(Mupen64RR_Plugins_Win32_TASInput PRIVATE
     PLUGIN_NAMESPACE=BuiltinTAS::TASInput

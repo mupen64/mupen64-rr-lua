@@ -29,6 +29,13 @@ target_link_libraries(Mupen64RR_Core_Tests PRIVATE
     Catch2::Catch2WithMain
     Mupen64RR_Core__TestIncludes
 )
+if (MUPEN64RR_BUILD_QT6)
+    windeployqt6(
+        TARGET Mupen64RR_Core_Tests
+        DEPLOY_TO_BUILD_DIR
+        ARGS --qmldir .
+    )
+endif()
 
 # Skip running tests when cross-compiling between OSes.
 if(NOT CMAKE_CROSSCOMPILING)

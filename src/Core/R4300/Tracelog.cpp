@@ -5,6 +5,9 @@
  */
 
 #include "Tracelog.hpp"
+
+#include <Common/IOUtils.hpp>
+
 #include "Disasm.hpp"
 #include "R4300.hpp"
 

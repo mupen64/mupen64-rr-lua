@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "FlashRAM.hpp"
+
+#include <cstring>
+
 #include "Memory.hpp"
 #include <Core.hpp>
 #include <R4300/R4300.hpp>

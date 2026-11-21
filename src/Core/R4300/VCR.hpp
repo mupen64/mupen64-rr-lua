@@ -6,6 +6,12 @@
 
 #pragma once
 
+#include <filesystem>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <vector>
+
 #include <Core/API.hpp>
 
 namespace VCR

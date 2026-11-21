@@ -5,11 +5,14 @@
  */
 
 #include "Common.hpp"
+#include <plugin/M64RRPlugin.hpp>
+
+#include <Common/Assert.hpp>
+
 #include "BuiltinTAS.hpp"
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <components/Statusbar.hpp>
-#include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
 #include <plugin/Windowing.hpp>
 

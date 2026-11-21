@@ -5,6 +5,9 @@
  */
 
 #include "Common.hpp"
+#include <Main.hpp>
+
+#include <SDL3/SDL.h>
 
 #include <Common/I18n.hpp>
 #include <Common.Views/ActionManager.hpp>

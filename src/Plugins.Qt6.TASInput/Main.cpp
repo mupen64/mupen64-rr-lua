@@ -5,6 +5,8 @@
  */
 
 #include "Main.hpp"
+
+#include <Common/VersionNameHelpers.hpp>
 #include <Core/Plugin.hpp>
 #include <QQuickWindow>
 #include <QTimer>

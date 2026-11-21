@@ -3,6 +3,9 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
+
+#include <print>
+
 #include "QtIconImageProvider.hpp"
 #include <Common/VersionNameHelpers.hpp>
 #include <Common.Views/App.hpp>
@@ -17,10 +20,12 @@
 #include <QQuickStyle>
 
 // Q_IMPORT_QML_PLUGIN(Mupen64ActionsPlugin)
-// Q_IMPORT_QML_PLUGIN(Mupen64CorePlugin)
 // Q_IMPORT_QML_PLUGIN(Mupen64ComponentsPlugin)
 // Q_IMPORT_QML_PLUGIN(Mupen64ConfigPlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64CorePlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64LuaPlugin)
 // Q_IMPORT_QML_PLUGIN(Mupen64UtilsPlugin)
+// Q_IMPORT_QML_PLUGIN(Mupen64ViewsPlugin)
 
 namespace
 {

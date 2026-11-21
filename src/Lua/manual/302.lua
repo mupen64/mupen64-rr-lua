@@ -23,7 +23,7 @@
 -- - CPU: Intel i7 8700k
 -- - OS: Windows 10, 22H2
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 local once = false
 

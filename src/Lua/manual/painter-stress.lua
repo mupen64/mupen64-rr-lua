@@ -6,7 +6,7 @@
 
 -- Painter API stress test.
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 local ROOT <const> = debug.getinfo(1).source:sub(2):gsub("\\[^\\]+$", "")
 local WIDTH <const> = 800

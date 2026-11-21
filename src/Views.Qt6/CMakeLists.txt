@@ -9,6 +9,7 @@ add_subdirectory(Actions)
 add_subdirectory(Components)
 add_subdirectory(Config)
 add_subdirectory(Core)
+add_subdirectory(Lua)
 add_subdirectory(Views)
 
 
@@ -37,6 +38,8 @@ target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE
     Mupen64RR_Views_Qt6_Configplugin
     Mupen64RR_Views_Qt6_Core
     Mupen64RR_Views_Qt6_Coreplugin
+    Mupen64RR_Views_Qt6_Lua
+    Mupen64RR_Views_Qt6_Luaplugin
     Mupen64RR_Views_Qt6_Utils
     Mupen64RR_Views_Qt6_Utilsplugin
     Mupen64RR_Views_Qt6_Viewsplugin
@@ -58,7 +61,7 @@ endif()
 windeployqt6(
     TARGET Mupen64RR_Views_Qt6
     DEPLOY_TO_BUILD_DIR
-    ARGS --qmldir .
+    ARGS --qmldir "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 # clang-cl generates a faulty UAC manifest section. Since Qt is generating
 # it already, we just ignore it.

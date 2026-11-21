@@ -5,8 +5,11 @@
  */
 
 #include "Common.hpp"
-#include <Common.Views/IDialogService.hpp>
 #include <lua/LuaRealmManager.hpp>
+
+#include <Common/Assert.hpp>
+
+#include <Common.Views/IDialogService.hpp>
 #include <lua/LuaRendererManager.hpp>
 
 LuaRealmManager &LuaRealmManager::instance()

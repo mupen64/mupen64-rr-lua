@@ -7,6 +7,8 @@
 #include "Common.hpp"
 #include "ReorderableListView.hpp"
 
+#include <Common/Assert.hpp>
+
 namespace ReorderableListView
 {
 const auto CTX_KEY = "Mupen64_ReorderableListViewContext";

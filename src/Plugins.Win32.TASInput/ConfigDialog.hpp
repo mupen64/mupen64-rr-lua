@@ -6,6 +6,12 @@
 
 #pragma once
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
+#include <SDL3/SDL_events.h>
+
 namespace ConfigDialog
 {
 /**

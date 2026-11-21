@@ -5,6 +5,10 @@
  */
 
 #include "Common.hpp"
+#include <lua/LuaRealm.hpp>
+
+#include <Common/Assert.hpp>
+
 #include <Common.Views/ActionManager.hpp>
 #include <lua/LuaRealmManager.hpp>
 #include <lua/LuaRendererManager.hpp>

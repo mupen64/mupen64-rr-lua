@@ -6,6 +6,11 @@
 
 #include <Alloc.hpp>
 
+#include <cassert>
+#include <cstring>
+#include <mutex>
+#include <vector>
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -14,18 +19,15 @@
 
 #include <unistd.h>
 #include <sys/mman.h>
+#include <unordered_map>
 
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-#endif
-
-// https://github.com/mupen64plus/mupen64plus-core/blob/e170c409fb006aa38fd02031b5eefab6886ec125/src/device/r4300/recomp.c#L995
-
-#if defined(__linux__)
 static std::mutex page_size_map_lock;
 static std::unordered_map<void *, size_t> page_alloc_sizes;
+
 #endif
 
 // Buffers that have been superseded by realloc_exec but cannot be freed yet because

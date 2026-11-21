@@ -6,6 +6,16 @@
 
 #pragma once
 
+#include <string_view>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <Windows.h>
+#endif
+
 /**
  * \brief Asserts a condition at runtime.
  * \param condition The condition to assert.

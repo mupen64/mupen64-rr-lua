@@ -8,6 +8,6 @@
 -- (a repro for the bug here and what to look out for to verify that the manual test passes. can also be a copy-and-pasted issue description)
 --
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 -- (your code here)

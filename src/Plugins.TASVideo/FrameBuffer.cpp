@@ -9,7 +9,7 @@
 #include "FrameBuffer.hpp"
 #include "RSP.hpp"
 #include "RDP.hpp"
-#include "Textures.h"
+#include "Textures.hpp"
 #include "Combiner.hpp"
 #include "Types.hpp"
 

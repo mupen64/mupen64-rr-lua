@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 add_library(Mupen64RR_Plugins_TASVideo STATIC
     "VI.hpp"
+    "Textures.hpp"
     "Types.hpp"
     "Common.hpp"
     "S2DEX2.hpp"
@@ -84,6 +85,10 @@ if (MUPEN64RR_BUILD_WIN32)
     target_link_libraries(Mupen64RR_Plugins_TASVideo PRIVATE Mupen64RR_Plugins_Win32_Common)
 else()
     target_link_libraries(Mupen64RR_Plugins_TASVideo PRIVATE Mupen64RR_Plugins_Common)
+endif()
+
+if (MUPEN64RR_BUILD_QT6)
+    qt6_disable_unicode_defines(Mupen64RR_Plugins_TASVideo)
 endif()
 
 target_compile_features(Mupen64RR_Plugins_TASVideo PRIVATE cxx_std_26)

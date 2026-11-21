@@ -6,9 +6,18 @@
 
 #include "Plugin.hpp"
 
+#include <cstring>
+#include <print>
+#ifndef _WIN32
+#include <safeclib/safe_str_lib.h>
+#endif
+
 #include <QDir>
 #include <QStandardPaths>
+
 #include <decan.hpp>
+
+#include <Common/MiscHelpers.hpp>
 
 #include "Windowing.hpp"
 #include "EmuContext.hpp"

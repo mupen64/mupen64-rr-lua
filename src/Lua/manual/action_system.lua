@@ -17,7 +17,7 @@
 -- 8. Pressing "Parameterized Action..." prompts for a parameter with a prefilled value and a few hints, and prints it to the console.
 -- 9. Stopping the script removes the "Action API Demo" menu.
 
-dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+dofile(assert(debug.getinfo(1).source:sub(2):gsub("\\", "/"):match("^(.-)manual/[^/]+$")) .. "test_prelude.lua")
 
 error({ text = "hi"})
 local display_name = ""

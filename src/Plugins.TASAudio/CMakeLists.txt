@@ -45,6 +45,9 @@ set_target_properties(Mupen64RR_Plugins_TASAudio PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
+if (MUPEN64RR_BUILD_QT6)
+    qt6_disable_unicode_defines(Mupen64RR_Plugins_TASAudio)
+endif()
 
 add_compile_definitions(NOMINMAX)
 

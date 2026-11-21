@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cstring>
 #include <tmmintrin.h>
 #include "Types.hpp"
 

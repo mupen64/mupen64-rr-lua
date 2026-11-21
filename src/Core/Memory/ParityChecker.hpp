@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 /**
  * \brief A module that provides parity checking functionality based on a running hash of sync-determining emulator
  * state.

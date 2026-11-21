@@ -4,6 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Savestates.hpp"
+
+#include <Common/FNV1A.hpp>
+#include <Common/IOUtils.hpp>
+#include <Common/MiscHelpers.hpp>
+
 #include <Core.hpp>
 #include <Core/API.hpp>
 #include <Memory/FlashRAM.hpp>

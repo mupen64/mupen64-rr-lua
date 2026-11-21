@@ -5,13 +5,17 @@
  */
 
 #include "Common.hpp"
+
+#include <cmath>
+#include <Common/Assert.hpp>
+
 #include "TASVideo.hpp"
 #include "OpenGL.hpp"
 #include "Types.hpp"
 #include "N64.hpp"
 #include "gSP.hpp"
 #include "gDP.hpp"
-#include "Textures.h"
+#include "Textures.hpp"
 #include "Combiner.hpp"
 #include "VI.hpp"
 

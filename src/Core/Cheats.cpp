@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Core.hpp>
+#include "Cheats.hpp"
 
+#include <Common/IOUtils.hpp>
+#include <Common/StrUtils.hpp>
+
+#include <Core.hpp>
 #include <Memory/Memory.hpp>
 #include <Cheats.hpp>
 #include <R4300/R4300.hpp>

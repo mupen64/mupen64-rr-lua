@@ -7,14 +7,20 @@
 // ReSharper disable CppCStyleCast
 
 #include "Common.hpp"
+#include <plugin/Plugin.hpp>
+
+#include <latch>
+
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
-#include <plugin/Plugin.hpp>
+
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/ZEPlugin.hpp>
+
 #include <components/ConfigDialog.hpp>
 #include <components/Statusbar.hpp>
 #include <components/MGECompositor.hpp>
+
 #include <ThreadPool.hpp>
 #include <Common.Views/Messages.hpp>
 

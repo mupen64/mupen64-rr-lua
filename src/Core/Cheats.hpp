@@ -6,6 +6,13 @@
 
 #pragma once
 
+#include <filesystem>
+#include <stack>
+#include <string_view>
+#include <vector>
+
+#include <Core/API.hpp>
+
 void cht_execute();
 
 bool cht_compile(std::string_view code, CoreCheat &cheat);

@@ -12,6 +12,7 @@
 
 #include <Core/Types.hpp>
 #include <optional>
+#include <stack>
 
 #ifdef __cplusplus
 extern "C"

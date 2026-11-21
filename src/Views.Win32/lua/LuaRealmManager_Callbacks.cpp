@@ -5,8 +5,11 @@
  */
 
 #include "Common.hpp"
-
 #include <lua/LuaRealmManager.hpp>
+
+#include <queue>
+
+#include <Common/Assert.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \

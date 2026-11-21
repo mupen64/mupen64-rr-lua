@@ -7,6 +7,7 @@
 #pragma once
 
 #include <Core/API.hpp>
+#include <atomic>
 
 extern CoreParams *g_core;
 extern CoreCtx g_ctx;

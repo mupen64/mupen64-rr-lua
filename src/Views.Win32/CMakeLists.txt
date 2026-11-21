@@ -133,6 +133,9 @@ set_target_properties(Mupen64RR_Views_Win32 PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
 )
+if (MUPEN64RR_BUILD_QT6)
+    qt6_disable_unicode_defines(Mupen64RR_Views_Win32)
+endif()
 mupen64rr_copy_vcpkg_deps(Mupen64RR_Views_Win32)
 mupen64rr_copy_mingw_runtime(Mupen64RR_Views_Win32)
 mupen64rr_copy_msvc_runtime(Mupen64RR_Views_Win32)

@@ -4,6 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "ParityChecker.hpp"
+
+#include <span>
+
+#include <Common/FNV1A.hpp>
+
 #include <Core.hpp>
 #include <Memory/Savestates.hpp>
 #include <Memory/ParityChecker.hpp>

@@ -5,6 +5,7 @@
  */
 
 #include <Common.hpp>
+#include <Common/Assert.hpp>
 #include <Common.Views/Config.hpp>
 #include <components/FilePicker.hpp>
 #include <Common.Win32/WinFilePicker.hpp>

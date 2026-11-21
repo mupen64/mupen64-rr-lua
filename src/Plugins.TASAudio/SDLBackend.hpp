@@ -7,6 +7,10 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
+#include <vector>
+#include <SDL3/SDL_audio.h>
+
 #include "Config.hpp"
 
 namespace SDLAudio

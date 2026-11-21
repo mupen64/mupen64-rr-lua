@@ -6,6 +6,9 @@
 
 #pragma once
 
+#include <cmath>
+#include <cstring>
+
 static void mat_cpy(float m0[4][4], float m1[4][4])
 {
     std::memcpy(m0, m1, 16 * sizeof(float));
