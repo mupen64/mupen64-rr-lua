@@ -4,9 +4,16 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "GBI.hpp"
+
+#ifdef _WIN32
+#include <cstring>
+#else
+#include <safeclib/safe_str_lib.h>
+#endif
+
 #include "Common.hpp"
 #include "TASVideo.hpp"
-#include "GBI.hpp"
 #include "RDP.hpp"
 #include "RSP.hpp"
 #include "F3D.hpp"

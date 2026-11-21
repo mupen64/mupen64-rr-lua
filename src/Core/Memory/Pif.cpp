@@ -7,6 +7,8 @@
 #include "Pif.hpp"
 
 #include <cassert>
+#include <cstring>
+#include <thread>
 
 #include <Core.hpp>
 #include <Memory/Memory.hpp>

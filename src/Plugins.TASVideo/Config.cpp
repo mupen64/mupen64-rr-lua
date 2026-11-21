@@ -11,7 +11,7 @@
 #include "Common.hpp"
 #include "TASVideo.hpp"
 #include "RSP.hpp"
-#include "Textures.h"
+#include "Textures.hpp"
 #include "OpenGL.hpp"
 #include <nlohmann/json.hpp>
 using nlohmann::json;

@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include "OpenGL.hpp"
-#include "Textures.h"
+#include "Textures.hpp"
 #include "GBI.hpp"
 #include "RSP.hpp"
 #include "gDP.hpp"

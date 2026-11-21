@@ -5,6 +5,9 @@
  */
 
 #include "Common.hpp"
+
+#include <thread>
+
 #include <Common/IOUtils.hpp>
 #include <Core/R4300/VCR.hpp>
 #include <Core/R4300/R4300.hpp>

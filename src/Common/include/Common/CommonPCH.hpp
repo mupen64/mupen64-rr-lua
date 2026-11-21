@@ -52,7 +52,7 @@
 #include <print>
 #include <set>
 #include <unordered_set>
-#if !defined(_WIN32)
+#ifndef _WIN32
 // Implementation of C11 Annex K for Linux
 #include <safe_str_lib.h>
 #endif

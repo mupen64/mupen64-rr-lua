@@ -6,6 +6,8 @@
 
 #include "R4300.hpp"
 
+#include <thread>
+
 #include <Common/IOUtils.hpp>
 #include <Common/MiscHelpers.hpp>
 #include <Common/StrUtils.hpp>

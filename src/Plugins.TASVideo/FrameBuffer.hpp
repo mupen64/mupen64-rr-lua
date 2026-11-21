@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Types.hpp"
-#include "Textures.h"
+#include "Textures.hpp"
 
 struct FrameBuffer
 {

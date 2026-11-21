@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <span>
+#include <thread>
 
 #include <Core.hpp>
 #include <R4300/Timers.hpp>

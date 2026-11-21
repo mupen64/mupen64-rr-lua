@@ -5,6 +5,7 @@
  */
 
 #include <Core.hpp>
+
 #include <Memory/Memory.hpp>
 #include <Memory/Pif.hpp>
 #include <Memory/Savestates.hpp>
@@ -17,6 +18,8 @@
 #include <R4300/Tracelog.hpp>
 #include <R4300/VCR.hpp>
 #include <Cheats.hpp>
+
+
 
 CoreParams *g_core{};
 CoreCtx g_ctx{};

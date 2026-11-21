@@ -8,6 +8,8 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#else
+#include <csetjmp>
 #endif
 
 #include <Core.hpp>
@@ -15,7 +17,6 @@
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
 #include <Alloc.hpp>
-#include <utility>
 
 // NOTE: dynarec isn't compatible with the game debugger
 

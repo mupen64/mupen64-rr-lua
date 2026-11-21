@@ -7,8 +7,15 @@
 #include "VCR.hpp"
 
 #include <cassert>
+#include <cstring>
 #include <fstream>
 #include <span>
+
+#ifdef _WIN32
+#include <cstring>
+#else
+#include <safeclib/safe_str_lib.h>
+#endif
 
 #include <Common/IOUtils.hpp>
 #include <Common/StrUtils.hpp>

@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "gSP.hpp"
+
+#include <cmath>
+
 #include "Common.hpp"
-#include "TASVideo.hpp"
 #include "Types.hpp"
 #include "RSP.hpp"
 #include "GBI.hpp"
-#include "gSP.hpp"
 #include "gDP.hpp"
 #include "3DMath.hpp"
 #include "OpenGL.hpp"
-#include "CRC.hpp"
-#include "convert.hpp"
 #include "S2DEX.hpp"
 #include "VI.hpp"
 #include "DepthBuffer.hpp"

@@ -12,7 +12,7 @@
 #include "GBI.hpp"
 #include "OpenGL.hpp"
 #include "RSP.hpp"
-#include "Textures.h"
+#include "Textures.hpp"
 #include <Common.Win32/Common.hpp>
 #include <nlohmann/json.hpp>
 #include <WinDarkMode.h>

@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "RSP.hpp"
+
+#include <hqx.h>
+
 #include "Common.hpp"
 #include "TASVideo.hpp"
 #include "OpenGL.hpp"
@@ -17,7 +21,6 @@
 #include "FrameBuffer.hpp"
 #include "DepthBuffer.hpp"
 #include "GBI.hpp"
-#include <hqx.h>
 
 RSPInfo RSP;
 

@@ -15,6 +15,7 @@
 #include <R4300/Rom.hpp>
 #include <Core/Types.hpp>
 
+#include <atomic>
 #include <mutex>
 
 struct r4300

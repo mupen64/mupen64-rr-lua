@@ -8,6 +8,7 @@
 #include "HLE.hpp"
 
 #include <immintrin.h>
+#include <cstring>
 
 using namespace BuiltinTAS::TASRSP;
 

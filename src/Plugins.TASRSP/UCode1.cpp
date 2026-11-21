@@ -6,6 +6,8 @@
 
 #include "Main.hpp"
 #include "HLE.hpp"
+
+#include <cstring>
 #include <tmmintrin.h>
 
 using namespace BuiltinTAS::TASRSP;

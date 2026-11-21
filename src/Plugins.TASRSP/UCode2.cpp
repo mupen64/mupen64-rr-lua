@@ -8,6 +8,7 @@
 #include "HLE.hpp"
 
 #include <cassert>
+#include <cstring>
 
 using namespace BuiltinTAS::TASRSP;
 

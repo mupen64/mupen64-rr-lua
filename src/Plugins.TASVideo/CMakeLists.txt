@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 add_library(Mupen64RR_Plugins_TASVideo STATIC
     "VI.hpp"
+    "Textures.hpp"
     "Types.hpp"
     "Common.hpp"
     "S2DEX2.hpp"
