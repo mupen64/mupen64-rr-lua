@@ -6,6 +6,10 @@
 
 #include <Common/Assert.hpp>
 
+#include <format>
+#include <string>
+#include <SDL3/SDL_messagebox.h>
+
 namespace
 {
 [[noreturn]] void assertion_failed(std::string_view message)

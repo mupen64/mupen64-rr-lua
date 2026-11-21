@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 typedef enum
 {
     INST_UNDEF,

@@ -5,9 +5,13 @@
  */
 
 #include "Common.hpp"
+#include <action/ActionMenu.hpp>
+
+#include <set>
+
+#include <Common/Assert.hpp>
 #include <Common.Views/Messages.hpp>
 #include <Common.Views/ActionManager.hpp>
-#include <action/ActionMenu.hpp>
 #include <components/ParameterPalette.hpp>
 
 const auto MANAGED_MENU_CTX = "Mupen64_ManagedMenuContext";

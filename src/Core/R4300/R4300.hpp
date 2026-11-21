@@ -15,6 +15,8 @@
 #include <R4300/Rom.hpp>
 #include <Core/Types.hpp>
 
+#include <mutex>
+
 struct r4300
 {
     std::atomic<CoreSpeedMode> desired_speed_mode{CoreSpeedMode::Normal};

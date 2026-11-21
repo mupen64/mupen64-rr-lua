@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include "Config.hpp"
+
+#include <fstream>
+
+#include "Common.hpp"
 #include "TASVideo.hpp"
 #include "RSP.hpp"
 #include "Textures.h"

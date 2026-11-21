@@ -5,6 +5,7 @@
  */
 
 #include "Memory.hpp"
+
 #include "DMA.hpp"
 #include "FlashRAM.hpp"
 #include "Pif.hpp"

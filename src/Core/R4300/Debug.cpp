@@ -4,10 +4,16 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Debug.hpp"
+
+#include <array>
+#include <shared_mutex>
+
 #include <Core.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Debug.hpp>
 #include <R4300/Disasm.hpp>
+
 
 struct Breakpoint
 {

@@ -6,6 +6,9 @@
 #pragma once
 
 #include <filesystem>
+#include <Common/IOUtils.hpp>
+#include <Common/StrUtils.hpp>
+
 #if defined(_WIN32)
 #include <Common.Win32/Common.hpp>
 #elif defined(__linux__)

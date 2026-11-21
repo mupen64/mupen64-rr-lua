@@ -5,5 +5,6 @@
  */
 
 #pragma once
+#include <cstdint>
 
 extern const uint8_t g_pif_lut[269][2][16];

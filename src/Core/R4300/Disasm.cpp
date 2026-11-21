@@ -5,7 +5,11 @@
  */
 
 #include "Disasm.hpp"
+
+#include <cstdarg>
+
 #include <Core/API.hpp>
+
 
 typedef enum INSTSETOP_t
 {

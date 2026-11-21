@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Pif.hpp"
+
+#include <cassert>
+
 #include <Core.hpp>
 #include <Memory/Memory.hpp>
 #include <Memory/Pif.hpp>

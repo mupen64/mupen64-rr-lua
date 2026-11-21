@@ -5,6 +5,9 @@
  */
 
 #include "Common.hpp"
+
+#include <Common/Assert.hpp>
+
 #include "TASVideo.hpp"
 #include "OpenGL.hpp"
 #include "Types.hpp"

@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 void print_queue();
 void compare_interrupt();
 void gen_dp();

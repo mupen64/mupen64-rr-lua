@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Summercart.hpp"
+
+#include <Common/IOUtils.hpp>
+
 #include <Core.hpp>
 #include <Memory/Memory.hpp>
 #include <Memory/Summercart.hpp>

@@ -4,10 +4,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Core.hpp>
-// #include <PlatformService.h>
+#include "Rom.hpp"
 
 #include <md5.h>
+
+#include <Common/IOUtils.hpp>
+#include <Common/MiscHelpers.hpp>
+
+#include <Core.hpp>
 #include <Memory/Memory.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>

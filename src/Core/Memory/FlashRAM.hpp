@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 extern int32_t use_flashram;
 
 void init_flashram();

@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <expected>
+
+#include <Core/API.hpp>
+
 #include <lua/LuaTypes.hpp>
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaWindow.hpp>

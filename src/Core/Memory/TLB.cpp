@@ -5,6 +5,9 @@
  */
 
 #include "TLB.hpp"
+
+#include <xxh64.h>
+
 #include "Memory.hpp"
 #include <Core.hpp>
 #include <R4300/Exception.hpp>

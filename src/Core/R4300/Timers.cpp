@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Timers.hpp"
+
+#include <chrono>
+#include <span>
+
 #include <Core.hpp>
 #include <R4300/Timers.hpp>
 #include <Core/API.hpp>

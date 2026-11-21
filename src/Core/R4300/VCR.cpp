@@ -4,6 +4,15 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "VCR.hpp"
+
+#include <cassert>
+#include <fstream>
+#include <span>
+
+#include <Common/IOUtils.hpp>
+#include <Common/StrUtils.hpp>
+
 #include <Core/Types.hpp>
 #include <Core.hpp>
 #include <Cheats.hpp>

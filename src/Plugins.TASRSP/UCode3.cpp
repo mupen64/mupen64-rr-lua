@@ -7,6 +7,8 @@
 #include "Main.hpp"
 #include "HLE.hpp"
 
+#include <cassert>
+
 using namespace BuiltinTAS::TASRSP;
 
 static void SPNOOP()

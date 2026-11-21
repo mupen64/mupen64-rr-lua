@@ -6,6 +6,9 @@
 
 #include "Common.hpp"
 #include <ConfigDialog.hpp>
+
+#include <variant>
+
 #include <Main.hpp>
 #include <NewConfig.hpp>
 #include <GamepadManager.hpp>

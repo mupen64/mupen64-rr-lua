@@ -12,7 +12,6 @@ Checks: >
   -bugprone-macro-parentheses,
   -bugprone-reserved-identifier,-cert-dcl37-c,-cert-dcl51-cpp,
   -cert-dcl21-cpp,
-  -misc-include-cleaner,
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -misc-use-anonymous-namespace,
