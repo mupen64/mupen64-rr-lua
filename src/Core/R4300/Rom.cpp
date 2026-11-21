@@ -108,6 +108,26 @@ uint32_t rom_get_vis_per_second(uint16_t country_code)
     }
 }
 
+CoreSystemType rom_system_type_for_country_code(const uint16_t country_code)
+{
+    switch (country_code & 0xFF)
+    {
+    case 0x37:
+    case 0x41:
+    case 0x45:
+    case 0x4a:
+        return CoreSystemType::NTSC;
+    default:
+        return CoreSystemType::PAL;
+    }
+}
+
+uint32_t rom_get_audio_sample_rate()
+{
+    const uint32_t clock = g_sys_type == CoreSystemType::NTSC ? 48681812 : 49656530;
+    return clock / (ai_register.ai_dacrate + 1);
+}
+
 void rom_byteswap(uint8_t *rom)
 {
     uint8_t tmp = 0;
@@ -228,29 +248,7 @@ bool rom_load(std::filesystem::path path)
     auto roml = (uint32_t *)rom;
     for (size_t i = 0; i < (rom_size / 4); i++) roml[i] = std::byteswap(roml[i]);
 
-    switch (ROM_HEADER.Country_code & 0xFF)
-    {
-    case 0x44:
-    case 0x46:
-    case 0x49:
-    case 0x50:
-    case 0x53:
-    case 0x55:
-    case 0x58:
-    case 0x59:
-        g_sys_type = CoreSystemType::PAL;
-        break;
-    case 0x37:
-    case 0x41:
-    case 0x45:
-    case 0x4a:
-        g_sys_type = CoreSystemType::NTSC;
-        break;
-    default:
-        g_core->log_warn(std::format("Unknown ccode: {:#06x}. Assuming PAL.", ROM_HEADER.Country_code));
-        g_sys_type = CoreSystemType::PAL;
-        break;
-    }
+    g_sys_type = rom_system_type_for_country_code(ROM_HEADER.Country_code);
 
     if (rom_cache.size() < g_core->cfg->rom_cache_size)
     {

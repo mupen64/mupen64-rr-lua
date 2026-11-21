@@ -26,7 +26,7 @@ constexpr auto readscreen_missing_msg = "The current video plugin doesn't suppor
 std::filesystem::path m_current_path;
 
 // 0x30018
-int m_audio_freq = 33000;
+int m_audio_sample_rate = 33000;
 int m_audio_bitrate = 16;
 long double m_video_frame = 0;
 long double m_audio_frame = 0;
@@ -231,35 +231,6 @@ void get_video_dimensions(int32_t *width, int32_t *height)
     }
 }
 
-// Same mapping as the core's (R4300/Rom.cpp), which assumes PAL for unknown country codes.
-static CoreSystemType system_type_from_ccode(const uint16_t country_code)
-{
-    switch (country_code & 0xFF)
-    {
-    case 0x37:
-    case 0x41:
-    case 0x45:
-    case 0x4a:
-        return CoreSystemType::NTSC;
-    default:
-        return CoreSystemType::PAL;
-    }
-}
-
-static int compute_audio_freq(const CoreSystemType type)
-{
-    switch (type)
-    {
-    case CoreSystemType::NTSC:
-        return (int)(48681812 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
-    case CoreSystemType::PAL:
-        return (int)(49656530 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
-    default:
-        assert(false);
-        return m_audio_freq;
-    }
-}
-
 bool stop_capture_impl()
 {
     std::lock_guard lock(m_mutex);
@@ -348,8 +319,7 @@ bool start_capture_impl(
     // restored the register), so read the current rate rather than the last change event.
     if (g_main_ctx.core_ctx->ai_register->ai_dacrate != 0)
     {
-        const auto type = system_type_from_ccode(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
-        m_audio_freq = compute_audio_freq(type);
+        m_audio_sample_rate = (int)g_main_ctx.core_ctx->vr_get_audio_sample_rate();
     }
 
     m_encoder_params = Encoder::Params{
@@ -357,7 +327,7 @@ bool start_capture_impl(
         .width = (uint32_t)m_video_width,
         .height = (uint32_t)m_video_height,
         .fps = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code),
-        .arate = (uint32_t)m_audio_freq,
+        .arate = (uint32_t)m_audio_sample_rate,
         .ask_for_capture_settings = ask_for_capture_settings,
     };
 
@@ -472,21 +442,21 @@ void ai_len_changed()
     }
 }
 
-void ai_dacrate_changed(CoreSystemType type)
+void ai_dacrate_changed(CoreSystemType)
 {
     std::lock_guard lock(m_mutex);
 
     m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
 
-    m_audio_freq = compute_audio_freq(type);
-    g_view_logger->info("[CaptureManager] m_audio_freq: {}", m_audio_freq);
+    m_audio_sample_rate = (int)g_main_ctx.core_ctx->vr_get_audio_sample_rate();
+    g_view_logger->info("[CaptureManager] m_audio_sample_rate: {}", m_audio_sample_rate);
 
-    if (m_capturing && (uint32_t)m_audio_freq != m_encoder_params.arate)
+    if (m_capturing && (uint32_t)m_audio_sample_rate != m_encoder_params.arate)
     {
         g_view_logger->warn(
-            "[CaptureManager]: The audio rate changed to {} Hz during capture, but the stream keeps its starting rate "
-            "of {} Hz.",
-            m_audio_freq, m_encoder_params.arate);
+            "[CaptureManager]: The audio sample rate changed to {} Hz during capture, but the stream keeps its "
+            "starting sample rate of {} Hz.",
+            m_audio_sample_rate, m_encoder_params.arate);
     }
 }
 
