@@ -7,7 +7,7 @@
 #include <R4300/Recomp.hpp>
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #else
 #include <csetjmp>
 #endif
