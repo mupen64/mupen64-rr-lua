@@ -32,3 +32,12 @@ Full contribution rules live in `CONTRIBUTING.md`; this file is a quick brief fo
 - Copyright header on every non-library file (`SPDX-License-Identifier: GPL-2.0-or-later`); enforced by CI, see `tools/check_headers.py`. See `CONTRIBUTING.md` for the exact text. Credits belong in `NOTICE`, not in file headers.
 - Commits to `main` follow Conventional Commits (`feat(ConfigDialog): ...`); only squash merges land on `main`.
 - PRs target `main`.
+
+## Agent Guidelines
+
+- **AI attribution:** Append a Git trailer at the end of every commit message you participate in:
+  - `Assisted-by: <model>` when assisting a human author.
+  - `Made-by: <model>` when the commit is mostly agent-written.
+- **Reuse before writing:** Search `src/Common` and existing modules before introducing new helpers, utilities, or types. Do not reinvent existing functionality.
+- **No hacks or workarounds:** Fit changes into the existing architecture. Do not patch around issues with brittle workarounds, unnecessary wrappers, or warning suppressions (e.g., `NOLINT`) to silence `clang-tidy`.
+- **Clean comments:** Keep comments brief, plain, and direct. Explain *why* non-obvious logic exists; avoid vague jargon or restating what the code already says.
