@@ -15,7 +15,6 @@
 
 constexpr auto control_class_name = "game_control";
 constexpr DXGI_FORMAT texture_format = DXGI_FORMAT_B8G8R8A8_UNORM;
-constexpr float clear_color[4] = {0, 0, 0, 1};
 
 const std::string VERTEX_SHADER = R"(
     cbuffer CB : register(b0) {}
@@ -133,14 +132,6 @@ static void create_d3d(const HWND hwnd)
 
     factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
-    // create RTV for swapchain back buffer
-    ComPtr<ID3D11Texture2D> back_buffer;
-    hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
-    need(hr, "GetBuffer");
-
-    hr = mge_context.device->CreateRenderTargetView(back_buffer.Get(), nullptr, &mge_context.rtv);
-    need(hr, "CreateRenderTargetView");
-
     // Point sampler for nearest-neighbour scaling
     D3D11_SAMPLER_DESC sampdesc = {};
     sampdesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
@@ -247,23 +238,6 @@ static void render_and_present()
     ID3D11RenderTargetView *rtv = mge_context.rtv.Get();
     mge_context.context->OMSetRenderTargets(1, &rtv, nullptr);
 
-    ComPtr<ID3D11Texture2D> bb;
-    HRESULT hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&bb));
-    need(hr, "GetBuffer");
-
-    D3D11_TEXTURE2D_DESC bbdesc;
-    bb->GetDesc(&bbdesc);
-    D3D11_VIEWPORT vp;
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = (float)bbdesc.Width;
-    vp.Height = (float)bbdesc.Height;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    mge_context.context->RSSetViewports(1, &vp);
-
-    mge_context.context->ClearRenderTargetView(mge_context.rtv.Get(), clear_color);
-
     // Bind SRV
     ID3D11ShaderResourceView *srvs[] = {mge_context.srv.Get()};
     mge_context.context->PSSetShaderResources(0, 1, srvs);
@@ -275,7 +249,7 @@ static void render_and_present()
     ID3D11ShaderResourceView *null_srv[1] = {nullptr};
     mge_context.context->PSSetShaderResources(0, 1, null_srv);
 
-    hr = mge_context.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
+    mge_context.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
 }
 
 static void recreate_mge_context_d3d()
@@ -286,6 +260,28 @@ static void recreate_mge_context_d3d()
     {
         create_d3d(mge_context.hwnd);
     }
+    else
+    {
+        mge_context.context->OMSetRenderTargets(0, nullptr, nullptr);
+        mge_context.rtv.Reset();
+        const HRESULT hr = mge_context.swapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+        need(hr, "ResizeBuffers");
+    }
+
+    ComPtr<ID3D11Texture2D> back_buffer;
+    HRESULT hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
+    need(hr, "GetBuffer");
+
+    hr = mge_context.device->CreateRenderTargetView(back_buffer.Get(), nullptr, &mge_context.rtv);
+    need(hr, "CreateRenderTargetView");
+
+    D3D11_TEXTURE2D_DESC desc;
+    back_buffer->GetDesc(&desc);
+    D3D11_VIEWPORT viewport{};
+    viewport.Width = static_cast<float>(desc.Width);
+    viewport.Height = static_cast<float>(desc.Height);
+    viewport.MaxDepth = 1.0f;
+    mge_context.context->RSSetViewports(1, &viewport);
 
     _aligned_free(mge_context.rgba_buffer);
 
@@ -295,25 +291,6 @@ static void recreate_mge_context_d3d()
     need(mge_context.rgba_buffer, "Failed to allocate MGE buffers");
 
     ZeroMemory(mge_context.rgba_buffer, buffer_size);
-
-    RECT rc;
-    need(GetClientRect(mge_context.hwnd, &rc), "GetClientRect failed");
-    const UINT w = static_cast<UINT>(rc.right - rc.left);
-    const UINT h = static_cast<UINT>(rc.bottom - rc.top);
-
-    if (mge_context.swapchain)
-    {
-        mge_context.rtv.Reset();
-        HRESULT hr = mge_context.swapchain->ResizeBuffers(2, w, h, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
-        need(hr, "ResizeBuffers");
-
-        ComPtr<ID3D11Texture2D> backBuffer;
-        hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-        need(hr, "GetBuffer");
-
-        hr = mge_context.device->CreateRenderTargetView(backBuffer.Get(), nullptr, &mge_context.rtv);
-        need(hr, "CreateRenderTargetView");
-    }
 
     ensure_texture_exists_with_size(mge_context.width, mge_context.height);
 }
