@@ -9,7 +9,6 @@
 #include <lua/LuaRenderer.hpp>
 
 #include <atomic>
-#include <optional>
 #include <thread>
 #include <vector>
 

@@ -6,7 +6,6 @@
 
 #include "Timers.hpp"
 
-#include <chrono>
 #include <span>
 #include <thread>
 

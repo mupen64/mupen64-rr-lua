@@ -5,7 +5,6 @@
  */
 #include "MovieMetadata.hpp"
 
-#include <type_traits>
 
 #include <QPointer>
 #include <QThreadPool>

@@ -8,7 +8,6 @@
 #include "Main.hpp"
 
 #include <array>
-#include <chrono>
 #include <thread>
 #include <stdexcept>
 #include <SDL3/SDL_init.h>

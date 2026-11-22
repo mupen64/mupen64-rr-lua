@@ -10,7 +10,6 @@
 #include <winhttp.h>
 #include <components/TextEditDialog.hpp>
 #include <components/UpdateChecker.hpp>
-#include <nlohmann/json.hpp>
 
 namespace UpdateChecker
 {

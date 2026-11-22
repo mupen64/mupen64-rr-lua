@@ -14,7 +14,6 @@
 #include "RSP.hpp"
 #include "Textures.hpp"
 #include <Common.Win32/Common.hpp>
-#include <nlohmann/json.hpp>
 #include <WinDarkMode.h>
 using nlohmann::json;
 

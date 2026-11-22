@@ -5,7 +5,6 @@
  */
 #pragma once
 
-#include <future>
 #include <functional>
 #include <mutex>
 #include <unordered_map>

@@ -10,7 +10,6 @@
 #include <Common.Views/Messages.hpp>
 #include <ThreadPool.hpp>
 #include <argh.h>
-#include <nlohmann/json.hpp>
 #include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <components/CLI.hpp>

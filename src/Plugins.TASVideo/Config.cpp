@@ -13,7 +13,6 @@
 #include "RSP.hpp"
 #include "Textures.hpp"
 #include "OpenGL.hpp"
-#include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #define CONFIG_FILE_NAME "TASVideo.json"

@@ -15,7 +15,6 @@
 #include "Rom.hpp"
 #include <Core.hpp>
 
-#include <condition_variable>
 #include <Memory/Memory.hpp>
 #include <Memory/Pif.hpp>
 #include <Memory/Savestates.hpp>

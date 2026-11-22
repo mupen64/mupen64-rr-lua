@@ -7,7 +7,6 @@
 #include "EmuContext.hpp"
 #include <Core/API.hpp>
 
-#include <type_traits>
 
 namespace LuaInternal
 {

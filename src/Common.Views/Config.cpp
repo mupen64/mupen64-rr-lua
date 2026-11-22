@@ -5,7 +5,6 @@
  */
 
 #include <Common.Views/App.hpp>
-#include <nlohmann/json.hpp>
 
 #include <Common/IOUtils.hpp>
 

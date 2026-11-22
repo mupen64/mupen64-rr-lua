@@ -14,6 +14,8 @@
 #include <bit>
 #include <concepts>
 #include <charconv>
+#include <chrono>
+#include <condition_variable>
 #include <cassert>
 #include <cctype>
 #include <cfloat>
@@ -28,15 +30,18 @@
 #include <format>
 #include <fstream>
 #include <functional>
+#include <future>
 #include <iterator>
 #include <initializer_list>
 #include <locale>
+#include <limits>
 #include <map>
 #include <unordered_map>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <numeric>
+#include <optional>
 #include <queue>
 #include <ranges>
 #include <span>
@@ -45,6 +50,8 @@
 #include <string_view>
 #include <system_error>
 #include <thread>
+#include <type_traits>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <latch>
@@ -58,6 +65,7 @@
 #endif
 
 #include <xxh64.h>
+#include <nlohmann/json.hpp>
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>

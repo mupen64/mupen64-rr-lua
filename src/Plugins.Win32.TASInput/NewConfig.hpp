@@ -7,7 +7,6 @@
 #pragma once
 
 #include <SDL3/SDL_gamepad.h>
-#include <nlohmann/json.hpp>
 
 #define CONFIG_FILE_NAME "TASInput.json"
 

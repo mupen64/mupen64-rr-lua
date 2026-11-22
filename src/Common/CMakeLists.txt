@@ -32,6 +32,7 @@ target_link_libraries(Mupen64RR_Common PUBLIC
     PkgConfig::lz4
     vendor::xxhash64
     SDL3::SDL3
+    nlohmann_json::nlohmann_json
 )
 
 # only MSVCRT implements C11 Annex K, libsafec is needed on other platforms

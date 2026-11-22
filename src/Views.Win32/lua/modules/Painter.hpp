@@ -20,12 +20,10 @@
 #include <dwrite_1.h>
 #include <format>
 #include <iterator>
-#include <limits>
 #include <memory>
 #include <new>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 inline bool operator==(const D2D1_COLOR_F &a, const D2D1_COLOR_F &b)

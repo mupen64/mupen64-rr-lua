@@ -8,7 +8,6 @@
 #include <Common.Views/App.hpp>
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/Hotkey.hpp>
-#include <nlohmann/json.hpp>
 
 constexpr auto flat_field_key = "config";
 

@@ -6,7 +6,6 @@
 
 #pragma once
 #include <array>
-#include <future>
 
 #include <QObject>
 #include <QQmlEngine>
