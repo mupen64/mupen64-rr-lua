@@ -22,7 +22,7 @@ namespace
 {
 struct LuaHelperContext
 {
-    std::unordered_map<lua_State *, std::unordered_set<uintptr_t *>> callback_tokens_by_state;
+    std::unordered_map<const void *, std::unordered_set<uintptr_t *>> callback_tokens_by_registry;
 };
 
 LuaHelperContext g_ctx;
@@ -36,7 +36,7 @@ uintptr_t *lua_optcallback(lua_State *L, int i)
     }
 
     const auto key = new uintptr_t();
-    g_ctx.callback_tokens_by_state[L].insert(key);
+    g_ctx.callback_tokens_by_registry[lua_topointer(L, LUA_REGISTRYINDEX)].insert(key);
 
     lua_pushvalue(L, i);
     lua_pushlightuserdata(L, key);
@@ -78,8 +78,8 @@ uintptr_t *lua_tocallback(lua_State *L, const int i)
 
 void lua_pushcallback(lua_State *L, uintptr_t *token, bool free)
 {
-    const auto context = g_ctx.callback_tokens_by_state.find(L);
-    if (context == g_ctx.callback_tokens_by_state.end() || !context->second.contains(token))
+    const auto context = g_ctx.callback_tokens_by_registry.find(lua_topointer(L, LUA_REGISTRYINDEX));
+    if (context == g_ctx.callback_tokens_by_registry.end() || !context->second.contains(token))
     {
         lua_pushnil(L);
         return;
@@ -95,8 +95,8 @@ void lua_pushcallback(lua_State *L, uintptr_t *token, bool free)
 
 void lua_freecallback(lua_State *L, uintptr_t *token)
 {
-    const auto context = g_ctx.callback_tokens_by_state.find(L);
-    if (context == g_ctx.callback_tokens_by_state.end())
+    const auto context = g_ctx.callback_tokens_by_registry.find(lua_topointer(L, LUA_REGISTRYINDEX));
+    if (context == g_ctx.callback_tokens_by_registry.end())
     {
         return;
     }
@@ -116,20 +116,20 @@ void lua_freecallback(lua_State *L, uintptr_t *token)
     delete token;
     if (tokens.empty())
     {
-        g_ctx.callback_tokens_by_state.erase(context);
+        g_ctx.callback_tokens_by_registry.erase(context);
     }
 }
 
 void lua_freecallbacks(lua_State *L)
 {
-    const auto context = g_ctx.callback_tokens_by_state.find(L);
-    if (context == g_ctx.callback_tokens_by_state.end())
+    const auto context = g_ctx.callback_tokens_by_registry.find(lua_topointer(L, LUA_REGISTRYINDEX));
+    if (context == g_ctx.callback_tokens_by_registry.end())
     {
         return;
     }
 
     const auto tokens = std::move(context->second);
-    g_ctx.callback_tokens_by_state.erase(context);
+    g_ctx.callback_tokens_by_registry.erase(context);
     for (auto *token : tokens)
     {
         lua_pushlightuserdata(L, token);

@@ -125,7 +125,7 @@ const luaL_Reg SAVESTATE_FUNCS[] = {{"do_file", LuaCore::Savestate::do_file}, {"
 const luaL_Reg IOHELPER_FUNCS[] = {{"filediag", LuaCore::IOHelper::LuaFileDialog}, {NULL, NULL}};
 
 const luaL_Reg AVI_FUNCS[] = {
-    {"startcapture", LuaCore::Avi::StartCapture}, {"stopcapture", LuaCore::Avi::StopCapture}, {NULL, NULL}};
+    {"start", LuaCore::Avi::start}, {"stop", LuaCore::Avi::stop}, {"capturing", LuaCore::Avi::capturing}, {NULL, NULL}};
 
 const luaL_Reg HOTKEY_FUNCS[] = {{"prompt", LuaCore::Hotkey::prompt}, {NULL, NULL}};
 

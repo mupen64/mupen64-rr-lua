@@ -2207,15 +2207,19 @@ function iohelper.filediag(filter, type) end
 -- avi functions
 --#region
 
----Begins an avi recording using the previously saved capture settings.
----It is saved to `filename`.
----@param filename string
----@return nil
-function avi.startcapture(filename) end
+---Starts recording asynchronously using the configured encoder and saved capture settings.
+---If a recording is already active, it is stopped before the new one starts.
+---@param path string Output path, with the file extension chosen by the encoder.
+---@param callback? fun(success: boolean) Called once when the start request completes.
+function avi.start(path, callback) end
 
----Stops avi recording.
----@return nil
-function avi.stopcapture() end
+---Stops recording asynchronously. Stopping when idle also succeeds.
+---@param callback? fun(success: boolean) Called once when the stop request completes.
+function avi.stop(callback) end
+
+---Returns whether a recording is currently active.
+---@return boolean
+function avi.capturing() end
 
 --#endregion
 
@@ -2566,6 +2570,25 @@ function __mupen_apply_shims()
     ---@param fast_forward boolean
     function emu.set_ff(fast_forward)
         emu.set_speed_mode(fast_forward and Mupen.CoreSpeedMode.FastForward or Mupen.CoreSpeedMode.Normal)
+    end
+
+    ---Starts recording using the saved capture settings.
+    ---@deprecated Use `avi.start` instead.
+    ---@param filename string
+    function avi.startcapture(filename)
+        if avi.capturing() then
+            error("Tried to start AVI capture when one was already in progress", 2)
+        end
+        avi.start(filename)
+    end
+
+    ---Stops the active recording.
+    ---@deprecated Use `avi.stop` instead.
+    function avi.stopcapture()
+        if not avi.capturing() then
+            error("Tried to end AVI capture when none was in progress", 2)
+        end
+        avi.stop()
     end
 
     ---Saves a savestate to `filename`.
