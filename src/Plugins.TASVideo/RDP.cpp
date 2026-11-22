@@ -224,15 +224,15 @@ void RDP_TexRectFlip(u32 w0, u32 w1)
     u32 w3 = *(u32 *)&RDRAM[RSP.PC[RSP.PCi] + 4];
     RSP.PC[RSP.PCi] += 8;
 
-    gDPTextureRectangleFlip(_FIXED2FLOAT(_SHIFTR(w1, 12, 12), 2), // ulx
-        _FIXED2FLOAT(_SHIFTR(w1, 0, 12), 2),                      // uly
-        _FIXED2FLOAT(_SHIFTR(w0, 12, 12), 2),                     // lrx
-        _FIXED2FLOAT(_SHIFTR(w0, 0, 12), 2),                      // lry
-        _SHIFTR(w1, 24, 3),                                       // tile
-        _FIXED2FLOAT((s16)_SHIFTR(w2, 16, 16), 5),                // s
-        _FIXED2FLOAT((s16)_SHIFTR(w2, 0, 16), 5),                 // t
-        _FIXED2FLOAT((s16)_SHIFTR(w3, 16, 16), 10),               // dsdx
-        _FIXED2FLOAT((s16)_SHIFTR(w3, 0, 16), 10));               // dsdy
+    gDPTextureRectangle(_FIXED2FLOAT(_SHIFTR(w1, 12, 12), 2), // ulx
+        _FIXED2FLOAT(_SHIFTR(w1, 0, 12), 2),                  // uly
+        _FIXED2FLOAT(_SHIFTR(w0, 12, 12), 2),                 // lrx
+        _FIXED2FLOAT(_SHIFTR(w0, 0, 12), 2),                  // lry
+        _SHIFTR(w1, 24, 3),                                   // tile
+        _FIXED2FLOAT((s16)_SHIFTR(w2, 16, 16), 5),            // s
+        _FIXED2FLOAT((s16)_SHIFTR(w2, 0, 16), 5),             // t
+        _FIXED2FLOAT((s16)_SHIFTR(w3, 16, 16), 10),           // dsdy
+        _FIXED2FLOAT((s16)_SHIFTR(w3, 0, 16), 10), true);     // dtdx
 }
 
 void RDP_TexRect(u32 w0, u32 w1)
