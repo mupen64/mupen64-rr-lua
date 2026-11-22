@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Config.hpp"
+#include "Textures.hpp"
 #include "gSP.hpp"
 
 struct GLVertex
@@ -41,9 +42,6 @@ struct GLInfo
     bool stretchBackgrounds{};
     bool stretchFullscreenRects{};
 
-    // Whether any non-orthographic geometry has been processed in the current display list.
-    bool frameHas3D{};
-
     int maxTextureUnits; // TNT = 2, GeForce = 2-4, Rage 128 = 2, Radeon = 3-6
 
     uint8_t smoothing;
@@ -69,8 +67,6 @@ struct GLInfo
     // Clears the game with black color every frame regardless of what N64 asks
     int32_t clear_override = TRUE;
 
-    bool headless{};
-
     bool isGLES{};
 };
 
@@ -81,12 +77,10 @@ struct GLcolor
     float r{}, g{}, b{}, a{};
 };
 
-extern void *gCapturedPixels;
-
-void OGL_ReadPixels();
+void OGL_ReadPixels(void *buffer);
 bool OGL_Start();
 void OGL_Stop();
-void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2, bool stretch = false);
+void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2);
 void OGL_DrawTriangles();
 void OGL_DrawLine(SPVertex *vertices, int v0, int v1, float width);
 void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color);
@@ -96,6 +90,6 @@ void OGL_UpdateScale();
 void OGL_SetIdentityProjection();
 void OGL_SetOrthoProjection(float left, float right, float bottom, float top, float znear, float zfar);
 void OGL_ClearDepthBuffer();
-void OGL_ClearColorBuffer(float *color);
+void OGL_ClearFramebuffer(GLbitfield mask);
 void OGL_ResizeWindow();
 bool OGL_DestroyContext();

@@ -597,7 +597,6 @@ void EmuContext::startDialogForCoreResult(CoreResult result)
 
 void CoreUtil::clear_plugin_funcs(CoreParams &params)
 {
-    params.video_process_dlist = [](auto...) {};
     params.video_process_rdp_list = [](auto...) {};
     params.video_show_cfb = [](auto...) {};
     params.video_vi_status_changed = [](auto...) {};

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "FrameBuffer.hpp"
+#include "Types.hpp"
 
 #define CHANGED_RENDERMODE 0x001
 #define CHANGED_CYCLETYPE 0x002
@@ -21,7 +21,6 @@
 #define TEXTUREMODE_NORMAL 0
 #define TEXTUREMODE_TEXRECT 1
 #define TEXTUREMODE_BGIMAGE 2
-#define TEXTUREMODE_FRAMEBUFFER 3
 
 #define LOADTYPE_BLOCK 0
 #define LOADTYPE_TILE 1
@@ -83,14 +82,13 @@ struct gDPTile
         };
     };
 
-    FrameBuffer *frameBuffer;
     u32 maskt, masks;
     u32 shiftt, shifts;
     f32 fuls, fult, flrs, flrt;
     u32 uls, ult, lrs, lrt;
 };
 
-struct gDPInfo
+struct DPPipelineState
 {
     struct
     {
@@ -159,7 +157,7 @@ struct gDPInfo
 
     gDPCombine combine;
 
-    gDPTile tiles[8], *loadTile;
+    gDPTile tiles[8];
 
     struct
     {
@@ -222,14 +220,18 @@ struct gDPInfo
         u32 width, height;
     } texRect;
 
-    u32 changed;
-
     // u16 palette[256];
     u32 paletteCRC16[16];
     u32 paletteCRC256;
     u32 half_1, half_2;
     u32 textureMode;
     u32 loadType;
+};
+
+struct gDPInfo : DPPipelineState
+{
+    gDPTile *loadTile;
+    u32 changed;
 };
 
 extern gDPInfo gDP;

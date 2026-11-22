@@ -4,15 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include "TASVideo.hpp"
+#include "GBI.hpp"
 #include "VI.hpp"
-#include "OpenGL.hpp"
 #include "N64.hpp"
-#include "gSP.hpp"
-#include "gDP.hpp"
-#include "RSP.hpp"
-#include "FrameBuffer.hpp"
 
 VIInfo VI;
 
@@ -36,16 +30,4 @@ void VI_UpdateSize()
 
     if (VI.width == 0.0f) VI.width = 320.0f;
     if (VI.height == 0.0f) VI.height = 240.0f;
-}
-
-void VI_UpdateScreen()
-{
-    glFinish();
-
-    if (gSP.changed & CHANGED_COLORBUFFER)
-    {
-        gSP.changed &= ~CHANGED_COLORBUFFER;
-    }
-
-    glFinish();
 }

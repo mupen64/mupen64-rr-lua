@@ -5,9 +5,8 @@
  */
 
 #include "Common.hpp"
-#include "TASVideo.hpp"
 #include "F3D.hpp"
-#include "F3DPD.hpp"
+#include "L3D.hpp"
 #include "N64.hpp"
 #include "RSP.hpp"
 #include "RDP.hpp"
@@ -15,17 +14,17 @@
 #include "gDP.hpp"
 #include "GBI.hpp"
 
-void F3DPD_Vtx(u32 w0, u32 w1)
+void L3D_Line3D(u32 w0, u32 w1)
 {
-    gSPCIVertex(w1, _SHIFTR(w0, 20, 4) + 1, _SHIFTR(w0, 16, 4));
+    u32 wd = _SHIFTR(w1, 0, 8);
+
+    if (wd == 0)
+        gSPLine3D(_SHIFTR(w1, 16, 8) / 10, _SHIFTR(w1, 8, 8) / 10, _SHIFTR(w1, 24, 8));
+    else
+        gSPLineW3D(_SHIFTR(w1, 16, 8) / 10, _SHIFTR(w1, 8, 8) / 10, wd, _SHIFTR(w1, 24, 8));
 }
 
-void F3DPD_VtxColorBase(u32 w0, u32 w1)
-{
-    gSPSetVertexColorBase(w1);
-}
-
-void F3DPD_Init()
+void L3D_Init()
 {
     // Set GeometryMode flags
     GBI_InitFlags(F3D);
@@ -37,14 +36,14 @@ void F3DPD_Init()
     GBI_SetGBI(G_MTX, F3D_MTX, F3D_Mtx);
     GBI_SetGBI(G_RESERVED0, F3D_RESERVED0, F3D_Reserved0);
     GBI_SetGBI(G_MOVEMEM, F3D_MOVEMEM, F3D_MoveMem);
-    GBI_SetGBI(G_VTX, F3D_VTX, F3DPD_Vtx);
+    GBI_SetGBI(G_VTX, F3D_VTX, F3D_Vtx);
     GBI_SetGBI(G_RESERVED1, F3D_RESERVED1, F3D_Reserved1);
     GBI_SetGBI(G_DL, F3D_DL, F3D_DList);
-    GBI_SetGBI(G_VTXCOLORBASE, F3DPD_VTXCOLORBASE, F3DPD_VtxColorBase);
+    GBI_SetGBI(G_RESERVED2, F3D_RESERVED2, F3D_Reserved2);
     GBI_SetGBI(G_RESERVED3, F3D_RESERVED3, F3D_Reserved3);
     GBI_SetGBI(G_SPRITE2D_BASE, F3D_SPRITE2D_BASE, F3D_Sprite2D_Base);
 
-    GBI_SetGBI(G_TRI1, F3D_TRI1, F3D_Tri1);
+    //	GBI_SetGBI( G_TRI1,					F3D_TRI1,				F3D_Tri1 );
     GBI_SetGBI(G_CULLDL, F3D_CULLDL, F3D_CullDL);
     GBI_SetGBI(G_POPMTX, F3D_POPMTX, F3D_PopMtx);
     GBI_SetGBI(G_MOVEWORD, F3D_MOVEWORD, F3D_MoveWord);
@@ -54,11 +53,9 @@ void F3DPD_Init()
     GBI_SetGBI(G_ENDDL, F3D_ENDDL, F3D_EndDL);
     GBI_SetGBI(G_SETGEOMETRYMODE, F3D_SETGEOMETRYMODE, F3D_SetGeometryMode);
     GBI_SetGBI(G_CLEARGEOMETRYMODE, F3D_CLEARGEOMETRYMODE, F3D_ClearGeometryMode);
-    GBI_SetGBI(G_QUAD, F3D_QUAD, F3D_Quad);
+    GBI_SetGBI(G_LINE3D, L3D_LINE3D, L3D_Line3D);
     GBI_SetGBI(G_RDPHALF_1, F3D_RDPHALF_1, F3D_RDPHalf_1);
     GBI_SetGBI(G_RDPHALF_2, F3D_RDPHALF_2, F3D_RDPHalf_2);
     GBI_SetGBI(G_RDPHALF_CONT, F3D_RDPHALF_CONT, F3D_RDPHalf_Cont);
-    GBI_SetGBI(G_TRI4, F3D_TRI4, F3D_Tri4);
-
-    gSPSetDMAOffsets(0, 0);
+    //	GBI_SetGBI( G_TRI4,					F3D_TRI4,				F3D_Tri4 );
 }

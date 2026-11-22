@@ -247,7 +247,6 @@ extern "C"
          */
         std::function<void(bool)> st_pending_changed = [](bool) {};
 
-        std::function<void()> video_process_dlist;
         std::function<void()> video_process_rdp_list;
         std::function<void()> video_show_cfb;
         std::function<void()> video_vi_status_changed;

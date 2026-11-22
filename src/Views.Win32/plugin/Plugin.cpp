@@ -324,7 +324,6 @@ bool PluginUtil::mge_available()
 
 void PluginUtil::start_plugins()
 {
-    g_main_ctx.core.video_process_dlist = g_plugin_funcs.video_process_dlist;
     g_main_ctx.core.video_process_rdp_list = g_plugin_funcs.video_process_rdp_list;
     g_main_ctx.core.video_show_cfb = g_plugin_funcs.video_show_cfb;
     g_main_ctx.core.video_vi_status_changed = g_plugin_funcs.video_vi_status_changed;

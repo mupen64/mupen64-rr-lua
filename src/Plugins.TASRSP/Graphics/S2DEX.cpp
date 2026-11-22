@@ -5,7 +5,6 @@
  */
 
 #include "Common.hpp"
-#include "OpenGL.hpp"
 #include "S2DEX.hpp"
 #include "F3D.hpp"
 #include "F3DEX.hpp"

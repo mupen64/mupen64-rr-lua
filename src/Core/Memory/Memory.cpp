@@ -1133,7 +1133,6 @@ void update_SP()
                 }
             }
 
-            // processDList();
             rsp_register.rsp_pc &= 0xFFF;
 
             // NOTE: we increment this here, and not in vcr_updatescreen, since invocation of vcr_updatescreen depends
@@ -1141,8 +1140,7 @@ void update_SP()
             // screen_updates and thus are stuck in incorrect state
             // A game may submit several graphics tasks per frame, but only the first one starts a new frame.
             // Counting every task would inflate the frame counter and the FPS reading, and would leave
-            // frame_skipped set from the last task, which suppresses both the rendering of the remaining tasks
-            // and the screen update at VI_INT.
+            // frame_skipped set from the last task, which can suppress the screen update at VI_INT.
             if (!g_r4300.frame_counted)
             {
                 g_r4300.frame_counted = true;
@@ -1255,9 +1253,6 @@ void update_SP()
             add_interrupt_event(SP_INT, 0 /*100*/);
         }
         // g_core->log_info("unknown task type");
-        /*if (hle) execute_dlist();
-        //if (hle) processDList();
-        else sp_register.halt = 0;*/
     }
 }
 

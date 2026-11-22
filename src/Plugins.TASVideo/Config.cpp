@@ -10,7 +10,6 @@
 
 #include "Common.hpp"
 #include "TASVideo.hpp"
-#include "RSP.hpp"
 #include "Textures.hpp"
 #include "OpenGL.hpp"
 using nlohmann::json;

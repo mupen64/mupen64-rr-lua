@@ -37,23 +37,23 @@ void CRC_BuildTable()
     }
 }
 
-uint32_t CRC_Calculate(uint32_t crc, void *buffer, uint32_t count)
+uint32_t CRC_Calculate(uint32_t crc, const void *buffer, uint32_t count)
 {
-    uint8_t *p;
+    const uint8_t *p;
     uint32_t orig = crc;
 
-    p = (uint8_t *)buffer;
+    p = (const uint8_t *)buffer;
     while (count--) crc = (crc >> 8) ^ CRCTable[(crc & 0xFF) ^ *p++];
 
     return crc ^ orig;
 }
 
-uint32_t CRC_CalculatePalette(uint32_t crc, void *buffer, uint32_t count)
+uint32_t CRC_CalculatePalette(uint32_t crc, const void *buffer, uint32_t count)
 {
-    uint8_t *p;
+    const uint8_t *p;
     uint32_t orig = crc;
 
-    p = (uint8_t *)buffer;
+    p = (const uint8_t *)buffer;
     while (count--)
     {
         crc = (crc >> 8) ^ CRCTable[(crc & 0xFF) ^ *p++];

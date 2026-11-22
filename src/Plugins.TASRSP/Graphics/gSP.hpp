@@ -25,12 +25,47 @@ struct SPVertex
     f32 xClip, yClip, zClip;
     s16 flag;
     bool widescreenAdjusted2D;
-    f32 originalX;
+    bool background;
 };
 
 using SPTriangle = SPVertex[3];
 
-struct gSPInfo
+struct SPPipelineState
+{
+    struct
+    {
+        f32 scales, scalet;
+        s32 level, on, tile;
+    } texture;
+
+    struct
+    {
+        f32 vscale[4];
+        f32 vtrans[4];
+        f32 x, y, width, height;
+        f32 nearz, farz;
+    } viewport;
+
+    struct
+    {
+        s16 multiplier, offset;
+    } fog;
+
+    struct
+    {
+        u32 address, width, height, format, size, palette;
+    } bgImage;
+
+    u32 geometryMode;
+};
+
+struct SPDrawState : SPPipelineState
+{
+    gDPTile *textureTile[2];
+    u32 changed;
+};
+
+struct gSPInfo : SPDrawState
 {
     u32 segment[16];
 
@@ -60,36 +95,7 @@ struct gSPInfo
         f32 x, y, z;
     } lights[8];
 
-    struct
-    {
-        f32 scales, scalet;
-        s32 level, on, tile;
-    } texture;
-
-    gDPTile *textureTile[2];
-
-    struct
-    {
-        f32 vscale[4];
-        f32 vtrans[4];
-        f32 x, y, width, height;
-        f32 nearz, farz;
-    } viewport;
-
-    struct
-    {
-        s16 multiplier, offset;
-    } fog;
-
-    struct
-    {
-        u32 address, width, height, format, size, palette;
-    } bgImage;
-
-    u32 geometryMode;
     s32 numLights;
-
-    u32 changed;
 
     u32 status[4];
 

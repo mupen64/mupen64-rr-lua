@@ -115,8 +115,6 @@ extern "C"
         CoreDPCReg *dpc_register;
         CoreDPSReg *dps_register;
 
-        void(CALL *process_dlist)(void);
-
         /**
          * \brief Logs the specified message at the trace level.
          */
@@ -244,7 +242,6 @@ extern "C"
     typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
     typedef void(CALL *PtrGetWindows)(WindowHandle *windows, size_t *count);
 
-    typedef void(CALL *PtrProcessDList)();
     typedef void(CALL *PtrProcessRDPList)();
     typedef void(CALL *PtrReadVideo)(void *buffer, int32_t *width, int32_t *height);
 
@@ -300,12 +297,6 @@ EXPORT void CALL M64RRGetWindows(::M64RRSpec::WindowHandle *windows, size_t *cou
 // ---
 
 /**
- * \brief Processes high-level display lists.
- * \note This should only be implemented for HLE graphics plugins.
- */
-EXPORT void CALL M64RRProcessDList(void);
-
-/**
  * \brief Processes low-level display lists.
  * \note This should only be implemented for LLE graphics plugins.
  */
@@ -313,7 +304,7 @@ EXPORT void CALL M64RRProcessRDPList(void);
 
 /**
  * \brief Reads video data.
- * \param buffer The buffer to store the video data. Can be `nullptr`.
+ * \param buffer The destination for the latest frame. Pass `nullptr` to query dimensions without requesting pixels.
  * \param width The width of the video. Can be `nullptr`.
  * \param height The height of the video. Can be `nullptr`.
  */

@@ -5,14 +5,12 @@
  */
 
 #include "Common.hpp"
-#include "TASVideo.hpp"
 #include "F3DEX2.hpp"
 #include "F3DEX3.hpp"
 #include "N64.hpp"
 #include "RSP.hpp"
 #include "gSP.hpp"
 #include "GBI.hpp"
-#include "OpenGL.hpp"
 
 void F3DEX3_Mtx(u32 w0, u32 w1)
 {
@@ -95,12 +93,10 @@ void F3DEX3_TriSnake(u32 w0, u32 w1)
             b = a;
         a = _SHIFTR(byte, 1, 6);
 
-        if (!OGL.headless) gSPTriangle(a, b, c, 0);
+        gSPTriangle(a, b, c, 0);
 
         if (byte & 0x80) break;
     }
-
-    if (OGL.numTriangles > 0) OGL_DrawTriangles();
 }
 
 void F3DEX3_RelSegment(u32 w0, u32 w1)

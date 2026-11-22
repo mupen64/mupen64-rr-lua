@@ -9,9 +9,8 @@
 #include "Config.hpp"
 #include "TASVideo.hpp"
 #include "Resource.h"
-#include "GBI.hpp"
 #include "OpenGL.hpp"
-#include "RSP.hpp"
+#include "Renderer.hpp"
 #include "Textures.hpp"
 #include <Common.Win32/WinUtils.hpp>
 #include <WinDarkMode.h>
@@ -61,9 +60,9 @@ static void apply(HWND hWndDlg)
         OGL.windowedWidth != prev_OGL.windowedWidth || OGL.windowedHeight != prev_OGL.windowedHeight ||
         OGL.usePolygonStipple != prev_OGL.usePolygonStipple;
 
-    if (RSP.thread && needs_restart)
+    if (renderer.thread && needs_restart)
     {
-        RSP_SendMessage(RSPMSG_RESTART);
+        Render_SendMessage(RENDER_RESTART);
     }
 }
 

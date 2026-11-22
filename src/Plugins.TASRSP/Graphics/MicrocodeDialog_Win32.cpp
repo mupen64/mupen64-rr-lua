@@ -6,8 +6,8 @@
 
 #include "Common.hpp"
 #include "MicrocodeDialog_Win32.hpp"
-#include "TASVideo.hpp"
 #include "Resource.h"
+#include "N64.hpp"
 #include "GBI.hpp"
 #include <Common.Win32/Common.hpp>
 
@@ -47,6 +47,6 @@ INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM
 
 uint32_t MicrocodeDialog::show()
 {
-    return DialogBox(
-        GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_MICROCODEDLG), g_plugin->main_window.hwnd(), MicrocodeDlgProc);
+    return DialogBox(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_MICROCODEDLG), graphics_plugin->main_window.hwnd(),
+        MicrocodeDlgProc);
 }

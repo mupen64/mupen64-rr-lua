@@ -73,6 +73,7 @@ add_executable(Mupen64RR_Views_Win32 WIN32
     "resource.h"
     "../Plugins.TASAudio/Resource.rc"
     "../Plugins.TASVideo/Resource.rc"
+    "../Plugins.TASRSP/Graphics/Resource.rc"
     "../Plugins.Win32.TASInput/Resource.rc"
 
     # sources
