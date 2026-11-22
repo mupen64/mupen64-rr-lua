@@ -145,6 +145,7 @@ void RSP_ThreadProc()
 void RSP_ProcessDList()
 {
     OGL.headless = g_plugin->frame_skipped();
+    OGL.frameHas3D = false;
 
     if (!OGL.headless)
     {

@@ -70,7 +70,15 @@ void gSPProcessVertex(u32 v)
 
     vert_transform(&gSP.vertices[v].x, gSP.matrix.combined);
 
-    gSP.vertices[v].x *= OGL.widescreenScale;
+    const auto &m = gSP.matrix.combined;
+    const bool orthographic = m[0][3] == 0.0f && m[1][3] == 0.0f && m[2][3] == 0.0f && m[3][3] == 1.0f;
+
+    if (!orthographic) OGL.frameHas3D = true;
+
+    const bool is_background =
+        OGL.stretchBackgrounds && orthographic && !(gSP.geometryMode & G_ZBUFFER) && !OGL.frameHas3D;
+
+    if (!is_background) gSP.vertices[v].x *= OGL.widescreenScale;
 
     if (gSP.matrix.billboard)
     {

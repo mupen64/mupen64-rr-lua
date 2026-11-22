@@ -37,6 +37,12 @@ struct GLInfo
     float adjustOffset;
     float widescreenScale = 1.0f;
 
+    // Stretch 2D background geometry (e.g. skyboxes) to avoid gaps. Only relevant in widescreen mode.
+    bool stretchBackgrounds{};
+
+    // Whether any non-orthographic geometry has been processed in the current display list.
+    bool frameHas3D{};
+
     int maxTextureUnits; // TNT = 2, GeForce = 2-4, Rage 128 = 2, Radeon = 3-6
 
     uint8_t smoothing;

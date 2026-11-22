@@ -37,6 +37,7 @@ static void Config_SetDefaults()
     OGL.textureFilter = TextureFilter::None;
     OGL.usePolygonStipple = FALSE;
     OGL.aspectMode = default_aspect_mode;
+    OGL.stretchBackgrounds = true;
 }
 
 void Config_LoadConfig()
@@ -68,6 +69,7 @@ void Config_LoadConfig()
         OGL.ignoreScissor = j["ignore_scissor"];
         OGL.clear_override = j["clear_override"];
         OGL.aspectMode = to_aspect_mode(j.value("aspect_mode", (int)default_aspect_mode));
+        OGL.stretchBackgrounds = j.value("stretch_backgrounds", true);
     }
     catch (const std::exception &e)
     {
@@ -91,6 +93,7 @@ void Config_SaveConfig()
         {"ignore_scissor", (bool)OGL.ignoreScissor},
         {"clear_override", (bool)OGL.clear_override},
         {"aspect_mode", (int)OGL.aspectMode},
+        {"stretch_backgrounds", OGL.stretchBackgrounds},
     });
 
     std::ofstream ofs(get_config_path());
