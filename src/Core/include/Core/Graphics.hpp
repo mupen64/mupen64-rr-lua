@@ -17,8 +17,14 @@ enum class GraphicsResult
 
     InvalidArgument = 2,
 
+    // NOLINTBEGIN(readability-identifier-naming)
+
+    // The windowing API could not create an OpenGL context.
     GL_ContextCreationFailed = 100,
+    // There is no current OpenGL context.
     GL_NoCurrentContext = 101,
+
+    // NOLINTEND(readability-identifier-naming)
 };
 
 enum class GLContextType : int8_t

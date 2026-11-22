@@ -18,6 +18,8 @@
  */
 enum class CoreResult
 {
+    
+    // NOLINTBEGIN(readability-identifier-naming)
 
     // Generic
     // ==========================================
@@ -113,6 +115,8 @@ enum class CoreResult
 
     // The core params are missing a critical component.
     IN_MissingComponent,
+    
+    // NOLINTEND(readability-identifier-naming)
 };
 
 /**
@@ -362,7 +366,7 @@ struct CoreCfg
 typedef std::common_type_t<std::chrono::duration<int64_t, std::ratio<1, 1000000000>>,
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>>>
     CoreTimerDelta;
-constexpr uint8_t core_timer_max_deltas = 60;
+constexpr uint8_t CORE_TIMER_MAX_DELTAS = 60;
 
 struct CoreRDRAMReg
 {
@@ -571,12 +575,9 @@ struct CoreROMHeader
 // #pragma region VCR
 // ==========================================
 
-enum
-{
-    MOVIE_START_FROM_SNAPSHOT = (1 << 0),
-    MOVIE_START_FROM_NOTHING = (1 << 1),
-    MOVIE_START_FROM_EEPROM = (1 << 2),
-};
+#define MOVIE_START_FROM_SNAPSHOT (1 << 0)
+#define MOVIE_START_FROM_NOTHING (1 << 1)
+#define MOVIE_START_FROM_EEPROM (1 << 2)
 
 #define CONTROLLER_X_PRESENT(x) (1 << (x))
 #define CONTROLLER_X_MEMPAK(x) (1 << ((x) + 4))
@@ -914,7 +915,7 @@ struct CoreSTJobParams
 
     /// The buffer containing the savestate data.
     /// Valid if the task's medium is <see cref="CoreSTMedium::memory"/> and the job is <see cref="CoreSTJob::load"/>.
-    std::vector<uint8_t> buffer{};
+    std::vector<uint8_t> buffer;
 };
 
 struct CoreSTCallbackInfo

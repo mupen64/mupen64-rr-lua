@@ -805,8 +805,8 @@ extern "C"
 
 #pragma region Helper Functions
 
-constexpr uint32_t core_addr_mask = 0x7FFFFF;
-constexpr uint32_t core_rdram_size = 0x800000;
+constexpr uint32_t CORE_ADDR_MASK = 0x7FFFFF;
+constexpr uint32_t CORE_RDRAM_SIZE = 0x800000;
 
 /**
  * \brief Converts an address for RDRAM operations with the specified size.
@@ -839,14 +839,14 @@ constexpr std::optional<uint32_t> to_addr(const uint32_t addr, const uint8_t siz
  * \param addr The start address of the value.
  * \return The value at the address, or std::nullopt if the read would be out-of-bounds.
  */
-template <typename T> constexpr std::optional<T> core_rdram_load(uint8_t *rdram, const uint32_t addr)
+template <typename T> constexpr std::optional<T> core_rdram_load(const uint8_t *rdram, const uint32_t addr)
 {
     const auto addr_opt = to_addr(addr, sizeof(T));
     if (!addr_opt) return std::nullopt;
 
-    const uint32_t addr_ = *addr_opt & core_addr_mask;
-    if (addr_ + sizeof(T) > core_rdram_size) return std::nullopt;
-    return *(T *)(rdram + addr_);
+    const uint32_t phys_addr = *addr_opt & CORE_ADDR_MASK;
+    if (phys_addr + sizeof(T) > CORE_RDRAM_SIZE) return std::nullopt;
+    return *(T *)(rdram + phys_addr);
 }
 
 /**
@@ -861,9 +861,9 @@ template <typename T> bool core_rdram_store(uint8_t *rdram, const uint32_t addr,
     const auto addr_opt = to_addr(addr, sizeof(T));
     if (!addr_opt) return false;
 
-    const uint32_t addr_ = *addr_opt & core_addr_mask;
-    if (addr_ + sizeof(T) > core_rdram_size) return false;
-    *(T *)(rdram + addr_) = value;
+    const uint32_t phys_addr = *addr_opt & CORE_ADDR_MASK;
+    if (phys_addr + sizeof(T) > CORE_RDRAM_SIZE) return false;
+    *(T *)(rdram + phys_addr) = value;
     return true;
 }
 

@@ -86,6 +86,7 @@ inline HRESULT hit_test_text_layout_point(IDWriteTextLayout *layout, UINT32 text
  * \param mask The colour to treat as transparent. Defaults to white.
  * \return The index of the newly added image, or -1 on failure.
  */
+// NOLINTNEXTLINE(readability-identifier-naming)
 inline int ImageList_AddMaskedFromBitmap(HIMAGELIST himl, HINSTANCE hinst, int id, COLORREF mask = RGB(255, 255, 255))
 {
     HBITMAP hbmp = LoadBitmap(hinst, MAKEINTRESOURCE(id));
@@ -292,11 +293,11 @@ inline void shift_listview_selection(const HWND hwnd, const int32_t offset)
 }
 
 /**
- * Sets the listview selection based on a vector of indicies.
+ * Sets the listview selection based on a vector of indices.
  * \param hwnd Handle to a listview.
- * \param indicies A vector containing the selected indicies.
+ * \param indices A vector containing the selected indices.
  */
-inline void set_listview_selection(const HWND hwnd, const std::vector<size_t> indicies)
+inline void set_listview_selection(const HWND hwnd, std::span<size_t> indices)
 {
     if (!IsWindow(hwnd))
     {
@@ -310,7 +311,7 @@ inline void set_listview_selection(const HWND hwnd, const std::vector<size_t> in
         ListView_SetItemState(hwnd, idx, 0, LVIS_SELECTED);
     }
 
-    for (const auto &idx : indicies)
+    for (const auto &idx : indices)
     {
         ListView_SetItemState(hwnd, idx, LVIS_SELECTED, LVIS_SELECTED);
     }
@@ -393,7 +394,7 @@ inline std::string load_resource_as_string(const int id, LPCSTR type)
     }
     const HGLOBAL rc_data = LoadResource(hinst, rc);
     const auto size = SizeofResource(hinst, rc);
-    const auto data = static_cast<const char *>(LockResource(rc_data));
+    const auto *data = static_cast<const char *>(LockResource(rc_data));
     return std::string(data, size);
 }
 
@@ -421,7 +422,7 @@ inline bool load_resource_as_dialog_template(const int id, DLGTEMPLATEEX **dlg_t
         return false;
     }
 
-    const auto data = static_cast<DLGTEMPLATEEX *>(LockResource(rc_data));
+    auto *const data = static_cast<DLGTEMPLATEEX *>(LockResource(rc_data));
     if (!data)
     {
         return false;
@@ -485,6 +486,7 @@ inline std::optional<std::string> get_window_text(const HWND hwnd)
  * \param hwnd The handle to the listbox.
  * \param index The index to ensure is visible.
  */
+// NOLINTNEXTLINE(misc-unused-parameters)
 inline void listbox_ensure_visible(const HWND hwnd, const int32_t index)
 {
     const int sel = ListBox_GetCurSel(hwnd);
@@ -506,6 +508,7 @@ inline void listbox_ensure_visible(const HWND hwnd, const int32_t index)
 }
 
 inline LRESULT CALLBACK no_resize_subclass_proc(
+    // NOLINTNEXTLINE(misc-unused-parameters)
     HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     switch (msg)
@@ -527,9 +530,9 @@ inline LRESULT CALLBACK no_resize_subclass_proc(
         case HTBOTTOMLEFT:
         case HTBOTTOMRIGHT:
             return HTCLIENT;
+        default:
+            return hit;
         }
-
-        return hit;
     }
     default:
         break;
@@ -565,7 +568,7 @@ inline Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src, boo
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
 
-    std::vector<uint32_t> src(w * h);
+    std::vector<uint32_t> src(static_cast<size_t>(w) * static_cast<size_t>(h));
     HDC hdc_screen = GetDC(nullptr);
     HDC hdc_src = CreateCompatibleDC(hdc_screen);
     HGDIOBJ old = SelectObject(hdc_src, hbmp_src);
@@ -587,10 +590,11 @@ inline Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src, boo
 
     for (int y = 0; y < h; ++y)
     {
-        auto *row = reinterpret_cast<uint32_t *>(static_cast<uint8_t *>(bmd.Scan0) + y * bmd.Stride);
+        auto *row =
+            reinterpret_cast<uint32_t *>(static_cast<uint8_t *>(bmd.Scan0) + static_cast<ptrdiff_t>(y * bmd.Stride));
         for (int x = 0; x < w; ++x)
         {
-            const uint32_t px = src[y * w + x];
+            const uint32_t px = src[(y * w) + x];
             const uint8_t b_in = (px >> 0) & 0xFF;
             const uint8_t g_in = (px >> 8) & 0xFF;
             const uint8_t r_in = (px >> 16) & 0xFF;
