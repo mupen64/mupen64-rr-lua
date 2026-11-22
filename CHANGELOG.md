@@ -3,31 +3,31 @@
 ## ✨ Features
 
 - Overhauled the statusbar.
-- Added F3DEX3 microcode support to TASVideo
+- Added F3DEX3 microcode support to TASVideo.
 - Added Lua script-owned window API.
 - Added scoped hotkeys (with Lua API).
-- Added widescreen background stretching support to TASVideo
+- Added widescreen background stretching support to TASVideo.
 
 ## 🐞 Bugfixes
 
-- Fixed Lua-created windows turning black when unfocused under Wine
-- Fixed Lua graphics staying above other applications when Mupen is sent to the background under Wine
-- Fixed windows beeping at you when pressing keys in some cases
-- Fixed Alt and F10 not activating the main window's menu bar
-- Fixed screenshot overwriting when more than one is taken within a second
-- Fixed screenshots not respecting configured screenshot directory
-- Fixed missing dpad down button in piano roll
+- Fixed Lua-created windows turning black when unfocused under Wine.
+- Fixed Lua graphics staying above other applications when Mupen is sent to the background under Wine.
+- Fixed windows beeping at you when pressing keys in some cases.
+- Fixed Alt and F10 not activating the main window's menu bar.
+- Fixed screenshot overwriting when more than one is taken within a second.
+- Fixed screenshots not respecting configured screenshot directory.
+- Fixed missing dpad down button in piano roll.
 - Fixed Mupen sometimes staying around as a zombie process after closing.
-- Fixed multi-line subtitles in toasts causing them to fill the window horizontally
-- Fixed captures started too early or right after savestate loads having buggy audio
-- Fixed inaccurate flipped rectangle rendering in TASVideo
-- Fixed certain text in Super Mario 64 (PAL) appearing garbled with TASVideo
+- Fixed multi-line subtitles in toasts causing them to fill the window horizontally.
+- Fixed captures started too early or right after savestate loads having buggy audio.
+- Fixed inaccurate flipped rectangle rendering in TASVideo.
+- Fixed certain text in Super Mario 64 (PAL) appearing garbled with TASVideo.
 
 ## ⚡ Performance
 
-- Improved Pure Interpreter core performance when breakpoints are present
-- Improved statusbar performance
-- Slightly improved TASRSP performance
+- Improved Pure Interpreter core performance when breakpoints are present.
+- Improved statusbar performance.
+- Slightly improved TASRSP performance.
 
 # 1.5.0-8
 
