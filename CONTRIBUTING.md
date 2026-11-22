@@ -141,7 +141,7 @@ add_library(vendor::argh ALIAS argh)
 
 ### Pull Request Guidelines
 
-- **Title:** Adhere to Conventional Commits (e.g. `feat(VCR): ...` or `fix(Win32): ...`), matching what will become the squash merge commit.
+- **Title:** Adhere to Conventional Commits (e.g. `feat(VCR): ...` or `fix(Views.Win32): ...`), matching what will become the squash merge commit.
 - **Description:** Provide a clear overview:
   - **Summary & Context:** What problem does this PR address and why?
   - **Changes:** Bullet points of modified components or key logic.
