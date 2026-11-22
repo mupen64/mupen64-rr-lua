@@ -78,6 +78,9 @@ void gSPProcessVertex(u32 v)
     const bool is_background =
         OGL.stretchBackgrounds && orthographic && !(gSP.geometryMode & G_ZBUFFER) && !OGL.frameHas3D;
 
+    gSP.vertices[v].originalX = gSP.vertices[v].x;
+    gSP.vertices[v].widescreenAdjusted2D = orthographic && !(gSP.geometryMode & G_ZBUFFER) && !gSP.matrix.billboard &&
+                                           !is_background && OGL.widescreenScale != 1.0f;
     if (!is_background) gSP.vertices[v].x *= OGL.widescreenScale;
 
     if (gSP.matrix.billboard)
@@ -641,6 +644,31 @@ void gSPInterpolateVertex(SPVertex *dest, f32 percent, SPVertex *first, SPVertex
     dest->t = first->t + percent * (second->t - first->t);
 }
 
+static bool gSPIsFullscreenRectTriangle(const SPVertex &a, const SPVertex &b, const SPVertex &c)
+{
+    if (!OGL.stretchFullscreenRects || OGL.widescreenScale == 1.0f || (gSP.geometryMode & G_ZBUFFER) ||
+        !a.widescreenAdjusted2D || !b.widescreenAdjusted2D || !c.widescreenAdjusted2D)
+        return false;
+
+    // An axis-aligned quad can arrive as two separate triangles.
+    const auto [left, right] = std::minmax({a.originalX, b.originalX, c.originalX});
+    const auto [bottom, top] = std::minmax({a.y, b.y, c.y});
+    const auto is_corner = [&](const SPVertex &v) {
+        return (v.originalX == left || v.originalX == right) && (v.y == bottom || v.y == top);
+    };
+    if (!is_corner(a) || !is_corner(b) || !is_corner(c)) return false;
+
+    const auto &viewport = gSP.viewport;
+    // Allow one source pixel for fixed-point projection rounding at each edge.
+    constexpr float tolerance = 1.0f;
+    const float visibleLeft = viewport.x + (std::max(left, -1.0f) + 1.0f) * viewport.width * 0.5f;
+    const float visibleRight = viewport.x + (std::min(right, 1.0f) + 1.0f) * viewport.width * 0.5f;
+    const float visibleTop = viewport.y + (1.0f - std::min(top, 1.0f)) * viewport.height * 0.5f;
+    const float visibleBottom = viewport.y + (1.0f - std::max(bottom, -1.0f)) * viewport.height * 0.5f;
+    return visibleLeft <= tolerance && visibleRight >= VI.width - tolerance && visibleTop <= tolerance &&
+           visibleBottom >= VI.height - tolerance;
+}
+
 void gSPTriangle(s32 v0, s32 v1, s32 v2, s32 flag)
 {
     if ((v0 < 80) && (v1 < 80) && (v2 < 80))
@@ -720,7 +748,8 @@ void gSPTriangle(s32 v0, s32 v1, s32 v2, s32 flag)
             //				glDepthFunc( GL_LEQUAL );
         }
         else
-            OGL_AddTriangle(gSP.vertices, v0, v1, v2);
+            OGL_AddTriangle(gSP.vertices, v0, v1, v2,
+                gSPIsFullscreenRectTriangle(gSP.vertices[v0], gSP.vertices[v1], gSP.vertices[v2]));
     }
     else
         DebugMsg(L"// Vertex index out of range\n");

@@ -327,7 +327,8 @@ static void OGL_SetRectViewport()
 
 static float OGL_AdjustRectX(float x, float rectWidth)
 {
-    if ((OGL.widescreenScale != 1.0f) && (fabs(rectWidth) < (float)VI.width * 9.0f / 10.0f))
+    const bool stretch = OGL.stretchFullscreenRects && fabs(rectWidth) >= VI.width * 9.0f / 10.0f;
+    if (OGL.widescreenScale != 1.0f && !stretch)
         return x * OGL.widescreenScale + (float)VI.width * (1.0f - OGL.widescreenScale) / 2.0f;
 
     return x;
@@ -528,7 +529,7 @@ void OGL_UpdateStates()
     gSP.changed &= CHANGED_TEXTURE | CHANGED_MATRIX;
 }
 
-void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2)
+void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2, bool stretch)
 {
     int v[] = {v0, v1, v2};
 
@@ -544,7 +545,7 @@ void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2)
 
     for (int i = 0; i < 3; i++)
     {
-        OGL.vertices[OGL.numVertices].x = vertices[v[i]].x;
+        OGL.vertices[OGL.numVertices].x = stretch ? vertices[v[i]].originalX : vertices[v[i]].x;
         OGL.vertices[OGL.numVertices].y = vertices[v[i]].y;
         OGL.vertices[OGL.numVertices].z =
             gDP.otherMode.depthSource == G_ZS_PRIM ? gDP.primDepth.z * vertices[v[i]].w : vertices[v[i]].z;

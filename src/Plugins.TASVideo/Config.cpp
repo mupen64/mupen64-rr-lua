@@ -37,6 +37,7 @@ static void Config_SetDefaults()
     OGL.usePolygonStipple = FALSE;
     OGL.aspectMode = default_aspect_mode;
     OGL.stretchBackgrounds = true;
+    OGL.stretchFullscreenRects = true;
 }
 
 void Config_LoadConfig()
@@ -69,6 +70,7 @@ void Config_LoadConfig()
         OGL.clear_override = j["clear_override"];
         OGL.aspectMode = to_aspect_mode(j.value("aspect_mode", (int)default_aspect_mode));
         OGL.stretchBackgrounds = j.value("stretch_backgrounds", true);
+        OGL.stretchFullscreenRects = j.value("stretch_fullscreen_rects", true);
     }
     catch (const std::exception &e)
     {
@@ -93,6 +95,7 @@ void Config_SaveConfig()
         {"clear_override", (bool)OGL.clear_override},
         {"aspect_mode", (int)OGL.aspectMode},
         {"stretch_backgrounds", OGL.stretchBackgrounds},
+        {"stretch_fullscreen_rects", OGL.stretchFullscreenRects},
     });
 
     std::ofstream ofs(get_config_path());

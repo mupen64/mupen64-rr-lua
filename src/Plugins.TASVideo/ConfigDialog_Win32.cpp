@@ -46,6 +46,8 @@ static void apply(HWND hWndDlg)
     OGL.smoothing = ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING));
     OGL.aspectMode = to_aspect_mode(ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_ASPECT)));
     OGL.stretchBackgrounds = (SendDlgItemMessage(hWndDlg, IDC_STRETCH_BACKGROUNDS, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    OGL.stretchFullscreenRects =
+        (SendDlgItemMessage(hWndDlg, IDC_STRETCH_FULLSCREEN_RECTS, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
     OGL.usePolygonStipple = (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
@@ -65,10 +67,11 @@ static void apply(HWND hWndDlg)
     }
 }
 
-static void update_stretch_backgrounds_enabled(HWND hWndDlg)
+static void update_widescreen_options_enabled(HWND hWndDlg)
 {
     const auto aspect_mode = to_aspect_mode(ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_ASPECT)));
     EnableWindow(GetDlgItem(hWndDlg, IDC_STRETCH_BACKGROUNDS), aspect_mode == AspectMode::Widescreen);
+    EnableWindow(GetDlgItem(hWndDlg, IDC_STRETCH_FULLSCREEN_RECTS), aspect_mode == AspectMode::Widescreen);
 }
 
 static void select_resolution_in_combobox(HWND cb_hwnd, uint32_t width, uint32_t height)
@@ -112,7 +115,9 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
 
         SendDlgItemMessage(hWndDlg, IDC_STRETCH_BACKGROUNDS, BM_SETCHECK,
             OGL.stretchBackgrounds ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
-        update_stretch_backgrounds_enabled(hWndDlg);
+        SendDlgItemMessage(hWndDlg, IDC_STRETCH_FULLSCREEN_RECTS, BM_SETCHECK,
+            OGL.stretchFullscreenRects ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
+        update_widescreen_options_enabled(hWndDlg);
 
         select_resolution_in_combobox(cb_hwnd, OGL.windowedWidth, OGL.windowedHeight);
 
@@ -172,7 +177,7 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         case IDC_ASPECT:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                update_stretch_backgrounds_enabled(hWndDlg);
+                update_widescreen_options_enabled(hWndDlg);
             }
             break;
         case IDC_WINDOWED_X:

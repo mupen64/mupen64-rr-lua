@@ -24,6 +24,8 @@ struct SPVertex
     f32 s, t;
     f32 xClip, yClip, zClip;
     s16 flag;
+    bool widescreenAdjusted2D;
+    f32 originalX;
 };
 
 using SPTriangle = SPVertex[3];
