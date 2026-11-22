@@ -23,7 +23,7 @@ Config g_config;
 
 static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_choices()
 {
-    const std::unordered_map<std::string, size_t> BASE_CHOICES = {
+    const std::unordered_map<std::string, size_t> base_choices = {
         {CORE_DLG_FLOAT_EXCEPTION, 0},
         {CORE_DLG_ST_HASH_MISMATCH, 0},
         {CORE_DLG_ST_UNFREEZE_WARNING, 0},
@@ -34,7 +34,7 @@ static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_cho
     };
 
     std::unordered_map<std::string, size_t> choices;
-    for (const auto &pair : BASE_CHOICES) choices.insert(pair);
+    for (const auto &pair : base_choices) choices.insert(pair);
     for (const auto &pair : get_silent_mode_dialog_choices()) choices.insert(pair);
     return choices;
 }

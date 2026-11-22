@@ -35,7 +35,7 @@ uintptr_t *lua_optcallback(lua_State *L, int i)
         return nullptr;
     }
 
-    const auto key = new uintptr_t();
+    auto* key = new uintptr_t();
     g_ctx.callback_tokens_by_state[L].insert(key);
 
     lua_pushvalue(L, i);
@@ -146,7 +146,7 @@ std::string luaL_checkstlstring(lua_State *L, int i)
         luaL_error(L, "Expected a string at argument %d", i);
     }
 
-    const auto str = lua_tostring(L, i);
+    const char* str = lua_tostring(L, i);
     if (str == nullptr)
     {
         luaL_error(L, "Expected a string at argument %d", i);

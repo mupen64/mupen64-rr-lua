@@ -24,8 +24,8 @@ std::optional<std::string> WinVFWEncoder::start(Params params)
     m_avi_file_size = 0;
     m_frame = 0;
     m_info_hdr.biSize = sizeof(BITMAPINFOHEADER);
-    m_info_hdr.biWidth = params.width;
-    m_info_hdr.biHeight = params.height;
+    m_info_hdr.biWidth = static_cast<LONG>(params.width);
+    m_info_hdr.biHeight = static_cast<LONG>(params.height);
     m_info_hdr.biPlanes = 1;
     m_info_hdr.biBitCount = 32;
     m_info_hdr.biCompression = BI_RGB;
@@ -91,7 +91,7 @@ std::optional<std::string> WinVFWEncoder::start(Params params)
     }
 
     if (AVIStreamSetFormat(m_compressed_video_stream, 0, &m_info_hdr,
-            m_info_hdr.biSize + m_info_hdr.biClrUsed * sizeof(RGBQUAD)) != AVIERR_OK)
+            static_cast<LONG>(m_info_hdr.biSize + (m_info_hdr.biClrUsed * sizeof(RGBQUAD)))) != AVIERR_OK)
     {
         stop_impl();
         return "Failed to set video stream format.";
@@ -168,7 +168,7 @@ bool WinVFWEncoder::stop()
     return this->stop_impl(false);
 }
 
-uint32_t shortHash(const uint8_t *d, size_t n)
+static uint32_t short_hash(const uint8_t *d, size_t n)
 {
     uint32_t h = 2166136261u;
     while (n--) h = (h ^ *d++) * 16777619u;
@@ -177,7 +177,7 @@ uint32_t shortHash(const uint8_t *d, size_t n)
 
 bool WinVFWEncoder::append_video(uint8_t *image)
 {
-    const auto hash = shortHash(image, m_params.width * m_params.height * 4);
+    const auto hash = short_hash(image, static_cast<size_t>(m_params.width) * static_cast<size_t>(m_params.height) * 4);
 
     if (g_config.synchronization_mode == static_cast<int>(Config::Sync::Video) ||
         g_config.synchronization_mode == static_cast<int>(Config::Sync::None))
@@ -213,7 +213,7 @@ bool WinVFWEncoder::append_video(uint8_t *image)
 
 bool WinVFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
 {
-    write_sound(audio, length, bitrate);
+    write_sound(audio, static_cast<int>(length), bitrate);
     std::memcpy(&m_last_sound, audio + length - sizeof(uint32_t), sizeof(uint32_t));
 
     return true;
@@ -232,18 +232,18 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
     m_in_sample += len / m_sound_format.nBlockAlign;
     m_audio_frame = (double)m_in_sample * m_params.fps / m_params.arate;
 
-    int expected_len = Resampler::get_resample_len(resampled_freq, m_params.arate, bitrate, sound_buf_pos);
+    int expected_len = Resampler::get_resample_len(resampled_freq, static_cast<int>(m_params.arate), bitrate, sound_buf_pos);
 
     if (expected_len <= 0 || (expected_len % 8) != 0) return true;
 
     int resampled_len = Resampler::resample(&m_resampled_sound, resampled_freq, reinterpret_cast<short *>(m_sound_buf),
-        m_params.arate, bitrate, sound_buf_pos);
+        static_cast<int>(m_params.arate), bitrate, sound_buf_pos);
 
     if (resampled_len <= 0) return true;
 
     need((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
 
-    BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, resampled_len / m_sound_format.nBlockAlign,
+    BOOL ok = (0 == AVIStreamWrite(m_sound_stream, static_cast<LONG>(m_sample), resampled_len / m_sound_format.nBlockAlign,
                         m_resampled_sound, resampled_len, 0, NULL, NULL));
 
     if (!ok)
@@ -266,7 +266,7 @@ bool WinVFWEncoder::append_video_impl(uint8_t *image)
 {
     LONG written_len = 0;
     BOOL ret = AVIStreamWrite(
-        m_compressed_video_stream, m_frame++, 1, image, m_info_hdr.biSizeImage, AVIIF_KEYFRAME, NULL, &written_len);
+        m_compressed_video_stream, static_cast<LONG>(m_frame++), 1, image, static_cast<LONG>(m_info_hdr.biSizeImage), AVIIF_KEYFRAME, NULL, &written_len);
     m_avi_file_size += written_len;
 
     if (ret != 0)

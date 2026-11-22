@@ -15,6 +15,8 @@ extern "C"
 #include <cstdint>
 #include <string>
 
+// NOLINTBEGIN(readability-identifier-naming)
+
 /**
  * \brief Prints the current Lua stack.
  */
@@ -153,3 +155,5 @@ std::wstring luaL_checkstlwstring(lua_State *L, int i);
  */
 void luaL_create_metatable(
     lua_State *L, const char *name, const luaL_Reg *methods, lua_CFunction index, lua_CFunction gc);
+
+// NOLINTEND(readability-identifier-naming)

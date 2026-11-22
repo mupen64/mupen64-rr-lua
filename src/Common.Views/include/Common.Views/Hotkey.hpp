@@ -113,7 +113,8 @@ struct Hotkey
         return any_context(context, [&](std::string_view scope) {
             return any_context(other.context, [&](std::string_view other_scope) {
                 return scope == other_scope || scope == "window.*" || other_scope == "window.*" ||
-                       matches_scope(scope, other_scope) || matches_scope(other_scope, scope);
+                       matches_scope(scope, other_scope) ||
+                       matches_scope(other_scope, scope); // NOLINT(readability-suspicious-call-argument)
             });
         });
     }

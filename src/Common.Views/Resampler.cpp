@@ -10,15 +10,15 @@
 
 const auto RESAMP_BUFFER_SIZE = 44100 * 2 * 2;
 
-static SpeexResamplerState *speex_ctx{};
-static short in_samps[RESAMP_BUFFER_SIZE]{};
-static short out_samps[RESAMP_BUFFER_SIZE]{};
+static SpeexResamplerState *g_speex_ctx{};
+static short g_in_samps[RESAMP_BUFFER_SIZE]{};
+static short g_out_samps[RESAMP_BUFFER_SIZE]{};
 
 static int rates_changed(const int cur_in, const int cur_out)
 {
     static spx_uint32_t in;
     static spx_uint32_t out;
-    speex_resampler_get_rate(speex_ctx, &in, &out);
+    speex_resampler_get_rate(g_speex_ctx, &in, &out);
     return in != (unsigned int)cur_in || out != (unsigned int)cur_out;
 }
 
@@ -33,7 +33,7 @@ int Resampler::get_resample_len(const int dst_freq, const int src_freq, const in
     }
 
     const long double ratio = src_freq / (long double)dst_freq;
-    const int dst_len = src_len / ratio;
+    const int dst_len = static_cast<int>(src_len / ratio);
 
     return dst_len;
 }
@@ -51,25 +51,25 @@ int Resampler::resample(
     // fix it here
     for (unsigned i = 0, samps = src_len >> 1; i < samps; i += 2)
     {
-        in_samps[i + 1] = src[i + 0];
-        in_samps[i + 0] = src[i + 1];
+        g_in_samps[i + 1] = src[i + 0];
+        g_in_samps[i + 0] = src[i + 1];
     }
 
-    if (!speex_ctx)
+    if (!g_speex_ctx)
     {
         int err = 0;
-        speex_ctx = speex_resampler_init(2, src_freq, dst_freq, 6, &err);
+        g_speex_ctx = speex_resampler_init(2, src_freq, dst_freq, 6, &err);
     }
 
     if (rates_changed(src_freq, dst_freq))
     {
-        speex_resampler_set_rate(speex_ctx, src_freq, dst_freq);
+        speex_resampler_set_rate(g_speex_ctx, src_freq, dst_freq);
     }
 
     spx_uint32_t in_pos = (spx_uint32_t)src_len / 4;
-    spx_uint32_t out_pos = sizeof(out_samps) / 4;
-    speex_resampler_process_interleaved_int(speex_ctx, in_samps, &in_pos, out_samps, &out_pos);
+    spx_uint32_t out_pos = sizeof(g_out_samps) / 4;
+    speex_resampler_process_interleaved_int(g_speex_ctx, g_in_samps, &in_pos, g_out_samps, &out_pos);
 
-    *dst = out_samps;
+    *dst = g_out_samps;
     return (int)out_pos * 4;
 }

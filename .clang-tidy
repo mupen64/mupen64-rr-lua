@@ -1,7 +1,6 @@
 Checks: >
   -*,
   bugprone-*,
-  cert-*,
   clang-analyzer-*,
   concurrency-*,
   misc-*,
@@ -10,9 +9,7 @@ Checks: >
   readability-*,
   -bugprone-easily-swappable-parameters,
   -bugprone-macro-parentheses,
-  -bugprone-reserved-identifier,-cert-dcl37-c,-cert-dcl51-cpp,
-  -cert-dcl21-cpp,
-  -cert-dcl03-c,
+  -bugprone-reserved-identifier,
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -misc-static-assert,
@@ -55,6 +52,8 @@ CheckOptions:
     value: lower_case
   - key: readability-identifier-naming.ConstantParameterCase
     value: lower_case
+  - key: readability-identifier-naming.ParameterIgnoredRegexp
+    value: "^(L)$"
 
   # === Local Variables ===
   - key: readability-identifier-naming.VariableCase
@@ -63,6 +62,12 @@ CheckOptions:
   - key: readability-identifier-naming.LocalConstantCase
     value: lower_case
   - key: readability-identifier-naming.LocalConstexprVariableCase
+    value: lower_case
+
+  # === Class Variables ===
+  - key: readability-identifier-naming.ClassConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassConstexprCase
     value: lower_case
 
   # === Global Variables ===

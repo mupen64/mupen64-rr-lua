@@ -13,8 +13,10 @@
 
 namespace Messenger
 {
-using AnyCallback = std::function<void(std::any)>;
+using AnyCallback = std::function<void(const std::any&)>;
 
+namespace
+{
 struct Subscriber
 {
     size_t uid;
@@ -36,6 +38,7 @@ struct Context
     // Whether a subscription is currently happening. Used to wait when broadcasting.
     std::atomic<int32_t> subscribing;
 };
+} // namespace
 
 static Context g_ctx;
 
@@ -53,12 +56,12 @@ size_t hash<Messenger::detail::MessageKey>::operator()(const Messenger::detail::
 
 namespace Messenger
 {
-void wait_for_broadcast_end()
+static void wait_for_broadcast_end()
 {
     while (g_ctx.broadcasting > 0) std::this_thread::yield();
 }
 
-void wait_for_subscribe_end()
+static void wait_for_subscribe_end()
 {
     while (g_ctx.subscribing > 0) std::this_thread::yield();
 }
@@ -66,7 +69,7 @@ void wait_for_subscribe_end()
 /**
  * Rebuilds the subscriber cache from the current subscriber vector.
  */
-void rebuild_subscriber_cache()
+static void rebuild_subscriber_cache()
 {
     g_ctx.subscriber_cache.clear();
 
@@ -78,7 +81,7 @@ void rebuild_subscriber_cache()
 
 namespace detail
 {
-void broadcast_impl(const MessageKey key, std::any data)
+void broadcast_impl(const MessageKey key, const std::any& data)
 {
     wait_for_subscribe_end();
 

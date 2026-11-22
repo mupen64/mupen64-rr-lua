@@ -10,7 +10,7 @@
 #include <Common.Views/Hotkey.hpp>
 #include <nlohmann/json.hpp>
 
-constexpr auto flat_field_key = "config";
+constexpr auto FLAT_FIELD_KEY = "config";
 
 static std::string ini_cleanup_field(std::string field_name)
 {
@@ -27,11 +27,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[flat_field_key].has(key))
+    if (!ini[FLAT_FIELD_KEY].has(key))
     {
         return;
     }
-    *value = std::stoi(ini[flat_field_key][key]);
+    *value = std::stoi(ini[FLAT_FIELD_KEY][key]);
 }
 
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name, double *value)
@@ -40,11 +40,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[flat_field_key].has(key))
+    if (!ini[FLAT_FIELD_KEY].has(key))
     {
         return;
     }
-    *value = std::stod(ini[flat_field_key][key]);
+    *value = std::stod(ini[FLAT_FIELD_KEY][key]);
 }
 
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name, uint64_t *value)
@@ -53,11 +53,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[flat_field_key].has(key))
+    if (!ini[FLAT_FIELD_KEY].has(key))
     {
         return;
     }
-    *value = std::stoull(ini[flat_field_key][key]);
+    *value = std::stoull(ini[FLAT_FIELD_KEY][key]);
 }
 
 // !!!
@@ -69,11 +69,11 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 
     // keep the default value if the key doesnt exist
     // it will be created upon saving anyway
-    if (!ini[flat_field_key].has(key))
+    if (!ini[FLAT_FIELD_KEY].has(key))
     {
         return;
     }
-    value = ini[flat_field_key][key];
+    value = ini[FLAT_FIELD_KEY][key];
 }
 
 // !!!
@@ -105,8 +105,8 @@ static void ini_handle_config_value(
     {
         return;
     }
-    auto &map = ini[key];
-    for (auto &pair : map)
+    const auto &map = ini[key];
+    for (const auto &pair : map)
     {
         value[pair.first] = pair.second;
     }
@@ -137,6 +137,8 @@ static void ini_handle_config_value(
         const auto assigned = pair.second.get("assigned");
         Hotkey hotkey = assigned == "0" ? Hotkey::make_unassigned() : Hotkey::make_empty();
 
+        // TODO: switch these to use <charconv> to avoid locale-sensitive behaviour
+
         const auto key_value = pair.second.get("key");
         if (!key_value.empty() && hotkey.is_assigned())
         {
@@ -150,7 +152,7 @@ static void ini_handle_config_value(
                     hotkey.trigger = converted->trigger;
                 }
             }
-            catch (...)
+            catch (...) // NOLINT(bugprone-empty-catch)
             {
             }
         }
@@ -162,7 +164,7 @@ static void ini_handle_config_value(
             {
                 hotkey.ctrl = std::stoi(ctrl);
             }
-            catch (...)
+            catch (...) // NOLINT(bugprone-empty-catch)
             {
             }
         }
@@ -174,7 +176,7 @@ static void ini_handle_config_value(
             {
                 hotkey.shift = std::stoi(shift);
             }
-            catch (...)
+            catch (...) // NOLINT(bugprone-empty-catch)
             {
             }
         }
@@ -186,7 +188,7 @@ static void ini_handle_config_value(
             {
                 hotkey.alt = std::stoi(alt);
             }
-            catch (...)
+            catch (...) // NOLINT(bugprone-empty-catch)
             {
             }
         }

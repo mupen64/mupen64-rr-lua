@@ -20,17 +20,17 @@ namespace ActionManager
 /**
  * \brief The character used to separate segments in action paths and filters.
  */
-const std::string SEGMENT_SEPARATOR = ">";
+constexpr std::string_view SEGMENT_SEPARATOR = ">";
 
 /**
  * \brief The suffix for action path and filters segments that are used to indicate a separator.
  */
-const std::string SEPARATOR_SUFFIX = "---";
+constexpr std::string_view SEPARATOR_SUFFIX = "---";
 
 /**
  * \brief The prefix for action paths that are hidden from the menu.
  */
-const std::string MENU_HIDDEN_PREFIX = "#";
+constexpr std::string_view MENU_HIDDEN_PREFIX = "#";
 
 /**
  * \brief An action filter that can be used to match actions in the action registry.
@@ -66,12 +66,12 @@ struct ActionParam
     /**
      * \brief The key of the parameter.
      */
-    std::string key{};
+    std::string key;
 
     /**
      * \brief The display name of the parameter.
      */
-    std::string name{};
+    std::string name;
 
     /**
      * \brief A validator function that takes in a parameter value and optionally returns an error message if the
@@ -82,12 +82,12 @@ struct ActionParam
     /**
      * \brief A function that returns the initial value of the parameter. Can be null.
      */
-    std::function<std::string()> get_initial_value{};
+    std::function<std::string()> get_initial_value;
 
     /**
      * \brief A function that returns hints for the parameter based on the current input. Can be null.
      */
-    std::function<std::vector<std::string>(std::string_view)> get_hints{};
+    std::function<std::vector<std::string>(std::string_view)> get_hints;
 };
 
 /**
@@ -98,12 +98,12 @@ struct ActionAddParams
     /**
      * \brief The action's path.
      */
-    action_path path{};
+    action_path path;
 
     /**
      * \brief The action parameters.
      */
-    std::vector<ActionParam> params{};
+    std::vector<ActionParam> params;
 
     /**
      * \brief The callback to be invoked when the action is pressed. If this action has parameters, they will be

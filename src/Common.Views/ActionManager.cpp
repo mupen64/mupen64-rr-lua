@@ -20,16 +20,18 @@ using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
 using action_argument_map = ActionManager::action_argument_map;
 
+namespace
+{
 struct Action
 {
     ActionAddParams add_params{};
 
-    std::string raw_name{};
-    std::vector<std::string> segments{};
+    std::string raw_name;
+    std::vector<std::string> segments;
 
-    std::optional<std::string> display_name{};
-    std::optional<bool> enabled{};
-    std::optional<bool> active{};
+    std::optional<std::string> display_name;
+    std::optional<bool> enabled;
+    std::optional<bool> active;
 
     bool pressed{};
     bool registered{true};
@@ -39,16 +41,17 @@ using ActionPtr = std::shared_ptr<Action>;
 
 struct ActionManagerContext
 {
-    std::vector<ActionPtr> actions{};
+    std::vector<ActionPtr> actions;
     bool batched_work{};
     bool work_happened{};
     bool lock_hotkeys{};
-    std::vector<Hotkey> locked_hotkeys{};
+    std::vector<Hotkey> locked_hotkeys;
     LRU::Cache<action_filter, std::vector<std::string>> segment_cache{256, [](const std::vector<std::string> &) {}};
     LRU::Cache<action_filter, std::vector<ActionPtr>> filter_result_cache{256, [](const std::vector<ActionPtr> &) {}};
 };
+} // namespace
 
-static ActionManagerContext g_mgr{};
+static ActionManagerContext g_mgr; // NOLINT(bugprone-throwing-static-initialization)
 
 /**
  * \brief Finds all actions using the given filter.
@@ -163,7 +166,7 @@ static bool validate_action_path(const std::string &path)
         return false;
     }
 
-    if (path.find(L'>') == std::string::npos)
+    if (path.contains(L'>'))
     {
         g_view_logger->error("Action path must contain at least one '>'.");
         return false;
@@ -208,7 +211,7 @@ static std::vector<std::string> update_display_names(const std::vector<ActionPtr
             display_name = StrUtils::ctrim_string(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
 
         const bool has_parameters = !action->add_params.params.empty();
-        if (has_parameters) display_name = "> " + display_name;
+        if (has_parameters) display_name.insert(0, "> ");
 
         action->raw_name = display_name;
 
@@ -428,7 +431,7 @@ std::string ActionManager::get_display_name(const action_filter &filter, bool ig
         return name;
     }
 
-    const auto action = actions.front();
+    const auto& action = actions.front();
 
     if (ignore_override)
     {

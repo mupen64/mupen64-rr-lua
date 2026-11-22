@@ -378,14 +378,14 @@ template <Message M, typename F> std::function<void()> subscribe(F callback)
     if constexpr (std::is_void_v<typename MessageData<M>::type>)
     {
         static_assert(std::is_invocable_v<F>, "The callback for this message must be callable with no arguments.");
-        return detail::subscribe_impl(detail::make_key(M), [cb = std::move(callback)](std::any) { std::invoke(cb); });
+        return detail::subscribe_impl(detail::make_key(M), [cb = std::move(callback)](const std::any&) { std::invoke(cb); });
     }
     else
     {
         using type = typename MessageData<M>::type;
         static_assert(
             std::is_invocable_v<F, type>, "The callback for this message must be callable with its data type.");
-        return detail::subscribe_impl(detail::make_key(M), [cb = std::move(callback)](std::any data) {
+        return detail::subscribe_impl(detail::make_key(M), [cb = std::move(callback)](const std::any& data) {
             if constexpr (std::is_reference_v<type>)
             {
                 using value_type = std::remove_reference_t<type>;

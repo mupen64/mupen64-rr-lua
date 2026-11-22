@@ -29,8 +29,8 @@ struct MessageKey
     bool operator==(const MessageKey &) const = default;
 };
 
-void broadcast_impl(MessageKey key, std::any data);
-std::function<void()> subscribe_impl(MessageKey key, std::function<void(std::any)> callback);
+void broadcast_impl(MessageKey key, const std::any& data);
+std::function<void()> subscribe_impl(MessageKey key, std::function<void(const std::any&)> callback);
 template <typename MessageT> MessageKey make_key(MessageT message)
 {
     static_assert(std::is_enum_v<MessageT>, "Messages must be defined as enum class types.");
