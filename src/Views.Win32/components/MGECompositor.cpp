@@ -340,7 +340,7 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 void MGECompositor::create(HWND hwnd)
 {
     mge_context.hwnd = CreateWindowEx(WS_EX_TRANSPARENT | WS_EX_NOACTIVATE, control_class_name, "",
-        WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr, g_main_ctx.hinst, nullptr);
+        WS_CHILD | WS_CLIPSIBLINGS, 0, 0, 1, 1, hwnd, nullptr, g_main_ctx.hinst, nullptr);
 }
 
 void MGECompositor::init()
@@ -353,8 +353,13 @@ void MGECompositor::init()
     wndclass.lpszClassName = control_class_name;
     RegisterClass(&wndclass);
 
-    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(
-        [](bool value) { ShowWindow(mge_context.hwnd, value && PluginUtil::mge_available() ? SW_SHOW : SW_HIDE); });
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>([](bool value) {
+        if (value && PluginUtil::mge_available())
+            SetWindowPos(
+                mge_context.hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+        else
+            ShowWindow(mge_context.hwnd, SW_HIDE);
+    });
 }
 
 void MGECompositor::update_screen()
