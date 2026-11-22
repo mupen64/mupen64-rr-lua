@@ -116,11 +116,39 @@ add_library(vendor::argh ALIAS argh)
 ```
 
 
-# Branching
+# Branching and Pull Requests
 
-For contributors: PRs should target `main`. That's all you need to care about.
+### For contributors
 
-For maintainers:
+- **Target branch:** All pull requests should target `main`.
+- **Branching:** Always branch from an up-to-date `origin/main` to avoid accidentally including commits from other branches:
+  ```bash
+  git fetch origin
+  git checkout -b <type>/<short-description> origin/main
+  ```
+  Recommended branch prefixes include `feat/`, `fix/`, `docs/`, `refactor/`, `chore/`, etc.
+- **Keeping your branch updated:** Rebase onto `origin/main` rather than creating merge commits:
+  ```bash
+  git fetch origin
+  git rebase origin/main
+  ```
+- **Checking your work:** Before opening a PR, verify that only your intended commits and changes are present:
+  ```bash
+  git log origin/main..HEAD
+  git diff origin/main...HEAD
+  ```
+- **AI-assisted contributions:** Follow the guidelines in `AGENTS.md` (attribution Git trailers, code reuse, clean comments).
+
+### Pull Request Guidelines
+
+- **Title:** Adhere to Conventional Commits (e.g. `feat(VCR): ...` or `fix(Views.Win32): ...`), matching what will become the squash merge commit.
+- **Description:** Provide a clear overview:
+  - **Summary & Context:** What problem does this PR address and why?
+  - **Changes:** Bullet points of modified components or key logic.
+  - **Testing:** Describe how the changes were verified (Linux/Windows build, core tests, Lua test scripts).
+- **Checks:** Ensure CI passes (formatting, copyright headers, and tests).
+
+### For maintainers
 
 Release branches are named `release/<version>` and created from `main`. 
 
@@ -163,7 +191,7 @@ Failure to comply will fail the check-format workflow.
 
 Naming must abide by the [.clang-tidy](https://github.com/mupen64/mupen64-rr-lua/blob/master/.clang-tidy) file provided in the repository root, except for the `Views.Qt6` module, where they should follow Qt conventions.
 
-CMake targets must remain 
+CMake targets must remain valid C identifiers.
 
 # Merge/Release Checklist
 
