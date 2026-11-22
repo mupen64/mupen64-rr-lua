@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "Common.hpp"
+#include "Renderer.hpp"
 #include "glsl_combiner.hpp"
 #include "Combiner.hpp"
 #include "OpenGL.hpp"
-#include "gDP.hpp"
-#include "gSP.hpp"
-#include "GBI.hpp"
 #include "TASVideo.hpp"
 #include "Textures.hpp"
 
@@ -552,17 +550,22 @@ void GLSLCombiner_UpdateColors(GLSLProgram *program)
 {
     glUseProgram(program->program);
 
-    glUniform4f(program->locPrimColor, gDP.primColor.r, gDP.primColor.g, gDP.primColor.b, gDP.primColor.a);
-    glUniform4f(program->locEnvColor, gDP.envColor.r, gDP.envColor.g, gDP.envColor.b, gDP.envColor.a);
-    glUniform4f(program->locCenterColor, gDP.key.center.r, gDP.key.center.g, gDP.key.center.b, gDP.key.center.a);
-    glUniform4f(program->locScaleColor, gDP.key.scale.r, gDP.key.scale.g, gDP.key.scale.b, gDP.key.scale.a);
-    glUniform4f(program->locFogColor, gDP.fogColor.r, gDP.fogColor.g, gDP.fogColor.b, gDP.fogColor.a);
+    glUniform4f(program->locPrimColor, render_state.dp.primColor.r, render_state.dp.primColor.g,
+        render_state.dp.primColor.b, render_state.dp.primColor.a);
+    glUniform4f(program->locEnvColor, render_state.dp.envColor.r, render_state.dp.envColor.g,
+        render_state.dp.envColor.b, render_state.dp.envColor.a);
+    glUniform4f(program->locCenterColor, render_state.dp.key.center.r, render_state.dp.key.center.g,
+        render_state.dp.key.center.b, render_state.dp.key.center.a);
+    glUniform4f(program->locScaleColor, render_state.dp.key.scale.r, render_state.dp.key.scale.g,
+        render_state.dp.key.scale.b, render_state.dp.key.scale.a);
+    glUniform4f(program->locFogColor, render_state.dp.fogColor.r, render_state.dp.fogColor.g,
+        render_state.dp.fogColor.b, render_state.dp.fogColor.a);
 
-    glUniform1f(program->locLodFrac, gDP.primColor.l);
-    glUniform1f(program->locPrimLodFrac, gDP.primColor.l);
+    glUniform1f(program->locLodFrac, render_state.dp.primColor.l);
+    glUniform1f(program->locPrimLodFrac, render_state.dp.primColor.l);
 
-    glUniform1f(program->locK4, gDP.convert.k4 / 255.0f);
-    glUniform1f(program->locK5, gDP.convert.k5 / 255.0f);
+    glUniform1f(program->locK4, render_state.dp.convert.k4 / 255.0f);
+    glUniform1f(program->locK5, render_state.dp.convert.k5 / 255.0f);
 
     glUniform1f(program->locNoise, 0.5f);
 }

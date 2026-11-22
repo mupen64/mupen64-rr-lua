@@ -7,6 +7,7 @@
 #include "Common.hpp"
 #include <plugin/M64RRPlugin.hpp>
 
+#include <BuiltinTAS/GraphicsTask.hpp>
 #include <Common/Assert.hpp>
 
 #include "BuiltinTAS.hpp"
@@ -15,6 +16,10 @@
 #include <components/Statusbar.hpp>
 #include <plugin/Plugin.hpp>
 #include <plugin/Windowing.hpp>
+
+static void CALL process_no_video_dlist()
+{
+}
 
 static M64RRSpec::PtrProcessEvent g_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows g_mupenrr_video_get_windows_fn = nullptr;
@@ -345,9 +350,10 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
             process_event_on_gui_thread(
                 g_mupenrr_video_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
-        funcs.video_process_dlist = []() {
-            if (g_mupenrr_process_dlist_fn) g_mupenrr_process_dlist_fn();
-        };
+        funcs.video_process_dlist =
+            m_builtin ? (g_mupenrr_process_dlist_fn ? g_mupenrr_process_dlist_fn : process_no_video_dlist) : +[]() {
+                if (g_mupenrr_process_dlist_fn) g_mupenrr_process_dlist_fn();
+            };
         funcs.video_process_rdp_list = []() {
             if (g_mupenrr_process_rdplist_fn) g_mupenrr_process_rdplist_fn();
         };
@@ -456,6 +462,13 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         LOOKUP_MUPENRR_FN(g_mupenrr_rsp_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
         LOOKUP_MUPENRR_FN(g_mupenrr_rsp_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
         LOOKUP_MUPENRR_FN(g_mupenrr_do_rsp_cycles_fn, M64RRSpec::PtrDoRSPCycles, "M64RRDoRSPCycles");
+
+        if (m_builtin)
+        {
+            const bool tas_video = init->process_dlist == BuiltinTAS::TASVideo::M64RRProcessDList;
+            BuiltinTAS::TASRSP::configure_graphics(tas_video || init->process_dlist == process_no_video_dlist,
+                tas_video ? BuiltinTAS::TASVideo::submit_draw_list : nullptr);
+        }
 
         // FIXME: add rsp_rom_opened
         funcs.rsp_rom_closed = []() {

@@ -7,7 +7,10 @@
 #pragma once
 
 #include "Config.hpp"
-#include "gSP.hpp"
+#include "Textures.hpp"
+#include "DrawList.hpp"
+
+using BuiltinTAS::Graphics::DrawVertex;
 
 struct GLVertex
 {
@@ -62,8 +65,6 @@ struct GLInfo
     // Clears the game with black color every frame regardless of what N64 asks
     int32_t clear_override = TRUE;
 
-    bool headless{};
-
     bool isGLES{};
 };
 
@@ -74,15 +75,14 @@ struct GLcolor
     float r{}, g{}, b{}, a{};
 };
 
-extern void *gCapturedPixels;
-
-void OGL_ReadPixels();
+void OGL_ReadPixels(void *buffer);
 bool OGL_Start();
 void OGL_Stop();
-void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2);
+void OGL_AddTriangle(const DrawVertex *vertices, float x_scale, bool disable_polygon_offset);
 void OGL_DrawTriangles();
-void OGL_DrawLine(SPVertex *vertices, int v0, int v1, float width);
-void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color);
+void OGL_RestorePolygonOffset();
+void OGL_DrawLine(const DrawVertex *vertices, float width);
+void OGL_DrawRect(int ulx, int uly, int lrx, int lry, const float *color);
 void OGL_DrawTexturedRect(
     float ulx, float uly, float lrx, float lry, float uls, float ult, float lrs, float lrt, bool flip);
 void OGL_UpdateScale();

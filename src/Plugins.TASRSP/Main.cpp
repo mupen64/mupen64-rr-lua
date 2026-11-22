@@ -7,6 +7,7 @@
 #include "Main.hpp"
 #include "Config.hpp"
 #include "HLE.hpp"
+#include <BuiltinTAS/GraphicsTask.hpp>
 
 using namespace BuiltinTAS::TASRSP;
 
@@ -15,6 +16,8 @@ using namespace BuiltinTAS::TASRSP;
 #define UCODE_ZELDA (3)
 
 static bool g_rsp_alive = false;
+static bool g_use_builtin_graphics;
+static BuiltinTAS::Graphics::SubmitDrawList g_submit_draw_list;
 static void (*ABI[0x20])();
 uint32_t inst1;
 uint32_t inst2;
@@ -74,7 +77,10 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 
     if (task->type == 1 && task->data_ptr != 0)
     {
-        if (g_plugin->process_dlist) g_plugin->process_dlist();
+        if (g_use_builtin_graphics || !g_plugin->process_dlist)
+            BuiltinTAS::Graphics::process_task(*g_plugin, g_submit_draw_list);
+        else
+            g_plugin->process_dlist();
 
         g_plugin->sp_register->sp_status_reg |= 0x0203;
         if ((g_plugin->sp_register->sp_status_reg & 0x40) != 0) g_plugin->mi_register->mi_intr_reg |= 0x1;
@@ -169,6 +175,13 @@ unknown_task:
 namespace BuiltinTAS::TASRSP
 {
 M64RRSpec::PluginInit *g_plugin;
+
+void configure_graphics(bool use_builtin_decoder, Graphics::SubmitDrawList submit)
+{
+    g_use_builtin_graphics = use_builtin_decoder;
+    g_submit_draw_list = submit;
+}
+
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::RSP;
@@ -191,12 +204,15 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
     {
     case M64RRSpec::Event::Type::Initiate:
         g_plugin = event.initiate.init;
+        configure_graphics(false, nullptr);
+        Graphics::reset();
         break;
     case M64RRSpec::Event::Type::RomOpened:
         config_load();
         break;
     case M64RRSpec::Event::Type::RomClosed:
         on_rom_closed();
+        Graphics::reset();
         break;
     default:
         break;

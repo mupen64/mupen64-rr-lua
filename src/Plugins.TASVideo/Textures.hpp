@@ -42,8 +42,6 @@ struct CachedTexture
 
     CachedTexture *lower, *higher;
     u32 lastDList;
-
-    u32 frameBufferTexture;
 };
 
 struct TextureCache

@@ -6,7 +6,6 @@
 
 #include "Common.hpp"
 #include "Types.hpp"
-#include "GBI.hpp"
 
 static inline s16 GetResult1(u32 A, u32 B, u32 C, u32 D, u32 E)
 {

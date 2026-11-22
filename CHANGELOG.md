@@ -24,6 +24,7 @@
 
 - Improved Pure Interpreter core performance when breakpoints are present
 - Improved statusbar performance
+- Improved general emulation performance
 
 # 1.5.0-8
 

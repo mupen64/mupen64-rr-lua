@@ -7,7 +7,8 @@
 #include "Common.hpp"
 #include "TASVideo.hpp"
 #include "OpenGL.hpp"
-#include "RSP.hpp"
+#include "Renderer.hpp"
+#include <BuiltinTAS/GraphicsTask.hpp>
 #include "Config.hpp"
 
 namespace BuiltinTAS::TASVideo
@@ -22,20 +23,6 @@ static void log_shim(const wchar_t *str)
 
 M64RRSpec::PluginInit *g_plugin;
 const M64RRSpec::WindowingAPI *g_wsi;
-
-static bool init_rsp_thread()
-{
-    if (RSP.thread)
-    {
-        RSP_SendMessage(RSPMSG_START);
-        return true;
-    }
-
-    RSP.halt = FALSE;
-    RSP.thread = std::make_unique<std::jthread>(RSP_ThreadProc);
-    RSP_SendMessage(RSPMSG_START);
-    return true;
-}
 
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
@@ -73,17 +60,14 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
         init_count--;
         if (init_count > 0) break;
 
-        if (!RSP.thread) break;
-        if (RSP.busy) RSP.halt = TRUE;
-        RSP_SendMessage(RSPMSG_CLOSE);
-        RSP.thread->join();
-        RSP.thread.reset();
+        stop_renderer();
         break;
     case M64RRSpec::Event::Type::RomOpened:
-        init_rsp_thread();
+        Graphics::reset();
+        start_renderer();
         break;
     case M64RRSpec::Event::Type::RomClosed:
-        RSP_SendMessage(RSPMSG_BLACKOUT);
+        black_out_renderer();
         break;
     default:
         break;
@@ -92,24 +76,15 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
 
 EXPORT void CALL M64RRProcessDList(void)
 {
-    if (RSP.thread)
-    {
-        RSP_SendMessage(RSPMSG_PROCESSDLIST);
-    }
+    // Legacy callback for third-party RSP plugins.
+    if (renderer_running()) Graphics::process_task(*g_plugin, submit_draw_list);
 }
 
 EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height)
 {
     if (width) *width = OGL.width;
     if (height) *height = OGL.height;
-    if (buffer)
-    {
-        gCapturedPixels = buffer;
-        if (RSP.thread)
-        {
-            RSP_SendMessage(RSPMSG_READPIXELS);
-        }
-    }
+    if (buffer) read_pixels(buffer);
 }
 
 #ifndef _WIN32

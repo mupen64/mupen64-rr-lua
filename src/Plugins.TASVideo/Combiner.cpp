@@ -5,10 +5,10 @@
  */
 
 #include "Common.hpp"
+#include "Renderer.hpp"
 #include "OpenGL.hpp"
 #include "Combiner.hpp"
 #include "glsl_combiner.hpp"
-#include "gDP.hpp"
 
 #include <cstdlib>
 
@@ -23,7 +23,7 @@ void Combiner_Init()
 void Combiner_UpdateCombineColors()
 {
     GLSLCombiner_UpdateColors((GLSLProgram *)combiner.current->compiled);
-    gDP.changed &= ~CHANGED_COMBINE_COLORS;
+    render_state.dp.changed &= ~CHANGED_COMBINE_COLORS;
 }
 
 void Combiner_SimplifyCycle(CombineCycle *cc, CombinerStage *stage)
@@ -184,7 +184,7 @@ CachedCombiner *Combiner_Compile(u64 mux)
 
     Combiner color, alpha;
 
-    if (gDP.otherMode.cycleType == G_CYC_2CYCLE)
+    if (render_state.dp.otherMode.cycleType == G_CYC_2CYCLE)
     {
         numCycles = 2;
         color.numStages = 2;
@@ -275,13 +275,6 @@ void Combiner_EndTextureUpdate()
 
 void Combiner_SelectCombine(u64 mux)
 {
-    // Hack for the Banjo-Tooie shadow (framebuffer textures must be enabled too)
-    if ((gDP.otherMode.cycleType == G_CYC_1CYCLE) && (mux == 0x00ffe7ffffcf9fcf) &&
-        (cache.current[0]->frameBufferTexture))
-    {
-        mux = EncodeCombineMode(0, 0, 0, 0, TEXEL0, 0, PRIMITIVE, 0, 0, 0, 0, 0, TEXEL0, 0, PRIMITIVE, 0);
-    }
-
     CachedCombiner *current = combiner.root;
     CachedCombiner *parent = current;
 
@@ -311,7 +304,7 @@ void Combiner_SelectCombine(u64 mux)
 
     combiner.current = current;
 
-    gDP.changed |= CHANGED_COMBINE_COLORS;
+    render_state.dp.changed |= CHANGED_COMBINE_COLORS;
 }
 
 void Combiner_SetCombineStates()

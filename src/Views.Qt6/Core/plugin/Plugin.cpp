@@ -17,6 +17,7 @@
 
 #include <decan.hpp>
 
+#include <BuiltinTAS/GraphicsTask.hpp>
 #include <Common/MiscHelpers.hpp>
 
 #include "Windowing.hpp"
@@ -230,9 +231,13 @@ void PluginSet::initiate_plugins(CoreCtx *ctx, CoreParams &params)
     });
 
     // RSP init
-    m_rsp.initiate(ctx, params, [&](M64RRSpec::PluginInit *init) {
-        init->process_dlist = (M64RRSpec::PtrProcessDList)m_video.load_symbol("M64RRProcessDList");
-    });
+    m_rsp.initiate(ctx, params, [&](M64RRSpec::PluginInit *init) { init->process_dlist = m_video_process_dlist; });
+    if (m_rsp.load_symbol("M64RRDoRSPCycles") == reinterpret_cast<void *>(BuiltinTAS::TASRSP::M64RRDoRSPCycles))
+    {
+        const bool tas_video = m_video_process_dlist == BuiltinTAS::TASVideo::M64RRProcessDList;
+        BuiltinTAS::TASRSP::configure_graphics(
+            tas_video || !m_video_process_dlist, tas_video ? BuiltinTAS::TASVideo::submit_draw_list : nullptr);
+    }
 }
 
 void PluginSet::emu_started(CoreParams &params)

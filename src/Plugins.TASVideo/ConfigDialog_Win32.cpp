@@ -9,9 +9,8 @@
 #include "Config.hpp"
 #include "TASVideo.hpp"
 #include "Resource.h"
-#include "GBI.hpp"
 #include "OpenGL.hpp"
-#include "RSP.hpp"
+#include "Renderer.hpp"
 #include "Textures.hpp"
 #include <Common.Win32/Common.hpp>
 #include <nlohmann/json.hpp>
@@ -59,10 +58,7 @@ static void apply(HWND hWndDlg)
         OGL.windowedWidth != prev_OGL.windowedWidth || OGL.windowedHeight != prev_OGL.windowedHeight ||
         OGL.usePolygonStipple != prev_OGL.usePolygonStipple;
 
-    if (RSP.thread && needs_restart)
-    {
-        RSP_SendMessage(RSPMSG_RESTART);
-    }
+    if (needs_restart) restart_renderer();
 }
 
 static void select_resolution_in_combobox(HWND cb_hwnd, uint32_t width, uint32_t height)

@@ -5,17 +5,13 @@
  */
 
 #include "Common.hpp"
+#include "Renderer.hpp"
+#include "RDPConstants.hpp"
 #include "OpenGL.hpp"
 #include "Textures.hpp"
-#include "GBI.hpp"
-#include "RSP.hpp"
-#include "gDP.hpp"
-#include "gSP.hpp"
-#include "N64.hpp"
 #include "CRC.hpp"
 #include "convert.hpp"
 #include "2xSAI.hpp"
-#include "FrameBuffer.hpp"
 
 TextureCache cache;
 
@@ -33,9 +29,9 @@ inline u32 GetCI4IA_RGBA4444(u64 *src, u16 x, u16 i, u8 palette)
     color4B = ((u8 *)src)[(x >> 1) ^ (i << 1)];
 
     if (x & 1)
-        return IA88_RGBA4444(*(u16 *)&TMEM[256 + (palette << 4) + (color4B & 0x0F)]);
+        return IA88_RGBA4444(*(u16 *)&render_tmem[256 + (palette << 4) + (color4B & 0x0F)]);
     else
-        return IA88_RGBA4444(*(u16 *)&TMEM[256 + (palette << 4) + (color4B >> 4)]);
+        return IA88_RGBA4444(*(u16 *)&render_tmem[256 + (palette << 4) + (color4B >> 4)]);
 }
 
 inline u32 GetCI4IA_RGBA8888(u64 *src, u16 x, u16 i, u8 palette)
@@ -45,9 +41,9 @@ inline u32 GetCI4IA_RGBA8888(u64 *src, u16 x, u16 i, u8 palette)
     color4B = ((u8 *)src)[(x >> 1) ^ (i << 1)];
 
     if (x & 1)
-        return IA88_RGBA8888(*(u16 *)&TMEM[256 + (palette << 4) + (color4B & 0x0F)]);
+        return IA88_RGBA8888(*(u16 *)&render_tmem[256 + (palette << 4) + (color4B & 0x0F)]);
     else
-        return IA88_RGBA8888(*(u16 *)&TMEM[256 + (palette << 4) + (color4B >> 4)]);
+        return IA88_RGBA8888(*(u16 *)&render_tmem[256 + (palette << 4) + (color4B >> 4)]);
 }
 
 inline u32 GetCI4RGBA_RGBA5551(u64 *src, u16 x, u16 i, u8 palette)
@@ -57,9 +53,9 @@ inline u32 GetCI4RGBA_RGBA5551(u64 *src, u16 x, u16 i, u8 palette)
     color4B = ((u8 *)src)[(x >> 1) ^ (i << 1)];
 
     if (x & 1)
-        return RGBA5551_RGBA5551(*(u16 *)&TMEM[256 + (palette << 4) + (color4B & 0x0F)]);
+        return RGBA5551_RGBA5551(*(u16 *)&render_tmem[256 + (palette << 4) + (color4B & 0x0F)]);
     else
-        return RGBA5551_RGBA5551(*(u16 *)&TMEM[256 + (palette << 4) + (color4B >> 4)]);
+        return RGBA5551_RGBA5551(*(u16 *)&render_tmem[256 + (palette << 4) + (color4B >> 4)]);
 }
 
 inline u32 GetCI4RGBA_RGBA8888(u64 *src, u16 x, u16 i, u8 palette)
@@ -69,9 +65,9 @@ inline u32 GetCI4RGBA_RGBA8888(u64 *src, u16 x, u16 i, u8 palette)
     color4B = ((u8 *)src)[(x >> 1) ^ (i << 1)];
 
     if (x & 1)
-        return RGBA5551_RGBA8888(*(u16 *)&TMEM[256 + (palette << 4) + (color4B & 0x0F)]);
+        return RGBA5551_RGBA8888(*(u16 *)&render_tmem[256 + (palette << 4) + (color4B & 0x0F)]);
     else
-        return RGBA5551_RGBA8888(*(u16 *)&TMEM[256 + (palette << 4) + (color4B >> 4)]);
+        return RGBA5551_RGBA8888(*(u16 *)&render_tmem[256 + (palette << 4) + (color4B >> 4)]);
 }
 
 inline u32 GetIA31_RGBA8888(u64 *src, u16 x, u16 i, u8 palette)
@@ -112,22 +108,22 @@ inline u32 GetI4_RGBA4444(u64 *src, u16 x, u16 i, u8 palette)
 
 inline u32 GetCI8IA_RGBA4444(u64 *src, u16 x, u16 i, u8 palette)
 {
-    return IA88_RGBA4444(*(u16 *)&TMEM[256 + ((u8 *)src)[x ^ (i << 1)]]);
+    return IA88_RGBA4444(*(u16 *)&render_tmem[256 + ((u8 *)src)[x ^ (i << 1)]]);
 }
 
 inline u32 GetCI8IA_RGBA8888(u64 *src, u16 x, u16 i, u8 palette)
 {
-    return IA88_RGBA8888(*(u16 *)&TMEM[256 + ((u8 *)src)[x ^ (i << 1)]]);
+    return IA88_RGBA8888(*(u16 *)&render_tmem[256 + ((u8 *)src)[x ^ (i << 1)]]);
 }
 
 inline u32 GetCI8RGBA_RGBA5551(u64 *src, u16 x, u16 i, u8 palette)
 {
-    return RGBA5551_RGBA5551(*(u16 *)&TMEM[256 + ((u8 *)src)[x ^ (i << 1)]]);
+    return RGBA5551_RGBA5551(*(u16 *)&render_tmem[256 + ((u8 *)src)[x ^ (i << 1)]]);
 }
 
 inline u32 GetCI8RGBA_RGBA8888(u64 *src, u16 x, u16 i, u8 palette)
 {
-    return RGBA5551_RGBA8888(*(u16 *)&TMEM[256 + ((u8 *)src)[x ^ (i << 1)]]);
+    return RGBA5551_RGBA8888(*(u16 *)&render_tmem[256 + ((u8 *)src)[x ^ (i << 1)]]);
 }
 
 inline u32 GetIA44_RGBA8888(u64 *src, u16 x, u16 i, u8 palette)
@@ -281,7 +277,6 @@ void TextureCache_Init()
     cache.dummy->crc = 0;
     cache.dummy->format = 0;
     cache.dummy->size = 0;
-    cache.dummy->frameBufferTexture = FALSE;
     cache.dummy->width = 2;
     cache.dummy->height = 2;
     cache.dummy->realWidth = 0;
@@ -302,8 +297,6 @@ void TextureCache_Init()
 
     TextureCache_ActivateDummy(0);
     TextureCache_ActivateDummy(1);
-
-    CRC_BuildTable();
 }
 
 static void TextureCache_Scale(
@@ -384,8 +377,6 @@ void TextureCache_RemoveBottom()
 
     glDeleteTextures(1, &cache.bottom->glName);
     cache.cachedBytes -= cache.bottom->textureBytes;
-
-    if (cache.bottom->frameBufferTexture) FrameBuffer_RemoveBuffer(cache.bottom->address);
 
     if (cache.bottom == cache.top) cache.top = NULL;
 
@@ -504,7 +495,7 @@ void TextureCache_LoadBackground(CachedTexture *texInfo)
     GLenum glType;
 
     texInfo->textureBytes = (texInfo->realWidth * texInfo->realHeight) << 2;
-    if ((texInfo->format == G_IM_FMT_CI) && (gDP.otherMode.textureLUT == G_TT_IA16))
+    if ((texInfo->format == G_IM_FMT_CI) && (render_state.dp.otherMode.textureLUT == G_TT_IA16))
     {
         if (texInfo->size == G_IM_SIZ_4b)
             GetTexel = GetCI4IA_RGBA8888;
@@ -521,10 +512,10 @@ void TextureCache_LoadBackground(CachedTexture *texInfo)
         glType = imageFormat[texInfo->size][texInfo->format].glType32;
     }
 
-    bpl = gSP.bgImage.width << gSP.bgImage.size >> 1;
-    numBytes = bpl * gSP.bgImage.height;
+    bpl = render_state.sp.bgImage.width << render_state.sp.bgImage.size >> 1;
+    numBytes = bpl * render_state.sp.bgImage.height;
     swapped = (u8 *)malloc(numBytes);
-    unswap_copy(&RDRAM[gSP.bgImage.address], swapped, numBytes);
+    unswap_copy(render_state.background_image.data(), swapped, numBytes);
     dest = (u32 *)malloc(texInfo->textureBytes);
 
     clampSClamp = texInfo->width - 1;
@@ -564,7 +555,7 @@ void TextureCache_Load(CachedTexture *texInfo)
     GLenum glType;
 
     texInfo->textureBytes = (texInfo->realWidth * texInfo->realHeight) << 2;
-    if ((texInfo->format == G_IM_FMT_CI) && (gDP.otherMode.textureLUT == G_TT_IA16))
+    if ((texInfo->format == G_IM_FMT_CI) && (render_state.dp.otherMode.textureLUT == G_TT_IA16))
     {
         if (texInfo->size == G_IM_SIZ_4b)
             GetTexel = GetCI4IA_RGBA8888;
@@ -625,7 +616,7 @@ void TextureCache_Load(CachedTexture *texInfo)
 
         if (y & mirrorTBit) ty ^= maskTMask;
 
-        src = &TMEM[texInfo->tMem] + line * ty;
+        src = &render_tmem[texInfo->tMem] + line * ty;
 
         i = (ty & 1) << 1;
         for (x = 0; x < texInfo->realWidth; x++)
@@ -649,13 +640,14 @@ u32 TextureCache_CalculateCRC(u32 t, u32 width, u32 height)
     u32 crc;
     u32 y, i, bpl, lineBytes, line;
     u64 *src;
+    const auto &tile = render_texture_tile(t);
 
-    src = &TMEM[gSP.textureTile[t]->tmem];
-    bpl = width << gSP.textureTile[t]->size >> 1;
-    lineBytes = gSP.textureTile[t]->line << 3;
+    src = &render_tmem[tile.tmem];
+    bpl = width << tile.size >> 1;
+    lineBytes = tile.line << 3;
 
-    line = gSP.textureTile[t]->line;
-    if (gSP.textureTile[t]->size == G_IM_SIZ_32b) line <<= 1;
+    line = tile.line;
+    if (tile.size == G_IM_SIZ_32b) line <<= 1;
 
     crc = 0xFFFFFFFF;
     for (y = 0; y < height; y++)
@@ -665,12 +657,12 @@ u32 TextureCache_CalculateCRC(u32 t, u32 width, u32 height)
         src += line;
     }
 
-    if (gSP.textureTile[t]->format == G_IM_FMT_CI)
+    if (tile.format == G_IM_FMT_CI)
     {
-        if (gSP.textureTile[t]->size == G_IM_SIZ_4b)
-            crc = CRC_Calculate(crc, &gDP.paletteCRC16[gSP.textureTile[t]->palette], 4);
-        else if (gSP.textureTile[t]->size == G_IM_SIZ_8b)
-            crc = CRC_Calculate(crc, &gDP.paletteCRC256, 4);
+        if (tile.size == G_IM_SIZ_4b)
+            crc = CRC_Calculate(crc, &render_state.dp.paletteCRC16[tile.palette], 4);
+        else if (tile.size == G_IM_SIZ_8b)
+            crc = CRC_Calculate(crc, &render_state.dp.paletteCRC256, 4);
     }
     return crc;
 }
@@ -683,7 +675,8 @@ void TextureCache_ActivateTexture(u32 t, CachedTexture *texture)
     GLint filter;
     if (OGL.smoothing == 0)
     {
-        if (gDP.otherMode.textureFilter == G_TF_BILERP || gDP.otherMode.textureFilter == G_TF_AVERAGE)
+        if (render_state.dp.otherMode.textureFilter == G_TF_BILERP ||
+            render_state.dp.otherMode.textureFilter == G_TF_AVERAGE)
             filter = GL_LINEAR;
         else
             filter = GL_NEAREST;
@@ -699,7 +692,7 @@ void TextureCache_ActivateTexture(u32 t, CachedTexture *texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texture->clampS ? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texture->clampT ? GL_CLAMP_TO_EDGE : GL_REPEAT);
 
-    texture->lastDList = RSP.DList;
+    texture->lastDList = render_display_list;
 
     TextureCache_MoveToTop(texture);
 
@@ -718,25 +711,23 @@ void TextureCache_ActivateDummy(u32 t)
 
 void TextureCache_UpdateBackground()
 {
-    u32 numBytes = gSP.bgImage.width * gSP.bgImage.height << gSP.bgImage.size >> 1;
-    u32 crc;
+    u32 crc = CRC_Calculate(0xFFFFFFFF, render_state.background_image.data(), render_state.background_image.size());
 
-    crc = CRC_Calculate(0xFFFFFFFF, &RDRAM[gSP.bgImage.address], numBytes);
-
-    if (gSP.bgImage.format == G_IM_FMT_CI)
+    if (render_state.sp.bgImage.format == G_IM_FMT_CI)
     {
-        if (gSP.bgImage.size == G_IM_SIZ_4b)
-            crc = CRC_Calculate(crc, &gDP.paletteCRC16[gSP.bgImage.palette], 4);
-        else if (gSP.bgImage.size == G_IM_SIZ_8b)
-            crc = CRC_Calculate(crc, &gDP.paletteCRC256, 4);
+        if (render_state.sp.bgImage.size == G_IM_SIZ_4b)
+            crc = CRC_Calculate(crc, &render_state.dp.paletteCRC16[render_state.sp.bgImage.palette], 4);
+        else if (render_state.sp.bgImage.size == G_IM_SIZ_8b)
+            crc = CRC_Calculate(crc, &render_state.dp.paletteCRC256, 4);
     }
 
     CachedTexture *current = cache.top;
 
     while (current)
     {
-        if ((current->crc == crc) && (current->width == gSP.bgImage.width) && (current->height == gSP.bgImage.height) &&
-            (current->format == gSP.bgImage.format) && (current->size == gSP.bgImage.size))
+        if ((current->crc == crc) && (current->width == render_state.sp.bgImage.width) &&
+            (current->height == render_state.sp.bgImage.height) &&
+            (current->format == render_state.sp.bgImage.format) && (current->size == render_state.sp.bgImage.size))
         {
             TextureCache_ActivateTexture(0, current);
 
@@ -755,18 +746,18 @@ void TextureCache_UpdateBackground()
 
     glBindTexture(GL_TEXTURE_2D, cache.current[0]->glName);
 
-    cache.current[0]->address = gSP.bgImage.address;
+    cache.current[0]->address = render_state.sp.bgImage.address;
     cache.current[0]->crc = crc;
 
-    cache.current[0]->format = gSP.bgImage.format;
-    cache.current[0]->size = gSP.bgImage.size;
+    cache.current[0]->format = render_state.sp.bgImage.format;
+    cache.current[0]->size = render_state.sp.bgImage.size;
 
-    cache.current[0]->width = gSP.bgImage.width;
-    cache.current[0]->height = gSP.bgImage.height;
+    cache.current[0]->width = render_state.sp.bgImage.width;
+    cache.current[0]->height = render_state.sp.bgImage.height;
 
-    cache.current[0]->clampWidth = gSP.bgImage.width;
-    cache.current[0]->clampHeight = gSP.bgImage.height;
-    cache.current[0]->palette = gSP.bgImage.palette;
+    cache.current[0]->clampWidth = render_state.sp.bgImage.width;
+    cache.current[0]->clampHeight = render_state.sp.bgImage.height;
+    cache.current[0]->palette = render_state.sp.bgImage.palette;
     cache.current[0]->maskS = 0;
     cache.current[0]->maskT = 0;
     cache.current[0]->mirrorS = 0;
@@ -775,11 +766,10 @@ void TextureCache_UpdateBackground()
     cache.current[0]->clampT = 1;
     cache.current[0]->line = 0;
     cache.current[0]->tMem = 0;
-    cache.current[0]->lastDList = RSP.DList;
-    cache.current[0]->frameBufferTexture = FALSE;
+    cache.current[0]->lastDList = render_display_list;
 
-    cache.current[0]->realWidth = pow2(gSP.bgImage.width);
-    cache.current[0]->realHeight = pow2(gSP.bgImage.height);
+    cache.current[0]->realWidth = pow2(render_state.sp.bgImage.width);
+    cache.current[0]->realHeight = pow2(render_state.sp.bgImage.height);
 
     cache.current[0]->scaleS = 1.0f / (f32)(cache.current[0]->realWidth);
     cache.current[0]->scaleT = 1.0f / (f32)(cache.current[0]->realHeight);
@@ -801,124 +791,119 @@ void TextureCache_Update(u32 t)
     u32 tileWidth, maskWidth, loadWidth, lineWidth, clampWidth, height;
     u32 tileHeight, maskHeight, loadHeight, lineHeight, clampHeight, width;
 
-    if (gDP.textureMode == TEXTUREMODE_BGIMAGE)
+    if (render_state.dp.textureMode == TEXTUREMODE_BGIMAGE)
     {
-        TextureCache_UpdateBackground();
-        return;
-    }
-    else if (gDP.textureMode == TEXTUREMODE_FRAMEBUFFER)
-    {
-        FrameBuffer_ActivateBufferTexture(t, gDP.loadTile->frameBuffer);
+        if (render_state.background_image.empty())
+            TextureCache_ActivateDummy(t);
+        else
+            TextureCache_UpdateBackground();
         return;
     }
 
-    maxTexels = imageFormat[gSP.textureTile[t]->size][gSP.textureTile[t]->format].maxTexels;
+    auto tile = render_texture_tile(t);
+    const auto &load_tile = render_load_tile();
+
+    maxTexels = imageFormat[tile.size][tile.format].maxTexels;
 
     // Here comes a bunch of code that just calculates the texture size...I wish there was an easier way...
-    tileWidth = gSP.textureTile[t]->lrs - gSP.textureTile[t]->uls + 1;
-    tileHeight = gSP.textureTile[t]->lrt - gSP.textureTile[t]->ult + 1;
+    tileWidth = tile.lrs - tile.uls + 1;
+    tileHeight = tile.lrt - tile.ult + 1;
 
-    maskWidth = 1 << gSP.textureTile[t]->masks;
-    maskHeight = 1 << gSP.textureTile[t]->maskt;
+    maskWidth = 1 << tile.masks;
+    maskHeight = 1 << tile.maskt;
 
-    loadWidth = gDP.loadTile->lrs - gDP.loadTile->uls + 1;
-    loadHeight = gDP.loadTile->lrt - gDP.loadTile->ult + 1;
+    loadWidth = load_tile.lrs - load_tile.uls + 1;
+    loadHeight = load_tile.lrt - load_tile.ult + 1;
 
-    lineWidth = gSP.textureTile[t]->line << imageFormat[gSP.textureTile[t]->size][gSP.textureTile[t]->format].lineShift;
+    lineWidth = tile.line << imageFormat[tile.size][tile.format].lineShift;
 
     if (lineWidth) // Don't allow division by zero
         lineHeight = std::min(maxTexels / lineWidth, tileHeight);
     else
         lineHeight = 0;
 
-    if (gDP.textureMode == TEXTUREMODE_TEXRECT)
+    if (render_state.dp.textureMode == TEXTUREMODE_TEXRECT)
     {
-        u16 texRectWidth = gDP.texRect.width - gSP.textureTile[t]->uls;
-        u16 texRectHeight = gDP.texRect.height - gSP.textureTile[t]->ult;
+        u16 texRectWidth = render_state.dp.texRect.width - tile.uls;
+        u16 texRectHeight = render_state.dp.texRect.height - tile.ult;
 
-        //		if ((tileWidth == (maskWidth + 1)) && (gDP.loadType == LOADTYPE_TILE) && (gDP.loadTile->lrs -
-        // gDP.loadTile->uls + 1 == tileWidth)) 			gSP.textureTile[t]->masks = 0;
+        //		if ((tileWidth == (maskWidth + 1)) && (render_state.dp.loadType == LOADTYPE_TILE) && (load_tile.lrs -
+        // load_tile.uls + 1 == tileWidth)) 			tile.masks = 0;
 
-        if (gSP.textureTile[t]->masks && ((maskWidth * maskHeight) <= maxTexels))
+        if (tile.masks && ((maskWidth * maskHeight) <= maxTexels))
             width = maskWidth;
         else if ((tileWidth * tileHeight) <= maxTexels)
             width = tileWidth;
         else if ((tileWidth * texRectHeight) <= maxTexels)
             width = tileWidth;
         else if ((texRectWidth * tileHeight) <= maxTexels)
-            width = gDP.texRect.width;
+            width = render_state.dp.texRect.width;
         else if ((texRectWidth * texRectHeight) <= maxTexels)
-            width = gDP.texRect.width;
-        else if (gDP.loadType == LOADTYPE_TILE)
+            width = render_state.dp.texRect.width;
+        else if (render_state.dp.loadType == LOADTYPE_TILE)
             width = loadWidth;
         else
             width = lineWidth;
 
-        //		if ((tileHeight == (maskHeight + 1)) && (gDP.loadType == LOADTYPE_TILE) && (gDP.loadTile->lrt -
-        // gDP.loadTile->ult + 1 == tileHeight)) 			gSP.textureTile[t]->maskt = 0;
+        //		if ((tileHeight == (maskHeight + 1)) && (render_state.dp.loadType == LOADTYPE_TILE) && (load_tile.lrt -
+        // load_tile.ult + 1 == tileHeight)) 			tile.maskt = 0;
 
-        if (gSP.textureTile[t]->maskt && ((maskWidth * maskHeight) <= maxTexels))
+        if (tile.maskt && ((maskWidth * maskHeight) <= maxTexels))
             height = maskHeight;
         else if ((tileWidth * tileHeight) <= maxTexels)
             height = tileHeight;
         else if ((tileWidth * texRectHeight) <= maxTexels)
-            height = gDP.texRect.height;
+            height = render_state.dp.texRect.height;
         else if ((texRectWidth * tileHeight) <= maxTexels)
             height = tileHeight;
         else if ((texRectWidth * texRectHeight) <= maxTexels)
-            height = gDP.texRect.height;
-        else if (gDP.loadType == LOADTYPE_TILE)
+            height = render_state.dp.texRect.height;
+        else if (render_state.dp.loadType == LOADTYPE_TILE)
             height = loadHeight;
         else
             height = lineHeight;
 
-        //		gSP.textureTile[t]->masks = 0;
-        //		gSP.textureTile[t]->maskt = 0;
+        //		tile.masks = 0;
+        //		tile.maskt = 0;
     }
     else
     {
-        if (gSP.textureTile[t]->masks && ((maskWidth * maskHeight) <= maxTexels))
+        if (tile.masks && ((maskWidth * maskHeight) <= maxTexels))
             width = maskWidth; // Use mask width if set and valid
         else if ((tileWidth * tileHeight) <= maxTexels)
             width = tileWidth; // else use tile width if valid
-        else if (gDP.loadType == LOADTYPE_TILE)
+        else if (render_state.dp.loadType == LOADTYPE_TILE)
             width = loadWidth; // else use load width if load done with LoadTile
         else
             width = lineWidth; // else use line-based width
 
-        if (gSP.textureTile[t]->maskt && ((maskWidth * maskHeight) <= maxTexels))
+        if (tile.maskt && ((maskWidth * maskHeight) <= maxTexels))
             height = maskHeight;
         else if ((tileWidth * tileHeight) <= maxTexels)
             height = tileHeight;
-        else if (gDP.loadType == LOADTYPE_TILE)
+        else if (render_state.dp.loadType == LOADTYPE_TILE)
             height = loadHeight;
         else
             height = lineHeight;
     }
 
-    /*	if (gDP.loadTile->frameBuffer)
-        {
-            FrameBuffer_ActivateBufferTexture( t, gDP.loadTile->frameBuffer );
-            return;
-        }*/
+    clampWidth = tile.clamps ? tileWidth : width;
+    clampHeight = tile.clampt ? tileHeight : height;
 
-    clampWidth = gSP.textureTile[t]->clamps ? tileWidth : width;
-    clampHeight = gSP.textureTile[t]->clampt ? tileHeight : height;
-
-    if (clampWidth > 256) gSP.textureTile[t]->clamps = 0;
-    if (clampHeight > 256) gSP.textureTile[t]->clampt = 0;
+    if (clampWidth > 256) tile.clamps = 0;
+    if (clampHeight > 256) tile.clampt = 0;
 
     // Make sure masking is valid
     if (maskWidth > width)
     {
-        gSP.textureTile[t]->masks = powof(width);
-        maskWidth = 1 << gSP.textureTile[t]->masks;
+        tile.masks = powof(width);
+        maskWidth = 1 << tile.masks;
     }
 
     if (maskHeight > height)
     {
-        gSP.textureTile[t]->maskt = powof(height);
-        maskHeight = 1 << gSP.textureTile[t]->maskt;
+        tile.maskt = powof(height);
+        maskHeight = 1 << tile.maskt;
     }
 
     crc = TextureCache_CalculateCRC(t, width, height);
@@ -930,19 +915,18 @@ void TextureCache_Update(u32 t)
     while (current)
     {
         if ((current->crc == crc) &&
-            //			(current->address == gDP.textureImage.address) &&
-            //			(current->palette == gSP.textureTile[t]->palette) &&
+            //			(current->address == render_state.dp.textureImage.address) &&
+            //			(current->palette == tile.palette) &&
             (current->width == width) && (current->height == height) && (current->clampWidth == clampWidth) &&
-            (current->clampHeight == clampHeight) && (current->maskS == gSP.textureTile[t]->masks) &&
-            (current->maskT == gSP.textureTile[t]->maskt) && (current->mirrorS == gSP.textureTile[t]->mirrors) &&
-            (current->mirrorT == gSP.textureTile[t]->mirrort) && (current->clampS == gSP.textureTile[t]->clamps) &&
-            (current->clampT == gSP.textureTile[t]->clampt) &&
-            //			(current->tMem == gSP.textureTile[t]->tMem) &&
-            /*			(current->ulS == gSP.textureTile[t]->ulS) &&
-                        (current->ulT == gSP.textureTile[t]->ulT) &&
-                        (current->lrS == gSP.textureTile[t]->lrS) &&
-                        (current->lrT == gSP.textureTile[t]->lrT) &&*/
-            (current->format == gSP.textureTile[t]->format) && (current->size == gSP.textureTile[t]->size))
+            (current->clampHeight == clampHeight) && (current->maskS == tile.masks) && (current->maskT == tile.maskt) &&
+            (current->mirrorS == tile.mirrors) && (current->mirrorT == tile.mirrort) &&
+            (current->clampS == tile.clamps) && (current->clampT == tile.clampt) &&
+            //			(current->tMem == tile.tMem) &&
+            /*			(current->ulS == tile.ulS) &&
+                        (current->ulT == tile.ulT) &&
+                        (current->lrS == tile.lrS) &&
+                        (current->lrT == tile.lrT) &&*/
+            (current->format == tile.format) && (current->size == tile.size))
         {
             TextureCache_ActivateTexture(t, current);
 
@@ -961,11 +945,11 @@ void TextureCache_Update(u32 t)
 
     glBindTexture(GL_TEXTURE_2D, cache.current[t]->glName);
 
-    cache.current[t]->address = gDP.textureImage.address;
+    cache.current[t]->address = render_state.dp.textureImage.address;
     cache.current[t]->crc = crc;
 
-    cache.current[t]->format = gSP.textureTile[t]->format;
-    cache.current[t]->size = gSP.textureTile[t]->size;
+    cache.current[t]->format = tile.format;
+    cache.current[t]->size = tile.size;
 
     cache.current[t]->width = width;
     cache.current[t]->height = height;
@@ -973,23 +957,22 @@ void TextureCache_Update(u32 t)
     cache.current[t]->clampWidth = clampWidth;
     cache.current[t]->clampHeight = clampHeight;
 
-    cache.current[t]->palette = gSP.textureTile[t]->palette;
-    /*	cache.current[t]->fulS = gSP.textureTile[t]->fulS;
-        cache.current[t]->fulT = gSP.textureTile[t]->fulT;
-        cache.current[t]->ulS = gSP.textureTile[t]->ulS;
-        cache.current[t]->ulT = gSP.textureTile[t]->ulT;
-        cache.current[t]->lrS = gSP.textureTile[t]->lrS;
-        cache.current[t]->lrT = gSP.textureTile[t]->lrT;*/
-    cache.current[t]->maskS = gSP.textureTile[t]->masks;
-    cache.current[t]->maskT = gSP.textureTile[t]->maskt;
-    cache.current[t]->mirrorS = gSP.textureTile[t]->mirrors;
-    cache.current[t]->mirrorT = gSP.textureTile[t]->mirrort;
-    cache.current[t]->clampS = gSP.textureTile[t]->clamps;
-    cache.current[t]->clampT = gSP.textureTile[t]->clampt;
-    cache.current[t]->line = gSP.textureTile[t]->line;
-    cache.current[t]->tMem = gSP.textureTile[t]->tmem;
-    cache.current[t]->lastDList = RSP.DList;
-    cache.current[t]->frameBufferTexture = FALSE;
+    cache.current[t]->palette = tile.palette;
+    /*	cache.current[t]->fulS = tile.fulS;
+        cache.current[t]->fulT = tile.fulT;
+        cache.current[t]->ulS = tile.ulS;
+        cache.current[t]->ulT = tile.ulT;
+        cache.current[t]->lrS = tile.lrS;
+        cache.current[t]->lrT = tile.lrT;*/
+    cache.current[t]->maskS = tile.masks;
+    cache.current[t]->maskT = tile.maskt;
+    cache.current[t]->mirrorS = tile.mirrors;
+    cache.current[t]->mirrorT = tile.mirrort;
+    cache.current[t]->clampS = tile.clamps;
+    cache.current[t]->clampT = tile.clampt;
+    cache.current[t]->line = tile.line;
+    cache.current[t]->tMem = tile.tmem;
+    cache.current[t]->lastDList = render_display_list;
 
     /*	if (cache.current[t]->clampS)
             cache.current[t]->realWidth = pow2( clampWidth );
@@ -1028,15 +1011,15 @@ void TextureCache_Update(u32 t)
     cache.current[t]->offsetS = OGL.textureFilter == TextureFilter::SaI ? 0.25f : 0.5f; // this needs to change?
     cache.current[t]->offsetT = OGL.textureFilter == TextureFilter::SaI ? 0.25f : 0.5f;
 
-    if (gSP.textureTile[t]->shifts > 10)
-        cache.current[t]->shiftScaleS = (f32)(1 << (16 - gSP.textureTile[t]->shifts));
-    else if (gSP.textureTile[t]->shifts > 0)
-        cache.current[t]->shiftScaleS /= (f32)(1 << gSP.textureTile[t]->shifts);
+    if (tile.shifts > 10)
+        cache.current[t]->shiftScaleS = (f32)(1 << (16 - tile.shifts));
+    else if (tile.shifts > 0)
+        cache.current[t]->shiftScaleS /= (f32)(1 << tile.shifts);
 
-    if (gSP.textureTile[t]->shiftt > 10)
-        cache.current[t]->shiftScaleT = (f32)(1 << (16 - gSP.textureTile[t]->shiftt));
-    else if (gSP.textureTile[t]->shiftt > 0)
-        cache.current[t]->shiftScaleT /= (f32)(1 << gSP.textureTile[t]->shiftt);
+    if (tile.shiftt > 10)
+        cache.current[t]->shiftScaleT = (f32)(1 << (16 - tile.shiftt));
+    else if (tile.shiftt > 0)
+        cache.current[t]->shiftScaleT /= (f32)(1 << tile.shiftt);
 
     TextureCache_Load(cache.current[t]);
     TextureCache_ActivateTexture(t, cache.current[t]);
@@ -1048,7 +1031,7 @@ void TextureCache_ActivateNoise(u32 t)
 {
     glActiveTexture(GL_TEXTURE0 + t);
 
-    glBindTexture(GL_TEXTURE_2D, cache.glNoiseNames[RSP.DList & 0x1F]);
+    glBindTexture(GL_TEXTURE_2D, cache.glNoiseNames[render_display_list & 0x1F]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
