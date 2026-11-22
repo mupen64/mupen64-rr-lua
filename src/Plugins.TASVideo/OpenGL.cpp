@@ -31,6 +31,7 @@ static M64RRSpec::GLContext *g_wsi_context;
 static GLuint g_fbo = 0;
 static GLuint g_color_rbo = 0;
 static GLuint g_aux_rbo = 0;
+static GLenum g_read_format = GL_RGBA;
 static GLuint g_vao = 0;
 static GLuint g_vbo = 0;
 
@@ -44,11 +45,9 @@ void OGL_ReadPixels()
 {
     if (!gCapturedPixels) return;
 
-    glFlush();
-    glFinish();
-
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
-    glReadPixels(0, 0, OGL.width, OGL.height, GL_RGBA, GL_UNSIGNED_BYTE, gCapturedPixels);
+    glReadPixels(0, 0, OGL.width, OGL.height, g_read_format, GL_UNSIGNED_BYTE, gCapturedPixels);
+    if (g_read_format == GL_BGRA) return;
 
     auto pixels = (uint8_t *)gCapturedPixels;
     const size_t count = (size_t)OGL.width * OGL.height;
@@ -198,6 +197,15 @@ void OGL_ResizeWindow()
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, g_color_rbo);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, g_aux_rbo);
+
+    g_read_format = GL_BGRA;
+    if (OGL.isGLES)
+    {
+        GLint format = 0, type = 0;
+        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &format);
+        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &type);
+        if (format != GL_BGRA || type != GL_UNSIGNED_BYTE) g_read_format = GL_RGBA;
+    }
 
     // clear main buffer to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

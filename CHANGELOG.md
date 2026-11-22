@@ -28,6 +28,7 @@
 
 ## ⚡ Performance
 
+- Improved TASVideo performance.
 - Improved Pure Interpreter core performance when breakpoints are present.
 - Improved statusbar performance.
 - Slightly improved TASRSP performance.
