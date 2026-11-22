@@ -636,6 +636,13 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
         (ulx == 0 && uly == 0 && lrx == 320 && lry == 8) || (ulx == 0 && uly == 232 && lrx == 320 && lry == 240);
     const auto ignore = OGL.ignoreScissor && is_sm64_border_rect;
 
+    // SM64 fills only the area between the borders during screen transitions.
+    if (OGL.ignoreScissor && gDP.otherMode.cycleType == G_CYC_FILL && ulx == 0 && uly == 8 && lrx == 320 && lry == 232)
+    {
+        uly = 0;
+        lry = 240;
+    }
+
     // We still need to set the correct gdp state even if we're ignoring the draw
     if (!ignore)
         OGL_DrawRect(
