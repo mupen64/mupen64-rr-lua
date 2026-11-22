@@ -876,17 +876,19 @@ void OGL_DrawTexturedRect(
     OGL.vertices[0].x = rect[0].x;
     OGL.vertices[0].y = rect[0].y;
 
-    OGL.vertices[1].s0 = rect[1].s0;
-    OGL.vertices[1].t0 = rect[0].t0;
-    OGL.vertices[1].s1 = rect[1].s1;
-    OGL.vertices[1].t1 = rect[0].t1;
+    const auto &right = rect[flip ? 0 : 1];
+    const auto &left = rect[flip ? 1 : 0];
+    OGL.vertices[1].s0 = right.s0;
+    OGL.vertices[1].t0 = left.t0;
+    OGL.vertices[1].s1 = right.s1;
+    OGL.vertices[1].t1 = left.t1;
     OGL.vertices[1].x = rect[1].x;
     OGL.vertices[1].y = rect[0].y;
 
-    OGL.vertices[2].s0 = rect[0].s0;
-    OGL.vertices[2].t0 = rect[1].t0;
-    OGL.vertices[2].s1 = rect[0].s1;
-    OGL.vertices[2].t1 = rect[1].t1;
+    OGL.vertices[2].s0 = left.s0;
+    OGL.vertices[2].t0 = right.t0;
+    OGL.vertices[2].s1 = left.s1;
+    OGL.vertices[2].t1 = right.t1;
     OGL.vertices[2].x = rect[0].x;
     OGL.vertices[2].y = rect[1].y;
 

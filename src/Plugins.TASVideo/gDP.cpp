@@ -684,7 +684,7 @@ void gDPSetKeyGB(u32 cG, u32 sG, u32 wG, u32 cB, u32 sB, u32 wB)
     ;
 }
 
-void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f32 t, f32 dsdx, f32 dtdy)
+void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f32 t, f32 dsdx, f32 dtdy, bool flip)
 {
     if (gDP.otherMode.cycleType == G_CYC_COPY)
     {
@@ -696,28 +696,33 @@ void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f3
     gSP.textureTile[0] = &gDP.tiles[tile];
     gSP.textureTile[1] = &gDP.tiles[tile < 7 ? tile + 1 : tile];
 
-    f32 lrs = s + (lrx - ulx - 1) * dsdx;
-    f32 lrt = t + (lry - uly - 1) * dtdy;
+    const f32 width = lrx - ulx;
+    const f32 height = lry - uly;
+    f32 lrs = s + ((flip ? height : width) - 1) * dsdx;
+    f32 lrt = t + ((flip ? width : height) - 1) * dtdy;
 
     if (gDP.textureMode == TEXTUREMODE_NORMAL) gDP.textureMode = TEXTUREMODE_TEXRECT;
 
     gDP.texRect.width = std::max(lrs, s) + dsdx;
     gDP.texRect.height = std::max(lrt, t) + dtdy;
 
-    if (lrs > s)
+    if (lrs < s)
     {
-        if (lrt > t)
-            OGL_DrawTexturedRect(ulx, uly, lrx, lry, s, t, lrs, lrt, (RSP.cmd == G_TEXRECTFLIP));
+        std::swap(s, lrs);
+        if (flip)
+            std::swap(uly, lry);
         else
-            OGL_DrawTexturedRect(ulx, lry, lrx, uly, s, lrt, lrs, t, (RSP.cmd == G_TEXRECTFLIP));
+            std::swap(ulx, lrx);
     }
-    else
+    if (lrt < t)
     {
-        if (lrt > t)
-            OGL_DrawTexturedRect(lrx, uly, ulx, lry, lrs, t, s, lrt, (RSP.cmd == G_TEXRECTFLIP));
+        std::swap(t, lrt);
+        if (flip)
+            std::swap(ulx, lrx);
         else
-            OGL_DrawTexturedRect(lrx, lry, ulx, uly, lrs, lrt, s, t, (RSP.cmd == G_TEXRECTFLIP));
+            std::swap(uly, lry);
     }
+    OGL_DrawTexturedRect(ulx, uly, lrx, lry, s, t, lrs, lrt, flip);
 
     gSP.textureTile[0] = &gDP.tiles[gSP.texture.tile];
     gSP.textureTile[1] = &gDP.tiles[gSP.texture.tile < 7 ? gSP.texture.tile + 1 : gSP.texture.tile];
@@ -728,14 +733,6 @@ void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f3
 
     DebugMsg(L"gDPTextureRectangle( %f, %f, %f, %f, %i, %i, %f, %f, %f, %f );\n", ulx, uly, lrx, lry, tile, s, t, dsdx,
         dtdy);
-}
-
-void gDPTextureRectangleFlip(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f32 t, f32 dsdx, f32 dtdy)
-{
-    gDPTextureRectangle(ulx, uly, lrx, lry, tile, s + (lrx - ulx) * dsdx, t + (lry - uly) * dtdy, -dsdx, -dtdy);
-
-    DebugMsg(L"gDPTextureRectangleFlip( %f, %f, %f, %f, %i, %i, %f, %f, %f, %f );\n", ulx, uly, lrx, lry, tile, s, t,
-        dsdx, dtdy);
 }
 
 void gDPFullSync()
