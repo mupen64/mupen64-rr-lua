@@ -10,7 +10,7 @@
 #include <Common/StrUtils.hpp>
 
 #if defined(_WIN32)
-#include <Common.Win32/Common.hpp>
+#include "Common.hpp"
 #elif defined(__linux__)
 #error "Don't include this file on Linux"
 #endif

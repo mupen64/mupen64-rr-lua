@@ -1190,7 +1190,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
         break;
-    case JoystickControl::wm_joystick_position_changed: {
+    case JoystickControl::WM_JOYSTICK_POSITION_CHANGED: {
         if (!can_joystick_be_modified()) break;
         int32_t x{};
         int32_t y{};

@@ -6,10 +6,12 @@
 
 #pragma once
 
-#include <Common.Win32/Common.hpp>
-#include <string>
+#include "Common.hpp"
 #include <cstdint>
+#include <functional>
+#include <string>
 #include <utility>
+#include <vector>
 
 /**
  * A module responsible for abstracting a settings-oriented ListView control.
@@ -197,8 +199,8 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
         return false;
     }
 
-    const auto lpnmhdr = reinterpret_cast<LPNMHDR>(lparam);
-    auto ctx = (SettingsListviewContext *)GetProp(dlg_hwnd, PROP_NAME);
+    LPNMHDR lpnmhdr = reinterpret_cast<LPNMHDR>(lparam);
+    auto* ctx = (SettingsListviewContext *)GetProp(dlg_hwnd, PROP_NAME);
 
     switch (lpnmhdr->code)
     {

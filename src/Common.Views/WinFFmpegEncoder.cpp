@@ -13,11 +13,14 @@
 const std::string NUT_PIPE_NAME = "\\\\.\\pipe\\mupennut";
 const std::string FFMPEG_OPTIONS = "-y -i {} {} \"{}\"";
 
+namespace
+{
 struct PipeIO
 {
     HANDLE pipe;
     HANDLE event;
 };
+} // namespace
 
 static int avio_write_cb(void *opaque, const uint8_t *buf, int size)
 {

@@ -711,7 +711,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         ctx->hwnd = nullptr;
     }
     break;
-    case JoystickControl::wm_joystick_position_changed: {
+    case JoystickControl::WM_JOYSTICK_POSITION_CHANGED: {
         int x{}, y{};
         JoystickControl::get_position(ctx->joy_hwnd, &x, &y);
 
@@ -724,7 +724,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         }
         break;
     }
-    case JoystickControl::wm_joystick_drag_begin:
+    case JoystickControl::WM_JOYSTICK_DRAG_BEGIN:
         ctx->activate_emulator_window();
         break;
     case WM_CONTEXTMENU:

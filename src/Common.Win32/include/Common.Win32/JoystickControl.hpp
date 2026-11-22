@@ -5,11 +5,12 @@
  */
 #pragma once
 
-#include <filesystem>
+#include <cmath>
 #include <numbers>
 #include <Common/MiscHelpers.hpp>
+
 #if defined(_WIN32)
-#include <Common.Win32/Common.hpp>
+#include "Common.hpp" // IWYU pragma: keep
 #elif defined(__linux__)
 #error JoystickControl is not supported on Linux
 #endif
@@ -19,8 +20,8 @@
  */
 namespace JoystickControl
 {
-static constexpr UINT wm_joystick_position_changed = WM_APP + 200;
-static constexpr UINT wm_joystick_drag_begin = WM_APP + 201;
+static constexpr UINT WM_JOYSTICK_POSITION_CHANGED = WM_APP + 200;
+static constexpr UINT WM_JOYSTICK_DRAG_BEGIN = WM_APP + 201;
 
 namespace Internal
 {
@@ -60,9 +61,9 @@ inline Gdiplus::Color contrastize(const Gdiplus::Color &color, int amount, bool 
     const auto contrastize_component = [](BYTE component, int amount, bool dark_background) {
         if (dark_background)
         {
-            return static_cast<BYTE>(component + (255 - component) * amount / 100);
+            return static_cast<BYTE>(component + (((255 - component) * amount) / 100));
         }
-        return static_cast<BYTE>(component - component * amount / 100);
+        return static_cast<BYTE>(component - ((component * amount) / 100));
     };
 
     return Gdiplus::Color(color.GetAlpha(), contrastize_component(color.GetRed(), amount, dark_background),
@@ -129,7 +130,7 @@ inline void update_joystick_position(HWND hwnd, Context *ctx)
     ctx->y = y;
 
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
-    SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_position_changed, 0, 0);
+    SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_POSITION_CHANGED, 0, 0);
 }
 
 inline void destroy_dcs(const HWND hwnd, Context *ctx)
@@ -282,7 +283,7 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->y = MiscHelpers::wrapping_clamp(ctx->y, -127, 128);
 
         RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
-        SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_position_changed, 0, 0);
+        SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_POSITION_CHANGED, 0, 0);
     }
     break;
     case WM_MBUTTONDOWN: {
@@ -293,7 +294,7 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->cursor_diff_y = y - ctx->y;
 
         ctx->mode = Mode::Relative;
-        SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_drag_begin, 0, 0);
+        SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_DRAG_BEGIN, 0, 0);
         SetCapture(hwnd);
         break;
     }
@@ -305,13 +306,13 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             break;
         }
         ctx->mode = Mode::Sticky;
-        SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_drag_begin, 0, 0);
+        SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_DRAG_BEGIN, 0, 0);
         SetCapture(hwnd);
         update_joystick_position(hwnd, ctx);
         break;
     case WM_LBUTTONDOWN:
         ctx->mode = Mode::Absolute;
-        SendMessage(GetParent(hwnd), JoystickControl::wm_joystick_drag_begin, 0, 0);
+        SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_DRAG_BEGIN, 0, 0);
         SetCapture(hwnd);
         update_joystick_position(hwnd, ctx);
         break;
@@ -441,7 +442,7 @@ inline bool set_position(HWND hwnd, int x, int y)
     ctx->x = x;
     ctx->y = y;
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
-    SendMessage(GetParent(hwnd), wm_joystick_position_changed, 1, 0);
+    SendMessage(GetParent(hwnd), WM_JOYSTICK_POSITION_CHANGED, 1, 0);
     return true;
 }
 

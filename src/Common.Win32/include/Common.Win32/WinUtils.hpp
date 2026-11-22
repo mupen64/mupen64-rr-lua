@@ -13,9 +13,11 @@
 #include <limits>
 #include <string>
 
-#include <Common.Win32/Common.hpp>
 #include <spdlog/spdlog.h>
+#include <Common.Views/App.hpp>
 #include <Common.Views/IDialogService.hpp>
+
+#include "Common.hpp"
 
 #define ComboBox_ResetContentKeepEdit(hwnd)                                                                            \
     do                                                                                                                 \

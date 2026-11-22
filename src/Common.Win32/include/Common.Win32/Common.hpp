@@ -12,6 +12,7 @@
 
 #pragma warning(push, 0)
 
+// IWYU pragma: begin_exports
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
@@ -46,5 +47,6 @@
 #include <d3dcompiler.h>
 
 #include <wrl/client.h>
+// IWYU pragma: end_exports
 
 #pragma warning(pop)
