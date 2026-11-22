@@ -9,14 +9,17 @@
 #include <cmath>
 #include <filesystem>
 #include <format>
+#include <initializer_list>
 #include <iterator>
 #include <limits>
+#include <map>
+#include <optional>
 #include <string>
-
+#include <vector>
 #include <Common.Win32/Common.hpp>
+#include <Common/IOUtils.hpp>
 #include <wil/resource.h>
 #include <spdlog/spdlog.h>
-#include <Common.Views/IDialogService.hpp>
 
 #define ComboBox_ResetContentKeepEdit(hwnd)                                                                            \
     do                                                                                                                 \
@@ -194,6 +197,50 @@ inline RECT get_window_rect_client_space(HWND parent, HWND child)
 }
 
 /**
+ * \brief Registers hover tooltips during dialog initialization. The dialog owns the tooltip window.
+ * \param dialog The dialog window handle.
+ * \param tips The UTF-8 tooltip text keyed by dialog item ID.
+ * \param show_when_disabled IDs of fixed-position items that also need tooltips while disabled.
+ */
+inline void set_dlg_item_tooltips(
+    HWND dialog, const std::map<int, std::string> &tips, std::initializer_list<int> show_when_disabled = {})
+{
+    if (tips.empty()) return;
+
+    const auto tooltip = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASSW, nullptr, WS_POPUP | TTS_NOPREFIX,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, dialog, nullptr, GetModuleHandle(nullptr), nullptr);
+    if (!tooltip) return;
+
+    SendMessageW(tooltip, TTM_SETMAXTIPWIDTH, 0, 360);
+
+    for (const auto &[id, text] : tips)
+    {
+        const auto control = GetDlgItem(dialog, id);
+        if (!control) continue;
+
+        auto wide_text = IOUtils::to_wide_string(text);
+        if (wide_text.empty()) continue;
+
+        TOOLINFOW tool{sizeof(tool)};
+        tool.hwnd = dialog;
+        tool.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+        tool.uId = reinterpret_cast<UINT_PTR>(control);
+        tool.lpszText = wide_text.data();
+        SendMessageW(tooltip, TTM_ADDTOOLW, 0, reinterpret_cast<LPARAM>(&tool));
+
+        // Mouse messages over disabled items are delivered to the dialog.
+        if (std::find(show_when_disabled.begin(), show_when_disabled.end(), id) != show_when_disabled.end())
+        {
+            GetWindowRect(control, &tool.rect);
+            MapWindowRect(HWND_DESKTOP, dialog, &tool.rect);
+            tool.uFlags = TTF_SUBCLASS;
+            tool.uId = id;
+            SendMessageW(tooltip, TTM_ADDTOOLW, 0, reinterpret_cast<LPARAM>(&tool));
+        }
+    }
+}
+
+/**
  * \brief Sets a statusbar's parts.
  * \param hwnd The statusbar window handle.
  * \param parts The parts to set, as a vector of widths in pixels.
@@ -214,8 +261,9 @@ inline void set_statusbar_parts(HWND hwnd, std::vector<int32_t> parts)
  * \brief Copies a string to the clipboard
  * \param owner The clipboard content's owner window
  * \param str The string to be copied
+ * \param logger The logger used to report a copy failure
  */
-inline void copy_to_clipboard(void *owner, const std::string &str)
+inline void copy_to_clipboard(void *owner, const std::string &str, spdlog::logger &logger)
 {
     OpenClipboard((HWND)owner);
     EmptyClipboard();
@@ -230,7 +278,7 @@ inline void copy_to_clipboard(void *owner, const std::string &str)
     }
     else
     {
-        g_view_logger->info("Failed to copy");
+        logger.info("Failed to copy");
         CloseClipboard();
     }
 }

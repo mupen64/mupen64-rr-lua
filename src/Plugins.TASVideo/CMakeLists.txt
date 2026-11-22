@@ -105,6 +105,7 @@ if (MUPEN64RR_BUILD_WIN32)
         uxtheme
         msimg32
         opengl32
+        spdlog::spdlog
     )
 endif()
 

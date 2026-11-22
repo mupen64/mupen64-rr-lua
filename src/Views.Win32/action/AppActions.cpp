@@ -651,7 +651,7 @@ static void show_ram_start()
         const auto stroop_line = std::format("<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" "
                                              "endianness=\"little\" autoDetect=\"true\"/>",
             exe_filename.string(), ram_start_str);
-        copy_to_clipboard(g_main_ctx.hwnd, stroop_line);
+        copy_to_clipboard(g_main_ctx.hwnd, stroop_line, *g_view_logger);
     }
 }
 

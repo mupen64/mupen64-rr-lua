@@ -13,7 +13,7 @@
 #include "OpenGL.hpp"
 #include "RSP.hpp"
 #include "Textures.hpp"
-#include <Common.Win32/Common.hpp>
+#include <Common.Win32/WinUtils.hpp>
 #include <WinDarkMode.h>
 using nlohmann::json;
 
@@ -150,6 +150,24 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         SendMessage(hWndDlg, WM_COMMAND, MAKEWPARAM(IDC_TEXTUREFILTER, CBN_SELCHANGE),
             (LPARAM)GetDlgItem(hWndDlg, IDC_TEXTUREFILTER));
 
+        set_dlg_item_tooltips(hWndDlg,
+            {
+                {IDC_SCISSOR, "Removes the top and bottom borders in Super Mario 64. This option is experimental."},
+                {IDC_STRETCH_BACKGROUNDS, "Stretches eligible 2D backgrounds to fill the window in Widescreen mode."},
+                {IDC_DITHEREDALPHATEST, "Uses a stipple pattern to approximate the N64's dithered alpha test."},
+                {IDC_STRETCH_FULLSCREEN_RECTS, "Stretches eligible full-screen effects (mostly rectangles or quads) to "
+                                               "fill the window in Widescreen mode."},
+                {IDC_CLEAR, "Clears the color buffer to black before drawing each frame."},
+                {IDC_FOG, "Renders fog where the game uses it."},
+                {IDC_MSAA, "Uses 4x multisample anti-aliasing to smooth jagged geometry edges."},
+                {IDC_TEXTUREFILTER,
+                    "Selects a texture upscaling filter. None keeps textures at their original resolution."},
+                {IDC_SMOOTHING,
+                    "Uses the game's texture sampling with Default, or forces linear or nearest neighbor sampling."},
+                {IDC_ASPECT, "Pillarbox keeps the original proportions with side bars. Stretch fills the window. "
+                             "Widescreen widens the 3D view while preserving its proportions."},
+            },
+            {IDC_STRETCH_BACKGROUNDS, IDC_STRETCH_FULLSCREEN_RECTS});
         WinDarkMode::attach(hWndDlg, {.is_dialog = true});
         return TRUE;
     }

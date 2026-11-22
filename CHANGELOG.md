@@ -7,6 +7,7 @@
 - Added Lua script-owned window API.
 - Added scoped hotkeys (with Lua API).
 - Improved TASVideo widescreen support.
+- Added tooltips to the TASVideo config dialog.
 
 ## 🐞 Bugfixes
 
