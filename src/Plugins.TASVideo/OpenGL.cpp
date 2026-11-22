@@ -144,6 +144,7 @@ void OGL_InitStates()
     glEnableVertexAttribArray(5);
 
     glPolygonOffset(-3.0f, -3.0f);
+    glEnable(GL_SCISSOR_TEST);
 }
 
 void OGL_UpdateScale()

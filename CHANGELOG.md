@@ -22,6 +22,7 @@
 - Fixed captures started too early or right after savestate loads having buggy audio.
 - Fixed inaccurate flipped rectangle rendering in TASVideo.
 - Fixed certain text in Super Mario 64 (PAL) appearing garbled with TASVideo.
+- Fixed scrolling dialogs having their text overflow due to improper scissor handling with TASVideo.
 
 ## ⚡ Performance
 
