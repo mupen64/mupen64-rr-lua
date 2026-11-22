@@ -6,9 +6,11 @@
 
 #include "Main.hpp"
 #include "HLE.hpp"
+#include "ADPCM.hpp"
 
 #include <cassert>
 #include <cstring>
+#include <emmintrin.h>
 
 using namespace BuiltinTAS::TASRSP;
 
@@ -24,10 +26,6 @@ extern uint16_t AudioOutBuffer; // 0x0002(T8)
 extern uint16_t AudioCount;     // 0x0004(T8)
 extern uint32_t loopval;        // 0x0010(T8)
 extern uint32_t SEGMENTS[0x10];
-
-extern uint16_t adpcmtable[0x88];
-
-extern uint16_t ResampleLUT[0x200];
 
 bool isMKABI = false;
 bool isZeldaABI = false;
@@ -70,312 +68,13 @@ static void SETBUFF2()
 
 static void ADPCM2()
 {
-    // Verified to be 100% Accurate...
-    uint8_t Flags = (uint8_t)(inst1 >> 16) & 0xff;
-    uint16_t Gain = (uint16_t)(inst1 & 0xffff);
-    uint32_t Address = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    uint16_t inPtr = 0;
-    // int16_t *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
-    int16_t *out = (int16_t *)(BufferSpace + AudioOutBuffer);
-    uint8_t *in = (uint8_t *)(BufferSpace + AudioInBuffer);
-    int16_t count = (int16_t)AudioCount;
-    uint8_t icode;
-    uint8_t code;
-    int32_t vscale;
-    uint16_t index;
-    uint16_t j;
-    int32_t a[8];
-    int16_t *book1, *book2;
-
-    uint8_t srange;
-    uint8_t inpinc;
-    uint8_t mask1;
-    uint8_t mask2;
-    uint8_t shifter;
-
-    memset(out, 0, 32);
-
-    if (Flags & 0x4)
-    {
-        // Tricky lil Zelda MM and ABI2!!! hahaha I know your secrets! :DDD
-        srange = 0xE;
-        inpinc = 0x5;
-        mask1 = 0xC0;
-        mask2 = 0x30;
-        shifter = 10;
-    }
+    const uint8_t flags = inst1 >> 16;
+    const uint32_t address = inst2 & 0xffffff;
+    const int16_t count = static_cast<int16_t>(AudioCount);
+    if (flags & 4)
+        decode_adpcm<2>(BufferSpace, AudioInBuffer, 0, AudioOutBuffer, count, flags, g_plugin->rdram, address, loopval);
     else
-    {
-        srange = 0xC;
-        inpinc = 0x9;
-        mask1 = 0xf0;
-        mask2 = 0x0f;
-        shifter = 12;
-    }
-
-    if (!(Flags & 0x1))
-    {
-        if (Flags & 0x2)
-        {
-            /*
-                        for(int32_t i=0;i<16;i++)
-                        {
-                            out[i]=*(int16_t *)&rsp->rdram[(loopval+i*2)^2];
-                        }*/
-            memcpy(out, &g_plugin->rdram[loopval], 32);
-        }
-        else
-        {
-            /*
-                        for(int32_t i=0;i<16;i++)
-                        {
-                            out[i]=*(int16_t *)&rsp->rdram[(Address+i*2)^2];
-                        }*/
-            memcpy(out, &g_plugin->rdram[Address], 32);
-        }
-    }
-
-    int32_t l1 = out[15];
-    int32_t l2 = out[14];
-    int32_t inp1[8];
-    int32_t inp2[8];
-    out += 16;
-    while (count > 0)
-    {
-        code = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
-        index = code & 0xf;
-        index <<= 4;
-        book1 = (int16_t *)&adpcmtable[index];
-        book2 = book1 + 8;
-        code >>= 4;
-        vscale = (0x8000 >> ((srange - code) - 1));
-
-        inPtr++;
-        j = 0;
-
-        while (j < 8)
-        {
-            icode = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
-            inPtr++;
-
-            inp1[j] = (int16_t)((icode & mask1) << 8); // this will in effect be signed
-            if (code < srange)
-                inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-
-            inp1[j] = (int16_t)((icode & mask2) << shifter);
-            if (code < srange)
-                inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-
-            if (Flags & 4)
-            {
-                inp1[j] = (int16_t)((icode & 0xC) << 12); // this will in effect be signed
-                if (code < 0xE)
-                    inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
-                else
-                    int32_t catchme = 1;
-                j++;
-
-                inp1[j] = (int16_t)((icode & 0x3) << 14);
-                if (code < 0xE)
-                    inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
-                else
-                    int32_t catchme = 1;
-                j++;
-            } // end flags
-        } // end while
-
-        j = 0;
-        while (j < 8)
-        {
-            icode = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
-            inPtr++;
-
-            inp2[j] = (int16_t)((icode & mask1) << 8);
-            if (code < srange)
-                inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-
-            inp2[j] = (int16_t)((icode & mask2) << shifter);
-            if (code < srange)
-                inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-
-            if (Flags & 4)
-            {
-                inp2[j] = (int16_t)((icode & 0xC) << 12);
-                if (code < 0xE)
-                    inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
-                else
-                    int32_t catchme = 1;
-                j++;
-
-                inp2[j] = (int16_t)((icode & 0x3) << 14);
-                if (code < 0xE)
-                    inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
-                else
-                    int32_t catchme = 1;
-                j++;
-            } // end flags
-        }
-
-        a[0] = (int32_t)book1[0] * (int32_t)l1;
-        a[0] += (int32_t)book2[0] * (int32_t)l2;
-        a[0] += (int32_t)inp1[0] * (int32_t)2048;
-
-        a[1] = (int32_t)book1[1] * (int32_t)l1;
-        a[1] += (int32_t)book2[1] * (int32_t)l2;
-        a[1] += (int32_t)book2[0] * inp1[0];
-        a[1] += (int32_t)inp1[1] * (int32_t)2048;
-
-        a[2] = (int32_t)book1[2] * (int32_t)l1;
-        a[2] += (int32_t)book2[2] * (int32_t)l2;
-        a[2] += (int32_t)book2[1] * inp1[0];
-        a[2] += (int32_t)book2[0] * inp1[1];
-        a[2] += (int32_t)inp1[2] * (int32_t)2048;
-
-        a[3] = (int32_t)book1[3] * (int32_t)l1;
-        a[3] += (int32_t)book2[3] * (int32_t)l2;
-        a[3] += (int32_t)book2[2] * inp1[0];
-        a[3] += (int32_t)book2[1] * inp1[1];
-        a[3] += (int32_t)book2[0] * inp1[2];
-        a[3] += (int32_t)inp1[3] * (int32_t)2048;
-
-        a[4] = (int32_t)book1[4] * (int32_t)l1;
-        a[4] += (int32_t)book2[4] * (int32_t)l2;
-        a[4] += (int32_t)book2[3] * inp1[0];
-        a[4] += (int32_t)book2[2] * inp1[1];
-        a[4] += (int32_t)book2[1] * inp1[2];
-        a[4] += (int32_t)book2[0] * inp1[3];
-        a[4] += (int32_t)inp1[4] * (int32_t)2048;
-
-        a[5] = (int32_t)book1[5] * (int32_t)l1;
-        a[5] += (int32_t)book2[5] * (int32_t)l2;
-        a[5] += (int32_t)book2[4] * inp1[0];
-        a[5] += (int32_t)book2[3] * inp1[1];
-        a[5] += (int32_t)book2[2] * inp1[2];
-        a[5] += (int32_t)book2[1] * inp1[3];
-        a[5] += (int32_t)book2[0] * inp1[4];
-        a[5] += (int32_t)inp1[5] * (int32_t)2048;
-
-        a[6] = (int32_t)book1[6] * (int32_t)l1;
-        a[6] += (int32_t)book2[6] * (int32_t)l2;
-        a[6] += (int32_t)book2[5] * inp1[0];
-        a[6] += (int32_t)book2[4] * inp1[1];
-        a[6] += (int32_t)book2[3] * inp1[2];
-        a[6] += (int32_t)book2[2] * inp1[3];
-        a[6] += (int32_t)book2[1] * inp1[4];
-        a[6] += (int32_t)book2[0] * inp1[5];
-        a[6] += (int32_t)inp1[6] * (int32_t)2048;
-
-        a[7] = (int32_t)book1[7] * (int32_t)l1;
-        a[7] += (int32_t)book2[7] * (int32_t)l2;
-        a[7] += (int32_t)book2[6] * inp1[0];
-        a[7] += (int32_t)book2[5] * inp1[1];
-        a[7] += (int32_t)book2[4] * inp1[2];
-        a[7] += (int32_t)book2[3] * inp1[3];
-        a[7] += (int32_t)book2[2] * inp1[4];
-        a[7] += (int32_t)book2[1] * inp1[5];
-        a[7] += (int32_t)book2[0] * inp1[6];
-        a[7] += (int32_t)inp1[7] * (int32_t)2048;
-
-        for (j = 0; j < 8; j++)
-        {
-            a[j ^ 1] >>= 11;
-            if (a[j ^ 1] > 32767)
-                a[j ^ 1] = 32767;
-            else if (a[j ^ 1] < -32768)
-                a[j ^ 1] = -32768;
-            *(out++) = a[j ^ 1];
-        }
-        l1 = a[6];
-        l2 = a[7];
-
-        a[0] = (int32_t)book1[0] * (int32_t)l1;
-        a[0] += (int32_t)book2[0] * (int32_t)l2;
-        a[0] += (int32_t)inp2[0] * (int32_t)2048;
-
-        a[1] = (int32_t)book1[1] * (int32_t)l1;
-        a[1] += (int32_t)book2[1] * (int32_t)l2;
-        a[1] += (int32_t)book2[0] * inp2[0];
-        a[1] += (int32_t)inp2[1] * (int32_t)2048;
-
-        a[2] = (int32_t)book1[2] * (int32_t)l1;
-        a[2] += (int32_t)book2[2] * (int32_t)l2;
-        a[2] += (int32_t)book2[1] * inp2[0];
-        a[2] += (int32_t)book2[0] * inp2[1];
-        a[2] += (int32_t)inp2[2] * (int32_t)2048;
-
-        a[3] = (int32_t)book1[3] * (int32_t)l1;
-        a[3] += (int32_t)book2[3] * (int32_t)l2;
-        a[3] += (int32_t)book2[2] * inp2[0];
-        a[3] += (int32_t)book2[1] * inp2[1];
-        a[3] += (int32_t)book2[0] * inp2[2];
-        a[3] += (int32_t)inp2[3] * (int32_t)2048;
-
-        a[4] = (int32_t)book1[4] * (int32_t)l1;
-        a[4] += (int32_t)book2[4] * (int32_t)l2;
-        a[4] += (int32_t)book2[3] * inp2[0];
-        a[4] += (int32_t)book2[2] * inp2[1];
-        a[4] += (int32_t)book2[1] * inp2[2];
-        a[4] += (int32_t)book2[0] * inp2[3];
-        a[4] += (int32_t)inp2[4] * (int32_t)2048;
-
-        a[5] = (int32_t)book1[5] * (int32_t)l1;
-        a[5] += (int32_t)book2[5] * (int32_t)l2;
-        a[5] += (int32_t)book2[4] * inp2[0];
-        a[5] += (int32_t)book2[3] * inp2[1];
-        a[5] += (int32_t)book2[2] * inp2[2];
-        a[5] += (int32_t)book2[1] * inp2[3];
-        a[5] += (int32_t)book2[0] * inp2[4];
-        a[5] += (int32_t)inp2[5] * (int32_t)2048;
-
-        a[6] = (int32_t)book1[6] * (int32_t)l1;
-        a[6] += (int32_t)book2[6] * (int32_t)l2;
-        a[6] += (int32_t)book2[5] * inp2[0];
-        a[6] += (int32_t)book2[4] * inp2[1];
-        a[6] += (int32_t)book2[3] * inp2[2];
-        a[6] += (int32_t)book2[2] * inp2[3];
-        a[6] += (int32_t)book2[1] * inp2[4];
-        a[6] += (int32_t)book2[0] * inp2[5];
-        a[6] += (int32_t)inp2[6] * (int32_t)2048;
-
-        a[7] = (int32_t)book1[7] * (int32_t)l1;
-        a[7] += (int32_t)book2[7] * (int32_t)l2;
-        a[7] += (int32_t)book2[6] * inp2[0];
-        a[7] += (int32_t)book2[5] * inp2[1];
-        a[7] += (int32_t)book2[4] * inp2[2];
-        a[7] += (int32_t)book2[3] * inp2[3];
-        a[7] += (int32_t)book2[2] * inp2[4];
-        a[7] += (int32_t)book2[1] * inp2[5];
-        a[7] += (int32_t)book2[0] * inp2[6];
-        a[7] += (int32_t)inp2[7] * (int32_t)2048;
-
-        for (j = 0; j < 8; j++)
-        {
-            a[j ^ 1] >>= 11;
-            if (a[j ^ 1] > 32767)
-                a[j ^ 1] = 32767;
-            else if (a[j ^ 1] < -32768)
-                a[j ^ 1] = -32768;
-            *(out++) = a[j ^ 1];
-        }
-        l1 = a[6];
-        l2 = a[7];
-
-        count -= 32;
-    }
-    out -= 16;
-    memcpy(&g_plugin->rdram[Address], out, 32);
+        decode_adpcm<4>(BufferSpace, AudioInBuffer, 0, AudioOutBuffer, count, flags, g_plugin->rdram, address, loopval);
 }
 
 static void CLEARBUFF2()
@@ -428,68 +127,8 @@ static void MIXER2()
 
 static void RESAMPLE2()
 {
-    uint8_t Flags = (uint8_t)((inst1 >> 16) & 0xff);
-    uint32_t Pitch = ((inst1 & 0xffff)) << 1;
-    uint32_t addy = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    uint32_t Accum = 0;
-    uint32_t location;
-    int16_t *lut;
-    int16_t *dst;
-    int16_t *src;
-    dst = (int16_t *)(BufferSpace);
-    src = (int16_t *)(BufferSpace);
-    uint32_t srcPtr = (AudioInBuffer / 2);
-    uint32_t dstPtr = (AudioOutBuffer / 2);
-    int32_t temp;
-    int32_t accum;
-
-    if (addy > (1024 * 1024 * 8)) addy = (inst2 & 0xffffff);
-
-    srcPtr -= 4;
-
-    if ((Flags & 0x1) == 0)
-    {
-        for (int32_t x = 0; x < 4; x++) // memcpy (src+srcPtr, rsp->rdram+addy, 0x8);
-            src[(srcPtr + x) ^ 1] = ((uint16_t *)g_plugin->rdram)[((addy / 2) + x) ^ 1];
-        Accum = *(uint16_t *)(g_plugin->rdram + addy + 10);
-    }
-    else
-    {
-        for (int32_t x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = 0; //*(uint16_t *)(rsp.rdram+((addy+x)^2));
-    }
-
-    const auto output_samples = ((AudioCount + 0xf) & 0xFFF0) / 2;
-    const auto lut_phases = 64;
-    const auto lut_taps = 4;
-
-    for (int32_t i = 0; i < output_samples; i++)
-    {
-        const int32_t phase = (Accum * lut_phases) >> 16;
-        const int16_t *coeff = (int16_t *)((uint8_t *)ResampleLUT + phase * lut_taps * sizeof(int16_t));
-        int32_t accum = 0;
-
-        for (int32_t tap = 0; tap < lut_taps; tap++)
-        {
-            int16_t sample = *(int16_t *)(src + ((srcPtr + tap) ^ 1));
-            int16_t c = coeff[tap];
-
-            accum += ((int32_t)sample * c) >> 15;
-        }
-
-        if (accum > INT16_MAX) accum = INT16_MAX;
-        if (accum < INT16_MIN) accum = INT16_MIN;
-
-        dst[dstPtr ^ 1] = (int16_t)accum;
-
-        dstPtr++;
-        Accum += Pitch;
-        srcPtr += (Accum >> 16);
-        Accum &= 0xFFFF;
-    }
-
-    for (int32_t x = 0; x < 4; x++) ((uint16_t *)g_plugin->rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
-    *(uint16_t *)(g_plugin->rdram + addy + 10) = (uint16_t)Accum;
-    // memcpy (RSWORK, src+srcPtr, 0x8);
+    resample_audio_per_tap(inst2 & 0xffffff, (inst1 & 0xffff) << 1, AudioInBuffer / 2, AudioOutBuffer / 2,
+        ((AudioCount + 0xf) & 0xfff0) / 2, inst1 & 0x10000);
 }
 
 static void DMEMMOVE2()
@@ -549,130 +188,62 @@ static void ENVSETUP2()
 
 static void ENVMIXER2()
 {
-    // fprintf (dfile, "ENVMIXER: inst1 = %08X, inst2 = %08X\n", inst1, inst2);
+    auto *input = reinterpret_cast<int16_t *>(BufferSpace + ((inst1 >> 12) & 0xff0));
+    auto *dry_l = reinterpret_cast<int16_t *>(BufferSpace + ((inst2 >> 20) & 0xff0));
+    auto *dry_r = reinterpret_cast<int16_t *>(BufferSpace + ((inst2 >> 12) & 0xff0));
+    auto *wet_l = reinterpret_cast<int16_t *>(BufferSpace + ((inst2 >> 4) & 0xff0));
+    auto *wet_r = reinterpret_cast<int16_t *>(BufferSpace + ((inst2 << 4) & 0xff0));
+    const auto dry_l_mask = _mm_set1_epi16(-static_cast<int16_t>((inst1 & 0x2) >> 1));
+    const auto dry_r_mask = _mm_set1_epi16(-static_cast<int16_t>(inst1 & 0x1));
+    const auto wet_l_mask = _mm_set1_epi16(-static_cast<int16_t>((inst1 & 0x8) >> 1));
+    const auto wet_r_mask = _mm_set1_epi16(-static_cast<int16_t>((inst1 & 0x4) >> 1));
 
-    int16_t *bufft6, *bufft7, *buffs0, *buffs1;
-    int16_t *buffs3;
-    int32_t count;
-    uint32_t adder;
-
-    int16_t vec9, vec10;
-
-    int16_t v2[8];
-
-    //__asm int32_t 3;
-
-    buffs3 = (int16_t *)(BufferSpace + ((inst1 >> 0x0c) & 0x0ff0));
-    bufft6 = (int16_t *)(BufferSpace + ((inst2 >> 0x14) & 0x0ff0));
-    bufft7 = (int16_t *)(BufferSpace + ((inst2 >> 0x0c) & 0x0ff0));
-    buffs0 = (int16_t *)(BufferSpace + ((inst2 >> 0x04) & 0x0ff0));
-    buffs1 = (int16_t *)(BufferSpace + ((inst2 << 0x04) & 0x0ff0));
-
-    v2[0] = 0 - (int16_t)((inst1 & 0x2) >> 1);
-    v2[1] = 0 - (int16_t)((inst1 & 0x1));
-    v2[2] = 0 - (int16_t)((inst1 & 0x8) >> 1);
-    v2[3] = 0 - (int16_t)((inst1 & 0x4) >> 1);
-
-    count = (inst1 >> 8) & 0xff;
-
-    if (!isMKABI)
+    int32_t count = (inst1 >> 8) & 0xff;
+    const int32_t adder = isMKABI ? 8 : 16;
+    if (isMKABI)
+    {
+        inst1 = 0;
+        t3 = 0;
+    }
+    else
     {
         s5 *= 2;
         s6 *= 2;
         t3 *= 2;
-        adder = 0x10;
     }
-    else
-    {
-        inst1 = 0;
-        adder = 0x8;
-        t3 = 0;
-    }
+
+    const bool swap_wet = inst1 & 0x10;
+    const auto scale = [](__m128i samples, uint16_t gain, __m128i mask) {
+        const auto gains = _mm_set1_epi16(static_cast<int16_t>(gain));
+        const auto correction = _mm_and_si128(_mm_srai_epi16(samples, 15), gains);
+        return _mm_xor_si128(_mm_sub_epi16(_mm_mulhi_epu16(samples, gains), correction), mask);
+    };
+    const auto accumulate = [](int16_t *buffer, __m128i samples) {
+        auto *vector = reinterpret_cast<__m128i *>(buffer);
+        _mm_storeu_si128(vector, _mm_adds_epi16(_mm_loadu_si128(vector), samples));
+    };
 
     while (count > 0)
     {
-        int32_t temp, x;
-        for (x = 0; x < 0x8; x++)
+        for (int32_t offset = 0; offset < adder; offset += 8)
         {
-            vec9 = (int16_t)(((int32_t)buffs3[x ^ 1] * (uint32_t)env[0]) >> 0x10) ^ v2[0];
-            vec10 = (int16_t)(((int32_t)buffs3[x ^ 1] * (uint32_t)env[2]) >> 0x10) ^ v2[1];
-            temp = bufft6[x ^ 1] + vec9;
-            if (temp > 32767) temp = 32767;
-            if (temp < -32768) temp = -32768;
-            bufft6[x ^ 1] = temp;
-            temp = bufft7[x ^ 1] + vec10;
-            if (temp > 32767) temp = 32767;
-            if (temp < -32768) temp = -32768;
-            bufft7[x ^ 1] = temp;
-            vec9 = (int16_t)(((int32_t)vec9 * (uint32_t)env[4]) >> 0x10) ^ v2[2];
-            vec10 = (int16_t)(((int32_t)vec10 * (uint32_t)env[4]) >> 0x10) ^ v2[3];
-            if (inst1 & 0x10)
-            {
-                temp = buffs0[x ^ 1] + vec10;
-                if (temp > 32767) temp = 32767;
-                if (temp < -32768) temp = -32768;
-                buffs0[x ^ 1] = temp;
-                temp = buffs1[x ^ 1] + vec9;
-                if (temp > 32767) temp = 32767;
-                if (temp < -32768) temp = -32768;
-                buffs1[x ^ 1] = temp;
-            }
-            else
-            {
-                temp = buffs0[x ^ 1] + vec9;
-                if (temp > 32767) temp = 32767;
-                if (temp < -32768) temp = -32768;
-                buffs0[x ^ 1] = temp;
-                temp = buffs1[x ^ 1] + vec10;
-                if (temp > 32767) temp = 32767;
-                if (temp < -32768) temp = -32768;
-                buffs1[x ^ 1] = temp;
-            }
+            const auto channel = offset / 8;
+            const auto samples = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input + offset));
+            const auto left = scale(samples, env[channel], dry_l_mask);
+            const auto right = scale(samples, env[channel + 2], dry_r_mask);
+            const auto wet_left = scale(left, env[channel + 4], wet_l_mask);
+            const auto wet_right = scale(right, env[channel + 4], wet_r_mask);
+            accumulate(dry_l + offset, left);
+            accumulate(dry_r + offset, right);
+            accumulate(wet_l + offset, swap_wet ? wet_right : wet_left);
+            accumulate(wet_r + offset, swap_wet ? wet_left : wet_right);
         }
 
-        if (!isMKABI)
-            for (x = 0x8; x < 0x10; x++)
-            {
-                vec9 = (int16_t)(((int32_t)buffs3[x ^ 1] * (uint32_t)env[1]) >> 0x10) ^ v2[0];
-                vec10 = (int16_t)(((int32_t)buffs3[x ^ 1] * (uint32_t)env[3]) >> 0x10) ^ v2[1];
-                temp = bufft6[x ^ 1] + vec9;
-                if (temp > 32767) temp = 32767;
-                if (temp < -32768) temp = -32768;
-                bufft6[x ^ 1] = temp;
-                temp = bufft7[x ^ 1] + vec10;
-                if (temp > 32767) temp = 32767;
-                if (temp < -32768) temp = -32768;
-                bufft7[x ^ 1] = temp;
-                vec9 = (int16_t)(((int32_t)vec9 * (uint32_t)env[5]) >> 0x10) ^ v2[2];
-                vec10 = (int16_t)(((int32_t)vec10 * (uint32_t)env[5]) >> 0x10) ^ v2[3];
-                if (inst1 & 0x10)
-                {
-                    temp = buffs0[x ^ 1] + vec10;
-                    if (temp > 32767) temp = 32767;
-                    if (temp < -32768) temp = -32768;
-                    buffs0[x ^ 1] = temp;
-                    temp = buffs1[x ^ 1] + vec9;
-                    if (temp > 32767) temp = 32767;
-                    if (temp < -32768) temp = -32768;
-                    buffs1[x ^ 1] = temp;
-                }
-                else
-                {
-                    temp = buffs0[x ^ 1] + vec9;
-                    if (temp > 32767) temp = 32767;
-                    if (temp < -32768) temp = -32768;
-                    buffs0[x ^ 1] = temp;
-                    temp = buffs1[x ^ 1] + vec10;
-                    if (temp > 32767) temp = 32767;
-                    if (temp < -32768) temp = -32768;
-                    buffs1[x ^ 1] = temp;
-                }
-            }
-        bufft6 += adder;
-        bufft7 += adder;
-        buffs0 += adder;
-        buffs1 += adder;
-        buffs3 += adder;
+        dry_l += adder;
+        dry_r += adder;
+        wet_l += adder;
+        wet_r += adder;
+        input += adder;
         count -= adder;
         env[0] += (uint16_t)s5;
         env[1] += (uint16_t)s5;

@@ -59,5 +59,5 @@ extern uint16_t AudioInBuffer, AudioOutBuffer, AudioCount;
 extern uint16_t AudioAuxA, AudioAuxC, AudioAuxE;
 extern uint32_t loopval;
 
-void decode_input_block(uint8_t *buffer, uint16_t &inPtr, int32_t *inp, uint8_t code, int32_t vscale);
-void compute_and_pack_block(int32_t *inp, int16_t *book1, int16_t *book2, int32_t &l1, int32_t &l2, int16_t *&out);
+void resample_audio_per_tap(
+    uint32_t address, uint32_t pitch, uint32_t source, uint32_t destination, int output_samples, bool initialize);

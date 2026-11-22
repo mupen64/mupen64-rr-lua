@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR_Plugins_TASRSP STATIC
+    "ADPCM.hpp"
     "Config.hpp"
     "HLE.hpp"
     "Main.hpp"

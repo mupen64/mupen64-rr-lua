@@ -6,9 +6,12 @@
 
 #include "Main.hpp"
 #include "HLE.hpp"
+#include "ADPCM.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <tmmintrin.h>
 
 using namespace BuiltinTAS::TASRSP;
 
@@ -16,8 +19,6 @@ static void SPNOOP()
 {
     assert(false && std::format("Unknown/Unimplemented Audio Command {} in ABI 3", inst1 >> 24).c_str());
 }
-
-extern uint16_t ResampleLUT[0x200];
 
 extern uint32_t loopval;
 
@@ -33,7 +34,6 @@ extern int32_t VolRamp_Right;
 // extern uint16_t VolRate_Right;
 
 extern int16_t hleMixerWorkArea[256];
-extern uint16_t adpcmtable[0x88];
 
 extern uint8_t BufferSpace[0x10000];
 
@@ -74,15 +74,6 @@ static void ENVMIXER3()
     int16_t *aux1 = (int16_t *)(BufferSpace + 0xB40);
     int16_t *aux2 = (int16_t *)(BufferSpace + 0xCB0);
     int16_t *aux3 = (int16_t *)(BufferSpace + 0xE20);
-    int32_t MainR;
-    int32_t MainL;
-    int32_t AuxR;
-    int32_t AuxL;
-    int32_t i1, o1, a1, a2, a3;
-    uint16_t AuxIncRate = 1;
-    int16_t zero[8];
-    memset(zero, 0, 16);
-
     int32_t LAdder, LAcc, LVol;
     int32_t RAdder, RAcc, RVol;
     int16_t RSig, LSig; // Most significant part of the Ramp Value
@@ -125,106 +116,63 @@ static void ENVMIXER3()
         RSig = *(int16_t *)(hleMixerWorkArea + 22);   // 22-23
     }
 
-    for (int32_t y = 0; y < (0x170 / 2); y++)
+    const auto advance = [](int32_t &acc, int32_t &volume, int32_t adder, int16_t target, int16_t sign) {
+        acc += adder;
+        volume += acc >> 16;
+        acc &= 0xffff;
+        volume = sign >= 0 ? std::min<int32_t>(volume, target) : std::max<int32_t>(volume, target);
+        return volume;
+    };
+    const auto mix = [](int16_t *output, __m128i input, __m128i volume, __m128i gain) {
+        auto *buffer = reinterpret_cast<__m128i *>(output);
+        const auto scaled = _mm_mulhrs_epi16(input, _mm_mulhrs_epi16(volume, gain));
+        _mm_storeu_si128(buffer, _mm_adds_epi16(_mm_loadu_si128(buffer), scaled));
+    };
+    const auto mix_wide = [](int16_t &output, int16_t input, int32_t volume, int16_t gain) {
+        const int32_t coefficient = (gain * volume + 0x4000) >> 15;
+        const int32_t sample = (input * coefficient + 0x4000) >> 15;
+        output = static_cast<int16_t>(std::clamp(output + sample, -32768, 32767));
+    };
+    const auto dry = _mm_set1_epi16(Dry);
+    const auto wet = _mm_set1_epi16(Wet);
+    const int32_t min_volume = (Dry == -32768 || Wet == -32768) ? -32767 : -32768;
+
+    for (int32_t y = 0; y < 0x170 / 2; y += 8)
     {
-        // Left
-        LAcc += LAdder;
-        LVol += (LAcc >> 16);
-        LAcc &= 0xFFFF;
-
-        // Right
-        RAcc += RAdder;
-        RVol += (RAcc >> 16);
-        RAcc &= 0xFFFF;
-        // ****************************************************************
-        // Clamp Left
-        if (LSig >= 0)
+        int32_t left[8], right[8];
+        bool fits = true;
+        for (int32_t x = 0; x < 8; ++x)
         {
-            // VLT
-            if (LVol > LTrg)
-            {
-                LVol = LTrg;
-            }
+            left[x ^ 1] = advance(LAcc, LVol, LAdder, LTrg, LSig);
+            right[x ^ 1] = advance(RAcc, RVol, RAdder, RTrg, RSig);
+            fits &= LVol >= min_volume && LVol <= 32767 && RVol >= min_volume && RVol <= 32767;
+        }
+
+        if (fits)
+        {
+            const auto pack = [](const int32_t *volume) {
+                return _mm_packs_epi32(_mm_loadu_si128(reinterpret_cast<const __m128i *>(volume)),
+                    _mm_loadu_si128(reinterpret_cast<const __m128i *>(volume + 4)));
+            };
+            const auto left_volume = pack(left);
+            const auto right_volume = pack(right);
+            const auto input = _mm_loadu_si128(reinterpret_cast<const __m128i *>(inp + y));
+            mix(out + y, input, left_volume, dry);
+            mix(aux1 + y, input, right_volume, dry);
+            mix(aux2 + y, input, left_volume, wet);
+            mix(aux3 + y, input, right_volume, wet);
         }
         else
         {
-            // VGE
-            if (LVol < LTrg)
+            for (int32_t x = 0; x < 8; ++x)
             {
-                LVol = LTrg;
+                mix_wide(out[y + x], inp[y + x], left[x], Dry);
+                mix_wide(aux1[y + x], inp[y + x], right[x], Dry);
+                mix_wide(aux2[y + x], inp[y + x], left[x], Wet);
+                mix_wide(aux3[y + x], inp[y + x], right[x], Wet);
             }
         }
-
-        // Clamp Right
-        if (RSig >= 0)
-        {
-            // VLT
-            if (RVol > RTrg)
-            {
-                RVol = RTrg;
-            }
-        }
-        else
-        {
-            // VGE
-            if (RVol < RTrg)
-            {
-                RVol = RTrg;
-            }
-        }
-        // ****************************************************************
-        MainL = ((Dry * LVol) + 0x4000) >> 15;
-        MainR = ((Dry * RVol) + 0x4000) >> 15;
-
-        o1 = out[y ^ 1];
-        a1 = aux1[y ^ 1];
-        i1 = inp[y ^ 1];
-
-        o1 += ((i1 * MainL) + 0x4000) >> 15;
-        a1 += ((i1 * MainR) + 0x4000) >> 15;
-
-        // ****************************************************************
-
-        if (o1 > 32767)
-            o1 = 32767;
-        else if (o1 < -32768)
-            o1 = -32768;
-
-        if (a1 > 32767)
-            a1 = 32767;
-        else if (a1 < -32768)
-            a1 = -32768;
-
-        // ****************************************************************
-
-        out[y ^ 1] = o1;
-        aux1[y ^ 1] = a1;
-
-        // ****************************************************************
-        // if (!(flags&A_AUX)) {
-        a2 = aux2[y ^ 1];
-        a3 = aux3[y ^ 1];
-
-        AuxL = ((Wet * LVol) + 0x4000) >> 15;
-        AuxR = ((Wet * RVol) + 0x4000) >> 15;
-
-        a2 += ((i1 * AuxL) + 0x4000) >> 15;
-        a3 += ((i1 * AuxR) + 0x4000) >> 15;
-
-        if (a2 > 32767)
-            a2 = 32767;
-        else if (a2 < -32768)
-            a2 = -32768;
-
-        if (a3 > 32767)
-            a3 = 32767;
-        else if (a3 < -32768)
-            a3 = -32768;
-
-        aux2[y ^ 1] = a2;
-        aux3[y ^ 1] = a3;
     }
-    //}
 
     *(int16_t *)(hleMixerWorkArea + 0) = Wet;     // 0-1
     *(int16_t *)(hleMixerWorkArea + 2) = Dry;     // 2-3
@@ -505,330 +453,16 @@ static void SETLOOP3()
 
 static void ADPCM3()
 {
-    // Verified to be 100% Accurate...
-    uint8_t Flags = (uint8_t)(inst2 >> 0x1c) & 0xff;
-    // uint16_t Gain=(uint16_t)(inst1&0xffff);
-    uint32_t Address = (inst1 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    uint16_t inPtr = (inst2 >> 12) & 0xf;
-    // int16_t *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
-    int16_t *out = (int16_t *)(BufferSpace + (inst2 & 0xfff) + 0x4f0);
-    uint8_t *in = (uint8_t *)(BufferSpace + ((inst2 >> 12) & 0xf) + 0x4f0);
-    int16_t count = (int16_t)((inst2 >> 16) & 0xfff);
-    uint8_t icode;
-    uint8_t code;
-    int32_t vscale;
-    uint16_t index;
-    uint16_t j;
-    int32_t a[8];
-    int16_t *book1, *book2;
-
-    memset(out, 0, 32);
-
-    if (!(Flags & 0x1))
-    {
-        if (Flags & 0x2)
-        {
-            memcpy(out, &g_plugin->rdram[loopval], 32);
-        }
-        else
-        {
-            memcpy(out, &g_plugin->rdram[Address], 32);
-        }
-    }
-
-    int32_t l1 = out[15];
-    int32_t l2 = out[14];
-    int32_t inp1[8];
-    int32_t inp2[8];
-    out += 16;
-    while (count > 0)
-    {
-        // the first interation through, these values are
-        // either 0 in the case of A_INIT, from a special
-        // area of memory in the case of A_LOOP or just
-        // the values we calculated the last time
-
-        code = BufferSpace[(0x4f0 + inPtr) ^ 3];
-        index = code & 0xf;
-        index <<= 4; // index into the adpcm code table
-        book1 = (int16_t *)&adpcmtable[index];
-        book2 = book1 + 8;
-        code >>= 4;                             // upper nibble is scale
-        vscale = (0x8000 >> ((12 - code) - 1)); // very strange. 0x8000 would be .5 in 16:16 format
-        // so this appears to be a fractional scale based
-        // on the 12 based inverse of the scale value.  note
-        // that this could be negative, in which case we do
-        // not use the calculated vscale value... see the
-        // if(code>12) check below
-
-        inPtr++; // coded adpcm data lies next
-        j = 0;
-        while (j < 8) // loop of 8, for 8 coded nibbles from 4 bytes
-        // which yields 8 int16_t pcm values
-        {
-            icode = BufferSpace[(0x4f0 + inPtr) ^ 3];
-            inPtr++;
-
-            inp1[j] = (int16_t)((icode & 0xf0) << 8); // this will in effect be signed
-            if (code < 12)
-                inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-
-            inp1[j] = (int16_t)((icode & 0xf) << 12);
-            if (code < 12)
-                inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-        }
-        j = 0;
-        while (j < 8)
-        {
-            icode = BufferSpace[(0x4f0 + inPtr) ^ 3];
-            inPtr++;
-
-            inp2[j] = (int16_t)((icode & 0xf0) << 8); // this will in effect be signed
-            if (code < 12)
-                inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-
-            inp2[j] = (int16_t)((icode & 0xf) << 12);
-            if (code < 12)
-                inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-        }
-
-        a[0] = (int32_t)book1[0] * (int32_t)l1;
-        a[0] += (int32_t)book2[0] * (int32_t)l2;
-        a[0] += (int32_t)inp1[0] * (int32_t)2048;
-
-        a[1] = (int32_t)book1[1] * (int32_t)l1;
-        a[1] += (int32_t)book2[1] * (int32_t)l2;
-        a[1] += (int32_t)book2[0] * inp1[0];
-        a[1] += (int32_t)inp1[1] * (int32_t)2048;
-
-        a[2] = (int32_t)book1[2] * (int32_t)l1;
-        a[2] += (int32_t)book2[2] * (int32_t)l2;
-        a[2] += (int32_t)book2[1] * inp1[0];
-        a[2] += (int32_t)book2[0] * inp1[1];
-        a[2] += (int32_t)inp1[2] * (int32_t)2048;
-
-        a[3] = (int32_t)book1[3] * (int32_t)l1;
-        a[3] += (int32_t)book2[3] * (int32_t)l2;
-        a[3] += (int32_t)book2[2] * inp1[0];
-        a[3] += (int32_t)book2[1] * inp1[1];
-        a[3] += (int32_t)book2[0] * inp1[2];
-        a[3] += (int32_t)inp1[3] * (int32_t)2048;
-
-        a[4] = (int32_t)book1[4] * (int32_t)l1;
-        a[4] += (int32_t)book2[4] * (int32_t)l2;
-        a[4] += (int32_t)book2[3] * inp1[0];
-        a[4] += (int32_t)book2[2] * inp1[1];
-        a[4] += (int32_t)book2[1] * inp1[2];
-        a[4] += (int32_t)book2[0] * inp1[3];
-        a[4] += (int32_t)inp1[4] * (int32_t)2048;
-
-        a[5] = (int32_t)book1[5] * (int32_t)l1;
-        a[5] += (int32_t)book2[5] * (int32_t)l2;
-        a[5] += (int32_t)book2[4] * inp1[0];
-        a[5] += (int32_t)book2[3] * inp1[1];
-        a[5] += (int32_t)book2[2] * inp1[2];
-        a[5] += (int32_t)book2[1] * inp1[3];
-        a[5] += (int32_t)book2[0] * inp1[4];
-        a[5] += (int32_t)inp1[5] * (int32_t)2048;
-
-        a[6] = (int32_t)book1[6] * (int32_t)l1;
-        a[6] += (int32_t)book2[6] * (int32_t)l2;
-        a[6] += (int32_t)book2[5] * inp1[0];
-        a[6] += (int32_t)book2[4] * inp1[1];
-        a[6] += (int32_t)book2[3] * inp1[2];
-        a[6] += (int32_t)book2[2] * inp1[3];
-        a[6] += (int32_t)book2[1] * inp1[4];
-        a[6] += (int32_t)book2[0] * inp1[5];
-        a[6] += (int32_t)inp1[6] * (int32_t)2048;
-
-        a[7] = (int32_t)book1[7] * (int32_t)l1;
-        a[7] += (int32_t)book2[7] * (int32_t)l2;
-        a[7] += (int32_t)book2[6] * inp1[0];
-        a[7] += (int32_t)book2[5] * inp1[1];
-        a[7] += (int32_t)book2[4] * inp1[2];
-        a[7] += (int32_t)book2[3] * inp1[3];
-        a[7] += (int32_t)book2[2] * inp1[4];
-        a[7] += (int32_t)book2[1] * inp1[5];
-        a[7] += (int32_t)book2[0] * inp1[6];
-        a[7] += (int32_t)inp1[7] * (int32_t)2048;
-
-        for (j = 0; j < 8; j++)
-        {
-            a[j ^ 1] >>= 11;
-            if (a[j ^ 1] > 32767)
-                a[j ^ 1] = 32767;
-            else if (a[j ^ 1] < -32768)
-                a[j ^ 1] = -32768;
-            *(out++) = a[j ^ 1];
-            //*(out+j)=a[j^1];
-        }
-        // out += 0x10;
-        l1 = a[6];
-        l2 = a[7];
-
-        a[0] = (int32_t)book1[0] * (int32_t)l1;
-        a[0] += (int32_t)book2[0] * (int32_t)l2;
-        a[0] += (int32_t)inp2[0] * (int32_t)2048;
-
-        a[1] = (int32_t)book1[1] * (int32_t)l1;
-        a[1] += (int32_t)book2[1] * (int32_t)l2;
-        a[1] += (int32_t)book2[0] * inp2[0];
-        a[1] += (int32_t)inp2[1] * (int32_t)2048;
-
-        a[2] = (int32_t)book1[2] * (int32_t)l1;
-        a[2] += (int32_t)book2[2] * (int32_t)l2;
-        a[2] += (int32_t)book2[1] * inp2[0];
-        a[2] += (int32_t)book2[0] * inp2[1];
-        a[2] += (int32_t)inp2[2] * (int32_t)2048;
-
-        a[3] = (int32_t)book1[3] * (int32_t)l1;
-        a[3] += (int32_t)book2[3] * (int32_t)l2;
-        a[3] += (int32_t)book2[2] * inp2[0];
-        a[3] += (int32_t)book2[1] * inp2[1];
-        a[3] += (int32_t)book2[0] * inp2[2];
-        a[3] += (int32_t)inp2[3] * (int32_t)2048;
-
-        a[4] = (int32_t)book1[4] * (int32_t)l1;
-        a[4] += (int32_t)book2[4] * (int32_t)l2;
-        a[4] += (int32_t)book2[3] * inp2[0];
-        a[4] += (int32_t)book2[2] * inp2[1];
-        a[4] += (int32_t)book2[1] * inp2[2];
-        a[4] += (int32_t)book2[0] * inp2[3];
-        a[4] += (int32_t)inp2[4] * (int32_t)2048;
-
-        a[5] = (int32_t)book1[5] * (int32_t)l1;
-        a[5] += (int32_t)book2[5] * (int32_t)l2;
-        a[5] += (int32_t)book2[4] * inp2[0];
-        a[5] += (int32_t)book2[3] * inp2[1];
-        a[5] += (int32_t)book2[2] * inp2[2];
-        a[5] += (int32_t)book2[1] * inp2[3];
-        a[5] += (int32_t)book2[0] * inp2[4];
-        a[5] += (int32_t)inp2[5] * (int32_t)2048;
-
-        a[6] = (int32_t)book1[6] * (int32_t)l1;
-        a[6] += (int32_t)book2[6] * (int32_t)l2;
-        a[6] += (int32_t)book2[5] * inp2[0];
-        a[6] += (int32_t)book2[4] * inp2[1];
-        a[6] += (int32_t)book2[3] * inp2[2];
-        a[6] += (int32_t)book2[2] * inp2[3];
-        a[6] += (int32_t)book2[1] * inp2[4];
-        a[6] += (int32_t)book2[0] * inp2[5];
-        a[6] += (int32_t)inp2[6] * (int32_t)2048;
-
-        a[7] = (int32_t)book1[7] * (int32_t)l1;
-        a[7] += (int32_t)book2[7] * (int32_t)l2;
-        a[7] += (int32_t)book2[6] * inp2[0];
-        a[7] += (int32_t)book2[5] * inp2[1];
-        a[7] += (int32_t)book2[4] * inp2[2];
-        a[7] += (int32_t)book2[3] * inp2[3];
-        a[7] += (int32_t)book2[2] * inp2[4];
-        a[7] += (int32_t)book2[1] * inp2[5];
-        a[7] += (int32_t)book2[0] * inp2[6];
-        a[7] += (int32_t)inp2[7] * (int32_t)2048;
-
-        for (j = 0; j < 8; j++)
-        {
-            a[j ^ 1] >>= 11;
-            if (a[j ^ 1] > 32767)
-                a[j ^ 1] = 32767;
-            else if (a[j ^ 1] < -32768)
-                a[j ^ 1] = -32768;
-            *(out++) = a[j ^ 1];
-            //*(out+j+0x1f8)=a[j^1];
-        }
-        l1 = a[6];
-        l2 = a[7];
-
-        count -= 32;
-    }
-    out -= 16;
-    memcpy(&g_plugin->rdram[Address], out, 32);
+    const uint8_t flags = inst2 >> 28;
+    const uint32_t address = inst1 & 0xffffff;
+    decode_adpcm<4>(BufferSpace, 0x4f0, (inst2 >> 12) & 0xf, (inst2 & 0xfff) + 0x4f0, (inst2 >> 16) & 0xfff, flags,
+        g_plugin->rdram, address, loopval);
 }
 
 static void RESAMPLE3()
 {
-    uint8_t Flags = (uint8_t)((inst2 >> 0x1e));
-    uint32_t Pitch = ((inst2 >> 0xe) & 0xffff) << 1;
-    uint32_t addy = (inst1 & 0xffffff);
-    uint32_t Accum = 0;
-    uint32_t location;
-    int16_t *lut;
-    int16_t *dst;
-    int16_t *src;
-    dst = (int16_t *)(BufferSpace);
-    src = (int16_t *)(BufferSpace);
-    uint32_t srcPtr = ((((inst2 >> 2) & 0xfff) + 0x4f0) / 2);
-    uint32_t dstPtr; //=(AudioOutBuffer/2);
-    int32_t temp;
-    int32_t accum;
-
-    // if (addy > (1024*1024*8))
-    //	addy = (inst2 & 0xffffff);
-
-    srcPtr -= 4;
-
-    if (inst2 & 0x3)
-    {
-        dstPtr = 0x660 / 2;
-    }
-    else
-    {
-        dstPtr = 0x4f0 / 2;
-    }
-
-    if ((Flags & 0x1) == 0)
-    {
-        for (int32_t x = 0; x < 4; x++) // memcpy (src+srcPtr, rsp->rdram+addy, 0x8);
-            src[(srcPtr + x) ^ 1] = ((uint16_t *)g_plugin->rdram)[((addy / 2) + x) ^ 1];
-        Accum = *(uint16_t *)(g_plugin->rdram + addy + 10);
-    }
-    else
-    {
-        for (int32_t x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = 0; //*(uint16_t *)(rsp.rdram+((addy+x)^2));
-    }
-
-    const auto output_samples = 0x170 / 2;
-    const auto lut_phases = 64;
-    const auto lut_taps = 4;
-
-    for (int32_t i = 0; i < output_samples; i++)
-    {
-        const int32_t phase = (Accum * lut_phases) >> 16;
-        const int16_t *coeff = (int16_t *)((uint8_t *)ResampleLUT + phase * lut_taps * sizeof(int16_t));
-        int32_t accum = 0;
-
-        for (int32_t tap = 0; tap < lut_taps; tap++)
-        {
-            int16_t sample = *(int16_t *)(src + ((srcPtr + tap) ^ 1));
-            int16_t c = coeff[tap];
-
-            accum += ((int32_t)sample * c) >> 15;
-        }
-
-        if (accum > INT16_MAX) accum = INT16_MAX;
-        if (accum < INT16_MIN) accum = INT16_MIN;
-
-        dst[dstPtr ^ 1] = (int16_t)accum;
-
-        dstPtr++;
-        Accum += Pitch;
-        srcPtr += (Accum >> 16);
-        Accum &= 0xFFFF;
-    }
-    for (int32_t x = 0; x < 4; x++) ((uint16_t *)g_plugin->rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
-    *(uint16_t *)(g_plugin->rdram + addy + 10) = Accum;
+    resample_audio_per_tap(inst1 & 0xffffff, ((inst2 >> 14) & 0xffff) << 1, (((inst2 >> 2) & 0xfff) + 0x4f0) / 2,
+        (inst2 & 0x3 ? 0x660 : 0x4f0) / 2, 0x170 / 2, inst2 & 0x40000000);
 }
 
 static void INTERLEAVE3()

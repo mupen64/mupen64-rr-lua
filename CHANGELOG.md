@@ -26,6 +26,7 @@
 
 - Improved Pure Interpreter core performance when breakpoints are present
 - Improved statusbar performance
+- Slightly improved TASRSP performance
 
 # 1.5.0-8
 
