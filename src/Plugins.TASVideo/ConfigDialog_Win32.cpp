@@ -6,6 +6,11 @@
 
 #include "Common.hpp"
 #include "ConfigDialog_Win32.hpp"
+
+#include <nlohmann/json.hpp>
+#include <Common.Win32/WinUtils.hpp>
+#include <WinDarkMode.h>
+
 #include "Config.hpp"
 #include "TASVideo.hpp"
 #include "Resource.h"
@@ -13,8 +18,6 @@
 #include "OpenGL.hpp"
 #include "RSP.hpp"
 #include "Textures.hpp"
-#include <Common.Win32/WinUtils.hpp>
-#include <WinDarkMode.h>
 using nlohmann::json;
 
 static void apply(HWND hWndDlg)
