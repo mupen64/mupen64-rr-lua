@@ -12,7 +12,8 @@
 #include <immintrin.h>
 #include <fenv.h>
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
+#include <float.h>
 #include <intrin.h>
 #endif
 
