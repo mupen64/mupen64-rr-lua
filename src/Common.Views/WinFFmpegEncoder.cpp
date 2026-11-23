@@ -8,6 +8,27 @@
 #include <Common.Views/WinFFmpegEncoder.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <format>
+#include <libavcodec/avcodec.h>
+#include <libavcodec/codec_id.h>
+#include <libavcodec/packet.h>
+#include <libavformat/avformat.h>
+#include <libavformat/avio.h>
+#include <libavutil/avutil.h>
+#include <libavutil/channel_layout.h>
+#include <libavutil/dict.h>
+#include <libavutil/error.h>
+#include <libavutil/mathematics.h>
+#include <libavutil/mem.h>
+#include <libavutil/pixfmt.h>
+#include <libavutil/samplefmt.h>
+#include <optional>
+#include <span>
+#include <string>
 #include <windows.h>
 
 const std::string NUT_PIPE_NAME = "\\\\.\\pipe\\mupennut";

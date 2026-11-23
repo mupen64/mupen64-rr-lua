@@ -6,6 +6,10 @@
 
 #pragma once
 
+
+#include <lua.hpp>
+#include <Common.Views/LuaHelpers.hpp>
+
 #include <Common.Views/IDialogService.hpp>
 #include <lua/LuaRealmManager.hpp>
 

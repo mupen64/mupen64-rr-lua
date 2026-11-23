@@ -6,18 +6,31 @@
 
 #include "R4300.hpp"
 
+#include <atomic>
+#include <chrono>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
+#include <format>
+#include <mutex>
+#include <stop_token>
+#include <string_view>
 #include <thread>
 
 #include <Common/IOUtils.hpp>
 #include <Common/MiscHelpers.hpp>
 #include <Common/StrUtils.hpp>
 
+#include "Core/Types.hpp"
+#include "Memory/TLB.hpp"
 #include "Rom.hpp"
 #include <Core.hpp>
 
 #include <Memory/Memory.hpp>
-#include <Memory/Pif.hpp>
 #include <Memory/Savestates.hpp>
 #include <R4300/Exception.hpp>
 #include <R4300/Interrupt.hpp>
@@ -25,7 +38,6 @@
 #include <R4300/Ops.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Recomp.hpp>
-#include <R4300/Timers.hpp>
 #include <R4300/VCR.hpp>
 #include <Alloc.hpp>
 

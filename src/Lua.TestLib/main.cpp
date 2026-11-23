@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-extern "C"
-{
-#include <lua.h>
-#include <lauxlib.h>
-}
+#include <cstddef>
+#include <cstdio>
+
+#include <lua.hpp>
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)

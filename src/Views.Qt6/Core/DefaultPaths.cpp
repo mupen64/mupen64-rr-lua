@@ -8,6 +8,7 @@
 
 #include <filesystem>
 #include <QStandardPaths>
+#include <qobject.h>
 
 QString DefaultPaths::romDir()
 {

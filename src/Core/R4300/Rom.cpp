@@ -5,7 +5,16 @@
  */
 
 #include "Rom.hpp"
+#include "Core/Types.hpp"
 
+#include <bit>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
+#include <format>
 #include <md5.h>
 
 #include <Common/IOUtils.hpp>
@@ -15,6 +24,9 @@
 #include <Memory/Memory.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
 std::unordered_map<std::filesystem::path, std::pair<uint8_t *, size_t>> rom_cache;
 

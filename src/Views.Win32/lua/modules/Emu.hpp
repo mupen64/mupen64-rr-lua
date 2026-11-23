@@ -6,8 +6,15 @@
 
 #pragma once
 
+
+#include <lua.hpp>
+#include <WinDarkMode.h>
+
+#include <Common.Views/LuaHelpers.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Messages.hpp>
+
+#include "Main.hpp"
 #include <plugin/Plugin.hpp>
 #include <lua/LuaRealmManager.hpp>
 

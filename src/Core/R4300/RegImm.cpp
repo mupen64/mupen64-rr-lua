@@ -9,6 +9,7 @@
 #include <R4300/Interrupt.hpp>
 #include <R4300/Ops.hpp>
 #include <R4300/Macros.hpp>
+#include <cstdint>
 
 void BLTZ()
 {

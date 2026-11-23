@@ -8,7 +8,6 @@
 
 #include "QtIconImageProvider.hpp"
 #include <Common/VersionNameHelpers.hpp>
-#include <Common.Views/App.hpp>
 
 #include <QApplication>
 #include <QDirIterator>
@@ -18,6 +17,15 @@
 #include <QtQml/QQmlExtensionPlugin>
 
 #include <QQuickStyle>
+#include <qbytearrayview.h>
+#include <qcoreapplication.h>
+#include <qguiapplication.h>
+#include <qhashfunctions.h>
+#include <qlatin1stringview.h>
+#include <qnamespace.h>
+#include <qobject.h>
+#include <qurl.h>
+#include <stdexcept>
 
 // Q_IMPORT_QML_PLUGIN(Mupen64ActionsPlugin)
 // Q_IMPORT_QML_PLUGIN(Mupen64ComponentsPlugin)

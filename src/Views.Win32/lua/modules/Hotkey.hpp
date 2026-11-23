@@ -6,9 +6,16 @@
 
 #pragma once
 
+#include <lua.hpp>
+#include <Common.Views/LuaHelpers.hpp>
+
+#include <Common.Views/Hotkey.hpp>
+#include <Common.Win32/WinUtils.hpp>
+
+#include "Main.hpp"
+
 #include <lua/LuaDialog.hpp>
 #include <lua/LuaRealmManager.hpp>
-#include <Common.Views/Hotkey.hpp>
 #include <HotkeyUtils.hpp>
 
 namespace LuaCore::Hotkey

@@ -8,12 +8,13 @@
 
 #include <expected>
 
+#include <lua.hpp>
+
 #include <Core/API.hpp>
 
 #include <lua/LuaTypes.hpp>
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaWindow.hpp>
-#include <lua.h>
 
 class LuaRealm;
 

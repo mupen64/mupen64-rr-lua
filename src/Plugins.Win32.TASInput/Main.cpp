@@ -5,10 +5,8 @@
  */
 
 #include "Common.hpp"
+#include "Core/Plugin.hpp"
 #include <Main.hpp>
-#include <TASInput.hpp>
-#include <GamepadManager.hpp>
-#include <ConfigDialog.hpp>
 
 HINSTANCE g_inst;
 

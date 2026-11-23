@@ -6,10 +6,27 @@
 
 #include "VCR.hpp"
 
+#include <algorithm>
 #include <cassert>
+#include <cstdint>
+#include <cstdio>
 #include <cstring>
+#include <ctime>
+#include <filesystem>
+#include <format>
 #include <fstream>
+#include <functional>
+#include <initializer_list>
+#include <ios>
+#include <iterator>
+#include <mutex>
+#include <optional>
+#include <queue>
 #include <span>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
 
 #ifdef _WIN32
 #include <cstring>

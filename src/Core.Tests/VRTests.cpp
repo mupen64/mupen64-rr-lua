@@ -5,9 +5,13 @@
  */
 
 #include "Common.hpp"
+#include "Core/API.hpp"
+#include "Core/Types.hpp"
 
 #include <Core/R4300/VCR.hpp>
 #include <Core/R4300/R4300.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <cstdint>
 
 static CoreCfg g_cfg{};
 static CoreParams g_core_params{};

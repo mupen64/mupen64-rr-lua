@@ -4,9 +4,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
 #include <ThreadPool.hpp>
 #include <BS_thread_pool.hpp>
+#include <cstddef>
+#include <exception>
+#include <functional>
+#include <mutex>
+#include <unordered_set>
 
 static BS::thread_pool pool(4);
 static std::unordered_set<size_t> pending_keys{};

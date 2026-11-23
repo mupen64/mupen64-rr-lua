@@ -6,6 +6,7 @@
 
 #include <R4300/Ops.hpp>
 #include <R4300/Recomph.hpp>
+#include <cstdint>
 
 // static uint32_t pMFC0 = (uintptr_t)(MFC0);
 void genmfc0()

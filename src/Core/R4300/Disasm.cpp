@@ -8,7 +8,7 @@
 
 #include <cstdarg>
 
-#include <Core/API.hpp>
+#include <cstdint>
 
 typedef enum INSTSETOP_t
 {

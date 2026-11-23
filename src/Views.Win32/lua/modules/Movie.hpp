@@ -6,14 +6,19 @@
 
 #pragma once
 
-#include "Common.hpp"
+#include <lua.hpp>
+
+#include <Common.Views/Messenger.hpp>
+#include <Common.Views/Messages.hpp>
+
+#include "Main.hpp"
 #include <ThreadPool.hpp>
 
 namespace LuaCore::Movie
 {
 static int play(lua_State *L)
 {
-    const auto path = lua_tostring(L, 1);
+    const char* path = lua_tostring(L, 1);
     if (!path)
     {
         lua_pushinteger(L, static_cast<lua_Integer>(CoreResult::VCR_BadFile));
@@ -71,7 +76,7 @@ static int begin_seek(lua_State *L)
     return 1;
 }
 
-static int stop_seek(lua_State *L)
+static int stop_seek(lua_State *)
 {
     g_main_ctx.core_ctx->vcr_stop_seek();
     return 0;

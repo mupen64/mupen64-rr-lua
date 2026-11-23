@@ -4,10 +4,23 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common/IOUtils.hpp"
 #include "Loggers.hpp"
+#include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <ctime>
+#include <filesystem>
+#include <iomanip>
+#include <memory>
+#include <spdlog/common.h>
+#include <spdlog/logger.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/wincolor_sink.h>
+#include <sstream>
+#include <system_error>
+#include <utility>
+#include <vector>
 
 std::shared_ptr<spdlog::logger> g_core_logger;
 std::shared_ptr<spdlog::logger> g_view_logger;

@@ -4,10 +4,15 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Core/API.hpp"
+#include "Core/Types.hpp"
+#include "R4300/Macros.hpp"
 #include <Core.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Exception.hpp>
 #include <R4300/Cop1Helpers.hpp>
+#include <format>
+#include <string_view>
 
 float largest_denormal_float = 1.1754942106924411e-38f;  // (1U << 23) - 1
 double largest_denormal_double = 2.225073858507201e-308; // (1ULL << 52) - 1

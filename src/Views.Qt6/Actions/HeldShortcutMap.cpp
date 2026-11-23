@@ -7,6 +7,9 @@
 #include "HeldShortcutMap.hpp"
 #include <QEvent>
 #include <QKeyEvent>
+#include <qguiapplication.h>
+#include <qnamespace.h>
+#include <qobjectdefs.h>
 #include <stdexcept>
 #include <print>
 

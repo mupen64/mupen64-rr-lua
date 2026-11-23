@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Common/Assert.hpp>
-
+#include <cstdlib>
 #include <format>
 #include <string>
+#include <string_view>
+
 #include <SDL3/SDL_messagebox.h>
+
+#include <Common/Assert.hpp>
 
 namespace
 {

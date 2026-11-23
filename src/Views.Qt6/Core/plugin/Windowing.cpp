@@ -5,8 +5,10 @@
  */
 
 #include "Windowing.hpp"
+#include "Core/Graphics.hpp"
 
 #include <expected>
+#include <future>
 #include <memory>
 
 #include <QObject>
@@ -15,6 +17,8 @@
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QThread>
+#include <qsurfaceformat.h>
+#include <utility>
 
 struct M64RRSpec::GLContext
 {

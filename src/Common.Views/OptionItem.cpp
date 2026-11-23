@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common/Assert.hpp"
 #include <Common.Views/OptionItem.hpp>
 #include <Common.Views/ActionManager.hpp>
+#include <cstdint>
+#include <format>
+#include <string>
 
 std::string OptionItem::get_name() const
 {

@@ -4,12 +4,35 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/App.hpp"
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Common/IOUtils.hpp"
+#include "Common/MiscHelpers.hpp"
+#include "Main.hpp"
 #include <Common.Views/Config.hpp>
+#include <algorithm>
+#include <cassert>
+#include <chrono>
 #include <components/RomBrowser.hpp>
 #include <components/Statusbar.hpp>
 #include <action/AppActions.hpp>
 #include <Common.Views/Messages.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
+#include <format>
+#include <functional>
+#include <iterator>
+#include <mutex>
+#include <ranges>
+#include <string>
+#include <thread>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace RomBrowser
 {

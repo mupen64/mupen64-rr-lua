@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "Types.hpp"
+
 struct DepthBuffer
 {
     DepthBuffer *higher, *lower;

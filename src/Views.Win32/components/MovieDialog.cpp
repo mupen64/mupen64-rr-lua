@@ -4,11 +4,25 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/App.hpp"
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include "WinDarkMode.h"
+#include <algorithm>
 #include <components/MovieDialog.hpp>
 #include <Common.Views/Config.hpp>
-#include <Common.Views/IDialogService.hpp>
 #include <components/FilePicker.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <format>
+#include <functional>
+#include <iterator>
+#include <string>
+#include <utility>
+#include <vector>
 
 struct MovieDialogContext
 {

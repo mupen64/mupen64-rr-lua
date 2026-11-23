@@ -10,6 +10,7 @@
 #include <R4300/Ops.hpp>
 #include <R4300/Exception.hpp>
 #include <R4300/Macros.hpp>
+#include <cstdint>
 
 void NOP()
 {

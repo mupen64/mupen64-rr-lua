@@ -6,6 +6,9 @@
 #include "LuaInternal.hpp"
 #include "EmuContext.hpp"
 #include <Core/API.hpp>
+#include <cstdint>
+
+#include <lua.hpp>
 
 
 namespace LuaInternal

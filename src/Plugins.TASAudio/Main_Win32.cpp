@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Core/Plugin.hpp"
 #ifdef MUPEN64RR_BUILD_WIN32
 
-#include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "Config_Win32.hpp"
 #include "Main.hpp"
-#include <Common.Win32/Common.hpp>
 
 namespace BuiltinTAS::TASAudio
 {

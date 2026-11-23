@@ -6,6 +6,15 @@
 
 #pragma once
 
+#include <lua.hpp>
+
+#include <Common/MiscHelpers.hpp>
+#include <Common/IOUtils.hpp>
+#include <Common/StrUtils.hpp>
+#include <Common.Views/LuaHelpers.hpp>
+
+#include "Main.hpp"
+#include "Loggers.hpp"
 #include <lua/LuaRealmManager.hpp>
 #include <lua/LuaRenderer.hpp>
 

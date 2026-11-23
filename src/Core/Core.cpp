@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Core/API.hpp"
+#include "Core/Types.hpp"
+#include "R4300/Recomp.hpp"
 #include <Core.hpp>
 
 #include <Memory/Memory.hpp>
@@ -11,13 +14,13 @@
 #include <Memory/Savestates.hpp>
 #include <Memory/ParityChecker.hpp>
 #include <R4300/Debug.hpp>
-#include <R4300/Disasm.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/Timers.hpp>
 #include <R4300/Tracelog.hpp>
 #include <R4300/VCR.hpp>
 #include <Cheats.hpp>
+#include <string_view>
 
 CoreParams *g_core{};
 CoreCtx g_ctx{};

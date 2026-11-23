@@ -5,7 +5,10 @@
  */
 
 #include "Config.hpp"
+#include <cstdint>
 #include <iomanip>
+#include <istream>
+#include <nlohmann/json_fwd.hpp>
 #include <ostream>
 #include <stdexcept>
 #include <nlohmann/json.hpp>

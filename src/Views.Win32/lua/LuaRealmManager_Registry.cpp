@@ -4,9 +4,21 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include <lua/modules/AVI.hpp>
+#include "lua/LuaRealmManager.hpp"
+
+#include <cstddef>
+#include <ranges>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <lua.hpp>
+
+#include "Common/Assert.hpp"
+#include "Common/StrUtils.hpp"
+
 #include <lua/LuaWindow.hpp>
+#include <lua/modules/AVI.hpp>
 #include <lua/modules/Action.hpp>
 #include <lua/modules/Clipboard.hpp>
 #include <lua/modules/Dialogs.hpp>

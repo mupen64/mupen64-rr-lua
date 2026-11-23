@@ -5,10 +5,12 @@
  */
 #include "EmuDisplay.hpp"
 
+#include <cstdint>
 #include <print>
 
 #include <QQuickWindow>
 #include <QSGImageNode>
+#include <qsgnode.h>
 
 EmuDisplay::EmuDisplay(QQuickItem *parent) : QQuickItem(parent), m_frame()
 {

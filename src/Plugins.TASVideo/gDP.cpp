@@ -5,7 +5,6 @@
  */
 
 #include "Common.hpp"
-#include "TASVideo.hpp"
 #include "N64.hpp"
 #include "GBI.hpp"
 #include "RSP.hpp"
@@ -15,9 +14,12 @@
 #include "convert.hpp"
 #include "OpenGL.hpp"
 #include "CRC.hpp"
-#include "FrameBuffer.hpp"
 #include "DepthBuffer.hpp"
 #include "VI.hpp"
+#include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <utility>
 
 gDPInfo gDP;
 

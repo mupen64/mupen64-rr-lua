@@ -13,6 +13,7 @@
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
 #include <R4300/x86_64/RegCache.hpp>
+#include <cstdint>
 
 void gensll()
 {

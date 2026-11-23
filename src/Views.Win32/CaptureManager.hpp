@@ -6,6 +6,11 @@
 
 #pragma once
 
+#include <filesystem>
+#include <functional>
+
+#include <Common.Views/Config.hpp>
+
 /**
  * Provides capturing functionality to the view.
  * \warning This namespace is not thread-safe unless otherwise specified.

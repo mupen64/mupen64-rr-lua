@@ -15,12 +15,7 @@
 #include <Core/API.hpp>
 
 #pragma warning(push, 0)
-extern "C"
-{
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
+#include <lua.hpp>
 #include <spdlog/logger.h>
 
 #include <resource.h>

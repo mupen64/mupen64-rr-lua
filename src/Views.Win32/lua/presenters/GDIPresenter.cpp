@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include <lua/presenters/GDIPresenter.hpp>
 
 GDIPresenter::~GDIPresenter()

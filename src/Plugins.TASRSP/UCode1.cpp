@@ -8,6 +8,7 @@
 #include "HLE.hpp"
 #include "ADPCM.hpp"
 
+#include <cstdint>
 #include <cstring>
 #include <tmmintrin.h>
 

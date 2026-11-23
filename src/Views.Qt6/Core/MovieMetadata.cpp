@@ -8,7 +8,31 @@
 
 #include <QPointer>
 #include <QThreadPool>
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <initializer_list>
+#include <qabstractitemmodel.h>
+#include <qanystringview.h>
+#include <qhash.h>
+#include <qlatin1stringview.h>
+#include <qlist.h>
+#include <qnamespace.h>
+#include <qobject.h>
+#include <qobjectdefs.h>
+#include <qscopeguard.h>
+#include <qstringview.h>
+#include <qttranslation.h>
+#include <span>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
+#include "Core/API.hpp"
+#include "Core/Types.hpp"
 #include "EmuContext.hpp"
 
 static QString format_duration(size_t seconds)

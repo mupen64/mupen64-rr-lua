@@ -7,8 +7,14 @@
 #include "LuaInternal.hpp"
 #include "Resources.hpp"
 
+#include <lua.hpp>
+
 #include <QFile>
 #include <QFileInfo>
+#include <qobject.h>
+#include <qtypes.h>
+#include <string>
+#include <vector>
 
 LuaInstance::LuaInstance(QObject *parent) : QObject(parent)
 {

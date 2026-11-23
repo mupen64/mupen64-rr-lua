@@ -7,24 +7,28 @@
 #pragma once
 
 #include <Common.hpp>
-#include <Common.Win32/WinUtils.hpp>
-#include <Common/Assert.hpp>
-#include <Common/LRUCache.hpp>
-#include <lua/LuaRealmManager.hpp>
-#include <lua/LuaRenderer.hpp>
+
+#include <lua.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
-#include <dwrite_1.h>
 #include <format>
 #include <iterator>
 #include <memory>
-#include <new>
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include <dwrite_1.h>
+
+#include <Common.Win32/WinUtils.hpp>
+#include <Common/Assert.hpp>
+#include <Common/LRUCache.hpp>
+#include <Common.Views/LuaHelpers.hpp>
+#include <lua/LuaRealmManager.hpp>
+#include <lua/LuaRenderer.hpp>
 
 inline bool operator==(const D2D1_COLOR_F &a, const D2D1_COLOR_F &b)
 {

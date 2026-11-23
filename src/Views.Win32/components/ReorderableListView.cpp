@@ -4,10 +4,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include "ReorderableListView.hpp"
 
+#include <cstddef>
+#include <optional>
+
 #include <Common/Assert.hpp>
+
+#include <CommCtrl.h>
 
 namespace ReorderableListView
 {

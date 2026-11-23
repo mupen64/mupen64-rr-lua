@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "R4300/Recomp.hpp"
 #include <Core.hpp>
 #include <Memory/Memory.hpp>
 #include <R4300/Interrupt.hpp>
@@ -14,6 +15,8 @@
 #include <R4300/x86_64/Assemble.hpp>
 #include <R4300/x86_64/RegCache.hpp>
 #include <Alloc.hpp>
+#include <cstddef>
+#include <cstdint>
 
 extern uint32_t src; // recomp.c
 

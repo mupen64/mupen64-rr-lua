@@ -5,6 +5,19 @@
  */
 #include "RomManager.hpp"
 
+#include <algorithm>
+#include <cstdint>
+#include <filesystem>
+#include <functional>
+#include <initializer_list>
+#include <ios>
+#include <qabstractitemmodel.h>
+#include <qhash.h>
+#include <qnamespace.h>
+#include <qobject.h>
+#include <qobjectdefs.h>
+#include <qstringview.h>
+#include <qtmetamacros.h>
 #include <ranges>
 
 #include <Common/Assert.hpp>
@@ -15,7 +28,11 @@
 #include <QThreadPool>
 #include <QFileInfo>
 #include <QtTranslation>
+#include <stdexcept>
+#include <string_view>
+#include <utility>
 
+#include "Core/Types.hpp"
 #include "EmuContext.hpp"
 
 template <class T, class U> static inline bool is_one_of(const U &x, std::initializer_list<T> objs)

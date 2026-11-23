@@ -5,6 +5,9 @@
  */
 
 #include <R4300/Recomp.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
 
 #ifdef _WIN32
 #include <windows.h>

@@ -4,9 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Memory/TLB.hpp"
 #include <R4300/Recomp.hpp>
 #include <R4300/Recomph.hpp>
 
+#include <cstdint>
+#include <cstdlib>
 #include <cstring>
 
 #include <Core.hpp>

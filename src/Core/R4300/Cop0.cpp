@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Core.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Macros.hpp>
 #include <R4300/Ops.hpp>
 #include <R4300/Interrupt.hpp>
+#include <cstdint>
+#include <format>
 
 void MFC0()
 {

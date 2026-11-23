@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Config.hpp"
+#include <cstdint>
+#include <format>
 #ifdef _WIN32
 
 #include "Config_Win32.hpp"
-#include "Main_Win32.hpp"
 #include "Resource.h"
-#include <Common.Win32/Common.hpp>
 #include <WinDarkMode.h>
 
 // Macros Windows should really have, but don't.

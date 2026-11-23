@@ -4,9 +4,15 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include "WinDarkMode.h"
 #include <Common.Views/IDialogService.hpp>
 #include <components/Cheats.hpp>
+#include <stack>
+#include <vector>
 
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {

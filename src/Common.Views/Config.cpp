@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/Hotkey.hpp"
+#include "ini.h"
 #include <Common.Views/App.hpp>
 
 #include <Common/IOUtils.hpp>
@@ -13,6 +15,20 @@
 #include <Common.Views/Messages.hpp>
 #include <Core/API.hpp>
 #include <Common.Views/ActionManager.hpp>
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <map>
+#include <nlohmann/json_fwd.hpp>
+#include <ranges>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
 using nlohmann::json;
 

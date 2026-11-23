@@ -4,12 +4,16 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "R4300/Macros.hpp"
+#include "R4300/Recomp.hpp"
 #include <Core.hpp>
 #include <R4300/Cop1Helpers.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
 #include <R4300/x86_64/Gcop1Helpers.hpp>
+#include <cstdint>
+#include <format>
 
 uint32_t g_saved_mxcsr = 0, g_scratch_mxcsr = 0;
 

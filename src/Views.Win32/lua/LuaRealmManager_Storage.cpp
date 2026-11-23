@@ -4,13 +4,17 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include <lua.hpp>
 #include <lua/LuaRealmManager.hpp>
 
 #include <Common/Assert.hpp>
 
 #include <Common.Views/IDialogService.hpp>
-#include <lua/LuaRendererManager.hpp>
+#include <memory>
+#include <utility>
+#include <vector>
 
 LuaRealmManager &LuaRealmManager::instance()
 {

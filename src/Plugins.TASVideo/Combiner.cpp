@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include "OpenGL.hpp"
+#include "GBI.hpp"
 #include "Combiner.hpp"
+#include "Textures.hpp"
+#include "Types.hpp"
 #include "glsl_combiner.hpp"
 #include "gDP.hpp"
 

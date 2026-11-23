@@ -6,15 +6,20 @@
 
 #include "Config.hpp"
 
+#include <exception>
+#include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
+#include <string>
 
-#include "Common.hpp"
 #include "TASVideo.hpp"
-#include "RSP.hpp"
 #include "Textures.hpp"
 #include "OpenGL.hpp"
+
 using nlohmann::json;
+using BuiltinTAS::TASVideo::g_plugin;
 
 #define CONFIG_FILE_NAME "TASVideo.json"
 

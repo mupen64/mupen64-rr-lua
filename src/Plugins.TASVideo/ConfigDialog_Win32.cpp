@@ -4,17 +4,19 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include "ConfigDialog_Win32.hpp"
 
-#include <nlohmann/json.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <iterator>
 #include <Common.Win32/WinUtils.hpp>
 #include <WinDarkMode.h>
+#include <nlohmann/json_fwd.hpp>
+#include <string>
 
 #include "Config.hpp"
-#include "TASVideo.hpp"
 #include "Resource.h"
-#include "GBI.hpp"
 #include "OpenGL.hpp"
 #include "RSP.hpp"
 #include "Textures.hpp"

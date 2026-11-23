@@ -6,6 +6,7 @@
 
 #include "R4300.hpp"
 #include "Macros.hpp"
+#include <cstdint>
 
 void CVT_S_L()
 {

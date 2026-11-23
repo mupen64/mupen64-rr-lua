@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include "TASVideo.hpp"
 #include "F3DEX2.hpp"
 #include "F3DEX3.hpp"
 #include "N64.hpp"
 #include "RSP.hpp"
+#include "Types.hpp"
 #include "gSP.hpp"
 #include "GBI.hpp"
 #include "OpenGL.hpp"

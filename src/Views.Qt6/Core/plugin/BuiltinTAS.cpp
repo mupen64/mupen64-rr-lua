@@ -5,6 +5,10 @@
  */
 #include "BuiltinTAS.hpp"
 #include <Common/StrUtils.hpp>
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <stdexcept>
 
 namespace BuiltinTAS
 {

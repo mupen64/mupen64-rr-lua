@@ -6,8 +6,12 @@
 
 #include "Dispatcher.hpp"
 
+#include <exception>
+#include <functional>
+#include <mutex>
 #include <stdexcept>
 #include <system_error>
+#include <utility>
 
 Dispatcher::Dispatcher(HWND hwnd) : m_hwnd(hwnd), m_thread_id(GetWindowThreadProcessId(hwnd, nullptr))
 {
