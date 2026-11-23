@@ -91,5 +91,5 @@ jobs:
     - name: clang-tidy check includes
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        pwd_escaped=$(sed -E 's/[\\.+?]/\\\1/g' <<< "$PWD")
+        pwd_escaped=$(sed -E 's/[\\.+?]/\\\0/g' <<< "$PWD")
         run-clang-tidy -p build -checks='-*,misc-include-cleaner' -quiet "$pwd_escaped/src/.+\.(c|h|cpp|hpp)"
