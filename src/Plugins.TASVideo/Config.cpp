@@ -18,8 +18,8 @@
 #include "Textures.hpp"
 #include "OpenGL.hpp"
 
-using nlohmann::json;
 using BuiltinTAS::TASVideo::g_plugin;
+using nlohmann::json;
 
 #define CONFIG_FILE_NAME "TASVideo.json"
 

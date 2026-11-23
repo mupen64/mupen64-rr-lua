@@ -19,7 +19,6 @@
 #include "lua/LuaTypes.hpp"
 #include <Main.hpp>
 
-
 #include <Common/I18n.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>

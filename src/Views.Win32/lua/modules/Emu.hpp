@@ -6,7 +6,6 @@
 
 #pragma once
 
-
 #include <lua.hpp>
 #include <WinDarkMode.h>
 

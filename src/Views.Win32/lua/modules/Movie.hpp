@@ -18,7 +18,7 @@ namespace LuaCore::Movie
 {
 static int play(lua_State *L)
 {
-    const char* path = lua_tostring(L, 1);
+    const char *path = lua_tostring(L, 1);
     if (!path)
     {
         lua_pushinteger(L, static_cast<lua_Integer>(CoreResult::VCR_BadFile));

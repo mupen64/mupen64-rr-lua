@@ -5,7 +5,6 @@
  */
 #include "MovieMetadata.hpp"
 
-
 #include <QPointer>
 #include <QThreadPool>
 #include <algorithm>

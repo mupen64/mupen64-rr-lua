@@ -10,7 +10,6 @@
 
 #include <lua.hpp>
 
-
 namespace LuaInternal
 {
 

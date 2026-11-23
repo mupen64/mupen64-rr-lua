@@ -8,7 +8,6 @@
 #include <Common.Views/WinVFWEncoder.hpp>
 #include <Common.Views/App.hpp>
 
-
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Resampler.hpp>

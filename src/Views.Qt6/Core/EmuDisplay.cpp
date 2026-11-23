@@ -6,7 +6,6 @@
 #include "EmuDisplay.hpp"
 
 #include <cstdint>
-#include <print>
 
 #include <QQuickWindow>
 #include <QSGImageNode>

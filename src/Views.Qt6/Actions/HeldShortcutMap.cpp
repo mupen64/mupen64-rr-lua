@@ -11,7 +11,6 @@
 #include <qnamespace.h>
 #include <qobjectdefs.h>
 #include <stdexcept>
-#include <print>
 
 using namespace Qt::Literals;
 

@@ -17,7 +17,6 @@
 
 #if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 
-#include <unistd.h>
 #include <sys/mman.h>
 #include <unordered_map>
 
@@ -45,7 +44,7 @@ void *malloc_exec(size_t size)
 {
 #ifdef _WIN32
     return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-#elif defined(__linux__)
+#elifdef __linux__
     void *block = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (block == MAP_FAILED) return NULL;
 
@@ -86,7 +85,7 @@ void free_exec(void *ptr)
 {
 #ifdef _WIN32
     VirtualFree(ptr, 0, MEM_RELEASE);
-#elif defined(__linux__)
+#elifdef __linux__
     size_t len = 0;
     {
         std::scoped_lock lock(page_size_map_lock);

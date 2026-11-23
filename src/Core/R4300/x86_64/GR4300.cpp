@@ -1815,8 +1815,6 @@ void genswr()
     gencallinterp((uintptr_t)SWR, 0);
 }
 
-#include <malloc.h>
-
 inline void put8gr(unsigned char octet)
 {
     (*inst_pointer)[code_length] = octet;
