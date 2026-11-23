@@ -17,6 +17,19 @@
 #include <components/Statusbar.hpp>
 #include <plugin/Plugin.hpp>
 
+#include <Common/Assert.hpp>
+#include <string.h>
+
+#include <Core/Types.hpp>
+#include <Core/Plugin.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+
+#include <Views.Win32/ZESpec.h>
+#include <components/Statusbar.hpp>
+#include <plugin/Plugin.hpp>
+#include <plugin/ZEPlugin.hpp>
+
 ZESpec::VideoPluginInfo dummy_video_info{};
 ZESpec::AudioPluginInfo dummy_audio_info{};
 ZESpec::InputPluginInfo dummy_control_info{};

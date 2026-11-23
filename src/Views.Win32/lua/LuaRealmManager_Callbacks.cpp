@@ -166,8 +166,8 @@ static void unregister_function(lua_State *L, LuaRealmManager::callback_key key)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    int n = luaL_len(L, -1);
-    for (LUA_INTEGER i = 0; i < n; i++)
+    lua_Integer n = luaL_len(L, -1);
+    for (lua_Integer i = 0; i < n; i++)
     {
         lua_pushinteger(L, 1 + i);
         lua_gettable(L, -2);
