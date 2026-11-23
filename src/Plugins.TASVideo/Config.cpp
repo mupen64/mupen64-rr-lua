@@ -7,6 +7,7 @@
 #include "Config.hpp"
 
 #include <fstream>
+#include <nlohmann/json.hpp>
 
 #include "Common.hpp"
 #include "TASVideo.hpp"

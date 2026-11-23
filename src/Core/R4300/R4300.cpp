@@ -6,6 +6,7 @@
 
 #include "R4300.hpp"
 
+#include <condition_variable>
 #include <thread>
 
 #include <Common/IOUtils.hpp>

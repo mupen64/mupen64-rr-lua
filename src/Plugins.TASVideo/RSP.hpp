@@ -10,7 +10,10 @@
 #include "N64.hpp"
 #include "GBI.hpp"
 #include "gSP.hpp"
+
+#include <condition_variable>
 #include <deque>
+#include <future>
 #include <memory>
 #include <mutex>
 #include <thread>

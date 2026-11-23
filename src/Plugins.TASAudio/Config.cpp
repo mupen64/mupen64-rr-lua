@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <ostream>
 #include <stdexcept>
+#include <nlohmann/json.hpp>
 
 namespace SDLAudio
 {
