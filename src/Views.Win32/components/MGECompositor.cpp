@@ -13,6 +13,9 @@
 #include <Common.Views/Messages.hpp>
 #include <lua/LuaRealmManager.hpp>
 
+#include <mutex>
+#include <optional>
+
 constexpr auto control_class_name = "game_control";
 constexpr DXGI_FORMAT texture_format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
@@ -77,7 +80,10 @@ struct MgeContext
     ComPtr<ID3D11SamplerState> sampler;
     ComPtr<ID3D11VertexShader> vs;
     ComPtr<ID3D11PixelShader> ps;
+    std::optional<uint64_t> shown_sequence;
 };
+
+static std::mutex g_mutex;
 
 static MgeContext mge_context{};
 
@@ -113,8 +119,8 @@ static void create_d3d(const HWND hwnd)
     need(hr, "GetParent IDXGIFactory2");
 
     DXGI_SWAP_CHAIN_DESC1 scdesc = {};
-    scdesc.Width = 0;
-    scdesc.Height = 0;
+    scdesc.Width = (UINT)mge_context.width;
+    scdesc.Height = (UINT)mge_context.height;
     scdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     scdesc.SampleDesc.Count = 1;
     scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -264,7 +270,8 @@ static void recreate_mge_context_d3d()
     {
         mge_context.context->OMSetRenderTargets(0, nullptr, nullptr);
         mge_context.rtv.Reset();
-        const HRESULT hr = mge_context.swapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+        const HRESULT hr = mge_context.swapchain->ResizeBuffers(
+            0, (UINT)mge_context.width, (UINT)mge_context.height, DXGI_FORMAT_UNKNOWN, 0);
         need(hr, "ResizeBuffers");
     }
 
@@ -291,6 +298,7 @@ static void recreate_mge_context_d3d()
     need(mge_context.rgba_buffer, "Failed to allocate MGE buffers");
 
     ZeroMemory(mge_context.rgba_buffer, buffer_size);
+    mge_context.shown_sequence.reset();
 
     ensure_texture_exists_with_size(mge_context.width, mge_context.height);
 }
@@ -305,9 +313,11 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return MA_NOACTIVATE;
     case WM_SIZE:
         return 0;
-    case WM_NCDESTROY:
+    case WM_NCDESTROY: {
+        std::lock_guard lock(g_mutex);
         destroy_d3d();
         break;
+    }
     default:
         break;
     }
@@ -341,19 +351,27 @@ void MGECompositor::init()
 
 void MGECompositor::update_screen()
 {
+    std::lock_guard lock(g_mutex);
+
     PluginUtil::get_video_size(&mge_context.width, &mge_context.height);
 
     if (mge_context.width != mge_context.last_width || mge_context.height != mge_context.last_height)
     {
-        MoveWindow(mge_context.hwnd, 0, 0, mge_context.width, mge_context.height, TRUE);
+        SetWindowPos(mge_context.hwnd, nullptr, 0, 0, mge_context.width, mge_context.height,
+            SWP_NOZORDER | SWP_NOACTIVATE | SWP_ASYNCWINDOWPOS);
         recreate_mge_context_d3d();
     }
+
+    // Read before the frame, so that a frame produced meanwhile is read again next time rather than skipped.
+    const auto sequence = PluginUtil::get_video_sequence();
+    if (sequence && sequence == mge_context.shown_sequence) return;
 
     PluginUtil::read_video(mge_context.rgba_buffer);
 
     upload_rgb32_buffer();
     render_and_present();
 
+    mge_context.shown_sequence = sequence;
     mge_context.last_width = mge_context.width;
     mge_context.last_height = mge_context.height;
 }
@@ -365,6 +383,8 @@ HWND MGECompositor::hwnd()
 
 void MGECompositor::get_video_size(int32_t *width, int32_t *height)
 {
+    std::lock_guard lock(g_mutex);
+
     if (width)
     {
         *width = mge_context.width;
@@ -377,14 +397,20 @@ void MGECompositor::get_video_size(int32_t *width, int32_t *height)
 
 void MGECompositor::copy_video(void *buffer)
 {
+    std::lock_guard lock(g_mutex);
+
     memcpy(buffer, mge_context.rgba_buffer, mge_context.width * mge_context.height * 4);
 }
 
 void MGECompositor::load_screen(void *data)
 {
+    std::lock_guard lock(g_mutex);
+
     memcpy(mge_context.rgba_buffer, data, mge_context.width * mge_context.height * 4);
 
     ensure_texture_exists_with_size(mge_context.width, mge_context.height);
     upload_rgb32_buffer();
     render_and_present();
+
+    mge_context.shown_sequence = PluginUtil::get_video_sequence();
 }

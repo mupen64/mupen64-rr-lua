@@ -105,7 +105,6 @@ FILE *g_mpak_file;
 
 void vr_invalidate_visuals()
 {
-    g_r4300.screen_invalidated_vi = true;
     g_r4300.screen_invalidated_frame = true;
 }
 
@@ -210,7 +209,7 @@ bool vr_get_paused()
     return emu_paused;
 }
 
-bool vr_get_frame_advance()
+size_t vr_get_frame_advance()
 {
     return g_r4300.frame_advance_outstanding;
 }

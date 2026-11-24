@@ -802,9 +802,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+// Whether a screen refresh is queued on the UI thread, so that a busy UI thread doesn't accumulate them.
+static std::atomic<bool> g_screen_refresh_posted;
+
+// Runs on the multimedia timer's thread once per UI frame.
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
     g_main_ctx.core_ctx->vr_invalidate_visuals();
+    PluginUtil::invalidate_screen();
+
+    if (g_main_ctx.exiting || !PluginUtil::video_reads_on_demand() || g_screen_refresh_posted.exchange(true)) return;
+    try
+    {
+        g_main_ctx.dispatcher->post([] {
+            g_screen_refresh_posted = false;
+            PluginUtil::refresh_screen();
+        });
+    }
+    catch (const std::system_error &)
+    {
+        // The main window is gone.
+        g_screen_refresh_posted = false;
+    }
 }
 
 static CoreResult init_core()
@@ -813,6 +832,7 @@ static CoreResult init_core()
     // g_main_ctx.core.io_service = &g_main_ctx.io_service;
     g_main_ctx.core.callbacks = {};
     g_main_ctx.core.callbacks.vi = [](const auto &...) {
+        PluginUtil::update_screen();
         LuaRealmManager::instance().call_interval();
         LuaRealmManager::instance().call_vi();
         if (CaptureManager::is_capturing()) CaptureManager::vi();
@@ -913,7 +933,6 @@ static CoreResult init_core()
     g_main_ctx.core.show_notification = [](const char *str, const char *title, CoreMessageTone tone) {
         DialogService::show_notification(str, title ? std::make_optional(title) : std::nullopt, tone);
     };
-    g_main_ctx.core.update_screen = PluginUtil::update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
     g_main_ctx.core.find_available_rom = RomBrowser::find_available_rom;
     g_main_ctx.core.mge_available = PluginUtil::mge_available;

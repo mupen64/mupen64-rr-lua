@@ -53,6 +53,7 @@ static CaptureContext g_ctx{};
 
 void readscreen_plugin(int32_t *width = nullptr, int32_t *height = nullptr)
 {
+    MGECompositor::update_screen();
     MGECompositor::copy_video(m_video_buf);
     MGECompositor::get_video_size(width, height);
 }

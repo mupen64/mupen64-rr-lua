@@ -96,7 +96,7 @@ bool timer_new_frame()
 
     if (!g_core->cfg->render_throttling) return false;
 
-    // See interrupt.cpp last_frame_advance explanation.
+    // The last frame of a frame advance is always rendered, so that its graphics are guaranteed to be visible.
     if (g_r4300.frame_advance_outstanding == 1)
     {
         g_r4300.screen_invalidated_frame = false;

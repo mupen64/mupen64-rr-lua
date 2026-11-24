@@ -193,11 +193,6 @@ extern "C"
             [](const auto &...) {};
 
         /**
-         * \brief Notifies the host that new video data is available and the screen should be updated.
-         */
-        std::function<void()> update_screen = [](const auto &...) {};
-
-        /**
          * \brief Writes the MGE compositor's current emulation front buffer into the destination buffer.
          * \param buffer The video buffer. Must be at least of size <c>width * height * 4</c>, as acquired by
          * <c>plugin_funcs.get_video_size</c>.
@@ -322,9 +317,9 @@ extern "C"
         std::function<bool()> vr_get_launched;
 
         /**
-         * \brief Gets whether the core is currently frame-advancing.
+         * \brief Gets the number of frames left in the current frame advance, or 0 if the core isn't frame-advancing.
          */
-        std::function<bool()> vr_get_frame_advance;
+        std::function<size_t()> vr_get_frame_advance;
 
         /**
          * \brief Gets whether the core is currently paused.
@@ -459,7 +454,8 @@ extern "C"
         std::function<void()> vr_on_render_throttling_changed;
 
         /**
-         * \brief Invalidates the visuals, allowing an updateScreen call to happen.
+         * \brief Invalidates the visuals, allowing the next frame to be rendered when render throttling would otherwise
+         * skip it.
          */
         std::function<void()> vr_invalidate_visuals;
 

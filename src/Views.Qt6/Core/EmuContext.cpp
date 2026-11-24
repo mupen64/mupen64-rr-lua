@@ -129,7 +129,6 @@ EmuContext::EmuContext(QQuickItem *parent)
 
 #pragma region Signals and properties
     // propagate signals from core
-    m_core_params->update_screen = [&] { QMetaObject::invokeMethod(this, &EmuContext::updateScreen); };
     m_core_params->callbacks.emu_launched_changed = [&](bool value) {
         QMetaObject::invokeMethod(this, &EmuContext::launchedChanged, value);
     };

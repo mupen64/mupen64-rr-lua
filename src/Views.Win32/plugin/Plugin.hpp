@@ -8,6 +8,7 @@
 
 #include <Views.Win32/ZESpec.h>
 #include <Core/Plugin.hpp>
+#include <optional>
 
 struct ZESpecFuncs
 {
@@ -31,6 +32,8 @@ struct ZESpecFuncs
     ZESpec::MOVESCREEN video_move_screen;
     ZESpec::CAPTURESCREEN video_capture_screen;
     ZESpec::READVIDEO video_read_video;
+    M64RRSpec::PtrGetVideoSequence video_get_video_sequence;
+    bool video_reads_on_demand;
 
     M64RRSpec::PluginInit audio_init;
     ZESpec::ROMOPEN audio_rom_open;
@@ -239,7 +242,34 @@ ZESpec::DLLCRTFREE get_free_function_in_module(HMODULE module);
 
 void get_video_size(int32_t *width, int32_t *height);
 void read_video(void *buffer);
+
+/**
+ * \brief Gets the video plugin's video sequence, or nothing if the plugin doesn't provide one. See
+ * M64RRGetVideoSequence.
+ */
+std::optional<uint64_t> get_video_sequence();
+/**
+ * \brief Called on the emulator thread on every VI. Updates the screen when the video isn't read on demand, subject to
+ * render throttling.
+ */
 void update_screen();
+
+/**
+ * \brief Marks the screen as needing an update. Called on every UI frame.
+ */
+void invalidate_screen();
+
+/**
+ * \brief Gets whether the video plugin's output is read on demand from the UI thread instead of on VI.
+ */
+bool video_reads_on_demand();
+
+/**
+ * \brief Updates the screen from the video plugin's latest output if it's read on demand. Must be called on the UI
+ * thread.
+ */
+void refresh_screen();
+
 void key_down(uint32_t wParam, int32_t lParam);
 void key_up(uint32_t wParam, int32_t lParam);
 void move_screen(uint32_t wParam, int32_t lParam);

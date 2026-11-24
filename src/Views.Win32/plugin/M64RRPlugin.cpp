@@ -20,6 +20,7 @@ static M64RRSpec::PtrProcessEvent g_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows g_mupenrr_video_get_windows_fn = nullptr;
 static M64RRSpec::PtrProcessRDPList g_mupenrr_process_rdplist_fn = nullptr;
 static M64RRSpec::PtrReadVideo g_mupenrr_read_video_fn = nullptr;
+static M64RRSpec::PtrGetVideoSequence g_mupenrr_get_video_sequence_fn = nullptr;
 
 static M64RRSpec::PtrProcessEvent g_mupenrr_audio_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows g_mupenrr_audio_get_windows_fn = nullptr;
@@ -152,6 +153,7 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type
         add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRGetMetadata));
         add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRProcessEvent));
         add("M64RRReadVideo", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRReadVideo));
+        add("M64RRGetVideoSequence", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRGetVideoSequence));
         add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRShowConfig));
         break;
     case Plugin::Type::Audio:
@@ -327,6 +329,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         LOOKUP_MUPENRR_FN(g_mupenrr_video_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
         LOOKUP_MUPENRR_FN(g_mupenrr_video_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
         LOOKUP_MUPENRR_FN(g_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
+        LOOKUP_MUPENRR_FN(g_mupenrr_get_video_sequence_fn, M64RRSpec::PtrGetVideoSequence, "M64RRGetVideoSequence");
 
         funcs.video_rom_open = []() {
             process_event_on_gui_thread(
@@ -354,6 +357,8 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
             };
             funcs.video_read_video = [](void **buffer) { g_mupenrr_read_video_fn(*buffer, nullptr, nullptr); };
         }
+        funcs.video_get_video_sequence = g_mupenrr_get_video_sequence_fn;
+        funcs.video_reads_on_demand = true;
         funcs.video_change_window = [](const auto &...) {};
         funcs.video_update_screen = [](const auto &...) {};
         funcs.video_move_screen = [](int32_t, int32_t) {};

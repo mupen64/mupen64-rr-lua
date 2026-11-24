@@ -35,6 +35,7 @@ struct Renderer
     std::mutex poolMutex;
     std::vector<std::unique_ptr<DrawList>> pool;
     std::atomic<std::shared_ptr<const DrawList>> latest;
+    std::atomic<u64> sequence{};
     std::mutex mutex;
     std::condition_variable msg_available;
     std::unique_ptr<std::jthread> thread;

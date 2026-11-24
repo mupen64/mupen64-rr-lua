@@ -260,11 +260,6 @@ class EmuContext : public QQuickItem
      */
     void gfxRequestSize(uint32_t width, uint32_t height);
 
-    /**
-     * @brief Requests that the video output be updated.
-     */
-    void updateScreen();
-
     // Dialog service
     // ============================================
 

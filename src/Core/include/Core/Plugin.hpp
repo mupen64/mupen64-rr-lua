@@ -244,6 +244,7 @@ extern "C"
 
     typedef void(CALL *PtrProcessRDPList)();
     typedef void(CALL *PtrReadVideo)(void *buffer, int32_t *width, int32_t *height);
+    typedef uint64_t(CALL *PtrGetVideoSequence)();
 
     typedef void(CALL *PtrAIDacrateChanged)(CoreSystemType system_type);
     typedef void(CALL *PtrAILenChanged)();
@@ -309,6 +310,13 @@ EXPORT void CALL M64RRProcessRDPList(void);
  * \param height The height of the video. Can be `nullptr`.
  */
 EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height);
+
+/**
+ * \brief Gets a number that changes whenever the frame `M64RRReadVideo` would return changes.
+ * \note Lets the frontend skip reading back unchanged frames and tell frames produced after a point in time (e.g. a savestate load) apart from older ones.
+ * \threadsafe This function is thread-safe.
+ */
+EXPORT uint64_t CALL M64RRGetVideoSequence(void);
 
 /**
  * \brief Called when the audio DAC rate changes.

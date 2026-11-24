@@ -245,6 +245,7 @@ void Render_Submit(DrawList &list)
 
     std::swap(*next, list);
     renderer.latest.store(std::shared_ptr<const DrawList>(next.release(), recycle));
+    ++renderer.sequence;
 }
 
 void Render_ThreadProc()
@@ -314,6 +315,7 @@ void Render_ThreadProc()
         default:
             break;
         }
+        if (command != RENDER_READPIXELS) ++renderer.sequence;
         message.completed.set_value();
     }
 }

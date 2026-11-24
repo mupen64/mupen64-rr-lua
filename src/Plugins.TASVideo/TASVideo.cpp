@@ -91,6 +91,11 @@ EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height)
     if (buffer && renderer.thread) Render_SendMessage(RENDER_READPIXELS, buffer);
 }
 
+EXPORT uint64_t CALL M64RRGetVideoSequence()
+{
+    return renderer.sequence.load();
+}
+
 #ifndef _WIN32
 EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle)
 {
