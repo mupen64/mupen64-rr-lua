@@ -8,7 +8,7 @@
 
 #include <functional>
 
-#include <Windows.h>
+#include <windows.h>
 
 /**
  * \brief A module responsible for adding drag-and-drop reordering functionality to list views.

@@ -8,7 +8,7 @@
 
 #include <SDL3/SDL_gamepad.h>
 #include <nlohmann/json.hpp>
-#include <Windows.h>
+#include <windows.h>
 
 #define CONFIG_FILE_NAME "TASInput.json"
 

@@ -14,7 +14,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <Windows.h>
+#include <windows.h>
 #include <CommCtrl.h>
 #include <minidumpapiset.h>
 #include <Psapi.h>

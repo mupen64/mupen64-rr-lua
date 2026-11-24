@@ -9,7 +9,7 @@
 #include <string>
 #include <optional>
 
-#include <Windows.h>
+#include <windows.h>
 
 /**
  * \brief A module responsible for implementing a text editing dialog.

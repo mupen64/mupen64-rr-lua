@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <cstdio>
 
-#include <Common.Win32/Common.hpp>
+#include <windows.h>
 #include <windowsx.h>
 
 #include "Resource.h"
