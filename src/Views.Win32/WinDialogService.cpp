@@ -19,7 +19,7 @@
 #include <vector>
 
 #include <windows.h>
-#include <CommCtrl.h>
+#include <commctrl.h>
 
 #include <Common/IOUtils.hpp>
 #include <Common/StrUtils.hpp>

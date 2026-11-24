@@ -11,7 +11,7 @@
 
 #include <Common/Assert.hpp>
 
-#include <CommCtrl.h>
+#include <commctrl.h>
 
 namespace ReorderableListView
 {
