@@ -73,10 +73,12 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
         break;
     case M64RRSpec::Event::Type::RomOpened:
         start_renderer();
+        renderer.pending.clear();
         draw_sink = Render_Submit;
         break;
     case M64RRSpec::Event::Type::RomClosed:
         draw_sink = nullptr;
+        renderer.pending.clear();
         if (renderer.thread) Render_SendMessage(RENDER_BLACKOUT);
         break;
     default:
@@ -94,6 +96,11 @@ EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height)
 EXPORT uint64_t CALL M64RRGetVideoSequence()
 {
     return renderer.sequence.load();
+}
+
+EXPORT void CALL M64RRVerticalInterrupt()
+{
+    Render_VerticalInterrupt();
 }
 
 #ifndef _WIN32

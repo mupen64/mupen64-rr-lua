@@ -308,6 +308,7 @@ class EmuContext : public QQuickItem
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
+    M64RRSpec::PtrVerticalInterrupt m_fn_vertical_interrupt{};
 
     QPointer<RomManager> m_rom_manager;
 

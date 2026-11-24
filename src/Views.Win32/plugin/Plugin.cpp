@@ -165,6 +165,8 @@ void PluginUtil::refresh_screen()
 
 void PluginUtil::update_screen()
 {
+    if (g_plugin_funcs.video_vertical_interrupt) g_plugin_funcs.video_vertical_interrupt();
+
     if (g_video_on_demand) return;
 
     if (g_config.core.render_throttling)

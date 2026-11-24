@@ -183,14 +183,13 @@ static void process(const DrawTexturedRect &rect)
     flush();
     OGL_DrawTexturedRect(rect.x0, rect.y0, rect.x1, rect.y1, rect.s, rect.t, rect.lrs, rect.lrt, rect.flip);
 }
-static void Render_List(const DrawList &list)
+static void Render_List(const DrawList &list, bool first)
 {
-    if (!OGL.context_initialized) return;
     renderVI = {list.width, list.height};
     renderer.listNumber = list.number;
     currentState = nullptr;
     OGL_UpdateScale();
-    if (OGL.clear_override) OGL_ClearFramebuffer(GL_COLOR_BUFFER_BIT);
+    if (first && OGL.clear_override) OGL_ClearFramebuffer(GL_COLOR_BUFFER_BIT);
     for (const auto &command : list.commands)
     {
         std::visit(
@@ -209,6 +208,13 @@ static void Render_List(const DrawList &list)
     renderer.background = {};
 }
 
+static void Render_Frame(const DrawFrame &frame)
+{
+    if (!OGL.context_initialized) return;
+    // Later tasks may build on earlier ones (e.g. by sampling what they rendered), so all of them are replayed.
+    for (size_t i = 0; i < frame.size(); ++i) Render_List(*frame[i], i == 0);
+}
+
 void Render_SendMessage(u32 command, void *pixels)
 {
     std::future<void> completed;
@@ -223,8 +229,10 @@ void Render_SendMessage(u32 command, void *pixels)
 
 static void recycle(DrawList *list)
 {
+    // Enough for a few graphics tasks per frame across the pending, published and rendering frames.
+    constexpr size_t max_pooled = 8;
     std::lock_guard lock(renderer.poolMutex);
-    if (renderer.pool.size() < 2)
+    if (renderer.pool.size() < max_pooled)
         renderer.pool.emplace_back(list);
     else
         delete list;
@@ -244,14 +252,23 @@ void Render_Submit(DrawList &list)
     if (!next) next = std::make_unique<DrawList>();
 
     std::swap(*next, list);
-    renderer.latest.store(std::shared_ptr<const DrawList>(next.release(), recycle));
+    renderer.pending.emplace_back(next.release(), recycle);
+
+    constexpr size_t max_pending = 32;
+    if (renderer.pending.size() >= max_pending) Render_VerticalInterrupt();
+}
+
+void Render_VerticalInterrupt()
+{
+    if (renderer.pending.empty()) return;
+    renderer.latest.store(std::make_shared<const DrawFrame>(std::exchange(renderer.pending, {})));
     ++renderer.sequence;
 }
 
 void Render_ThreadProc()
 {
     hqxInit();
-    std::weak_ptr<const DrawList> rendered;
+    std::weak_ptr<const DrawFrame> rendered;
 
     while (true)
     {
@@ -299,11 +316,11 @@ void Render_ThreadProc()
             renderSP.changed = renderDP.changed = 0xFFFFFFFF;
             break;
         case RENDER_READPIXELS: {
-            const auto list = renderer.latest.load();
-            if (list && list != rendered.lock())
+            const auto frame = renderer.latest.load();
+            if (frame && frame != rendered.lock())
             {
-                Render_List(*list);
-                rendered = list;
+                Render_Frame(*frame);
+                rendered = frame;
             }
             OGL_ReadPixels(message.pixels);
             break;

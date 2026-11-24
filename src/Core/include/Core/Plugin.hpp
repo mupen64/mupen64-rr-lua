@@ -245,6 +245,7 @@ extern "C"
     typedef void(CALL *PtrProcessRDPList)();
     typedef void(CALL *PtrReadVideo)(void *buffer, int32_t *width, int32_t *height);
     typedef uint64_t(CALL *PtrGetVideoSequence)();
+    typedef void(CALL *PtrVerticalInterrupt)();
 
     typedef void(CALL *PtrAIDacrateChanged)(CoreSystemType system_type);
     typedef void(CALL *PtrAILenChanged)();
@@ -317,6 +318,11 @@ EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height);
  * \threadsafe This function is thread-safe.
  */
 EXPORT uint64_t CALL M64RRGetVideoSequence(void);
+
+/**
+ * \brief Called on VI.
+ */
+EXPORT void CALL M64RRVerticalInterrupt(void);
 
 /**
  * \brief Called when the audio DAC rate changes.

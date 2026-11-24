@@ -230,6 +230,7 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         FUNC(funcs.video_get_video_size, ZESpec::GETVIDEOSIZE, nullptr, "mge_get_video_size");
         FUNC(funcs.video_read_video, ZESpec::READVIDEO, nullptr, "mge_read_video2");
         funcs.video_get_video_sequence = nullptr;
+        funcs.video_vertical_interrupt = nullptr;
         funcs.video_reads_on_demand = false;
         FUNC(funcs.video_fb_read, ZESpec::FBREAD, dummy_fb_read, "FBRead");
         FUNC(funcs.video_fb_write, ZESpec::FBWRITE, dummy_fb_write, "FBWrite");

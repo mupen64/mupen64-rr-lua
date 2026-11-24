@@ -33,6 +33,7 @@ struct ZESpecFuncs
     ZESpec::CAPTURESCREEN video_capture_screen;
     ZESpec::READVIDEO video_read_video;
     M64RRSpec::PtrGetVideoSequence video_get_video_sequence;
+    M64RRSpec::PtrVerticalInterrupt video_vertical_interrupt;
     bool video_reads_on_demand;
 
     M64RRSpec::PluginInit audio_init;

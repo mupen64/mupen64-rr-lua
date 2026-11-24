@@ -82,6 +82,10 @@ EmuContext::EmuContext(QQuickItem *parent)
         m_plugins.value().emu_stopped(*m_core_params);
         m_plugins.reset();
         m_fn_read_video = nullptr;
+        m_fn_vertical_interrupt = nullptr;
+    };
+    m_core_params->callbacks.vi = [&](bool) {
+        if (m_fn_vertical_interrupt) m_fn_vertical_interrupt();
     };
 
     m_core_params->load_plugins = [&] {
@@ -97,6 +101,8 @@ EmuContext::EmuContext(QQuickItem *parent)
 
             // Read video functions
             m_fn_read_video = (M64RRSpec::PtrReadVideo)m_plugins->video().load_symbol("M64RRReadVideo");
+            m_fn_vertical_interrupt =
+                (M64RRSpec::PtrVerticalInterrupt)m_plugins->video().load_symbol("M64RRVerticalInterrupt");
             return true;
         }
         catch (const std::exception &err)

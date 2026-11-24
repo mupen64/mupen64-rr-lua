@@ -30,11 +30,15 @@ struct RenderMessage
     std::promise<void> completed;
 };
 
+// The draw lists of all graphics tasks between two vertical interrupts, in submission order.
+using DrawFrame = std::vector<std::shared_ptr<const DrawList>>;
+
 struct Renderer
 {
     std::mutex poolMutex;
     std::vector<std::unique_ptr<DrawList>> pool;
-    std::atomic<std::shared_ptr<const DrawList>> latest;
+    DrawFrame pending;
+    std::atomic<std::shared_ptr<const DrawFrame>> latest;
     std::atomic<u64> sequence{};
     std::mutex mutex;
     std::condition_variable msg_available;
@@ -52,3 +56,4 @@ extern std::array<u64, 512> renderTMEM;
 void Render_ThreadProc();
 void Render_SendMessage(u32 command, void *pixels = nullptr);
 void Render_Submit(DrawList &list);
+void Render_VerticalInterrupt();

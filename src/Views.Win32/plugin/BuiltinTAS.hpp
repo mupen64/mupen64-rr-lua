@@ -31,6 +31,7 @@ void M64RRGetMetadata(M64RRSpec::PluginMetadata *);
 void M64RRProcessEvent(M64RRSpec::Event);
 void M64RRReadVideo(void *, int32_t *, int32_t *);
 uint64_t M64RRGetVideoSequence();
+void M64RRVerticalInterrupt();
 void M64RRShowConfig(M64RRSpec::WindowHandle);
 } // namespace TASVideo
 
