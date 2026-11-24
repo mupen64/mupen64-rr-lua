@@ -82,37 +82,44 @@ void setJoypad(lua_State *L, int port)
     }
 }
 
+int joypad_get(lua_State *L)
+{
+    int port = static_cast<int>(luaL_optinteger(L, 1, 1)) - 1;
+    if (port < 0 || port >= 4) return luaL_error(L, "port: 1-4");
+    pushJoypad(L, port);
+    return 1;
+}
+
+int joypad_set(lua_State *L)
+{
+    int port;
+    if (lua_type(L, 1) == LUA_TTABLE)
+    {
+        port = 0;
+    }
+    else
+    {
+        port = static_cast<int>(luaL_optinteger(L, 1, 1)) - 1;
+    }
+    if (port < 0 || port >= 4) return luaL_error(L, "port: 1-4");
+    if (!lua_istable(L, -1)) return luaL_error(L, "table expected");
+    setJoypad(L, port);
+    return 0;
+}
+
 } // namespace
 
 void registerJoypadAPIs(lua_State *L)
 {
     lua_newtable(L);
 
-    lua_pushcfunction(L, [](lua_State *L) -> int {
-        int port = static_cast<int>(luaL_optinteger(L, 1, 1)) - 1;
-        if (port < 0 || port >= 4) return luaL_error(L, "port: 1-4");
-        pushJoypad(L, port);
-        return 1;
-    });
-    lua_setfield(L, -2, "get");
+    const luaL_Reg joypadFuncs[] = {
+        {"get", joypad_get},
+        {"set", joypad_set},
+        {nullptr, nullptr},
+    };
 
-    lua_pushcfunction(L, [](lua_State *L) -> int {
-        int port;
-        if (lua_type(L, 1) == LUA_TTABLE)
-        {
-            port = 0;
-        }
-        else
-        {
-            port = static_cast<int>(luaL_optinteger(L, 1, 1)) - 1;
-        }
-        if (port < 0 || port >= 4) return luaL_error(L, "port: 1-4");
-        if (!lua_istable(L, -1)) return luaL_error(L, "table expected");
-        setJoypad(L, port);
-        return 0;
-    });
-    lua_setfield(L, -2, "set");
-
+    luaL_setfuncs(L, joypadFuncs, 0);
     lua_setglobal(L, "joypad");
 }
 
