@@ -4,10 +4,16 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Core/Plugin.hpp"
 #include <Common.Views/OptionItem.hpp>
 #include <HotkeyUtils.hpp>
+#include <algorithm>
 #include <components/FilePicker.hpp>
 #include <components/TextEditDialog.hpp>
+#include <cstdint>
+#include <format>
+#include <ranges>
+#include <string>
 
 bool OptionItem::edit(const M64RRSpec::WindowHandle parent)
 {

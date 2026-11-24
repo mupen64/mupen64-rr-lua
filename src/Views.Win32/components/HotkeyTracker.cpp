@@ -4,12 +4,16 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include "Common.Views/Config.hpp"
 #include <Common.Views/ActionManager.hpp>
 #include <action/AppActions.hpp>
 #include <components/HotkeyTracker.hpp>
 #include <components/ParameterPalette.hpp>
 #include <HotkeyUtils.hpp>
+#include <cstdint>
+#include <memory>
+#include <string>
 
 const auto HOTKEY_TRACKER_CTX = "Mupen64_HotkeyTrackerContext";
 

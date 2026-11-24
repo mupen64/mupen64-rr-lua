@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstdint>
+#include <nlohmann/json.hpp>
 
 struct RSPConfig
 {

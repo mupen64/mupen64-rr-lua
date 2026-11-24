@@ -5,14 +5,21 @@
  */
 
 #include "Debug.hpp"
+#include "Core/Types.hpp"
 
+#include <algorithm>
 #include <array>
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <mutex>
 #include <shared_mutex>
 
-#include <Core.hpp>
-#include <R4300/R4300.hpp>
 #include <R4300/Debug.hpp>
 #include <R4300/Disasm.hpp>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 struct Breakpoint
 {

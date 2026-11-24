@@ -4,20 +4,38 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/App.hpp"
+#include "Common.Views/OptionItem.hpp"
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Common/StrUtils.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include "WinDarkMode.h"
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Messages.hpp>
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <format>
+#include <iterator>
+#include <optional>
 #include <plugin/Plugin.hpp>
 #include <CaptureManager.hpp>
-#include <components/FilePicker.hpp>
 #include <Common.Win32/SettingsListView.hpp>
-#include <components/TextEditDialog.hpp>
 #include <components/ConfigDialog.hpp>
 #include <lua/LuaRealmManager.hpp>
 #include <Common.Views/Hotkey.hpp>
-#include <HotkeyUtils.hpp>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)

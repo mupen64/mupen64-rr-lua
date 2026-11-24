@@ -5,8 +5,11 @@
  */
 
 #include "Main.hpp"
-#include "Main_Win32.hpp"
 
+#include <cstdint>
+#include <exception>
+#include <filesystem>
+#include <format>
 #include <iostream>
 #include <fstream>
 
@@ -14,6 +17,10 @@
 #include "SDLBackend.hpp"
 #include <Core/Types.hpp>
 #include <Core/Plugin.hpp>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace BuiltinTAS::TASAudio
 {

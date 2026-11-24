@@ -4,14 +4,28 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/Config.hpp"
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Common/IOUtils.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include "WinDarkMode.h"
 #include <Common.Views/Messages.hpp>
 #include <Common/I18n.hpp>
 #include <Common.Views/ActionManager.hpp>
 #include <action/AppActions.hpp>
+#include <algorithm>
 #include <components/Statusbar.hpp>
 #include <components/StatusbarOld.hpp>
 #include <CaptureManager.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <format>
+#include <span>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <wil/resource.h>
 #include <Common.Win32/BetterStatusbar.hpp>
 #include <atomic>

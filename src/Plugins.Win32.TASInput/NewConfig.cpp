@@ -9,6 +9,13 @@
 
 #include <Main.hpp>
 #include <GamepadManager.hpp>
+#include <exception>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <nlohmann/detail/conversions/from_json.hpp>
+#include <nlohmann/json_fwd.hpp>
+#include <string>
 
 const InputConfig default_config{};
 InputConfig new_config{};

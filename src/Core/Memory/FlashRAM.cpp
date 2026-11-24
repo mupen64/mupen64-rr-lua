@@ -6,11 +6,15 @@
 
 #include "FlashRAM.hpp"
 
+#include <algorithm>
+#include <cstdint>
+#include <cstdio>
 #include <cstring>
 
 #include "Memory.hpp"
 #include <Core.hpp>
 #include <R4300/R4300.hpp>
+#include <format>
 
 int32_t use_flashram;
 

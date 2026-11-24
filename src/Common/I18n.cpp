@@ -7,6 +7,10 @@
 #include <Common/I18n.hpp>
 
 #include <mutex>
+#include <shared_mutex>
+#include <string>
+#include <string_view>
+#include <utility>
 
 I18n &I18n::get()
 {

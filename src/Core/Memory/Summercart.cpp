@@ -5,6 +5,7 @@
  */
 
 #include "Summercart.hpp"
+#include "Core/Types.hpp"
 
 #include <Common/IOUtils.hpp>
 
@@ -12,6 +13,13 @@
 #include <Memory/Memory.hpp>
 #include <Memory/Summercart.hpp>
 #include <R4300/Rom.hpp>
+#include <bit>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
 
 struct vhd
 {

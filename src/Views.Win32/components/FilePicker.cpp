@@ -4,11 +4,15 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Common.hpp>
+#include "Common.Views/App.hpp"
+#include "Common.Win32/WinUtils.hpp"
+#include "Main.hpp"
 #include <Common/Assert.hpp>
 #include <Common.Views/Config.hpp>
 #include <components/FilePicker.hpp>
 #include <Common.Win32/WinFilePicker.hpp>
+#include <filesystem>
+#include <string>
 
 std::filesystem::path FilePicker::show_open_dialog(const std::string &id, HWND hwnd, const std::string &filter)
 {

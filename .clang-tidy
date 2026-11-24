@@ -94,3 +94,5 @@ CheckOptions:
     value: true
   - key: misc-include-cleaner.UnusedIncludes
     value: true
+  - key: misc-include-cleaner.IgnoreHeaders
+    value: '.*Windows Kits[/\\].*;.*MSVC[/\\].*;windows\.h;(lua|lauxlib|lualib|luaconf)\.h;lua.hpp'

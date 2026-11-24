@@ -4,17 +4,31 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <filesystem>
+#include <format>
+#include <memory>
 #include <plugin/M64RRPlugin.hpp>
 
 #include <Common/Assert.hpp>
 
 #include "BuiltinTAS.hpp"
-#include <Common.Views/Config.hpp>
+#include "Common/IOUtils.hpp"
+#include "Core/Plugin.hpp"
+#include "Core/Types.hpp"
+#include "Loggers.hpp"
+#include "Main.hpp"
+#include "Views.Win32/ZESpec.h"
 #include <Common.Views/IDialogService.hpp>
-#include <components/Statusbar.hpp>
 #include <plugin/Plugin.hpp>
 #include <plugin/Windowing.hpp>
+#include <string>
+#include <utility>
+#include <vector>
 
 static M64RRSpec::PtrProcessEvent g_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows g_mupenrr_video_get_windows_fn = nullptr;

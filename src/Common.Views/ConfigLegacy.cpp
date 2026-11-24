@@ -4,10 +4,18 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/Config.hpp"
+#include "ini.h"
 #include <Common.Views/ConfigLegacy.hpp>
 #include <Common.Views/App.hpp>
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/Hotkey.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <format>
+#include <map>
+#include <string>
+#include <vector>
 
 constexpr auto flat_field_key = "config";
 

@@ -5,11 +5,9 @@
  */
 
 #include "Common.hpp"
-#include "TASVideo.hpp"
 #include "F3D.hpp"
-#include "N64.hpp"
 #include "RSP.hpp"
-#include "RDP.hpp"
+#include "Types.hpp"
 #include "gSP.hpp"
 #include "gDP.hpp"
 #include "GBI.hpp"

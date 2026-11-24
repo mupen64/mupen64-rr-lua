@@ -4,9 +4,25 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Win32/WinFilePicker.hpp"
 #include "Common.hpp"
+#include "Common/IOUtils.hpp"
 #include <ConfigDialog.hpp>
 
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_gamepad.h>
+#include <SDL3/SDL_joystick.h>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <format>
+#include <iterator>
+#include <nlohmann/json_fwd.hpp>
+#include <optional>
+#include <span>
+#include <string>
 #include <variant>
 
 #include <Main.hpp>

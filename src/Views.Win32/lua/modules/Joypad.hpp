@@ -6,7 +6,10 @@
 
 #pragma once
 
+#include <lua.hpp>
 #include <lua/LuaRealmManager.hpp>
+
+#include "Main.hpp"
 
 namespace LuaCore::Joypad
 {

@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <R4300/Macros.hpp>
-#include <R4300/Ops.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Recomp.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
 #include <R4300/x86_64/Gcop1Helpers.hpp>
+#include <cstdint>
 
 // CTC1 ported to native JIT: writes FCR31 + sets the SSE rounding mode (MXCSR), the x64
 // analogue of x86's fldcw path. (Was interpreted only because the old #else used x87 fldcw.)

@@ -8,6 +8,7 @@
 #include "Ops.hpp"
 #include "Macros.hpp"
 #include "Interrupt.hpp"
+#include <cstdint>
 
 void BC1F()
 {

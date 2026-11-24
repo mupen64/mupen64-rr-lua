@@ -4,15 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include "TASVideo.hpp"
 #include "F3D.hpp"
 #include "L3D.hpp"
-#include "N64.hpp"
-#include "RSP.hpp"
-#include "RDP.hpp"
+#include "Types.hpp"
 #include "gSP.hpp"
-#include "gDP.hpp"
 #include "GBI.hpp"
 
 void L3D_Line3D(u32 w0, u32 w1)

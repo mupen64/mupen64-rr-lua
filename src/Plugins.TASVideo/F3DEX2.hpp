@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "Types.hpp"
+
 #define F3DEX2_MTX_STACKSIZE 18
 
 #define F3DEX2_MTX_MODELVIEW 0x00

@@ -7,6 +7,9 @@
 #include <Common.Views/Hotkey.hpp>
 
 #include <SDL3/SDL_keyboard.h>
+#include <SDL3/SDL_mouse.h>
+#include <string>
+#include <variant>
 
 static constexpr std::string mbf_to_string(const SDL_MouseButtonFlags button)
 {

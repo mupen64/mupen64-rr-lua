@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include "OpenGL.hpp"
 #include "S2DEX.hpp"
 #include "S2DEX2.hpp"
 #include "F3D.hpp"
@@ -13,9 +11,6 @@
 #include "F3DEX2.hpp"
 #include "GBI.hpp"
 #include "gSP.hpp"
-#include "gDP.hpp"
-#include "RSP.hpp"
-#include "Types.hpp"
 
 void S2DEX2_Init()
 {

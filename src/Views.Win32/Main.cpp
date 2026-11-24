@@ -4,16 +4,41 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/App.hpp"
+#include "Common.Views/Hotkey.hpp"
+#include "Common.Win32/JoystickControl.hpp"
 #include "Common.hpp"
+#include "Common/Assert.hpp"
+#include "Common/IOUtils.hpp"
+#include "Common/MiscHelpers.hpp"
+#include "Common/VersionNameHelpers.hpp"
+#include "Core/API.hpp"
+#include "Core/Types.hpp"
+#include "Loggers.hpp"
+#include "WinDarkMode.h"
+#include "lua/LuaTypes.hpp"
 #include <Main.hpp>
 
-#include <SDL3/SDL.h>
-
 #include <Common/I18n.hpp>
-#include <Common.Views/ActionManager.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Messages.hpp>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_init.h>
+#include <array>
+#include <cctype>
+#include <clocale>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cwctype>
+#include <filesystem>
+#include <format>
+#include <iterator>
+#include <memory>
+#include <nlohmann/json.hpp>
+#include <optional>
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <CaptureManager.hpp>
@@ -24,7 +49,6 @@
 #include <components/CommandPalette.hpp>
 #include <components/ParameterPalette.hpp>
 #include <components/Toasts.hpp>
-#include <components/ConfigDialog.hpp>
 #include <components/CrashManager.hpp>
 #include <components/Dispatcher.hpp>
 #include <components/HotkeyTracker.hpp>
@@ -39,7 +63,10 @@
 #include <lua/LuaRendererManager.hpp>
 #include <lua/LuaDialog.hpp>
 #include <HotkeyUtils.hpp>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // Throwaway actions which can be spammed get keys as to not clog up the async executor queue
 #define ASYNC_KEY_CLOSE_ROM (1)

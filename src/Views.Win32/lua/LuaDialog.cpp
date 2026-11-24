@@ -4,12 +4,25 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/Config.hpp"
+#include "Common.Win32/ResizeAnchor.hpp"
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Main.hpp"
+#include "WinDarkMode.h"
+#include "lua/LuaRealm.hpp"
+#include "lua/LuaTypes.hpp"
 #include <Common.Views/Messages.hpp>
+#include <algorithm>
 #include <components/FilePicker.hpp>
 #include <components/ReorderableListView.hpp>
+#include <cstddef>
+#include <filesystem>
 #include <lua/LuaRealmManager.hpp>
 #include <lua/LuaDialog.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
 // wParam: either nullptr, or a pointer to a InstanceContext whose running state has changed
 #define MUPM_RUNNING_STATE_CHANGED (WM_USER + 24)

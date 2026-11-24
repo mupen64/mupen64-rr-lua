@@ -4,9 +4,24 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include "Common/IOUtils.hpp"
+#include "Common/StrUtils.hpp"
+#include "Common/VersionNameHelpers.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
+#include <array>
+#include <charconv>
+#include <cstddef>
+#include <format>
+#include <nlohmann/json_fwd.hpp>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <system_error>
 #include <winhttp.h>
 #include <components/TextEditDialog.hpp>
 #include <components/UpdateChecker.hpp>

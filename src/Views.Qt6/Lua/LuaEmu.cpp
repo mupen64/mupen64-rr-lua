@@ -3,15 +3,20 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
-#include "LuaInternal.hpp"
-#include "EmuContext.hpp"
+#include "LuaInstance.hpp"
+
+#include <cstring>
+#include <string>
 
 #include <QColor>
 #include <QGuiApplication>
 #include <QPalette>
 #include <QStyleHints>
 
-#include <cstring>
+#include <lua.hpp>
+
+#include "LuaInternal.hpp"
+#include "EmuContext.hpp"
 
 namespace LuaInternal
 {

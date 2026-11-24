@@ -6,7 +6,13 @@
 
 #include "Main.hpp"
 #include "Config.hpp"
+#include "Core/Plugin.hpp"
+#include "Core/Types.hpp"
 #include "HLE.hpp"
+#include <cstdint>
+#include <cstring>
+#include <exception>
+#include <format>
 
 using namespace BuiltinTAS::TASRSP;
 

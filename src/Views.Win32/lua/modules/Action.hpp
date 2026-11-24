@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <lua.hpp>
+
 #include <Common.Views/ActionManager.hpp>
 #include <lua/LuaRealmManager.hpp>
 #include <lua/modules/Hotkey.hpp>

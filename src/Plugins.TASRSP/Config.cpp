@@ -7,7 +7,13 @@
 #include "Main.hpp"
 #include "Config.hpp"
 
+#include <exception>
+#include <filesystem>
 #include <fstream>
+#include <iomanip>
+#include <nlohmann/detail/conversions/from_json.hpp>
+#include <nlohmann/json_fwd.hpp>
+#include <string>
 
 #define CONFIG_FILE_NAME "TASRSP.json"
 

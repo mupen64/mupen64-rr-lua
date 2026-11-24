@@ -5,12 +5,26 @@
  */
 
 #include "Common.hpp"
+#include "Core/API.hpp"
+#include "Core/Types.hpp"
+#include "R4300/Rom.hpp"
 
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <ios>
+#include <optional>
+#include <string>
 #include <thread>
 
 #include <Common/IOUtils.hpp>
 #include <Core/R4300/VCR.hpp>
 #include <Core/R4300/R4300.hpp>
+#include <vector>
 
 static CoreCfg g_cfg{};
 static std::string g_last_notification_message{};

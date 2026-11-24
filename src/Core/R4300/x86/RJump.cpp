@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include <csetjmp>
+#include <cstdint>
+
 #include <Core.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Recomp.hpp>

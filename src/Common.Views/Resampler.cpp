@@ -5,7 +5,12 @@
  */
 
 #include <Common.Views/Resampler.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <span>
 #include <speex/speex_resampler.h>
+#include <speex/speexdsp_types.h> // NOLINT(misc-include-cleaner)
+#include <utility>
 
 void Resampler::Deleter::operator()(SpeexResamplerState_ *state) const
 {

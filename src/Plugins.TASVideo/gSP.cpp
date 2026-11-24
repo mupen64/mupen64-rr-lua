@@ -6,9 +6,12 @@
 
 #include "gSP.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "Common.hpp"
+#include "N64.hpp"
+#include "Textures.hpp"
 #include "Types.hpp"
 #include "RSP.hpp"
 #include "GBI.hpp"

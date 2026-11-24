@@ -5,12 +5,22 @@
  */
 
 #include "SDLBackend.hpp"
+#include "Config.hpp"
 #include "Main.hpp"
 
+#include <SDL3/SDL_audio.h>
+#include <SDL3/SDL_error.h>
+#include <algorithm>
 #include <array>
+#include <bit>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <format>
 #include <thread>
 #include <stdexcept>
 #include <SDL3/SDL_init.h>
+#include <vector>
 
 using namespace BuiltinTAS::TASAudio;
 

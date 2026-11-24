@@ -5,14 +5,11 @@
  */
 
 #include "Common.hpp"
-#include "TASVideo.hpp"
+#include "GBI.hpp"
 #include "VI.hpp"
-#include "OpenGL.hpp"
 #include "N64.hpp"
+#include "Types.hpp"
 #include "gSP.hpp"
-#include "gDP.hpp"
-#include "RSP.hpp"
-#include "FrameBuffer.hpp"
 
 VIInfo VI;
 

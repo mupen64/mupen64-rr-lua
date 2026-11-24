@@ -4,10 +4,19 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/ActionManager.hpp"
+#include "Common.Views/App.hpp"
+#include "Common.Views/Config.hpp"
+#include "Common.Views/IDialogService.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
 #include "CoreUtils.hpp"
+#include <algorithm>
+#include <cstdint>
+#include <format>
 #include <plugin/Plugin.hpp>
 #include <action/AppActions.hpp>
+#include <utility>
 
 // Prompts the user to change their plugin selection.
 static void prompt_plugin_change(HWND hwnd)

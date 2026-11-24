@@ -7,6 +7,8 @@
 #include "Common.hpp"
 
 #include <Common/IOUtils.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <filesystem>
 
 // Selection of 20-byte ROM headers.
 static constexpr char mario64[20] = "SUPER MARIO 64";

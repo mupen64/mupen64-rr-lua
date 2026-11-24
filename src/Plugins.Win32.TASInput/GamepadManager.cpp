@@ -5,9 +5,24 @@
  */
 
 #include "Common.hpp"
+#include "Core/Types.hpp"
 #include "GamepadManager.hpp"
 #include <Main.hpp>
 #include <NewConfig.hpp>
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_gamepad.h>
+#include <SDL3/SDL_guid.h>
+#include <SDL3/SDL_joystick.h>
+#include <SDL3/SDL_stdinc.h>
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <format>
+#include <optional>
+#include <string>
 
 struct gamepad_manager_context
 {

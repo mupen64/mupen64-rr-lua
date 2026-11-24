@@ -7,6 +7,9 @@
 #include <QtIconImageProvider.hpp>
 
 #include <QIcon>
+#include <qhashfunctions.h>
+#include <qpixmap.h>
+#include <qsize.h>
 
 QPixmap QtIconImageProvider::requestPixmap(const QString &id, QSize *size, const QSize &requestedSize)
 {

@@ -5,6 +5,10 @@
  */
 
 #include "GBI.hpp"
+#include "N64.hpp"
+#include "convert.hpp"
+#include <cstdint>
+#include <cstdlib>
 
 #ifdef _WIN32
 #include <cstring>
@@ -13,9 +17,7 @@
 #endif
 
 #include "Common.hpp"
-#include "TASVideo.hpp"
 #include "RDP.hpp"
-#include "RSP.hpp"
 #include "F3D.hpp"
 #include "F3DEX.hpp"
 #include "F3DEX2.hpp"

@@ -4,7 +4,21 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/App.hpp"
+#include "Common.Views/Config.hpp"
+#include "Common.Views/IDialogService.hpp"
 #include "Common.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include "WinDarkMode.h"
+#include <algorithm>
+#include <chrono>
+#include <climits>
+#include <cstdint>
+#include <format>
+#include <memory>
+#include <string>
+#include <vector>
 #include "Toasts.hpp"
 
 namespace

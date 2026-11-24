@@ -4,14 +4,19 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/App.hpp"
 #include "Common.hpp"
+#include "Main.hpp"
 #include <components/MGECompositor.hpp>
 
 #include <Common/Assert.hpp>
 
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <plugin/Plugin.hpp>
 #include <Common.Views/Messages.hpp>
-#include <lua/LuaRealmManager.hpp>
+#include <string>
 
 constexpr auto control_class_name = "game_control";
 constexpr DXGI_FORMAT texture_format = DXGI_FORMAT_B8G8R8A8_UNORM;

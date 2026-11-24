@@ -4,8 +4,28 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include <Common.Views/App.hpp>
+#include "Main.hpp"
+
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <format>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include <Windows.h>
+#include <CommCtrl.h>
+
+#include <Common/IOUtils.hpp>
+#include <Common/StrUtils.hpp>
 #include <Common/Assert.hpp>
+#include <Core/Types.hpp>
+
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 

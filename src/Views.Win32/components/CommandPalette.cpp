@@ -4,14 +4,35 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/ActionManager.hpp"
+#include "Common.Views/Config.hpp"
+#include "Common.Views/OptionItem.hpp"
+#include "Common.Win32/ResizeAnchor.hpp"
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Common/Assert.hpp"
+#include "Common/MiscHelpers.hpp"
+#include "Common/StrUtils.hpp"
+#include "Main.hpp"
 #include "RomBrowser.hpp"
+#include "WinDarkMode.h"
+#include <algorithm>
+#include <cctype>
 #include <components/CommandPalette.hpp>
 #include <components/ConfigDialog.hpp>
 #include <action/AppActions.hpp>
 #include <components/ParameterPalette.hpp>
 #include <Common.Views/Messages.hpp>
 #include <HotkeyUtils.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <format>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 #include "CommandPalette.hpp"
 
 struct ListboxItem

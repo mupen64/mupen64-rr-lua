@@ -4,9 +4,17 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include "Common.Views/Config.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
 #include <Common.Views/IDialogService.hpp>
+#include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <components/Statusbar.hpp>
+#include <cstddef>
+#include <cstdint>
 #include <lua/LuaRealmManager.hpp>
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaRendererManager.hpp>
@@ -14,6 +22,14 @@
 #include <lua/presenters/DCompPresenter.hpp>
 #include <lua/presenters/GDIPresenter.hpp>
 #include <Common.Views/Messages.hpp>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <ratio>
+#include <stop_token>
+#include <thread>
+#include <utility>
+#include <vector>
 
 LRESULT CALLBACK LuaRendererManager::main_window_subclass_proc(
     HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR data)

@@ -6,21 +6,28 @@
 
 #include "RSP.hpp"
 
+#include <algorithm>
+#include <cstdint>
+#include <cstring>
+#include <future>
 #include <hqx.h>
+#include <mutex>
+#include <utility>
 
 #include "Common.hpp"
 #include "TASVideo.hpp"
 #include "OpenGL.hpp"
 #include "RSP.hpp"
-#include "RDP.hpp"
 #include "N64.hpp"
-#include "F3D.hpp"
-#include "3DMath.hpp"
+#include "Textures.hpp"
+#include "Types.hpp"
 #include "VI.hpp"
 #include "Combiner.hpp"
 #include "FrameBuffer.hpp"
 #include "DepthBuffer.hpp"
 #include "GBI.hpp"
+#include "gDP.hpp"
+#include "gSP.hpp"
 
 RSPInfo RSP;
 

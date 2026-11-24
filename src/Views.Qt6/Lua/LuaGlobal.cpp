@@ -4,6 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "LuaInternal.hpp"
+#include <cstddef>
+
+#include <QtTypes>
+#include <QObject>
+
+#include <lua.hpp>
 
 namespace LuaInternal
 {

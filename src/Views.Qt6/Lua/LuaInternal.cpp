@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "LuaInternal.hpp"
+#include "LuaInstance.hpp"
+
+#include <lua.hpp>
 
 namespace LuaInternal
 {

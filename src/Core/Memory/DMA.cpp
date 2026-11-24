@@ -6,6 +6,8 @@
 
 #include "DMA.hpp"
 
+#include <algorithm>
+#include <bit>
 #include <cassert>
 
 #include "FlashRAM.hpp"
@@ -19,6 +21,9 @@
 #include <R4300/Ops.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
+#include <cstdint>
+#include <cstdio>
+#include <format>
 
 static uint32_t clamp_dma_length(const uint32_t offset, const uint32_t capacity, const uint32_t requested)
 {

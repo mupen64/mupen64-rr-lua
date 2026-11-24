@@ -4,10 +4,22 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include "Common.Views/LuaHelpers.hpp"
+#include "Main.hpp"
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <functional>
+#include <lua.hpp>
 #include <lua/LuaWindow.hpp>
 #include <lua/LuaRealmManager.hpp>
 #include <components/HotkeyTracker.hpp>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
 
 namespace
 {

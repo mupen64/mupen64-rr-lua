@@ -7,6 +7,7 @@
 #include "R4300.hpp"
 #include "Ops.hpp"
 #include "Macros.hpp"
+#include <cstdint>
 
 void CVT_S_W()
 {

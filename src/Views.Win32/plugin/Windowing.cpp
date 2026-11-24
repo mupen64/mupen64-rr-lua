@@ -5,6 +5,7 @@
  */
 
 #include "Windowing.hpp"
+#include "Core/Graphics.hpp"
 #include <SDL3/SDL_video.h>
 
 struct M64RRSpec::GLContext

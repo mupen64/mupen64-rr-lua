@@ -4,11 +4,26 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include "Common.Views/Config.hpp"
+#include "Common.Views/Hotkey.hpp"
+#include "Common.Win32/WinUtils.hpp"
+#include "Common/Assert.hpp"
+#include "Common/IOUtils.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Messages.hpp>
 #include <ThreadPool.hpp>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <format>
+#include <functional>
+#include <memory>
+#include <optional>
 #include <plugin/Plugin.hpp>
 #include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
@@ -27,6 +42,10 @@
 #include <components/Validators.hpp>
 #include <lua/LuaDialog.hpp>
 #include <HotkeyUtils.hpp>
+#include <string>
+#include <string_view>
+#include <tuple>
+#include <vector>
 
 bool confirm_user_exit()
 {

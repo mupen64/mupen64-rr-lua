@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include "DepthBuffer.hpp"
 #include "Types.hpp"
+#include <cstddef>
+#include <cstdlib>
 
 DepthBufferInfo depthBuffer;
 

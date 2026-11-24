@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "R4300/Recomp.hpp"
 #include <R4300/x86_64/Assemble.hpp>
 
+#include <cstdint>
+#include <cstdlib>
 #include <cstring>
 
 #include <Core.hpp>
@@ -13,6 +16,7 @@
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/RegCache.hpp>
 #include <Alloc.hpp>
+#include <format>
 
 typedef struct _jump_table
 {
