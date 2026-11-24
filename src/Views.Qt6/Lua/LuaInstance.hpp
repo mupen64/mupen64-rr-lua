@@ -11,6 +11,7 @@
 #include <QString>
 #include <qqmlintegration.h>
 
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <unordered_map>
