@@ -28,10 +28,9 @@
 
 ## ⚡ Performance
 
-- Improved TASVideo performance.
+- Greatly improved emulation, TAS Video plugin, and graphics presentation performance.
 - Improved Pure Interpreter core performance when breakpoints are present.
 - Improved statusbar performance.
-- Improved game graphics presentation performance. 
 - Slightly improved TASRSP performance.
 
 # 1.5.0-8
