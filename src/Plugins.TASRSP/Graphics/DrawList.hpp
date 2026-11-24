@@ -9,38 +9,69 @@
 #include "Graphics.hpp"
 #include "gSP.hpp"
 #include <array>
-#include <memory>
 #include <variant>
 #include <vector>
 
-enum class DrawControl
+enum class DrawControl : u8
 {
     ClearDepth,
     DisableOffset,
     EnableOffset,
     SpriteProjection,
-    IdentityProjection
+    IdentityProjection,
 };
-struct DrawTriangle
+
+// The subset of SPVertex the renderer consumes.
+struct DrawVertex
 {
-    std::array<SPVertex, 3> vertices;
+    f32 x, y, z, w;
+    f32 r, g, b, a;
+    f32 s, t;
+    bool background;
+    // Part of a triangle covering the whole native screen.
     bool fullscreen;
 };
+
+// Switches to states[index].
+struct DrawUseState
+{
+    u32 index;
+};
+// Overwrites `count` TMEM words starting at word `offset` with tmem[data, data + count).
+struct DrawTmemWrite
+{
+    u16 offset, count;
+    u32 data;
+};
+// Makes bytes[offset, offset + size) the current background image.
+struct DrawBackground
+{
+    u32 offset, size;
+};
+// Draws vertices[first, first + count) as a triangle list.
+struct DrawTriangles
+{
+    u32 first, count;
+};
+// Draws a line between vertices[first] and vertices[first + 1].
 struct DrawLine
 {
-    std::array<SPVertex, 2> vertices;
-    float width;
+    u32 first;
+    f32 width;
 };
 struct DrawRect
 {
-    int x0, y0, x1, y1;
-    std::array<float, 4> color;
+    s32 x0, y0, x1, y1;
+    std::array<f32, 4> color;
 };
 struct DrawTexturedRect
 {
-    float x0, y0, x1, y1, s, t, lrs, lrt;
+    f32 x0, y0, x1, y1, s, t, lrs, lrt;
     bool flip;
 };
+
+using DrawCommand = std::variant<DrawUseState, DrawTmemWrite, DrawBackground, DrawControl, DrawTriangles, DrawLine,
+    DrawRect, DrawTexturedRect>;
 
 struct DrawPipelineState
 {
@@ -50,29 +81,29 @@ struct DrawPipelineState
     int loadTile, tile0, tile1;
 };
 
-struct DrawStateIndex
-{
-    size_t value;
-};
-struct DrawTextureIndex
-{
-    size_t value;
-};
-
-using DrawCommand = std::variant<DrawStateIndex, DrawTextureIndex, std::vector<u8>, DrawControl, DrawTriangle, DrawLine,
-    DrawRect, DrawTexturedRect>;
 struct DrawList
 {
     u32 width, height, number;
     std::vector<DrawCommand> commands;
     std::vector<DrawPipelineState> states;
-    std::vector<std::array<u64, 512>> textures;
+    std::vector<DrawVertex> vertices;
+    std::vector<u64> tmem;
+    std::vector<u8> bytes;
+
+    void clear()
+    {
+        commands.clear();
+        states.clear();
+        vertices.clear();
+        tmem.clear();
+        bytes.clear();
+    }
 };
 
-extern void (*draw_sink)(DrawList &&);
+extern void (*draw_sink)(DrawList &);
 void DrawList_Reset();
 void DrawList_StateChanged();
-void DrawList_TextureChanged();
+void DrawList_TmemWritten(u32 begin, u32 end);
 void DrawList_Begin(bool record);
 bool DrawList_IsRecording();
 void DrawList_End(u32 width, u32 height);

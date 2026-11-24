@@ -528,7 +528,7 @@ void TextureCache_LoadBackground(CachedTexture *texInfo)
     {
         ty = std::min(y, (u32)clampTClamp);
 
-        const auto *src = renderer.background->data() + bpl * ty;
+        const auto *src = renderer.background.data() + bpl * ty;
 
         for (x = 0; x < texInfo->realWidth; x++)
         {
@@ -714,13 +714,13 @@ void TextureCache_UpdateBackground()
     u32 numBytes = renderSP.bgImage.width * renderSP.bgImage.height << renderSP.bgImage.size >> 1;
     u32 crc;
 
-    if (!renderer.background || renderer.background->size() != numBytes || !numBytes)
+    if (renderer.background.size() != numBytes || !numBytes)
     {
         TextureCache_ActivateDummy(0);
         cache.current[0] = cache.dummy;
         return;
     }
-    crc = CRC_Calculate(0xFFFFFFFF, renderer.background->data(), numBytes);
+    crc = CRC_Calculate(0xFFFFFFFF, renderer.background.data(), numBytes);
 
     if (renderSP.bgImage.format == G_IM_FMT_CI)
     {

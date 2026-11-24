@@ -110,7 +110,7 @@ void gSPProcessVertex(u32 v)
     else
         gSP.vertices[v].zClip = 0.0f;
 
-    if (gSP.geometryMode & G_LIGHTING)
+    if ((gSP.geometryMode & G_LIGHTING) && DrawList_IsRecording())
     {
         vec_transform(&gSP.vertices[v].nx, gSP.matrix.modelView[gSP.matrix.modelViewi]);
         vec_normalize(&gSP.vertices[v].nx);

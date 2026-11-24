@@ -10,6 +10,9 @@
 #include <atomic>
 #include <deque>
 #include <future>
+#include <memory>
+#include <mutex>
+#include <span>
 #include <thread>
 
 #define RENDER_CLOSE 0
@@ -29,14 +32,15 @@ struct RenderMessage
 
 struct Renderer
 {
-    // Readback holds a snapshot while the RSP publishes the next completed task.
+    std::mutex poolMutex;
+    std::vector<std::unique_ptr<DrawList>> pool;
     std::atomic<std::shared_ptr<const DrawList>> latest;
     std::mutex mutex;
     std::condition_variable msg_available;
     std::unique_ptr<std::jthread> thread;
     std::deque<RenderMessage> messages;
     u32 listNumber{}, cullBoth{}, cullBack{};
-    const std::vector<u8> *background{};
+    std::span<const u8> background;
     ~Renderer();
 };
 extern Renderer renderer;
@@ -46,4 +50,4 @@ extern VIInfo renderVI;
 extern std::array<u64, 512> renderTMEM;
 void Render_ThreadProc();
 void Render_SendMessage(u32 command, void *pixels = nullptr);
-void Render_Submit(DrawList &&list);
+void Render_Submit(DrawList &list);

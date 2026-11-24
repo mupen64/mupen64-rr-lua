@@ -6,15 +6,16 @@
 
 #include "DrawList.hpp"
 #include "N64.hpp"
+#include <algorithm>
+#include <bit>
 #include <cstring>
 #include <optional>
 
-void (*draw_sink)(DrawList &&);
+void (*draw_sink)(DrawList &);
 static DrawList list;
+static u32 listNumber;
 static bool recording;
-static std::optional<DrawPipelineState> lastState;
 static bool stateChanged;
-static bool needTexture;
 struct BackgroundSource
 {
     u32 address;
@@ -24,30 +25,53 @@ struct BackgroundSource
 };
 static std::optional<BackgroundSource> lastBackground;
 
+static constexpr u32 TMEM_WORDS = sizeof(TMEM) / sizeof(TMEM[0]);
+
+static void writeTmem(u32 begin, u32 end)
+{
+    list.commands.emplace_back(DrawTmemWrite{u16(begin), u16(end - begin), u32(list.tmem.size())});
+    list.tmem.insert(list.tmem.end(), TMEM + begin, TMEM + end);
+}
+
+// RDRAM is stored as native 32-bit words, so byte `a` lives at RDRAM[a ^ 3].
+static void copyRdram(u8 *dst, u32 address, size_t size)
+{
+    size_t i = 0;
+    for (; i < size && ((address + i) & 3); ++i) dst[i] = RDRAM[(address + i) ^ 3];
+    for (; i + 4 <= size; i += 4)
+    {
+        u32 word;
+        std::memcpy(&word, RDRAM + address + i, sizeof(word));
+        word = std::byteswap(word);
+        std::memcpy(dst + i, &word, sizeof(word));
+    }
+    for (; i < size; ++i) dst[i] = RDRAM[(address + i) ^ 3];
+}
+
 void DrawList_StateChanged()
 {
     stateChanged = true;
 }
 
-void DrawList_TextureChanged()
+void DrawList_TmemWritten(u32 begin, u32 end)
 {
-    needTexture = true;
+    if (!recording) return;
+    end = std::min(end, TMEM_WORDS);
+    if (begin < end) writeTmem(begin, end);
 }
 
 void DrawList_Reset()
 {
     list = {};
+    listNumber = 0;
 }
 void DrawList_Begin(bool record)
 {
     recording = record;
-    list.commands.clear();
-    list.states.clear();
-    list.textures.clear();
-    lastState.reset();
+    list.clear();
     lastBackground.reset();
     stateChanged = true;
-    needTexture = true;
+    if (recording) writeTmem(0, TMEM_WORDS);
 }
 bool DrawList_IsRecording()
 {
@@ -57,29 +81,22 @@ void DrawList_End(u32 width, u32 height)
 {
     list.width = width;
     list.height = height;
-    if (recording) draw_sink(std::move(list));
-    ++list.number;
+    list.number = listNumber++;
+    if (recording) draw_sink(list);
 }
 
 static void captureState()
 {
     if (stateChanged)
     {
-        DrawPipelineState state{gDP, gSP, G_CULL_BOTH, G_CULL_BACK, int(gDP.loadTile - gDP.tiles),
+        const DrawPipelineState state{gDP, gSP, G_CULL_BOTH, G_CULL_BACK, int(gDP.loadTile - gDP.tiles),
             int(gSP.textureTile[0] - gDP.tiles), int(gSP.textureTile[1] - gDP.tiles)};
-        if (!lastState || std::memcmp(&*lastState, &state, sizeof(state)) != 0)
+        if (list.states.empty() || std::memcmp(&list.states.back(), &state, sizeof(state)) != 0)
         {
-            list.commands.emplace_back(DrawStateIndex{list.states.size()});
+            list.commands.emplace_back(DrawUseState{u32(list.states.size())});
             list.states.push_back(state);
-            lastState = state;
         }
         stateChanged = false;
-    }
-    if (needTexture)
-    {
-        list.commands.emplace_back(DrawTextureIndex{list.textures.size()});
-        list.textures.push_back(std::to_array(TMEM));
-        needTexture = false;
     }
     if (gDP.textureMode == TEXTUREMODE_BGIMAGE)
     {
@@ -90,16 +107,24 @@ static void captureState()
         // Graphics tasks read RDRAM synchronously, so the same range can be reused within this list.
         if (lastBackground == source) return;
 
-        std::vector<u8> pixels;
+        const auto offset = u32(list.bytes.size());
+        u32 copied = 0;
         if (source.address < RDRAMSize && size <= RDRAMSize - source.address)
         {
-            pixels.resize(size);
-            for (size_t i = 0; i < pixels.size(); ++i) pixels[i] = RDRAM[(source.address + i) ^ 3];
+            copied = u32(size);
+            list.bytes.resize(offset + copied);
+            copyRdram(list.bytes.data() + offset, source.address, copied);
         }
-        list.commands.emplace_back(std::move(pixels));
+        list.commands.emplace_back(DrawBackground{offset, copied});
         lastBackground = source;
     }
 }
+
+static DrawVertex toDrawVertex(const SPVertex &v, bool fullscreen)
+{
+    return {v.x, v.y, v.z, v.w, v.r, v.g, v.b, v.a, v.s, v.t, v.background, fullscreen};
+}
+
 void Draw_Control(DrawControl control)
 {
     if (!recording) return;
@@ -110,13 +135,26 @@ void Draw_Triangle(const SPVertex *v, int a, int b, int c, bool fullscreen)
 {
     if (!recording) return;
     captureState();
-    list.commands.emplace_back(DrawTriangle{{v[a], v[b], v[c]}, fullscreen});
+    const auto first = u32(list.vertices.size());
+    list.vertices.push_back(toDrawVertex(v[a], fullscreen));
+    list.vertices.push_back(toDrawVertex(v[b], fullscreen));
+    list.vertices.push_back(toDrawVertex(v[c], fullscreen));
+    if (auto *batch = list.commands.empty() ? nullptr : std::get_if<DrawTriangles>(&list.commands.back());
+        batch && batch->first + batch->count == first)
+    {
+        batch->count += 3;
+        return;
+    }
+    list.commands.emplace_back(DrawTriangles{first, 3});
 }
 void Draw_Line(const SPVertex *v, int a, int b, float width)
 {
     if (!recording) return;
     captureState();
-    list.commands.emplace_back(DrawLine{{v[a], v[b]}, width});
+    const auto first = u32(list.vertices.size());
+    list.vertices.push_back(toDrawVertex(v[a], false));
+    list.vertices.push_back(toDrawVertex(v[b], false));
+    list.commands.emplace_back(DrawLine{first, width});
 }
 void Draw_Rect(int x0, int y0, int x1, int y1, const float *color)
 {

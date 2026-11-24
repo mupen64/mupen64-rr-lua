@@ -534,9 +534,9 @@ void OGL_UpdateStates()
     renderSP.changed &= CHANGED_TEXTURE | CHANGED_MATRIX;
 }
 
-void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2)
+void OGL_AddTriangle(const DrawVertex *vertices)
 {
-    int v[] = {v0, v1, v2};
+    constexpr int v[] = {0, 1, 2};
 
     if (renderSP.changed || renderDP.changed) OGL_UpdateStates();
 
@@ -674,9 +674,9 @@ void OGL_DrawTriangles()
     OGL.numTriangles = OGL.numVertices = 0;
 }
 
-void OGL_DrawLine(SPVertex *vertices, int v0, int v1, float width)
+void OGL_DrawLine(const DrawVertex *vertices, float width)
 {
-    int v[] = {v0, v1};
+    constexpr int v[] = {0, 1};
 
     if (renderSP.changed || renderDP.changed) OGL_UpdateStates();
 

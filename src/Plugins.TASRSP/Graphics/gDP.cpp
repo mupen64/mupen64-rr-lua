@@ -409,7 +409,7 @@ void gDPLoadTile(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 
     gDP.textureMode = TEXTUREMODE_NORMAL;
     gDP.loadType = LOADTYPE_TILE;
-    DrawList_TextureChanged();
+    DrawList_TmemWritten(gDP.loadTile->tmem, gDP.loadTile->tmem + (height - 1) * line + std::max(line, (bpl + 7) / 8));
     gDP.changed |= CHANGED_TMEM;
 
     DebugMsg(L"gDPLoadTile( %i, %i, %i, %i, %i );\n", tile, gDP.loadTile->uls, gDP.loadTile->ult, gDP.loadTile->lrs,
@@ -459,7 +459,7 @@ void gDPLoadBlock(u32 tile, u32 uls, u32 ult, u32 lrs, u32 dxt)
 
     gDP.textureMode = TEXTUREMODE_NORMAL;
     gDP.loadType = LOADTYPE_BLOCK;
-    DrawList_TextureChanged();
+    DrawList_TmemWritten(gDP.loadTile->tmem, u32(dest - TMEM) + (dxt > 0 ? 0 : (bytes + 7) / 8));
     gDP.changed |= CHANGED_TMEM;
 
     DebugMsg(L"gDPLoadBlock( %i, %i, %i, %i, %i );\n", tile, uls, ult, lrs, dxt);
@@ -509,7 +509,7 @@ void gDPLoadTLUT(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 
     gDP.paletteCRC256 = CRC_Calculate(0xFFFFFFFF, gDP.paletteCRC16, 64);
 
-    DrawList_TextureChanged();
+    DrawList_TmemWritten(tmem, tmem + count);
     gDP.changed |= CHANGED_TMEM;
 
     DebugMsg(L"gDPLoadTLUT( %i, %i, %i, %i, %i );\n", tile, gDP.tiles[tile].uls, gDP.tiles[tile].ult,
