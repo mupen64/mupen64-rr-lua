@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <R4300/Recomp.hpp>
 
 void init_cache(precomp_instr *start);

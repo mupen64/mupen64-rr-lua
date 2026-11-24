@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "Common.hpp"
+#include <type_traits>
 
 #define PLUGIN_WITH_CALLBACKS
 #include <Core/Plugin.hpp>

@@ -6,12 +6,14 @@
 
 // BC1FL/BC1TL are fully JITed via gentestl.
 
+#include "R4300/Recomp.hpp"
 #include <Core.hpp>
 #include <R4300/x86_64/Assemble.hpp>
 #include <R4300/Ops.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/RegCache.hpp>
+#include <cstdint>
 
 void genbc1f_test()
 {

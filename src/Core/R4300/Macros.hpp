@@ -8,11 +8,15 @@
 
 #include <cstdint>
 
+#ifdef _MSC_VER
+#include <float.h>
+#endif
+
 #if defined(_M_X64) || defined(__x86_64__)
 #include <immintrin.h>
 #include <fenv.h>
 
-#ifdef _MSC_VER
+#if _MSC_VER
 #include <intrin.h>
 #endif
 

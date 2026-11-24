@@ -5,6 +5,8 @@
  */
 
 #include "Savestates.hpp"
+#include "Core/Types.hpp"
+#include "Memory/TLB.hpp"
 
 #include <Common/FNV1A.hpp>
 #include <Common/IOUtils.hpp>
@@ -20,6 +22,18 @@
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/VCR.hpp>
+#include <algorithm>
+#include <bit>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
+#include <format>
+#include <functional>
+#include <mutex>
+#include <vector>
 
 constexpr auto rdram_device_manuf_new_fix_bit = (1U << 31);
 

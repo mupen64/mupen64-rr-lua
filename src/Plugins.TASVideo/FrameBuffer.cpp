@@ -6,11 +6,15 @@
 
 #include "Common.hpp"
 #include "Renderer.hpp"
+#include "N64.hpp"
 #include "OpenGL.hpp"
 #include "FrameBuffer.hpp"
 #include "Textures.hpp"
-#include "Combiner.hpp"
 #include "Types.hpp"
+#include "gDP.hpp"
+#include "gSP.hpp"
+#include <cstddef>
+#include <cstdlib>
 
 FrameBufferInfo frameBuffer;
 

@@ -4,9 +4,27 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include <Common.Views/Config.hpp>
 #include <components/CrashManager.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <format>
+#include <iterator>
+#include <string>
+#include <unordered_map>
+
+#include <Windows.h>
+#include <CommCtrl.h>
+#include <minidumpapiset.h>
+#include <Psapi.h>
+
+#include <Common/IOUtils.hpp>
+#include <Common.Views/App.hpp>
+#include <Common.Views/Config.hpp>
+
+#include "Loggers.hpp"
+#include "Main.hpp"
 
 typedef struct StacktraceInfo
 {

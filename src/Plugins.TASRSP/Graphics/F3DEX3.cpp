@@ -10,6 +10,7 @@
 #include "F3DEX3.hpp"
 #include "N64.hpp"
 #include "RSP.hpp"
+#include "Types.hpp"
 #include "gSP.hpp"
 #include "GBI.hpp"
 

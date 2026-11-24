@@ -6,6 +6,11 @@
 #include "CoreEnums.hpp"
 
 #include <QQmlEngine>
+#include <optional>
+#include <qanystringview.h>
+#include <qbytearrayview.h>
+#include <qlatin1stringview.h>
+#include <utility>
 
 std::optional<std::pair<QAnyStringView, QAnyStringView>> QmlCoreResult::messageCpp(Value value)
 {

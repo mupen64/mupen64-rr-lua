@@ -7,6 +7,7 @@
 #include "Main.hpp"
 #include "HLE.hpp"
 
+#include <cstdint>
 #include <cstring>
 
 using namespace BuiltinTAS::TASRSP;

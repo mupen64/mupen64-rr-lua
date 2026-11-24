@@ -5,7 +5,16 @@
  */
 
 #include "Common.hpp"
+#include "Core/Types.hpp"
 #include <Combo.hpp>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <span>
+#include <string>
+#include <variant>
+#include <vector>
 
 bool Combo::uses_joystick() const
 {

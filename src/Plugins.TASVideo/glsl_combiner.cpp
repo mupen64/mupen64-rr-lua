@@ -9,10 +9,12 @@
 #include "Combiner.hpp"
 #include "OpenGL.hpp"
 #include "gDP.hpp"
-#include "gSP.hpp"
-#include "GBI.hpp"
 #include "TASVideo.hpp"
-#include "Textures.hpp"
+#include <algorithm>
+#include <cstdint>
+#include <format>
+#include <string>
+#include <vector>
 
 struct GLSLProgram
 {

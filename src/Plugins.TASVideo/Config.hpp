@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <optional>
 #include <string>
 
 enum class AspectMode : uint8_t

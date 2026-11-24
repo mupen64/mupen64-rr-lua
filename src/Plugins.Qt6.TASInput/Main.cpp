@@ -10,7 +10,17 @@
 #include <Core/Plugin.hpp>
 #include <QQuickWindow>
 #include <QTimer>
+#include <atomic>
+#include <cstdint>
+#include <format>
+#include <qcontainerfwd.h>
+#include <qeventloop.h>
+#include <qnamespace.h>
+#include <qobject.h>
+#include <qobjectdefs.h>
+#include <qpointer.h>
 
+#include "Core/Types.hpp"
 #include "UIManager.hpp"
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TASInput (Qt6)")

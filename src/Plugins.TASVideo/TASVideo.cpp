@@ -4,11 +4,17 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include "TASVideo.hpp"
+#include "Core/Graphics.hpp"
+#include "Core/Plugin.hpp"
 #include "OpenGL.hpp"
 #include "Renderer.hpp"
 #include "Config.hpp"
+#include <cstdint>
+#include <cwchar>
+#include <format>
+#include <memory>
+#include <thread>
 
 namespace BuiltinTAS::TASVideo
 {

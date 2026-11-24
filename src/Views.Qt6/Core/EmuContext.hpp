@@ -6,6 +6,7 @@
 #pragma once
 
 #include <functional>
+#include <future>
 #include <mutex>
 #include <unordered_map>
 

@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Main.hpp"
 #include <components/TextEditDialog.hpp>
+#include <optional>
 
 struct TextEditDialogContext
 {

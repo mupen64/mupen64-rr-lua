@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Messages.hpp>
@@ -14,7 +16,12 @@
 #include <components/CoreUtils.hpp>
 #include <components/CLI.hpp>
 #include <components/Dispatcher.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
 #include <lua/LuaDialog.hpp>
+#include <sstream>
+#include <string>
 
 struct CLIParams
 {

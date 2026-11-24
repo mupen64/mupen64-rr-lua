@@ -6,9 +6,14 @@
 
 #pragma once
 
+#include <lua.hpp>
+#include <Common.Views/LuaHelpers.hpp>
+
+#include <SDL3/SDL_keyboard.h>
+
 #include <components/TextEditDialog.hpp>
 #include <lua/LuaRealmManager.hpp>
-#include <SDL3/SDL_keyboard.h>
+#include "Main.hpp"
 
 namespace LuaCore::Input
 {

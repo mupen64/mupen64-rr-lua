@@ -11,8 +11,6 @@
 #include "F3DEX.hpp"
 #include "GBI.hpp"
 #include "gSP.hpp"
-#include "gDP.hpp"
-#include "RSP.hpp"
 #include "Types.hpp"
 
 void S2DEX_BG_1Cyc(u32 w0, u32 w1)

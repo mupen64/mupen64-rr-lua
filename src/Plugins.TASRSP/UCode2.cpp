@@ -9,8 +9,10 @@
 #include "ADPCM.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <cstring>
 #include <emmintrin.h>
+#include <format>
 
 using namespace BuiltinTAS::TASRSP;
 

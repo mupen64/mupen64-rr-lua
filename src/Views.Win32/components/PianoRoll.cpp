@@ -4,14 +4,34 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/ActionManager.hpp"
+#include "Common.Views/App.hpp"
+#include "Common.Win32/JoystickControl.hpp"
+#include "Common.Win32/ResizeAnchor.hpp"
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
 #include "PianoRoll.hpp"
+#include "Common/MiscHelpers.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
 #include "ThreadPool.hpp"
 #include <Common.Views/Config.hpp>
 #include <Common.Views/Messages.hpp>
+#include <algorithm>
+#include <cassert>
 #include <components/CoreUtils.hpp>
 #include <components/HotkeyTracker.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <format>
+#include <functional>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include "../action/ActionMenu.hpp"
+#include "WinDarkMode.h"
 
 struct piano_roll_history_state
 {

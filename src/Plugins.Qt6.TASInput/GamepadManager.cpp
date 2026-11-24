@@ -5,12 +5,18 @@
  */
 
 #include "GamepadManager.hpp"
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_joystick.h>
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <cmath>
 
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_init.h>
+#include <cstdint>
+#include <qlogging.h>
+#include <qobject.h>
 
 namespace
 {

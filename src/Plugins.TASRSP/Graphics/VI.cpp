@@ -7,6 +7,9 @@
 #include "GBI.hpp"
 #include "VI.hpp"
 #include "N64.hpp"
+#include "Common.hpp"
+#include "Types.hpp"
+#include "gSP.hpp"
 
 VIInfo VI;
 

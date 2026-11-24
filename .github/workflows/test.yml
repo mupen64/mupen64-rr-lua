@@ -50,6 +50,13 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: ctest --test-dir build
 
+      - name: clang-tidy check includes
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: |
+          python3 $(gcm run-clang-tidy).Source -p build -checks='-*,misc-include-cleaner' `
+            -header-filter="$($(pwd) -replace '[\\.+?]', '\$0')\\src\\.+" `
+            -quiet "$($(pwd) -replace '[\\.+?]', '\$0')\\src\\.+\.(c|h|cpp|hpp)"
+
 
   test-linux:
     name: Linux
@@ -80,3 +87,9 @@ jobs:
     - name: CMake test
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: ctest --test-dir build
+
+    - name: clang-tidy check includes
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        pwd_escaped=$(sed -E 's/[\\.+?]/\\\0/g' <<< "$PWD")
+        run-clang-tidy -p build -checks='-*,misc-include-cleaner' -quiet "$pwd_escaped/src/.+\.(c|h|cpp|hpp)"

@@ -4,14 +4,24 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/App.hpp"
+#include "Common.Views/LuaHelpers.hpp"
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Main.hpp"
+#include <cstddef>
+#include <expected>
+#include <filesystem>
+#include <lua.hpp>
 #include <lua/LuaRealm.hpp>
 
 #include <Common/Assert.hpp>
 
 #include <Common.Views/ActionManager.hpp>
 #include <lua/LuaRealmManager.hpp>
-#include <lua/LuaRendererManager.hpp>
+#include <memory>
+#include <string>
+#include <utility>
 
 static const std::string &mupen_api_lua_code()
 {

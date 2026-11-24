@@ -7,6 +7,7 @@
 #pragma once
 
 #include <CaptureManager.hpp>
+#include <lua.hpp>
 
 namespace LuaCore::Avi
 {

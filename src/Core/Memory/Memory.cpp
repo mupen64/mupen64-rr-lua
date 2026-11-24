@@ -6,9 +6,12 @@
 
 #include "Memory.hpp"
 
+#include "Core/Types.hpp"
 #include "DMA.hpp"
 #include "FlashRAM.hpp"
+#include "Memory/TLB.hpp"
 #include "Pif.hpp"
+#include "R4300/Rom.hpp"
 #include "Summercart.hpp"
 #include <Core.hpp>
 #include <R4300/Interrupt.hpp>
@@ -17,7 +20,9 @@
 #include <R4300/R4300.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/Timers.hpp>
-#include <R4300/VCR.hpp>
+#include <bit>
+#include <cstddef>
+#include <cstdint>
 
 static int32_t frame;
 

@@ -10,7 +10,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <cstring>
+#include <format>
 #include <tmmintrin.h>
 
 using namespace BuiltinTAS::TASRSP;

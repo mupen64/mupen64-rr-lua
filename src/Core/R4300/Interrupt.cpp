@@ -7,9 +7,12 @@
 // #include "../config.h"
 
 #include "Interrupt.hpp"
+#include "R4300/Recomp.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 
 #include <Core.hpp>
@@ -21,6 +24,10 @@
 #include <R4300/VCR.hpp>
 #include <R4300/Timers.hpp>
 #include <Memory/Pif.hpp>
+#include <format>
+#include <iterator>
+#include <limits>
+#include <string>
 
 typedef struct _interrupt_queue
 {

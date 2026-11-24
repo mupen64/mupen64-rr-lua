@@ -10,6 +10,7 @@
 #include <R4300/Macros.hpp>
 #include <R4300/Ops.hpp>
 #include <R4300/R4300.hpp>
+#include <cmath>
 
 void ADD_D()
 {

@@ -4,7 +4,18 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include <atomic>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <Common.Views/Config.hpp>

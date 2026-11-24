@@ -11,6 +11,14 @@
 #include <QDir>
 #include <QQmlComponent>
 #include <QUrl>
+#include <cstddef>
+#include <qcontainerfwd.h>
+#include <qlogging.h>
+#include <qobject.h>
+#include <qqml.h>
+#include <qquickwindow.h>
+#include <qsettings.h>
+#include <string>
 
 #define CONFIG_FILE_NAME "TASInputQt6.ini"
 

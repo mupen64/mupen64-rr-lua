@@ -4,11 +4,19 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
+#include "Common/MiscHelpers.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include "WinDarkMode.h"
 #include <Common.Views/Messages.hpp>
 #include <Common.Views/Config.hpp>
 #include <components/Seeker.hpp>
 #include <components/CoreUtils.hpp>
+#include <cstdint>
+#include <format>
+#include <iterator>
 
 #define WM_SEEK_COMPLETED (WM_USER + 11)
 

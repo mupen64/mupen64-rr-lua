@@ -7,6 +7,7 @@
 #include "Ops.hpp"
 #include "R4300.hpp"
 #include "Macros.hpp"
+#include <cstdint>
 
 void MFC1()
 {

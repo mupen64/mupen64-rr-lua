@@ -5,9 +5,14 @@
  */
 
 #include "Pif.hpp"
+#include "Core/Types.hpp"
 
 #include <cassert>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
 #include <cstring>
+#include <format>
 #include <thread>
 
 #include <Core.hpp>

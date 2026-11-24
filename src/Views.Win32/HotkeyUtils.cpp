@@ -4,7 +4,25 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/ActionManager.hpp"
+#include "Common.Views/Config.hpp"
+#include "Common.Views/Hotkey.hpp"
+#include "Common.Views/IDialogService.hpp"
 #include "Common.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include <SDL3/SDL_keycode.h>
+#include <SDL3/SDL_mouse.h>
+#include <cstddef>
+#include <cstdint>
+#include <format>
+#include <optional>
+#include <ranges>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <variant>
+#include <vector>
 #include "HotkeyUtils.hpp"
 
 const std::unordered_map<uint32_t, SDL_Keycode> WIN_TO_SDL_KEYCODE = {

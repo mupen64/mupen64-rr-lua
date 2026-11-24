@@ -8,6 +8,8 @@
 #include <cassert>
 
 #include <QResource>
+#include <cstddef>
+#include <string_view>
 
 namespace LuaResources
 {

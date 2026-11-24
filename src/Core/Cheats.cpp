@@ -5,6 +5,8 @@
  */
 
 #include "Cheats.hpp"
+#include "Core/API.hpp"
+#include "Core/Types.hpp"
 
 #include <Common/IOUtils.hpp>
 #include <Common/StrUtils.hpp>
@@ -12,9 +14,22 @@
 #include <Core.hpp>
 #include <Memory/Memory.hpp>
 #include <Cheats.hpp>
-#include <R4300/R4300.hpp>
 #include <algorithm>
 #include <atomic>
+#include <charconv>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <ios>
+#include <iterator>
+#include <mutex>
+#include <stack>
+#include <string_view>
+#include <system_error>
+#include <tuple>
+#include <vector>
 
 static std::recursive_mutex cheats_mutex;
 static std::vector<CoreCheat> host_cheats;

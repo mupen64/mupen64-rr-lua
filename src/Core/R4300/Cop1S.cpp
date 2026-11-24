@@ -9,6 +9,7 @@
 #include <R4300/Ops.hpp>
 #include <R4300/Macros.hpp>
 #include <R4300/Cop1Helpers.hpp>
+#include <cmath>
 
 void ADD_S()
 {

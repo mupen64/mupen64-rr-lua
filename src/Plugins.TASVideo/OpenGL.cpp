@@ -7,9 +7,16 @@
 #include "Common.hpp"
 #include "Renderer.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <Common/Assert.hpp>
+#include <cstddef>
+#include <cstdint>
 
+#include "Config.hpp"
+#include "Core/Graphics.hpp"
+#include "FrameBuffer.hpp"
+#include "GBI.hpp"
 #include "TASVideo.hpp"
 #include "OpenGL.hpp"
 #include "Types.hpp"

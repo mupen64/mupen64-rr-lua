@@ -9,11 +9,8 @@
 #include "F3DEX.hpp"
 #include "L3D.hpp"
 #include "L3DEX.hpp"
-#include "N64.hpp"
-#include "RSP.hpp"
-#include "RDP.hpp"
+#include "Types.hpp"
 #include "gSP.hpp"
-#include "gDP.hpp"
 #include "GBI.hpp"
 
 void L3DEX_Line3D(u32 w0, u32 w1)

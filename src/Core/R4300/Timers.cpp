@@ -5,7 +5,14 @@
  */
 
 #include "Timers.hpp"
+#include "Core/Types.hpp"
+#include "R4300/Rom.hpp"
 
+#include <chrono>
+#include <cstddef>
+#include <format>
+#include <mutex>
+#include <ratio>
 #include <span>
 #include <thread>
 

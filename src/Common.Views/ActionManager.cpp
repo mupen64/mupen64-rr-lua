@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/Hotkey.hpp"
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/App.hpp>
 
@@ -13,6 +14,14 @@
 #include <Common.Views/Messages.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common/LRUCache.hpp>
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <string>
+#include <utility>
+#include <vector>
 
 using ActionParam = ActionManager::ActionParam;
 using ActionAddParams = ActionManager::ActionAddParams;

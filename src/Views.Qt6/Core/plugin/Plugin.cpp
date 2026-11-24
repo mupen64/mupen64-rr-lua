@@ -5,9 +5,23 @@
  */
 
 #include "Plugin.hpp"
+#include "Core/API.hpp"
+#include "Core/Plugin.hpp"
+#include "plugin/BuiltinTAS.hpp"
 
+#include <cstdint>
+#include <cstdio>
 #include <cstring>
+#include <filesystem>
+#include <functional>
 #include <print>
+#include <qobjectdefs.h>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <variant>
 #ifndef _WIN32
 #include <safeclib/safe_str_lib.h>
 #endif

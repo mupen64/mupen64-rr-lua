@@ -6,6 +6,9 @@
 
 #include "ParityChecker.hpp"
 
+#include <algorithm>
+#include <cstdint>
+#include <format>
 #include <span>
 
 #include <Common/FNV1A.hpp>
@@ -13,6 +16,8 @@
 #include <Core.hpp>
 #include <Memory/Savestates.hpp>
 #include <Memory/ParityChecker.hpp>
+#include <utility>
+#include <vector>
 
 namespace ParityChecker
 {

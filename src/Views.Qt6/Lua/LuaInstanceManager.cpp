@@ -5,6 +5,13 @@
  */
 #include "LuaInstanceManager.hpp"
 #include "EmuContext.hpp"
+#include <qabstractitemmodel.h>
+#include <qhash.h>
+#include <qhashfunctions.h>
+#include <qobject.h>
+#include <qstringview.h>
+#include <qtmetamacros.h>
+#include <qvariant.h>
 
 LuaInstanceManager::LuaInstanceManager(QObject *parent) : QAbstractListModel(parent)
 {

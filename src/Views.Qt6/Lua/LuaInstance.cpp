@@ -7,8 +7,14 @@
 #include "LuaInternal.hpp"
 #include "Resources.hpp"
 
+#include <lua.hpp>
+
 #include <QFile>
 #include <QFileInfo>
+#include <qobject.h>
+#include <qtypes.h>
+#include <string>
+#include <vector>
 
 LuaInstance::LuaInstance(QObject *parent) : QObject(parent)
 {
@@ -36,28 +42,28 @@ void LuaInstance::setPath(const QString &path)
     if (m_path == path) return;
     m_path = path;
     m_name = QFileInfo(path).fileName();
-    emit pathChanged();
-    emit nameChanged();
+    pathChanged();
+    nameChanged();
 }
 
 void LuaInstance::setTrusted(bool trusted)
 {
     if (m_trusted == trusted) return;
     m_trusted = trusted;
-    emit trustedChanged();
+    trustedChanged();
 }
 
 void LuaInstance::setLastError(const QString &err)
 {
     if (m_lastError == err) return;
     m_lastError = err;
-    emit lastErrorChanged();
+    lastErrorChanged();
 }
 
 void LuaInstance::clearLogs()
 {
     m_logs.clear();
-    emit logsChanged();
+    logsChanged();
 }
 
 void LuaInstance::appendLog(const QString &text)
@@ -68,8 +74,8 @@ void LuaInstance::appendLog(const QString &text)
     {
         m_logs.remove(0, m_logs.size() - MAX_LOG_LENGTH / 2);
     }
-    emit logAdded(text);
-    emit logsChanged();
+    logAdded(text);
+    logsChanged();
 }
 
 std::string LuaInstance::queryHint(const std::string &key) const
@@ -219,14 +225,14 @@ bool LuaInstance::start()
         QString err = QString::fromUtf8(msg ? msg : "Unknown Lua error");
         appendLog(QString("[Error] %1\n").arg(err));
         setLastError(err);
-        emit errorOccurred(err);
+        errorOccurred(err);
         stop();
         return false;
     }
 
     m_running = true;
-    emit runningChanged();
-    emit started();
+    runningChanged();
+    started();
     appendLog(tr("Script started: %1\n").arg(name()));
     return true;
 }
@@ -255,8 +261,8 @@ void LuaInstance::stop()
     if (m_running)
     {
         m_running = false;
-        emit runningChanged();
-        emit stopped();
+        runningChanged();
+        stopped();
         appendLog(tr("Script stopped: %1\n").arg(name()));
     }
 }

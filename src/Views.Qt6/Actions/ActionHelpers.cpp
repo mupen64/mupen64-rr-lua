@@ -5,7 +5,14 @@
  */
 
 #include "ActionHelpers.hpp"
+#include <array>
 #include <print>
+#include <qcontainerfwd.h>
+#include <qkeysequence.h>
+#include <qobject.h>
+#include <qtypes.h>
+#include <qvariant.h>
+#include <stdexcept>
 
 static QVariant sequenceToKeyImpl(const QKeySequence &seq)
 {

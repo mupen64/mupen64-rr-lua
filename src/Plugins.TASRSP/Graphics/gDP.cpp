@@ -16,6 +16,10 @@
 #include "CRC.hpp"
 #include "DepthBuffer.hpp"
 #include "VI.hpp"
+#include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <utility>
 
 gDPInfo gDP;
 

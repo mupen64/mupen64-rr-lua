@@ -6,7 +6,11 @@
 
 #pragma once
 
+#include <lua.hpp>
+#include <Common.Views/LuaHelpers.hpp>
+
 #include <Main.hpp>
+#include <ThreadPool.hpp>
 #include <lua/LuaRealmManager.hpp>
 
 namespace LuaCore::Savestate

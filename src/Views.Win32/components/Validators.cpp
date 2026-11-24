@@ -4,7 +4,15 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Main.hpp"
+#include <cstddef>
+#include <exception>
+#include <filesystem>
+#include <format>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <tuple>
 #include "Validators.hpp"
 
 namespace Validators

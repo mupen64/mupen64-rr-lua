@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <functional>
+
+#include <Windows.h>
+
 /**
  * \brief A module responsible for adding drag-and-drop reordering functionality to list views.
  */

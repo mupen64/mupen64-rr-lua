@@ -6,6 +6,13 @@
 
 #pragma once
 
+#include <cstdint>
+#include <lua.hpp>
+
+#include <Windows.h>
+
+#include "Main.hpp"
+
 namespace LuaCore::Memory
 {
 static DWORD LuaCheckIntegerU(lua_State *L, int i = -1)

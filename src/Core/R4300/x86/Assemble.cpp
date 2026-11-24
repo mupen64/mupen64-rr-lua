@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include <cstdlib>
+
 #include <R4300/Macros.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/x86/Assemble.hpp>

@@ -4,12 +4,18 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include "MicrocodeDialog_Win32.hpp"
+
+#include <cstdint>
+#include <cstdio>
+
+#include <Common.Win32/Common.hpp>
+#include <windowsx.h>
+
 #include "Resource.h"
 #include "N64.hpp"
 #include "GBI.hpp"
-#include <Common.Win32/Common.hpp>
+
 
 INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

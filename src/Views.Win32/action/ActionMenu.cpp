@@ -4,10 +4,23 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/App.hpp"
+#include "Common.Views/Config.hpp"
 #include "Common.hpp"
 #include <action/ActionMenu.hpp>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <format>
+#include <functional>
+#include <iterator>
+#include <optional>
+#include <ranges>
 #include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <Common/Assert.hpp>
 #include <Common.Views/Messages.hpp>

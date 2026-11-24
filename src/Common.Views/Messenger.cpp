@@ -6,9 +6,16 @@
 
 #include <Common.Views/Messenger.hpp>
 
+#include <any>
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <thread>
+#include <typeindex>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace Messenger
 {

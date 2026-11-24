@@ -6,6 +6,11 @@
 
 #pragma once
 
+#include <string>
+#include <optional>
+
+#include <Windows.h>
+
 /**
  * \brief A module responsible for implementing a text editing dialog.
  */

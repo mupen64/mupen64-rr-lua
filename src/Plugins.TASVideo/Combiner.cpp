@@ -7,7 +7,10 @@
 #include "Common.hpp"
 #include "Renderer.hpp"
 #include "OpenGL.hpp"
+#include "GBI.hpp"
 #include "Combiner.hpp"
+#include "Textures.hpp"
+#include "Types.hpp"
 #include "glsl_combiner.hpp"
 #include "gDP.hpp"
 

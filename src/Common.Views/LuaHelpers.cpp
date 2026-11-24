@@ -8,15 +8,14 @@
 #include <Common.Views/LuaHelpers.hpp>
 #include <Common/IOUtils.hpp>
 #include <cmath>
+#include <cstdint>
 #include <format>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-extern "C"
-{
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
+#include <utility>
+
+#include <lua.hpp>
 
 namespace
 {

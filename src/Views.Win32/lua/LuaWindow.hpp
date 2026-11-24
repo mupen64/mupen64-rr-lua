@@ -7,7 +7,7 @@
 #pragma once
 
 #include <lua/LuaRenderer.hpp>
-#include <lua.h>
+#include <lua.hpp>
 
 class LuaRealm;
 

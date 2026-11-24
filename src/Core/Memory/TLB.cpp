@@ -6,10 +6,11 @@
 
 #include "TLB.hpp"
 
+#include <bit>
+#include <cstdint>
 #include <xxh64.h>
 
 #include "Memory.hpp"
-#include <Core.hpp>
 #include <R4300/Exception.hpp>
 #include <R4300/Interrupt.hpp>
 #include <R4300/Macros.hpp>

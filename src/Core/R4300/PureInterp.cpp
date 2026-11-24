@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Core/Types.hpp"
+#include "R4300/Recomp.hpp"
 #include <Core.hpp>
 #include <Core/API.hpp>
 #include <Memory/Memory.hpp>
@@ -16,6 +18,10 @@
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/Tracelog.hpp>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <format>
 
 uint32_t interp_addr;
 uint32_t vr_op;

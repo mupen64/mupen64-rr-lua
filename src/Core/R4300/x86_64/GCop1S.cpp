@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "R4300/Recomp.hpp"
 #include <Core.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Recomph.hpp>
@@ -11,6 +12,7 @@
 #include <R4300/x86_64/Gcop1Helpers.hpp>
 #include <R4300/Cop1Helpers.hpp>
 #include <R4300/Ops.hpp>
+#include <cstdint>
 
 // FP JIT port (bit-exact with the interpreter): all COP1 .S ops are SSE-native — ADD/SUB/MUL/DIV,
 // ABS/NEG/MOV (integer bit ops), all C.cond.S compares, CVT_D_S, SQRT, and the float->int

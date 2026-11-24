@@ -6,13 +6,9 @@
 
 #include "Common.hpp"
 #include "F3D.hpp"
-#include "F3DEX.hpp"
 #include "F3DWRUS.hpp"
-#include "N64.hpp"
-#include "RSP.hpp"
-#include "RDP.hpp"
+#include "Types.hpp"
 #include "gSP.hpp"
-#include "gDP.hpp"
 #include "GBI.hpp"
 
 void F3DWRUS_Vtx(u32 w0, u32 w1)

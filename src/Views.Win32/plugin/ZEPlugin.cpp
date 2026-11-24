@@ -6,16 +6,40 @@
 
 // ReSharper disable CppCStyleCast
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include "Common/VersionNameHelpers.hpp"
+#include "Main.hpp"
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <filesystem>
+#include <format>
+#include <iterator>
+#include <memory>
 #include <plugin/ZEPlugin.hpp>
 
 #include <Common/Assert.hpp>
 
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
-#include <components/MGECompositor.hpp>
 #include <components/Statusbar.hpp>
 #include <plugin/Plugin.hpp>
+
+#include <Common/Assert.hpp>
+#include <string.h>
+
+#include <Core/Types.hpp>
+#include <Core/Plugin.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+
+#include <Views.Win32/ZESpec.h>
+#include <components/Statusbar.hpp>
+#include <plugin/Plugin.hpp>
+#include <plugin/ZEPlugin.hpp>
+#include <string>
+#include <string_view>
+#include <utility>
 
 ZESpec::VideoPluginInfo dummy_video_info{};
 ZESpec::AudioPluginInfo dummy_audio_info{};

@@ -4,12 +4,24 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include "Common.Views/App.hpp"
+#include "Core/Types.hpp"
+#include "Main.hpp"
+#include "lua/LuaTypes.hpp"
+#include "lua/LuaWindow.hpp"
+#include <algorithm>
+#include <cstdint>
+#include <expected>
+#include <format>
+#include <functional>
+#include <lua.hpp>
 #include <lua/LuaRealmManager.hpp>
 
+#include <memory>
 #include <queue>
 
 #include <Common/Assert.hpp>
+#include <string>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
@@ -166,8 +178,8 @@ static void unregister_function(lua_State *L, LuaRealmManager::callback_key key)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    int n = luaL_len(L, -1);
-    for (LUA_INTEGER i = 0; i < n; i++)
+    lua_Integer n = luaL_len(L, -1);
+    for (lua_Integer i = 0; i < n; i++)
     {
         lua_pushinteger(L, 1 + i);
         lua_gettable(L, -2);

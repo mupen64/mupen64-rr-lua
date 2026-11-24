@@ -4,9 +4,23 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "TASInput.hpp"
 #include "Common.hpp"
+#include "Common/MiscHelpers.hpp"
+#include "Core/Plugin.hpp"
+#include "Core/Types.hpp"
+#include "Helpers.hpp"
 
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_gamepad.h>
+#include <algorithm>
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <format>
+#include <iterator>
 #include <mutex>
 
 #include <Common/IOUtils.hpp>
@@ -17,8 +31,11 @@
 #include <GamepadManager.hpp>
 #include <Main.hpp>
 #include <NewConfig.hpp>
-#include <TASInput.hpp>
 #include <WinDarkMode.h>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 #define WM_EDIT_END (WM_USER + 3)
 #define WM_UPDATE_STATUS (WM_USER + 4)

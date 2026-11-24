@@ -7,11 +7,8 @@
 #include "Common.hpp"
 #include "F3D.hpp"
 #include "F3DPD.hpp"
-#include "N64.hpp"
-#include "RSP.hpp"
-#include "RDP.hpp"
+#include "Types.hpp"
 #include "gSP.hpp"
-#include "gDP.hpp"
 #include "GBI.hpp"
 
 void F3DPD_Vtx(u32 w0, u32 w1)

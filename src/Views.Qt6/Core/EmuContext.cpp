@@ -5,7 +5,25 @@
  */
 
 #include "EmuContext.hpp"
+#include "Core/API.hpp"
+#include "Core/Plugin.hpp"
+#include "Core/Types.hpp"
+#include "CoreEnums.hpp"
+#include "RomManager.hpp"
+#include "plugin/BuiltinTAS.hpp"
+#include "plugin/Plugin.hpp"
 
+#include <algorithm>
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <exception>
+#include <filesystem>
+#include <functional>
+#include <future>
+#include <mutex>
+#include <optional>
 #include <print>
 
 #include <QIcon>
@@ -13,6 +31,20 @@
 #include <QThread>
 #include <QThreadPool>
 #include <QUrl>
+#include <qimage.h>
+#include <qlist.h>
+#include <qobject.h>
+#include <qobjectdefs.h>
+#include <qpointer.h>
+#include <qquickitem.h>
+#include <qttranslation.h>
+#include <qvariant.h>
+#include <ranges>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 static std::atomic<EmuContext *> g_core_instance = nullptr;
 

@@ -5,9 +5,12 @@
  */
 
 #include "RegCache.hpp"
+#include "R4300/x86_64/Assemble.hpp"
 #include <R4300/R4300.hpp>
 #include <R4300/Recomp.hpp>
 #include <R4300/Recomph.hpp>
+#include <cstddef>
+#include <cstdint>
 
 static uintptr_t reg_content[8];
 static precomp_instr *last_access[8];

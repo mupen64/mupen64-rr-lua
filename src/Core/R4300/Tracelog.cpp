@@ -7,9 +7,14 @@
 #include "Tracelog.hpp"
 
 #include <Common/IOUtils.hpp>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <filesystem>
 
 #include "Disasm.hpp"
 #include "R4300.hpp"
+#include "R4300/Recomp.hpp"
 
 bool enabled = false;
 bool use_binary = false;

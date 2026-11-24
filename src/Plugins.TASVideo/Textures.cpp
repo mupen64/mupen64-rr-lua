@@ -9,12 +9,21 @@
 #include "OpenGL.hpp"
 #include "Textures.hpp"
 #include "GBI.hpp"
+#include "RSP.hpp"
+#include "Types.hpp"
 #include "gDP.hpp"
 #include "gSP.hpp"
 #include "CRC.hpp"
 #include "convert.hpp"
 #include "2xSAI.hpp"
 #include "FrameBuffer.hpp"
+#include "hqx.h"
+#include "xbrz.h"
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
 
 TextureCache cache;
 

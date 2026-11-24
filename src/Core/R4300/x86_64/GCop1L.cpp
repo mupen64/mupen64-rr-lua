@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "R4300/Recomp.hpp"
 #include <R4300/R4300.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
-#include <R4300/Ops.hpp>
 
 // int64->float converts ported to native SSE (cvtsi2ss / cvtsi2sd, 64-bit source).
 // #define INTERPRET_CVT_S_L

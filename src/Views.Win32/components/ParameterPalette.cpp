@@ -4,12 +4,19 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.Views/ActionManager.hpp"
+#include "Common.Win32/ResizeAnchor.hpp"
+#include "Common.Win32/WinUtils.hpp"
 #include "Common.hpp"
-#include "RomBrowser.hpp"
+#include "Common/Assert.hpp"
+#include "Main.hpp"
+#include "WinDarkMode.h"
 #include <components/CommandPalette.hpp>
-#include <components/ConfigDialog.hpp>
-#include <action/AppActions.hpp>
 #include <Common.Views/Messages.hpp>
+#include <cstddef>
+#include <format>
+#include <functional>
+#include <vector>
 #include "ParameterPalette.hpp"
 
 struct ParameterPaletteContext

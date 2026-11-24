@@ -6,7 +6,11 @@
 
 #pragma once
 
+#include <lua.hpp>
+#include <Common.Views/LuaHelpers.hpp>
 #include <Common.Win32/WinUtils.hpp>
+
+#include "Main.hpp"
 #include <components/FilePicker.hpp>
 #include <lua/LuaDialog.hpp>
 
