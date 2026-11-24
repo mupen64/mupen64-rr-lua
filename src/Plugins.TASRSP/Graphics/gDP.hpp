@@ -189,15 +189,6 @@ struct DPPipelineState
 
     struct
     {
-        u32 format, size, width, height, bpl;
-        u32 address, changed;
-        u32 depthImage;
-    } colorImage;
-
-    u32 depthImageAddress;
-
-    struct
-    {
         u32 mode;
         f32 ulx, uly, lrx, lry;
     } scissor;
@@ -223,13 +214,22 @@ struct DPPipelineState
     // u16 palette[256];
     u32 paletteCRC16[16];
     u32 paletteCRC256;
-    u32 half_1, half_2;
     u32 textureMode;
     u32 loadType;
 };
 
 struct gDPInfo : DPPipelineState
 {
+    struct
+    {
+        u32 format, size, width, height, bpl;
+        u32 address, changed;
+        u32 depthImage;
+    } colorImage;
+
+    u32 depthImageAddress;
+
+    u32 half_1, half_2;
     gDPTile *loadTile;
     u32 changed;
 };

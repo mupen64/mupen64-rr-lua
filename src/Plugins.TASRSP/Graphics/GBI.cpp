@@ -13,6 +13,7 @@
 #endif
 
 #include "Common.hpp"
+#include "DrawList.hpp"
 #include "RDP.hpp"
 #include "RSP.hpp"
 #include "F3D.hpp"
@@ -304,6 +305,7 @@ void GBI_MakeCurrent(MicrocodeInfo *current)
     {
         for (int i = 0; i <= 0xFF; i++) GBI.cmd[i] = GBI_Unknown;
 
+        DrawList_StateChanged();
         RDP_Init();
 
         switch (current->type)

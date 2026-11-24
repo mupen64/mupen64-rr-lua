@@ -5,6 +5,7 @@
  */
 
 #include "Common.hpp"
+#include "DrawList.hpp"
 #include "F3D.hpp"
 #include "F3DEX.hpp"
 #include "F3DEX2.hpp"
@@ -182,6 +183,7 @@ void F3DEX2_SetOtherMode_H(u32 w0, u32 w1)
         u32 shift = 32 - _SHIFTR(w0, 8, 8) - length;
         u32 mask = ((1 << length) - 1) << shift;
 
+        DrawList_StateChanged();
         gDP.otherMode.h &= ~mask;
         gDP.otherMode.h |= w1 & mask;
 
@@ -208,6 +210,7 @@ void F3DEX2_SetOtherMode_L(u32 w0, u32 w1)
         u32 shift = 32 - _SHIFTR(w0, 8, 8) - length;
         u32 mask = ((1 << length) - 1) << shift;
 
+        DrawList_StateChanged();
         gDP.otherMode.l &= ~mask;
         gDP.otherMode.l |= w1 & mask;
 

@@ -5,6 +5,7 @@
  */
 
 #include "Common.hpp"
+#include "DrawList.hpp"
 #include "F3DEX2.hpp"
 #include "F3DEX3.hpp"
 #include "N64.hpp"
@@ -24,6 +25,7 @@ void F3DEX3_MoveMem(u32 w0, u32 w1)
     case F3DEX3_MV_VIEWPORT:
         gSPViewport(w1);
 
+        DrawList_StateChanged();
         gSP.viewport.vscale[1] = -gSP.viewport.vscale[1];
         gSP.viewport.vscale[2] /= 32.0f;
         gSP.viewport.vtrans[2] /= 32.0f;

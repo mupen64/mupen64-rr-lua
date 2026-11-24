@@ -13,7 +13,22 @@ void (*draw_sink)(DrawList &&);
 static DrawList list;
 static bool recording;
 static std::optional<DrawPipelineState> lastState;
+static bool stateChanged;
 static bool needTexture;
+struct BackgroundSource
+{
+    u32 address;
+    uint64_t size;
+
+    bool operator==(const BackgroundSource &) const = default;
+};
+static std::optional<BackgroundSource> lastBackground;
+
+void DrawList_StateChanged()
+{
+    stateChanged = true;
+}
+
 void DrawList_TextureChanged()
 {
     needTexture = true;
@@ -30,7 +45,13 @@ void DrawList_Begin(bool record)
     list.states.clear();
     list.textures.clear();
     lastState.reset();
+    lastBackground.reset();
+    stateChanged = true;
     needTexture = true;
+}
+bool DrawList_IsRecording()
+{
+    return recording;
 }
 void DrawList_End(u32 width, u32 height)
 {
@@ -42,13 +63,17 @@ void DrawList_End(u32 width, u32 height)
 
 static void captureState()
 {
-    DrawPipelineState state{gDP, gSP, G_CULL_BOTH, G_CULL_BACK, int(gDP.loadTile - gDP.tiles),
-        int(gSP.textureTile[0] - gDP.tiles), int(gSP.textureTile[1] - gDP.tiles)};
-    if (!lastState || std::memcmp(&*lastState, &state, sizeof(state)) != 0)
+    if (stateChanged)
     {
-        list.commands.emplace_back(DrawStateIndex{list.states.size()});
-        list.states.push_back(state);
-        lastState = state;
+        DrawPipelineState state{gDP, gSP, G_CULL_BOTH, G_CULL_BACK, int(gDP.loadTile - gDP.tiles),
+            int(gSP.textureTile[0] - gDP.tiles), int(gSP.textureTile[1] - gDP.tiles)};
+        if (!lastState || std::memcmp(&*lastState, &state, sizeof(state)) != 0)
+        {
+            list.commands.emplace_back(DrawStateIndex{list.states.size()});
+            list.states.push_back(state);
+            lastState = state;
+        }
+        stateChanged = false;
     }
     if (needTexture)
     {
@@ -58,14 +83,21 @@ static void captureState()
     }
     if (gDP.textureMode == TEXTUREMODE_BGIMAGE)
     {
-        const auto size = (uint64_t(gSP.bgImage.width) * gSP.bgImage.height << gSP.bgImage.size) >> 1;
+        const auto &image = gSP.bgImage;
+        const uint64_t size =
+            image.size <= G_IM_SIZ_32b ? (uint64_t(image.width) * image.height << image.size) >> 1 : 0;
+        const BackgroundSource source{image.address, size};
+        // Graphics tasks read RDRAM synchronously, so the same range can be reused within this list.
+        if (lastBackground == source) return;
+
         std::vector<u8> pixels;
-        if (gSP.bgImage.address < RDRAMSize && size <= RDRAMSize - gSP.bgImage.address)
+        if (source.address < RDRAMSize && size <= RDRAMSize - source.address)
         {
             pixels.resize(size);
-            for (size_t i = 0; i < size; ++i) pixels[i] = RDRAM[(gSP.bgImage.address + i) ^ 3];
+            for (size_t i = 0; i < pixels.size(); ++i) pixels[i] = RDRAM[(source.address + i) ^ 3];
         }
         list.commands.emplace_back(std::move(pixels));
+        lastBackground = source;
     }
 }
 void Draw_Control(DrawControl control)

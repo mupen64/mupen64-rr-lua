@@ -5,6 +5,7 @@
  */
 
 #include "Common.hpp"
+#include "DrawList.hpp"
 #include "S2DEX.hpp"
 #include "F3D.hpp"
 #include "F3DEX.hpp"
@@ -78,6 +79,7 @@ void S2DEX_Init()
     // Set GeometryMode flags
     GBI_InitFlags(F3DEX);
 
+    DrawList_StateChanged();
     gSP.geometryMode = 0;
 
     GBI.PCStackSize = 18;

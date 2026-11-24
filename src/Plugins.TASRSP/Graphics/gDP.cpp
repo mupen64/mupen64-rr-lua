@@ -21,6 +21,7 @@ gDPInfo gDP;
 
 void gDPSetOtherMode(u32 mode0, u32 mode1)
 {
+    DrawList_StateChanged();
     gDP.otherMode.h = mode0;
     gDP.otherMode.l = mode1;
 
@@ -43,6 +44,7 @@ void gDPSetOtherMode(u32 mode0, u32 mode1)
 
 void gDPSetPrimDepth(u16 z, u16 dz)
 {
+    DrawList_StateChanged();
     gDP.primDepth.z =
         std::min(1.0f, std::max(0.0f, (_FIXED2FLOAT(z, 15) - gSP.viewport.vtrans[2]) / gSP.viewport.vscale[2]));
     gDP.primDepth.deltaZ = dz;
@@ -52,6 +54,7 @@ void gDPSetPrimDepth(u16 z, u16 dz)
 
 void gDPPipelineMode(u32 mode)
 {
+    DrawList_StateChanged();
     gDP.otherMode.pipelineMode = mode;
 
     DebugMsg(L"gDPPipelineMode( %s );\n", PipelineModeText[gDP.otherMode.pipelineMode]);
@@ -59,6 +62,7 @@ void gDPPipelineMode(u32 mode)
 
 void gDPSetCycleType(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.cycleType = type;
 
     gDP.changed |= CHANGED_CYCLETYPE;
@@ -68,6 +72,7 @@ void gDPSetCycleType(u32 type)
 
 void gDPSetTexturePersp(u32 enable)
 {
+    DrawList_StateChanged();
     gDP.otherMode.texturePersp = enable;
 
     DebugMsg(L"gDPSetTexturePersp( %s );\n", TexturePerspText[gDP.otherMode.texturePersp]);
@@ -75,6 +80,7 @@ void gDPSetTexturePersp(u32 enable)
 
 void gDPSetTextureDetail(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureDetail = type;
 
     DebugMsg(L"gDPSetTextureDetail( %s );\n", TextureDetailText[gDP.otherMode.textureDetail]);
@@ -82,6 +88,7 @@ void gDPSetTextureDetail(u32 type)
 
 void gDPSetTextureLOD(u32 mode)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureLOD = mode;
 
     DebugMsg(L"gDPSetTextureLOD( %s );\n", TextureLODText[gDP.otherMode.textureLOD]);
@@ -89,6 +96,7 @@ void gDPSetTextureLOD(u32 mode)
 
 void gDPSetTextureLUT(u32 mode)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureLUT = mode;
 
     DebugMsg(L"gDPSetTextureLUT( %s );\n", TextureLUTText[gDP.otherMode.textureLUT]);
@@ -96,6 +104,7 @@ void gDPSetTextureLUT(u32 mode)
 
 void gDPSetTextureFilter(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureFilter = type;
 
     DebugMsg(L"gDPSetTextureFilter( %s );\n", TextureFilterText[gDP.otherMode.textureFilter]);
@@ -103,6 +112,7 @@ void gDPSetTextureFilter(u32 type)
 
 void gDPSetTextureConvert(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureConvert = type;
 
     DebugMsg(L"gDPSetTextureConvert( %s );\n", TextureConvertText[gDP.otherMode.textureConvert]);
@@ -110,6 +120,7 @@ void gDPSetTextureConvert(u32 type)
 
 void gDPSetCombineKey(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.combineKey = type;
 
     DebugMsg(L"gDPSetCombineKey( %s );\n", CombineKeyText[gDP.otherMode.combineKey]);
@@ -117,6 +128,7 @@ void gDPSetCombineKey(u32 type)
 
 void gDPSetColorDither(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.colorDither = type;
 
     DebugMsg(L"gDPSetColorDither( %s );\n", ColorDitherText[gDP.otherMode.colorDither]);
@@ -124,6 +136,7 @@ void gDPSetColorDither(u32 type)
 
 void gDPSetAlphaDither(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.alphaDither = type;
 
     DebugMsg(L"gDPSetAlphaDither( %s );\n", AlphaDitherText[gDP.otherMode.alphaDither]);
@@ -131,6 +144,7 @@ void gDPSetAlphaDither(u32 type)
 
 void gDPSetAlphaCompare(u32 mode)
 {
+    DrawList_StateChanged();
     gDP.otherMode.alphaCompare = mode;
 
     gDP.changed |= CHANGED_ALPHACOMPARE;
@@ -140,6 +154,7 @@ void gDPSetAlphaCompare(u32 mode)
 
 void gDPSetDepthSource(u32 source)
 {
+    DrawList_StateChanged();
     gDP.otherMode.depthSource = source;
 
     DebugMsg(L"gDPSetDepthSource( %s );\n", DepthSourceText[gDP.otherMode.depthSource]);
@@ -147,6 +162,7 @@ void gDPSetDepthSource(u32 source)
 
 void gDPSetRenderMode(u32 mode1, u32 mode2)
 {
+    DrawList_StateChanged();
     gDP.otherMode.l &= 0x00000007;
     gDP.otherMode.l |= mode1 | mode2;
 
@@ -162,6 +178,7 @@ void gDPSetRenderMode(u32 mode1, u32 mode2)
 
 void gDPSetCombine(s32 muxs0, s32 muxs1)
 {
+    DrawList_StateChanged();
     gDP.combine.muxs0 = muxs0;
     gDP.combine.muxs1 = muxs1;
 
@@ -201,6 +218,7 @@ void gDPSetColorImage(u32 format, u32 size, u32 width, u32 address)
 
 void gDPSetTextureImage(u32 format, u32 size, u32 width, u32 address)
 {
+    DrawList_StateChanged();
     gDP.textureImage.format = format;
     gDP.textureImage.size = size;
     gDP.textureImage.width = width;
@@ -220,6 +238,7 @@ void gDPSetDepthImage(u32 address)
 
     if (depthBuffer.current->cleared) Draw_Control(DrawControl::ClearDepth);
 
+    DrawList_StateChanged();
     gDP.depthImageAddress = RSP_SegmentToPhysical(address);
 
     DebugMsg(L"gDPSetDepthImage( 0x%08X );\n", gDP.depthImageAddress);
@@ -227,6 +246,7 @@ void gDPSetDepthImage(u32 address)
 
 void gDPSetEnvColor(u32 r, u32 g, u32 b, u32 a)
 {
+    DrawList_StateChanged();
     gDP.envColor.r = r * 0.0039215689f;
     gDP.envColor.g = g * 0.0039215689f;
     gDP.envColor.b = b * 0.0039215689f;
@@ -239,6 +259,7 @@ void gDPSetEnvColor(u32 r, u32 g, u32 b, u32 a)
 
 void gDPSetBlendColor(u32 r, u32 g, u32 b, u32 a)
 {
+    DrawList_StateChanged();
     gDP.blendColor.r = r * 0.0039215689f;
     gDP.blendColor.g = g * 0.0039215689f;
     gDP.blendColor.b = b * 0.0039215689f;
@@ -249,6 +270,7 @@ void gDPSetBlendColor(u32 r, u32 g, u32 b, u32 a)
 
 void gDPSetFogColor(u32 r, u32 g, u32 b, u32 a)
 {
+    DrawList_StateChanged();
     gDP.fogColor.r = r * 0.0039215689f;
     gDP.fogColor.g = g * 0.0039215689f;
     gDP.fogColor.b = b * 0.0039215689f;
@@ -261,6 +283,7 @@ void gDPSetFogColor(u32 r, u32 g, u32 b, u32 a)
 
 void gDPSetFillColor(u32 c)
 {
+    DrawList_StateChanged();
     gDP.fillColor.r = _SHIFTR(c, 11, 5) * 0.032258064f;
     gDP.fillColor.g = _SHIFTR(c, 6, 5) * 0.032258064f;
     gDP.fillColor.b = _SHIFTR(c, 1, 5) * 0.032258064f;
@@ -274,6 +297,7 @@ void gDPSetFillColor(u32 c)
 
 void gDPSetPrimColor(u32 m, u32 l, u32 r, u32 g, u32 b, u32 a)
 {
+    DrawList_StateChanged();
     gDP.primColor.m = m;
     gDP.primColor.l = l * 0.0039215689f;
     gDP.primColor.r = r * 0.0039215689f;
@@ -289,6 +313,7 @@ void gDPSetPrimColor(u32 m, u32 l, u32 r, u32 g, u32 b, u32 a)
 void gDPSetTile(u32 format, u32 size, u32 line, u32 tmem, u32 tile, u32 palette, u32 cmt, u32 cms, u32 maskt, u32 masks,
     u32 shiftt, u32 shifts)
 {
+    DrawList_StateChanged();
     if (((size == G_IM_SIZ_4b) || (size == G_IM_SIZ_8b)) && (format == G_IM_FMT_RGBA)) format = G_IM_FMT_CI;
 
     gDP.tiles[tile].format = format;
@@ -314,6 +339,7 @@ void gDPSetTile(u32 format, u32 size, u32 line, u32 tmem, u32 tile, u32 palette,
 
 void gDPSetTileSize(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 {
+    DrawList_StateChanged();
     gDP.tiles[tile].uls = _SHIFTR(uls, 2, 10);
     gDP.tiles[tile].ult = _SHIFTR(ult, 2, 10);
     gDP.tiles[tile].lrs = _SHIFTR(lrs, 2, 10);
@@ -492,6 +518,7 @@ void gDPLoadTLUT(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 
 void gDPSetScissor(u32 mode, f32 ulx, f32 uly, f32 lrx, f32 lry)
 {
+    DrawList_StateChanged();
     gDP.scissor.mode = mode;
     gDP.scissor.ulx = ulx;
     gDP.scissor.uly = uly;
@@ -537,6 +564,7 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
 
 void gDPSetConvert(s32 k0, s32 k1, s32 k2, s32 k3, s32 k4, s32 k5)
 {
+    DrawList_StateChanged();
     gDP.convert.k0 = k0;
     gDP.convert.k1 = k1;
     gDP.convert.k2 = k2;
@@ -547,6 +575,7 @@ void gDPSetConvert(s32 k0, s32 k1, s32 k2, s32 k3, s32 k4, s32 k5)
 
 void gDPSetKeyR(u32 cR, u32 sR, u32 wR)
 {
+    DrawList_StateChanged();
     gDP.key.center.r = cR * 0.0039215689f;
     ;
     gDP.key.scale.r = sR * 0.0039215689f;
@@ -557,6 +586,7 @@ void gDPSetKeyR(u32 cR, u32 sR, u32 wR)
 
 void gDPSetKeyGB(u32 cG, u32 sG, u32 wG, u32 cB, u32 sB, u32 wB)
 {
+    DrawList_StateChanged();
     gDP.key.center.g = cG * 0.0039215689f;
     ;
     gDP.key.scale.g = sG * 0.0039215689f;
@@ -580,6 +610,7 @@ void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f3
         lry += 1.0f;
     }
 
+    DrawList_StateChanged();
     gSP.textureTile[0] = &gDP.tiles[tile];
     gSP.textureTile[1] = &gDP.tiles[tile < 7 ? tile + 1 : tile];
 
@@ -611,6 +642,7 @@ void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f3
     }
     Draw_TexturedRect(ulx, uly, lrx, lry, s, t, lrs, lrt, flip);
 
+    DrawList_StateChanged();
     gSP.textureTile[0] = &gDP.tiles[gSP.texture.tile];
     gSP.textureTile[1] = &gDP.tiles[gSP.texture.tile < 7 ? gSP.texture.tile + 1 : gSP.texture.tile];
 

@@ -246,6 +246,7 @@ void gSPDMAMatrix(u32 matrix, u8 index, u8 multiply)
 
 void gSPViewport(u32 v)
 {
+    DrawList_StateChanged();
     u32 address = RSP_SegmentToPhysical(v);
 
     if ((address + 16) > RDRAMSize)
@@ -658,6 +659,72 @@ static bool gSPIsFullscreenRectTriangle(const SPVertex &a, const SPVertex &b, co
            visibleBottom >= VI.height - tolerance;
 }
 
+static void queueTriangle(s32 v0, s32 v1, s32 v2)
+{
+    // NoN work-around, clips triangles, and draws the clipped-off parts with clamped z
+    if (GBI.current->NoN &&
+        ((gSP.vertices[v0].zClip < 0.0f) || (gSP.vertices[v1].zClip < 0.0f) || (gSP.vertices[v2].zClip < 0.0f)))
+    {
+        SPVertex nearVertices[4]{};
+        SPVertex clippedVertices[4]{};
+        s32 numNearTris = 0;
+        s32 numClippedTris = 0;
+        s32 nearIndex = 0;
+        s32 clippedIndex = 0;
+
+        s32 v[3] = {v0, v1, v2};
+
+        for (s32 i = 0; i < 3; i++)
+        {
+            s32 j = i + 1;
+            if (j == 3) j = 0;
+
+            if (((gSP.vertices[v[i]].zClip < 0.0f) && (gSP.vertices[v[j]].zClip >= 0.0f)) ||
+                ((gSP.vertices[v[i]].zClip >= 0.0f) && (gSP.vertices[v[j]].zClip < 0.0f)))
+            {
+                f32 percent =
+                    (-gSP.vertices[v[i]].w - gSP.vertices[v[i]].z) /
+                    ((gSP.vertices[v[j]].z - gSP.vertices[v[i]].z) + (gSP.vertices[v[j]].w - gSP.vertices[v[i]].w));
+
+                gSPInterpolateVertex(&clippedVertices[clippedIndex], percent, &gSP.vertices[v[i]], &gSP.vertices[v[j]]);
+
+                gSPCopyVertex(&nearVertices[nearIndex], &clippedVertices[clippedIndex]);
+                nearVertices[nearIndex].z = -nearVertices[nearIndex].w;
+
+                clippedIndex++;
+                nearIndex++;
+            }
+
+            if (((gSP.vertices[v[i]].zClip < 0.0f) && (gSP.vertices[v[j]].zClip >= 0.0f)) ||
+                ((gSP.vertices[v[i]].zClip >= 0.0f) && (gSP.vertices[v[j]].zClip >= 0.0f)))
+            {
+                gSPCopyVertex(&clippedVertices[clippedIndex], &gSP.vertices[v[j]]);
+                clippedIndex++;
+            }
+            else
+            {
+                gSPCopyVertex(&nearVertices[nearIndex], &gSP.vertices[v[j]]);
+                nearVertices[nearIndex].z = -nearVertices[nearIndex].w; // + 0.00001f;
+                nearIndex++;
+            }
+        }
+
+        Draw_Triangle(clippedVertices, 0, 1, 2);
+
+        if (clippedIndex == 4) Draw_Triangle(clippedVertices, 0, 2, 3);
+
+        Draw_Control(DrawControl::DisableOffset);
+
+        Draw_Triangle(nearVertices, 0, 1, 2);
+        if (nearIndex == 4) Draw_Triangle(nearVertices, 0, 2, 3);
+
+        if (gDP.otherMode.depthMode == ZMODE_DEC) Draw_Control(DrawControl::EnableOffset);
+    }
+    else
+        Draw_Triangle(gSP.vertices, v0, v1, v2,
+            gSPIsFullscreenRectTriangle(gSP.vertices[v0], gSP.vertices[v1], gSP.vertices[v2]));
+}
+
 void gSPTriangle(s32 v0, s32 v1, s32 v2, s32 flag)
 {
     if ((v0 < 80) && (v1 < 80) && (v2 < 80))
@@ -670,74 +737,7 @@ void gSPTriangle(s32 v0, s32 v1, s32 v2, s32 flag)
             ((gSP.vertices[v0].zClip < -0.1f) && (gSP.vertices[v1].zClip < -0.1f) && (gSP.vertices[v2].zClip < -0.1f)))
             return;
 
-        // NoN work-around, clips triangles, and draws the clipped-off parts with clamped z
-        if (GBI.current->NoN &&
-            ((gSP.vertices[v0].zClip < 0.0f) || (gSP.vertices[v1].zClip < 0.0f) || (gSP.vertices[v2].zClip < 0.0f)))
-        {
-            SPVertex nearVertices[4]{};
-            SPVertex clippedVertices[4]{};
-            s32 numNearTris = 0;
-            s32 numClippedTris = 0;
-            s32 nearIndex = 0;
-            s32 clippedIndex = 0;
-
-            s32 v[3] = {v0, v1, v2};
-
-            for (s32 i = 0; i < 3; i++)
-            {
-                s32 j = i + 1;
-                if (j == 3) j = 0;
-
-                if (((gSP.vertices[v[i]].zClip < 0.0f) && (gSP.vertices[v[j]].zClip >= 0.0f)) ||
-                    ((gSP.vertices[v[i]].zClip >= 0.0f) && (gSP.vertices[v[j]].zClip < 0.0f)))
-                {
-                    f32 percent =
-                        (-gSP.vertices[v[i]].w - gSP.vertices[v[i]].z) /
-                        ((gSP.vertices[v[j]].z - gSP.vertices[v[i]].z) + (gSP.vertices[v[j]].w - gSP.vertices[v[i]].w));
-
-                    gSPInterpolateVertex(
-                        &clippedVertices[clippedIndex], percent, &gSP.vertices[v[i]], &gSP.vertices[v[j]]);
-
-                    gSPCopyVertex(&nearVertices[nearIndex], &clippedVertices[clippedIndex]);
-                    nearVertices[nearIndex].z = -nearVertices[nearIndex].w;
-
-                    clippedIndex++;
-                    nearIndex++;
-                }
-
-                if (((gSP.vertices[v[i]].zClip < 0.0f) && (gSP.vertices[v[j]].zClip >= 0.0f)) ||
-                    ((gSP.vertices[v[i]].zClip >= 0.0f) && (gSP.vertices[v[j]].zClip >= 0.0f)))
-                {
-                    gSPCopyVertex(&clippedVertices[clippedIndex], &gSP.vertices[v[j]]);
-                    clippedIndex++;
-                }
-                else
-                {
-                    gSPCopyVertex(&nearVertices[nearIndex], &gSP.vertices[v[j]]);
-                    nearVertices[nearIndex].z = -nearVertices[nearIndex].w; // + 0.00001f;
-                    nearIndex++;
-                }
-            }
-
-            Draw_Triangle(clippedVertices, 0, 1, 2);
-
-            if (clippedIndex == 4) Draw_Triangle(clippedVertices, 0, 2, 3);
-
-            Draw_Control(DrawControl::DisableOffset);
-
-            //			glDepthFunc( GL_LEQUAL );
-
-            Draw_Triangle(nearVertices, 0, 1, 2);
-            if (nearIndex == 4) Draw_Triangle(nearVertices, 0, 2, 3);
-
-            if (gDP.otherMode.depthMode == ZMODE_DEC) Draw_Control(DrawControl::EnableOffset);
-
-            //			if (gDP.otherMode.depthCompare)
-            //				glDepthFunc( GL_LEQUAL );
-        }
-        else
-            Draw_Triangle(gSP.vertices, v0, v1, v2,
-                gSPIsFullscreenRectTriangle(gSP.vertices[v0], gSP.vertices[v1], gSP.vertices[v2]));
+        if (DrawList_IsRecording()) queueTriangle(v0, v1, v2);
 
         // Framebuffer bookkeeping still uses the native clip volume.
         if ((gSP.vertices[v0].xClip < 0 && gSP.vertices[v1].xClip < 0 && gSP.vertices[v2].xClip < 0) ||
@@ -797,6 +797,7 @@ void gSPDMATriangles(u32 tris, u32 n)
 
     for (u32 i = 0; i < n; i++)
     {
+        DrawList_StateChanged();
         gSP.geometryMode &= ~G_CULL_BOTH;
 
         if (!(triangles->flag & 0x40))
@@ -1074,6 +1075,7 @@ void gSPLightColor(u32 lightNum, u32 packedColor)
 
 void gSPFogFactor(s16 fm, s16 fo)
 {
+    DrawList_StateChanged();
     gSP.fog.multiplier = fm;
     gSP.fog.offset = fo;
 
@@ -1088,6 +1090,7 @@ void gSPPerspNormalize(u16 scale)
 
 void gSPTexture(f32 sc, f32 tc, s32 level, s32 tile, s32 on)
 {
+    DrawList_StateChanged();
     gSP.texture.scales = sc;
     gSP.texture.scalet = tc;
 
@@ -1121,6 +1124,7 @@ void gSPEndDisplayList()
 
 void gSPGeometryMode(u32 clear, u32 set)
 {
+    DrawList_StateChanged();
     gSP.geometryMode = (gSP.geometryMode & ~clear) | set;
 
     gSP.changed |= CHANGED_GEOMETRYMODE;
@@ -1139,6 +1143,7 @@ void gSPGeometryMode(u32 clear, u32 set)
 
 void gSPSetGeometryMode(u32 mode)
 {
+    DrawList_StateChanged();
     gSP.geometryMode |= mode;
 
     gSP.changed |= CHANGED_GEOMETRYMODE;
@@ -1152,6 +1157,7 @@ void gSPSetGeometryMode(u32 mode)
 
 void gSPClearGeometryMode(u32 mode)
 {
+    DrawList_StateChanged();
     gSP.geometryMode &= ~mode;
 
     gSP.changed |= CHANGED_GEOMETRYMODE;
@@ -1182,6 +1188,7 @@ void gSPBgRect1Cyc(u32 bg)
     u32 address = RSP_SegmentToPhysical(bg);
     auto objScaleBg = (uObjScaleBg *)&RDRAM[address];
 
+    DrawList_StateChanged();
     gSP.bgImage.address = RSP_SegmentToPhysical(objScaleBg->imagePtr);
     gSP.bgImage.width = objScaleBg->imageW >> 2;
     gSP.bgImage.height = objScaleBg->imageH >> 2;
@@ -1266,6 +1273,7 @@ void gSPBgRectCopy(u32 bg)
     u32 address = RSP_SegmentToPhysical(bg);
     auto objBg = (uObjBg *)&RDRAM[address];
 
+    DrawList_StateChanged();
     gSP.bgImage.address = RSP_SegmentToPhysical(objBg->imagePtr);
     gSP.bgImage.width = objBg->imageW >> 2;
     gSP.bgImage.height = objBg->imageH >> 2;

@@ -71,8 +71,10 @@ struct DrawList
 
 extern void (*draw_sink)(DrawList &&);
 void DrawList_Reset();
+void DrawList_StateChanged();
 void DrawList_TextureChanged();
 void DrawList_Begin(bool record);
+bool DrawList_IsRecording();
 void DrawList_End(u32 width, u32 height);
 void Draw_Control(DrawControl control);
 void Draw_Triangle(const SPVertex *vertices, int a, int b, int c, bool fullscreen = false);
