@@ -27,6 +27,8 @@ void DrawList_Begin(bool record)
 {
     recording = record;
     list.commands.clear();
+    list.states.clear();
+    list.textures.clear();
     lastState.reset();
     needTexture = true;
 }
@@ -44,12 +46,14 @@ static void captureState()
         int(gSP.textureTile[0] - gDP.tiles), int(gSP.textureTile[1] - gDP.tiles)};
     if (!lastState || std::memcmp(&*lastState, &state, sizeof(state)) != 0)
     {
-        list.commands.emplace_back(std::make_shared<const DrawPipelineState>(state));
+        list.commands.emplace_back(DrawStateIndex{list.states.size()});
+        list.states.push_back(state);
         lastState = state;
     }
     if (needTexture)
     {
-        list.commands.emplace_back(std::make_shared<const std::array<u64, 512>>(std::to_array(TMEM)));
+        list.commands.emplace_back(DrawTextureIndex{list.textures.size()});
+        list.textures.push_back(std::to_array(TMEM));
         needTexture = false;
     }
     if (gDP.textureMode == TEXTUREMODE_BGIMAGE)

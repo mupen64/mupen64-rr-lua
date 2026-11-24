@@ -60,7 +60,8 @@ void Graphics_Process(M64RRSpec::PluginInit *plugin)
     if (!gDP.loadTile) Graphics_Reset();
     graphics_plugin = plugin;
     VI_UpdateSize();
-    DrawList_Begin(draw_sink != nullptr);
+    const bool skip_frame = plugin->frame_skipped && plugin->frame_skipped();
+    DrawList_Begin(draw_sink != nullptr && !skip_frame);
     RSP.PC[0] = *(u32 *)&DMEM[0x0FF0];
     RSP.PCi = 0;
     RSP.count = 0;

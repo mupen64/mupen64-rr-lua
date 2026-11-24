@@ -30,16 +30,16 @@ static void flush()
     if (OGL.numTriangles) OGL_DrawTriangles();
 }
 
-static void process(const std::shared_ptr<const DrawPipelineState> &state)
+static void process(const DrawPipelineState &state)
 {
     flush();
-    static_cast<DPPipelineState &>(renderDP) = state->dp;
-    renderDP.loadTile = &renderDP.tiles[state->loadTile];
-    renderSP.textureTile[0] = &renderDP.tiles[state->tile0];
-    renderSP.textureTile[1] = &renderDP.tiles[state->tile1];
-    static_cast<SPPipelineState &>(renderSP) = state->sp;
-    renderer.cullBoth = state->cullBoth;
-    renderer.cullBack = state->cullBack;
+    static_cast<DPPipelineState &>(renderDP) = state.dp;
+    renderDP.loadTile = &renderDP.tiles[state.loadTile];
+    renderSP.textureTile[0] = &renderDP.tiles[state.tile0];
+    renderSP.textureTile[1] = &renderDP.tiles[state.tile1];
+    static_cast<SPPipelineState &>(renderSP) = state.sp;
+    renderer.cullBoth = state.cullBoth;
+    renderer.cullBack = state.cullBack;
     auto &scissor = renderDP.scissor;
     if (OGL.ignoreScissor && scissor.ulx == 0 && scissor.uly == 8 && scissor.lrx == 320 && scissor.lry == 232)
     {
@@ -48,10 +48,10 @@ static void process(const std::shared_ptr<const DrawPipelineState> &state)
     }
     renderSP.changed = renderDP.changed = ~0u;
 }
-static void process(const std::shared_ptr<const std::array<u64, 512>> &texture)
+static void process(const std::array<u64, 512> &texture)
 {
     flush();
-    renderTMEM = *texture;
+    renderTMEM = texture;
     renderDP.changed |= CHANGED_TMEM;
 }
 static void process(const std::vector<u8> &pixels)
@@ -126,7 +126,20 @@ static void Render_List(const DrawList &list)
     renderer.listNumber = list.number;
     OGL_UpdateScale();
     if (OGL.clear_override) OGL_ClearFramebuffer(GL_COLOR_BUFFER_BIT);
-    for (const auto &command : list.commands) std::visit([](const auto &value) { process(value); }, command);
+    for (const auto &command : list.commands)
+    {
+        std::visit(
+            [&list](const auto &value) {
+                using T = std::decay_t<decltype(value)>;
+                if constexpr (std::is_same_v<T, DrawStateIndex>)
+                    process(list.states[value.value]);
+                else if constexpr (std::is_same_v<T, DrawTextureIndex>)
+                    process(list.textures[value.value]);
+                else
+                    process(value);
+            },
+            command);
+    }
     flush();
     renderer.background = nullptr;
 }

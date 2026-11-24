@@ -50,12 +50,23 @@ struct DrawPipelineState
     int loadTile, tile0, tile1;
 };
 
-using DrawCommand = std::variant<std::shared_ptr<const DrawPipelineState>, std::shared_ptr<const std::array<u64, 512>>,
-    std::vector<u8>, DrawControl, DrawTriangle, DrawLine, DrawRect, DrawTexturedRect>;
+struct DrawStateIndex
+{
+    size_t value;
+};
+struct DrawTextureIndex
+{
+    size_t value;
+};
+
+using DrawCommand = std::variant<DrawStateIndex, DrawTextureIndex, std::vector<u8>, DrawControl, DrawTriangle, DrawLine,
+    DrawRect, DrawTexturedRect>;
 struct DrawList
 {
     u32 width, height, number;
     std::vector<DrawCommand> commands;
+    std::vector<DrawPipelineState> states;
+    std::vector<std::array<u64, 512>> textures;
 };
 
 extern void (*draw_sink)(DrawList &&);
