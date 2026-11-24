@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <lua.hpp>
 
-#include <Windows.h>
+#include <windows.h>
 
 #include "Main.hpp"
 

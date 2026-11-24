@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <cstdio>
 
-#include <Windows.h>
+#include <windows.h>
 #include <windowsx.h>
 
 #include "TASVideo.hpp"

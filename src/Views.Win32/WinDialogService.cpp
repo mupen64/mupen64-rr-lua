@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-#include <Windows.h>
+#include <windows.h>
 #include <CommCtrl.h>
 
 #include <Common/IOUtils.hpp>
