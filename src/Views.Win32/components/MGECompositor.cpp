@@ -81,6 +81,7 @@ struct MgeContext
     ComPtr<ID3D11VertexShader> vs;
     ComPtr<ID3D11PixelShader> ps;
     std::optional<uint64_t> shown_sequence;
+    bool destroyed{};
 };
 
 static std::mutex g_mutex;
@@ -316,6 +317,7 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_NCDESTROY: {
         std::lock_guard lock(g_mutex);
         destroy_d3d();
+        mge_context.destroyed = true;
         break;
     }
     default:
@@ -352,6 +354,7 @@ void MGECompositor::init()
 void MGECompositor::update_screen()
 {
     std::lock_guard lock(g_mutex);
+    if (mge_context.destroyed) return;
 
     PluginUtil::get_video_size(&mge_context.width, &mge_context.height);
 
@@ -405,6 +408,7 @@ void MGECompositor::copy_video(void *buffer)
 void MGECompositor::load_screen(void *data)
 {
     std::lock_guard lock(g_mutex);
+    if (mge_context.destroyed) return;
 
     memcpy(mge_context.rgba_buffer, data, mge_context.width * mge_context.height * 4);
 

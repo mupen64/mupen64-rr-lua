@@ -255,18 +255,18 @@ std::optional<uint64_t> get_video_sequence();
 void update_screen();
 
 /**
- * \brief Marks the screen as needing an update. Called on every UI frame.
+ * \brief Marks the screen as needing an update. Called once per UI frame from the render thread.
  */
 void invalidate_screen();
 
 /**
- * \brief Gets whether the video plugin's output is read on demand from the UI thread instead of on VI.
+ * \brief Gets whether the video plugin's output is read on demand from the render thread instead of on VI.
  */
 bool video_reads_on_demand();
 
 /**
- * \brief Updates the screen from the video plugin's latest output if it's read on demand. Must be called on the UI
- * thread.
+ * \brief Updates the screen from the video plugin's latest output if it's read on demand. Called once per UI frame
+ * from the render thread.
  */
 void refresh_screen();
 

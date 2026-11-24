@@ -142,8 +142,10 @@ std::optional<uint64_t> PluginUtil::get_video_sequence()
 }
 
 static std::atomic<bool> g_screen_invalidated{true};
-// Whether the video is read on demand from the UI thread rather than on VI. Only false for ZE video plugins.
+// Whether the video is read on demand from the render thread rather than on VI. Only false for ZE video plugins.
 static std::atomic<bool> g_video_on_demand{false};
+// Held while reading the video on demand, so that the video plugin isn't stopped mid-read.
+static std::mutex g_refresh_mutex;
 
 void PluginUtil::invalidate_screen()
 {
@@ -157,6 +159,7 @@ bool PluginUtil::video_reads_on_demand()
 
 void PluginUtil::refresh_screen()
 {
+    std::lock_guard lock(g_refresh_mutex);
     if (g_video_on_demand) MGECompositor::update_screen();
 }
 
@@ -410,7 +413,10 @@ void PluginUtil::start_plugins()
 
 void PluginUtil::stop_plugins()
 {
-    g_video_on_demand = false;
+    {
+        std::lock_guard lock(g_refresh_mutex);
+        g_video_on_demand = false;
+    }
     g_plugin_funcs.video_rom_closed();
     g_plugin_funcs.audio_rom_closed();
     g_plugin_funcs.input_rom_closed();

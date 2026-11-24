@@ -52,7 +52,7 @@ MainContext g_main_ctx{};
 static bool g_sdl_initialized = false;
 
 constexpr UINT_PTR sdl_timer_id = 1;
-MMRESULT g_ui_timer;
+std::jthread g_render_thread;
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
 DWORD g_ui_thread_id{};
@@ -802,27 +802,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-// Whether a screen refresh is queued on the UI thread, so that a busy UI thread doesn't accumulate them.
-static std::atomic<bool> g_screen_refresh_posted;
-
-// Runs on the multimedia timer's thread once per UI frame.
-static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
+static void render_thread_proc(const std::stop_token &stop)
 {
-    g_main_ctx.core_ctx->vr_invalidate_visuals();
-    PluginUtil::invalidate_screen();
+    using clock = std::chrono::steady_clock;
+    constexpr auto period = std::chrono::nanoseconds(1'000'000'000 / 60);
 
-    if (g_main_ctx.exiting || !PluginUtil::video_reads_on_demand() || g_screen_refresh_posted.exchange(true)) return;
-    try
+    auto next = clock::now();
+    while (!stop.stop_requested())
     {
-        g_main_ctx.dispatcher->post([] {
-            g_screen_refresh_posted = false;
-            PluginUtil::refresh_screen();
-        });
-    }
-    catch (const std::system_error &)
-    {
-        // The main window is gone.
-        g_screen_refresh_posted = false;
+        g_main_ctx.core_ctx->vr_invalidate_visuals();
+        PluginUtil::invalidate_screen();
+        PluginUtil::refresh_screen();
+
+        next += period;
+        next = std::max(next, clock::now());
+        std::this_thread::sleep_until(next);
     }
 }
 
@@ -1177,13 +1171,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::broadcast<Messenger::Message::AppReady>();
     Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 
-    g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
-    if (!g_ui_timer)
-    {
-        DialogService::show_dialog("timeSetEvent call failed. Verify that your system supports multimedia timers.",
-            "Error", CoreMessageTone::Error);
-        return -1;
-    }
+    timeBeginPeriod(1);
+    g_render_thread = std::jthread(render_thread_proc);
 
     WinDarkMode::attach(g_main_ctx.hwnd);
 
@@ -1201,7 +1190,9 @@ quit:
     g_main_ctx.exiting = true;
     LuaDialog::close_all();
 
-    timeKillEvent(g_ui_timer);
+    g_render_thread.request_stop();
+    g_render_thread.join();
+    timeEndPeriod(1);
     Gdiplus::GdiplusShutdown(gdi_plus_token);
     CoUninitialize();
     if (g_sdl_initialized) SDL_Quit();
