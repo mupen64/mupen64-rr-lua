@@ -8,6 +8,7 @@
 - Added scoped hotkeys (with Lua API).
 - Improved TASVideo widescreen support.
 - Added tooltips to the TASVideo config dialog.
+- Increased game refresh rate to match the monitor's when using TAS Video.
 
 ## 🐞 Bugfixes
 
