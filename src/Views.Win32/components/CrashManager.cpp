@@ -16,8 +16,8 @@
 
 #include <windows.h>
 #include <commctrl.h>
-#include <minidumpapiset.h>
-#include <Psapi.h>
+#include <dbghelp.h>
+#include <psapi.h>
 
 #include <Common/IOUtils.hpp>
 #include <Common.Views/App.hpp>
