@@ -297,6 +297,8 @@ static void build_impl()
     t1.join();
     t2.join();
 
+    std::erase_if(results, [](const SimpleROMInfo &entry) { return entry.path.empty(); });
+
     g_ctx.discovered_roms = std::move(results);
 
     g_main_ctx.dispatcher->invoke([] {
