@@ -12,11 +12,10 @@
 #include <windows.h>
 #include <windowsx.h>
 
-#include "TASVideo.hpp"
 #include "Resource.h"
+#include "N64.hpp"
 #include "GBI.hpp"
 
-using BuiltinTAS::TASVideo::g_plugin;
 
 INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -54,6 +53,6 @@ INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM
 
 uint32_t MicrocodeDialog::show()
 {
-    return DialogBox(
-        GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_MICROCODEDLG), g_plugin->main_window.hwnd(), MicrocodeDlgProc);
+    return DialogBox(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_MICROCODEDLG), graphics_plugin->main_window.hwnd(),
+        MicrocodeDlgProc);
 }

@@ -32,9 +32,10 @@
 
 static M64RRSpec::PtrProcessEvent g_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows g_mupenrr_video_get_windows_fn = nullptr;
-static M64RRSpec::PtrProcessDList g_mupenrr_process_dlist_fn = nullptr;
 static M64RRSpec::PtrProcessRDPList g_mupenrr_process_rdplist_fn = nullptr;
 static M64RRSpec::PtrReadVideo g_mupenrr_read_video_fn = nullptr;
+static M64RRSpec::PtrGetVideoSequence g_mupenrr_get_video_sequence_fn = nullptr;
+static M64RRSpec::PtrVerticalInterrupt g_mupenrr_vertical_interrupt_fn = nullptr;
 
 static M64RRSpec::PtrProcessEvent g_mupenrr_audio_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows g_mupenrr_audio_get_windows_fn = nullptr;
@@ -166,8 +167,9 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type
         }
         add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRGetMetadata));
         add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRProcessEvent));
-        add("M64RRProcessDList", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRProcessDList));
         add("M64RRReadVideo", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRReadVideo));
+        add("M64RRGetVideoSequence", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRGetVideoSequence));
+        add("M64RRVerticalInterrupt", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRVerticalInterrupt));
         add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::TASVideo::M64RRShowConfig));
         break;
     case Plugin::Type::Audio:
@@ -291,8 +293,6 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     init->dpc_register = g_main_ctx.core_ctx->dpc_register;
     init->dps_register = g_main_ctx.core_ctx->dps_register;
 
-    init->process_dlist = funcs.video_process_dlist;
-
     init->get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
     init->frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
     init->config_path = get_config_path;
@@ -344,8 +344,9 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 
         LOOKUP_MUPENRR_FN(g_mupenrr_video_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
         LOOKUP_MUPENRR_FN(g_mupenrr_video_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
-        LOOKUP_MUPENRR_FN(g_mupenrr_process_dlist_fn, M64RRSpec::PtrProcessDList, "M64RRProcessDList");
         LOOKUP_MUPENRR_FN(g_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
+        LOOKUP_MUPENRR_FN(g_mupenrr_get_video_sequence_fn, M64RRSpec::PtrGetVideoSequence, "M64RRGetVideoSequence");
+        LOOKUP_MUPENRR_FN(g_mupenrr_vertical_interrupt_fn, M64RRSpec::PtrVerticalInterrupt, "M64RRVerticalInterrupt");
 
         funcs.video_rom_open = []() {
             process_event_on_gui_thread(
@@ -359,9 +360,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
             process_event_on_gui_thread(
                 g_mupenrr_video_event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
-        funcs.video_process_dlist = []() {
-            if (g_mupenrr_process_dlist_fn) g_mupenrr_process_dlist_fn();
-        };
+        funcs.video_process_dlist = []() {}; // Zilmar RSP plugins require a callable ProcessDlistList.
         funcs.video_process_rdp_list = []() {
             if (g_mupenrr_process_rdplist_fn) g_mupenrr_process_rdplist_fn();
         };
@@ -375,6 +374,9 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
             };
             funcs.video_read_video = [](void **buffer) { g_mupenrr_read_video_fn(*buffer, nullptr, nullptr); };
         }
+        funcs.video_get_video_sequence = g_mupenrr_get_video_sequence_fn;
+        funcs.video_vertical_interrupt = g_mupenrr_vertical_interrupt_fn;
+        funcs.video_reads_on_demand = true;
         funcs.video_change_window = [](const auto &...) {};
         funcs.video_update_screen = [](const auto &...) {};
         funcs.video_move_screen = [](int32_t, int32_t) {};

@@ -12,7 +12,7 @@
 #include "gSP.hpp"
 #include "Types.hpp"
 #include "convert.hpp"
-#include "OpenGL.hpp"
+#include "DrawList.hpp"
 #include "CRC.hpp"
 #include "DepthBuffer.hpp"
 #include "VI.hpp"
@@ -25,6 +25,7 @@ gDPInfo gDP;
 
 void gDPSetOtherMode(u32 mode0, u32 mode1)
 {
+    DrawList_StateChanged();
     gDP.otherMode.h = mode0;
     gDP.otherMode.l = mode1;
 
@@ -47,6 +48,7 @@ void gDPSetOtherMode(u32 mode0, u32 mode1)
 
 void gDPSetPrimDepth(u16 z, u16 dz)
 {
+    DrawList_StateChanged();
     gDP.primDepth.z =
         std::min(1.0f, std::max(0.0f, (_FIXED2FLOAT(z, 15) - gSP.viewport.vtrans[2]) / gSP.viewport.vscale[2]));
     gDP.primDepth.deltaZ = dz;
@@ -56,6 +58,7 @@ void gDPSetPrimDepth(u16 z, u16 dz)
 
 void gDPPipelineMode(u32 mode)
 {
+    DrawList_StateChanged();
     gDP.otherMode.pipelineMode = mode;
 
     DebugMsg(L"gDPPipelineMode( %s );\n", PipelineModeText[gDP.otherMode.pipelineMode]);
@@ -63,6 +66,7 @@ void gDPPipelineMode(u32 mode)
 
 void gDPSetCycleType(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.cycleType = type;
 
     gDP.changed |= CHANGED_CYCLETYPE;
@@ -72,6 +76,7 @@ void gDPSetCycleType(u32 type)
 
 void gDPSetTexturePersp(u32 enable)
 {
+    DrawList_StateChanged();
     gDP.otherMode.texturePersp = enable;
 
     DebugMsg(L"gDPSetTexturePersp( %s );\n", TexturePerspText[gDP.otherMode.texturePersp]);
@@ -79,6 +84,7 @@ void gDPSetTexturePersp(u32 enable)
 
 void gDPSetTextureDetail(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureDetail = type;
 
     DebugMsg(L"gDPSetTextureDetail( %s );\n", TextureDetailText[gDP.otherMode.textureDetail]);
@@ -86,6 +92,7 @@ void gDPSetTextureDetail(u32 type)
 
 void gDPSetTextureLOD(u32 mode)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureLOD = mode;
 
     DebugMsg(L"gDPSetTextureLOD( %s );\n", TextureLODText[gDP.otherMode.textureLOD]);
@@ -93,6 +100,7 @@ void gDPSetTextureLOD(u32 mode)
 
 void gDPSetTextureLUT(u32 mode)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureLUT = mode;
 
     DebugMsg(L"gDPSetTextureLUT( %s );\n", TextureLUTText[gDP.otherMode.textureLUT]);
@@ -100,6 +108,7 @@ void gDPSetTextureLUT(u32 mode)
 
 void gDPSetTextureFilter(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureFilter = type;
 
     DebugMsg(L"gDPSetTextureFilter( %s );\n", TextureFilterText[gDP.otherMode.textureFilter]);
@@ -107,6 +116,7 @@ void gDPSetTextureFilter(u32 type)
 
 void gDPSetTextureConvert(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.textureConvert = type;
 
     DebugMsg(L"gDPSetTextureConvert( %s );\n", TextureConvertText[gDP.otherMode.textureConvert]);
@@ -114,6 +124,7 @@ void gDPSetTextureConvert(u32 type)
 
 void gDPSetCombineKey(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.combineKey = type;
 
     DebugMsg(L"gDPSetCombineKey( %s );\n", CombineKeyText[gDP.otherMode.combineKey]);
@@ -121,6 +132,7 @@ void gDPSetCombineKey(u32 type)
 
 void gDPSetColorDither(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.colorDither = type;
 
     DebugMsg(L"gDPSetColorDither( %s );\n", ColorDitherText[gDP.otherMode.colorDither]);
@@ -128,6 +140,7 @@ void gDPSetColorDither(u32 type)
 
 void gDPSetAlphaDither(u32 type)
 {
+    DrawList_StateChanged();
     gDP.otherMode.alphaDither = type;
 
     DebugMsg(L"gDPSetAlphaDither( %s );\n", AlphaDitherText[gDP.otherMode.alphaDither]);
@@ -135,6 +148,7 @@ void gDPSetAlphaDither(u32 type)
 
 void gDPSetAlphaCompare(u32 mode)
 {
+    DrawList_StateChanged();
     gDP.otherMode.alphaCompare = mode;
 
     gDP.changed |= CHANGED_ALPHACOMPARE;
@@ -144,6 +158,7 @@ void gDPSetAlphaCompare(u32 mode)
 
 void gDPSetDepthSource(u32 source)
 {
+    DrawList_StateChanged();
     gDP.otherMode.depthSource = source;
 
     DebugMsg(L"gDPSetDepthSource( %s );\n", DepthSourceText[gDP.otherMode.depthSource]);
@@ -151,6 +166,7 @@ void gDPSetDepthSource(u32 source)
 
 void gDPSetRenderMode(u32 mode1, u32 mode2)
 {
+    DrawList_StateChanged();
     gDP.otherMode.l &= 0x00000007;
     gDP.otherMode.l |= mode1 | mode2;
 
@@ -166,6 +182,7 @@ void gDPSetRenderMode(u32 mode1, u32 mode2)
 
 void gDPSetCombine(s32 muxs0, s32 muxs1)
 {
+    DrawList_StateChanged();
     gDP.combine.muxs0 = muxs0;
     gDP.combine.muxs1 = muxs1;
 
@@ -180,104 +197,8 @@ void gDPSetCombine(s32 muxs0, s32 muxs1)
         saAText[gDP.combine.saA1], sbAText[gDP.combine.sbA1], mAText[gDP.combine.mA1], aAText[gDP.combine.aA1]);
 }
 
-/*void RSP_UpdateColorImage()
-{
-    WORD *colorBuffer = (WORD*)&RDRAM[RDP.colorImage.address];
-    BYTE *frameBuffer = (BYTE*)malloc( OGL.width * OGL.height * 3 );
-    BYTE *framePixel;
-
-    int x, y, frameX, frameY, i;
-
-    glReadBuffer( GL_BACK );
-    glReadPixels( 0, 0, OGL.width - 1, OGL.height - 1, GL_RGB, GL_UNSIGNED_BYTE, frameBuffer );
-
-    i = 0;
-    for (y = 0; y < RDP.height; y++)
-    {
-        frameY = OGL.height - (y * OGL.scaleY);
-        for (x = 0; x < RDP.width; x++)
-        {
-            frameX = x * OGL.scaleX;
-            framePixel = &frameBuffer[(OGL.width * frameY + frameX) * 3];
-            colorBuffer[i^1] =	((framePixel[0] >> 3) << 11) |
-                                ((framePixel[1] >> 3) <<  6) |
-                                ((framePixel[2] >> 3) <<  1);
-            i++;
-        }
-    }
-    free( frameBuffer );
-}*/
-
-void gDPUpdateColorImage()
-{
-    return;
-    if ((gDP.colorImage.size == G_IM_SIZ_16b) && (gDP.colorImage.format == G_IM_FMT_RGBA))
-    {
-        auto frameBuffer = (u16 *)malloc(gDP.colorImage.width * OGL.scaleX * gDP.colorImage.height * OGL.scaleY * 2);
-        auto colorImage = (u16 *)&RDRAM[gDP.colorImage.address];
-        u32 frameX, frameY;
-        u32 i = 0;
-
-        glReadBuffer(GL_BACK);
-        glReadPixels(0, OGL.height - gDP.colorImage.height * OGL.scaleY, gDP.colorImage.width * OGL.scaleX,
-            gDP.colorImage.height * OGL.scaleY, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, frameBuffer);
-
-        for (u32 y = 0; y < gDP.colorImage.height; y++)
-        {
-            frameY = (gDP.colorImage.height - 1) * OGL.scaleY - y * OGL.scaleY;
-            for (u32 x = 0; x < gDP.colorImage.width; x++)
-            {
-                frameX = x * OGL.scaleX;
-                colorImage[i ^ 1] = frameBuffer[(u32)(gDP.colorImage.width * OGL.scaleX) * frameY + frameX];
-
-                i++;
-            }
-        }
-
-        free(frameBuffer);
-    }
-    else if ((gDP.colorImage.size == G_IM_SIZ_8b) && (gDP.colorImage.format == G_IM_FMT_I))
-    {
-        auto frameBuffer = (u8 *)malloc(gDP.colorImage.width * OGL.scaleX * gDP.colorImage.height * OGL.scaleY);
-        auto colorImage = (u8 *)&RDRAM[gDP.colorImage.address];
-        u32 frameX, frameY;
-        u32 i = 0;
-
-        glReadPixels(0, OGL.height - gDP.colorImage.height * OGL.scaleY, gDP.colorImage.width * OGL.scaleX,
-            gDP.colorImage.height * OGL.scaleY, GL_LUMINANCE, GL_UNSIGNED_BYTE, frameBuffer);
-
-        for (u32 y = 0; y < gDP.colorImage.height; y++)
-        {
-            frameY = (gDP.colorImage.height - 1) * OGL.scaleY - y * OGL.scaleY;
-            for (u32 x = 0; x < gDP.colorImage.width; x++)
-            {
-                frameX = x * OGL.scaleX;
-                colorImage[i ^ 3] = frameBuffer[(u32)(gDP.colorImage.width * OGL.scaleX) * frameY + frameX];
-
-                i++;
-            }
-        }
-
-        free(frameBuffer);
-    }
-}
-
 void gDPSetColorImage(u32 format, u32 size, u32 width, u32 address)
 {
-    /*	if (gDP.colorImage.changed &&
-    //		(gDP.colorImage.address != gDP.depthImageAddress) &&
-            (gDP.colorImage.address != RSP_SegmentToPhysical( address )))
-        {
-            gDPUpdateColorImage();
-            OGL_ClearDepthBuffer();
-            gDP.colorImage.changed = FALSE;
-            gDP.colorImage.height = 1;
-        }*/
-
-    /*	for (int i = 0; i < (gDP.colorImage.width * gDP.colorImage.height ) << gDP.colorImage.size >> 1; i++)
-        {
-            RDRAM[gDP.colorImage.address + i] = 0;
-        }*/
     address = RSP_SegmentToPhysical(address);
 
     if (gDP.colorImage.address != address)
@@ -301,6 +222,7 @@ void gDPSetColorImage(u32 format, u32 size, u32 width, u32 address)
 
 void gDPSetTextureImage(u32 format, u32 size, u32 width, u32 address)
 {
+    DrawList_StateChanged();
     gDP.textureImage.format = format;
     gDP.textureImage.size = size;
     gDP.textureImage.width = width;
@@ -314,12 +236,13 @@ void gDPSetTextureImage(u32 format, u32 size, u32 width, u32 address)
 void gDPSetDepthImage(u32 address)
 {
     //	if (address != gDP.depthImageAddress)
-    //		OGL_ClearDepthBuffer();
+    //		Draw_Control(DrawControl::ClearDepth);
 
     DepthBuffer_SetBuffer(RSP_SegmentToPhysical(address));
 
-    if (depthBuffer.current->cleared) OGL_ClearDepthBuffer();
+    if (depthBuffer.current->cleared) Draw_Control(DrawControl::ClearDepth);
 
+    DrawList_StateChanged();
     gDP.depthImageAddress = RSP_SegmentToPhysical(address);
 
     DebugMsg(L"gDPSetDepthImage( 0x%08X );\n", gDP.depthImageAddress);
@@ -327,6 +250,7 @@ void gDPSetDepthImage(u32 address)
 
 void gDPSetEnvColor(u32 r, u32 g, u32 b, u32 a)
 {
+    DrawList_StateChanged();
     gDP.envColor.r = r * 0.0039215689f;
     gDP.envColor.g = g * 0.0039215689f;
     gDP.envColor.b = b * 0.0039215689f;
@@ -339,6 +263,7 @@ void gDPSetEnvColor(u32 r, u32 g, u32 b, u32 a)
 
 void gDPSetBlendColor(u32 r, u32 g, u32 b, u32 a)
 {
+    DrawList_StateChanged();
     gDP.blendColor.r = r * 0.0039215689f;
     gDP.blendColor.g = g * 0.0039215689f;
     gDP.blendColor.b = b * 0.0039215689f;
@@ -349,6 +274,7 @@ void gDPSetBlendColor(u32 r, u32 g, u32 b, u32 a)
 
 void gDPSetFogColor(u32 r, u32 g, u32 b, u32 a)
 {
+    DrawList_StateChanged();
     gDP.fogColor.r = r * 0.0039215689f;
     gDP.fogColor.g = g * 0.0039215689f;
     gDP.fogColor.b = b * 0.0039215689f;
@@ -361,6 +287,7 @@ void gDPSetFogColor(u32 r, u32 g, u32 b, u32 a)
 
 void gDPSetFillColor(u32 c)
 {
+    DrawList_StateChanged();
     gDP.fillColor.r = _SHIFTR(c, 11, 5) * 0.032258064f;
     gDP.fillColor.g = _SHIFTR(c, 6, 5) * 0.032258064f;
     gDP.fillColor.b = _SHIFTR(c, 1, 5) * 0.032258064f;
@@ -374,6 +301,7 @@ void gDPSetFillColor(u32 c)
 
 void gDPSetPrimColor(u32 m, u32 l, u32 r, u32 g, u32 b, u32 a)
 {
+    DrawList_StateChanged();
     gDP.primColor.m = m;
     gDP.primColor.l = l * 0.0039215689f;
     gDP.primColor.r = r * 0.0039215689f;
@@ -389,6 +317,7 @@ void gDPSetPrimColor(u32 m, u32 l, u32 r, u32 g, u32 b, u32 a)
 void gDPSetTile(u32 format, u32 size, u32 line, u32 tmem, u32 tile, u32 palette, u32 cmt, u32 cms, u32 maskt, u32 masks,
     u32 shiftt, u32 shifts)
 {
+    DrawList_StateChanged();
     if (((size == G_IM_SIZ_4b) || (size == G_IM_SIZ_8b)) && (format == G_IM_FMT_RGBA)) format = G_IM_FMT_CI;
 
     gDP.tiles[tile].format = format;
@@ -414,6 +343,7 @@ void gDPSetTile(u32 format, u32 size, u32 line, u32 tmem, u32 tile, u32 palette,
 
 void gDPSetTileSize(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 {
+    DrawList_StateChanged();
     gDP.tiles[tile].uls = _SHIFTR(uls, 2, 10);
     gDP.tiles[tile].ult = _SHIFTR(ult, 2, 10);
     gDP.tiles[tile].lrs = _SHIFTR(lrs, 2, 10);
@@ -483,6 +413,7 @@ void gDPLoadTile(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 
     gDP.textureMode = TEXTUREMODE_NORMAL;
     gDP.loadType = LOADTYPE_TILE;
+    DrawList_TmemWritten(gDP.loadTile->tmem, gDP.loadTile->tmem + (height - 1) * line + std::max(line, (bpl + 7) / 8));
     gDP.changed |= CHANGED_TMEM;
 
     DebugMsg(L"gDPLoadTile( %i, %i, %i, %i, %i );\n", tile, gDP.loadTile->uls, gDP.loadTile->ult, gDP.loadTile->lrs,
@@ -532,6 +463,7 @@ void gDPLoadBlock(u32 tile, u32 uls, u32 ult, u32 lrs, u32 dxt)
 
     gDP.textureMode = TEXTUREMODE_NORMAL;
     gDP.loadType = LOADTYPE_BLOCK;
+    DrawList_TmemWritten(gDP.loadTile->tmem, u32(dest - TMEM) + (dxt > 0 ? 0 : (bytes + 7) / 8));
     gDP.changed |= CHANGED_TMEM;
 
     DebugMsg(L"gDPLoadBlock( %i, %i, %i, %i, %i );\n", tile, uls, ult, lrs, dxt);
@@ -581,6 +513,7 @@ void gDPLoadTLUT(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 
     gDP.paletteCRC256 = CRC_Calculate(0xFFFFFFFF, gDP.paletteCRC16, 64);
 
+    DrawList_TmemWritten(tmem, tmem + count);
     gDP.changed |= CHANGED_TMEM;
 
     DebugMsg(L"gDPLoadTLUT( %i, %i, %i, %i, %i );\n", tile, gDP.tiles[tile].uls, gDP.tiles[tile].ult,
@@ -589,17 +522,7 @@ void gDPLoadTLUT(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 
 void gDPSetScissor(u32 mode, f32 ulx, f32 uly, f32 lrx, f32 lry)
 {
-    const auto is_sm64_border_scissor =
-        (ulx == 0 && uly == 0 && lrx == 320 && lry == 240) || (ulx == 0 && uly == 8 && lrx == 320 && lry == 232);
-
-    if (OGL.ignoreScissor && is_sm64_border_scissor)
-    {
-        ulx = 0;
-        uly = 0;
-        lrx = 320;
-        lry = 240;
-    }
-
+    DrawList_StateChanged();
     gDP.scissor.mode = mode;
     gDP.scissor.ulx = ulx;
     gDP.scissor.uly = uly;
@@ -628,27 +551,13 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
     if (gDP.depthImageAddress == gDP.colorImage.address ||
         (gDP.otherMode.cycleType == G_CYC_FILL && fill_color == 0x01010100))
     {
-        OGL_ClearDepthBuffer();
+        Draw_Control(DrawControl::ClearDepth);
         DepthBuffer *buffer = DepthBuffer_FindBuffer(gDP.colorImage.address);
         if (buffer) buffer->cleared = TRUE;
         return;
     }
 
-    const auto is_sm64_border_rect =
-        (ulx == 0 && uly == 0 && lrx == 320 && lry == 8) || (ulx == 0 && uly == 232 && lrx == 320 && lry == 240);
-    const auto ignore = OGL.ignoreScissor && is_sm64_border_rect;
-
-    // SM64 fills only the area between the borders during screen transitions.
-    if (OGL.ignoreScissor && gDP.otherMode.cycleType == G_CYC_FILL && ulx == 0 && uly == 8 && lrx == 320 && lry == 232)
-    {
-        uly = 0;
-        lry = 240;
-    }
-
-    // We still need to set the correct gdp state even if we're ignoring the draw
-    if (!ignore)
-        OGL_DrawRect(
-            ulx, uly, lrx, lry, (gDP.otherMode.cycleType == G_CYC_FILL) ? &gDP.fillColor.r : &gDP.blendColor.r);
+    Draw_Rect(ulx, uly, lrx, lry, (gDP.otherMode.cycleType == G_CYC_FILL) ? &gDP.fillColor.r : &gDP.blendColor.r);
 
     if (depthBuffer.current) depthBuffer.current->cleared = FALSE;
     gDP.colorImage.changed = TRUE;
@@ -659,6 +568,7 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
 
 void gDPSetConvert(s32 k0, s32 k1, s32 k2, s32 k3, s32 k4, s32 k5)
 {
+    DrawList_StateChanged();
     gDP.convert.k0 = k0;
     gDP.convert.k1 = k1;
     gDP.convert.k2 = k2;
@@ -669,6 +579,7 @@ void gDPSetConvert(s32 k0, s32 k1, s32 k2, s32 k3, s32 k4, s32 k5)
 
 void gDPSetKeyR(u32 cR, u32 sR, u32 wR)
 {
+    DrawList_StateChanged();
     gDP.key.center.r = cR * 0.0039215689f;
     ;
     gDP.key.scale.r = sR * 0.0039215689f;
@@ -679,6 +590,7 @@ void gDPSetKeyR(u32 cR, u32 sR, u32 wR)
 
 void gDPSetKeyGB(u32 cG, u32 sG, u32 wG, u32 cB, u32 sB, u32 wB)
 {
+    DrawList_StateChanged();
     gDP.key.center.g = cG * 0.0039215689f;
     ;
     gDP.key.scale.g = sG * 0.0039215689f;
@@ -702,6 +614,7 @@ void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f3
         lry += 1.0f;
     }
 
+    DrawList_StateChanged();
     gSP.textureTile[0] = &gDP.tiles[tile];
     gSP.textureTile[1] = &gDP.tiles[tile < 7 ? tile + 1 : tile];
 
@@ -731,8 +644,9 @@ void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f3
         else
             std::swap(uly, lry);
     }
-    OGL_DrawTexturedRect(ulx, uly, lrx, lry, s, t, lrs, lrt, flip);
+    Draw_TexturedRect(ulx, uly, lrx, lry, s, t, lrs, lrt, flip);
 
+    DrawList_StateChanged();
     gSP.textureTile[0] = &gDP.tiles[gSP.texture.tile];
     gSP.textureTile[1] = &gDP.tiles[gSP.texture.tile < 7 ? gSP.texture.tile + 1 : gSP.texture.tile];
 

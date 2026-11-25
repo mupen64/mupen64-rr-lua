@@ -25,6 +25,7 @@
 #include <memory>
 #include <plugin/Plugin.hpp>
 
+#include <atomic>
 #include <latch>
 
 #include <Common.Views/Config.hpp>
@@ -155,8 +156,48 @@ void PluginUtil::read_video(void *buffer)
     g_plugin_funcs.video_read_video(&buffer);
 }
 
+std::optional<uint64_t> PluginUtil::get_video_sequence()
+{
+    if (!g_plugin_funcs.video_get_video_sequence) return std::nullopt;
+    return g_plugin_funcs.video_get_video_sequence();
+}
+
+static std::atomic<bool> g_screen_invalidated{true};
+// Whether the video is read on demand from the render thread rather than on VI. Only false for ZE video plugins.
+static std::atomic<bool> g_video_on_demand{false};
+// Held while reading the video on demand, so that the video plugin isn't stopped mid-read.
+static std::mutex g_refresh_mutex;
+
+void PluginUtil::invalidate_screen()
+{
+    g_screen_invalidated = true;
+}
+
+bool PluginUtil::video_reads_on_demand()
+{
+    return g_video_on_demand;
+}
+
+void PluginUtil::refresh_screen()
+{
+    std::lock_guard lock(g_refresh_mutex);
+    if (g_video_on_demand) MGECompositor::update_screen();
+}
+
 void PluginUtil::update_screen()
 {
+    if (g_plugin_funcs.video_vertical_interrupt) g_plugin_funcs.video_vertical_interrupt();
+
+    if (g_video_on_demand) return;
+
+    if (g_config.core.render_throttling)
+    {
+        const auto core = g_main_ctx.core_ctx;
+        const bool needs_update = g_screen_invalidated || core->vr_get_frame_advance() == 1;
+        if (!needs_update || core->vr_get_frame_skipped()) return;
+    }
+    g_screen_invalidated = false;
+
     if (PluginUtil::mge_available())
         MGECompositor::update_screen();
     else
@@ -345,7 +386,6 @@ bool PluginUtil::mge_available()
 
 void PluginUtil::start_plugins()
 {
-    g_main_ctx.core.video_process_dlist = g_plugin_funcs.video_process_dlist;
     g_main_ctx.core.video_process_rdp_list = g_plugin_funcs.video_process_rdp_list;
     g_main_ctx.core.video_show_cfb = g_plugin_funcs.video_show_cfb;
     g_main_ctx.core.video_vi_status_changed = g_plugin_funcs.video_vi_status_changed;
@@ -389,11 +429,17 @@ void PluginUtil::start_plugins()
     g_plugin_funcs.input_rom_open();
     g_plugin_funcs.audio_rom_open();
 
+    g_video_on_demand = mge_available() && g_plugin_funcs.video_reads_on_demand;
+
     start_audio_thread();
 }
 
 void PluginUtil::stop_plugins()
 {
+    {
+        std::lock_guard lock(g_refresh_mutex);
+        g_video_on_demand = false;
+    }
     g_plugin_funcs.video_rom_closed();
     g_plugin_funcs.audio_rom_closed();
     g_plugin_funcs.input_rom_closed();

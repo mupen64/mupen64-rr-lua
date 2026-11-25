@@ -89,17 +89,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,182,169,50,14
 END
 
-IDD_MICROCODEDLG DIALOGEX 0, 0, 226, 131
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Video Unknown Microcode"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,169,110,50,14
-    COMBOBOX        IDC_MICROCODE,46,98,87,80,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Microcode:",IDC_STATIC,7,100,36,8
-    LTEXT           "The game's microcode couldn't be automatically detected. Choose the closest matching microcode to continue graphics emulation.",IDC_STATIC,7,7,212,28
-    EDITTEXT        IDC_TEXTBOX,7,39,212,55,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY
-END
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -118,13 +108,6 @@ BEGIN
         BOTTOMMARGIN, 183
     END
 
-    IDD_MICROCODEDLG, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 219
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 124
-    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -139,10 +122,6 @@ BEGIN
     0
 END
 
-IDD_MICROCODEDLG AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

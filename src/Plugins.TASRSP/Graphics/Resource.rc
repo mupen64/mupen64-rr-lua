@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "Resource.h"
+#include <windows.h>
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+IDD_MICROCODEDLG DIALOGEX 0, 0, 226, 131
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Unknown Graphics Microcode"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,169,110,50,14
+    COMBOBOX        IDC_MICROCODE,46,98,87,80,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Microcode:",IDC_STATIC,7,100,36,8
+    LTEXT           "The game's microcode couldn't be automatically detected. Choose the closest matching microcode to continue graphics emulation.",IDC_STATIC,7,7,212,28
+    EDITTEXT        IDC_TEXTBOX,7,39,212,55,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY
+END

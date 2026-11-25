@@ -138,9 +138,6 @@ void Plugin::initiate(CoreCtx *ctx, CoreParams &params, const std::function<void
 
     m_init_data->rcp_counter = ctx->rcp_counter;
 
-    auto *video_process_dlist_ptr = (M64RRSpec::PtrProcessDList)load_symbol("M64RRProcessDList");
-    m_init_data->process_dlist = video_process_dlist_ptr;
-
     m_init_data->get_effective_speed_mode = []() { return EmuContext::rawContext()->vr_get_effective_speed_mode(); };
     m_init_data->frame_skipped = []() { return EmuContext::rawContext()->vr_get_frame_skipped(); };
     m_init_data->config_path = get_config_path;
@@ -164,7 +161,6 @@ void Plugin::bind_functions(CoreParams &params)
     switch (m_type)
     {
     case M64RRSpec::PluginType::Video:
-        load_core_function<M64RRSpec::PtrProcessDList>(*this, "M64RRProcessDList", params.video_process_dlist);
         break;
     case M64RRSpec::PluginType::Audio:
         load_core_function<M64RRSpec::PtrAIDacrateChanged>(
@@ -206,8 +202,7 @@ void *Plugin::load_symbol(const char *symbol) const
 }
 
 PluginSet::PluginSet(Plugin &&video, Plugin &&audio, Plugin &&input, Plugin &&rsp)
-    : m_video(std::move(video)), m_audio(std::move(audio)), m_input(std::move(input)), m_rsp(std::move(rsp)),
-      m_video_process_dlist((M64RRSpec::PtrProcessDList)m_video.load_symbol("M64RRProcessDList"))
+    : m_video(std::move(video)), m_audio(std::move(audio)), m_input(std::move(input)), m_rsp(std::move(rsp))
 {
 }
 
@@ -244,9 +239,7 @@ void PluginSet::initiate_plugins(CoreCtx *ctx, CoreParams &params)
     });
 
     // RSP init
-    m_rsp.initiate(ctx, params, [&](M64RRSpec::PluginInit *init) {
-        init->process_dlist = (M64RRSpec::PtrProcessDList)m_video.load_symbol("M64RRProcessDList");
-    });
+    m_rsp.initiate(ctx, params);
 }
 
 void PluginSet::emu_started(CoreParams &params)

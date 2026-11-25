@@ -5,6 +5,7 @@
  */
 
 #include "Common.hpp"
+#include "DrawList.hpp"
 #include "F3D.hpp"
 #include "RSP.hpp"
 #include "Types.hpp"
@@ -242,6 +243,7 @@ void F3D_SetOtherMode_H(u32 w0, u32 w1)
         u32 length = _SHIFTR(w0, 0, 8);
         u32 mask = ((1 << length) - 1) << shift;
 
+        DrawList_StateChanged();
         gDP.otherMode.h &= ~mask;
         gDP.otherMode.h |= w1 & mask;
 
@@ -268,6 +270,7 @@ void F3D_SetOtherMode_L(u32 w0, u32 w1)
         u32 length = _SHIFTR(w0, 0, 8);
         u32 mask = ((1 << length) - 1) << shift;
 
+        DrawList_StateChanged();
         gDP.otherMode.l &= ~mask;
         gDP.otherMode.l |= w1 & mask;
 

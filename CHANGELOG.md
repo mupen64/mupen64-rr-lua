@@ -8,6 +8,7 @@
 - Added scoped hotkeys (with Lua API).
 - Improved TASVideo widescreen support.
 - Added tooltips to the TASVideo config dialog.
+- Increased game refresh rate to match the monitor's when using TAS Video.
 
 ## 🐞 Bugfixes
 
@@ -25,15 +26,14 @@
 - Fixed inaccurate flipped rectangle rendering in TASVideo.
 - Fixed certain text in Super Mario 64 (PAL) appearing garbled with TASVideo.
 - Fixed scrolling dialogs having their text overflow due to improper scissor handling with TASVideo.
-- Fixed TASVideo SM64 black bars hack sometimes failing during fade transitions.  
+- Fixed TASVideo SM64 black bars hack sometimes failing during fade transitions.
 - Potentially fixed spurious swapchain initialization errors on ROM start.
 
 ## ⚡ Performance
 
-- Improved TASVideo performance.
+- Greatly improved emulation, TAS Video plugin, and graphics presentation performance.
 - Improved Pure Interpreter core performance when breakpoints are present.
 - Improved statusbar performance.
-- Improved game graphics presentation performance. 
 - Slightly improved TASRSP performance.
 
 # 1.5.0-8

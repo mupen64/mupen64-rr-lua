@@ -27,6 +27,7 @@
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_init.h>
 #include <array>
+#include <atomic>
 #include <cctype>
 #include <clocale>
 #include <cstddef>
@@ -37,6 +38,7 @@
 #include <format>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <plugin/Plugin.hpp>
@@ -79,7 +81,10 @@ MainContext g_main_ctx{};
 static bool g_sdl_initialized = false;
 
 constexpr UINT_PTR sdl_timer_id = 1;
-MMRESULT g_ui_timer;
+constexpr UINT render_stopped_message = WM_USER + 27;
+constexpr UINT default_refresh_rate = 60;
+std::jthread g_render_thread;
+static std::atomic_bool g_refresh_rate_invalidated{true};
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
 DWORD g_ui_thread_id{};
@@ -670,6 +675,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         return 0;
     }
     case WM_MOVE: {
+        g_refresh_rate_invalidated = true;
         PluginUtil::move_screen(wParam, lParam);
 
         if (IsIconic(g_main_ctx.hwnd))
@@ -689,6 +695,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_SIZE: {
+        g_refresh_rate_invalidated = true;
         SendMessage(Statusbar::hwnd(), WM_SIZE, 0, 0);
         Toasts::relayout();
         RECT rect{};
@@ -715,6 +722,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         break;
     }
+    case WM_DISPLAYCHANGE:
+        g_refresh_rate_invalidated = true;
+        return DefWindowProc(hwnd, Message, wParam, lParam);
     case WM_FOCUS_MAIN_WINDOW:
         SetFocus(g_main_ctx.hwnd);
         break;
@@ -752,9 +762,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             if (realm->main_window && !realm->main_window->close()) realm->stop();
         // This needs the UI thread to still be responsive.
         LuaRendererManager::instance().stop();
-        DestroyWindow(hwnd);
-        break;
+        // Keep pumping messages while DXGI finishes using the compositor window.
+        g_render_thread.request_stop();
+        return 0;
     }
+    case render_stopped_message:
+        DestroyWindow(hwnd);
+        return 0;
     case WM_CLOSE:
         if (!confirm_user_exit()) return 0;
 
@@ -829,9 +843,49 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
+UINT Main::screen_refresh_rate()
 {
-    g_main_ctx.core_ctx->vr_invalidate_visuals();
+    static std::mutex mutex;
+    static UINT refresh_rate = default_refresh_rate;
+    const std::lock_guard lock(mutex);
+    if (!g_refresh_rate_invalidated.exchange(false)) return refresh_rate;
+
+    const HMONITOR monitor = MonitorFromWindow(g_main_ctx.hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFOEX monitor_info{};
+    monitor_info.cbSize = sizeof(monitor_info);
+    DEVMODE display_mode{};
+    display_mode.dmSize = sizeof(display_mode);
+
+    refresh_rate = default_refresh_rate;
+    if (monitor && GetMonitorInfo(monitor, &monitor_info) &&
+        EnumDisplaySettings(monitor_info.szDevice, ENUM_CURRENT_SETTINGS, &display_mode) &&
+        display_mode.dmDisplayFrequency > 1)
+        refresh_rate = display_mode.dmDisplayFrequency;
+
+    return refresh_rate;
+}
+
+static void render_thread_proc(const std::stop_token &stop)
+{
+    using clock = std::chrono::steady_clock;
+
+    auto next = clock::now();
+    while (!stop.stop_requested())
+    {
+        g_main_ctx.core_ctx->vr_invalidate_visuals();
+        PluginUtil::invalidate_screen();
+        PluginUtil::refresh_screen();
+        MGECompositor::present();
+
+        const auto refresh_rate =
+            PluginUtil::video_reads_on_demand() ? Main::screen_refresh_rate() : default_refresh_rate;
+        next += std::chrono::duration_cast<clock::duration>(std::chrono::duration<double>(1.0 / refresh_rate));
+        next = std::max(next, clock::now());
+        std::this_thread::sleep_until(next);
+    }
+
+    MGECompositor::release_render_resources();
+    PostMessage(g_main_ctx.hwnd, render_stopped_message, 0, 0);
 }
 
 static CoreResult init_core()
@@ -840,6 +894,7 @@ static CoreResult init_core()
     // g_main_ctx.core.io_service = &g_main_ctx.io_service;
     g_main_ctx.core.callbacks = {};
     g_main_ctx.core.callbacks.vi = [](const auto &...) {
+        PluginUtil::update_screen();
         LuaRealmManager::instance().call_interval();
         LuaRealmManager::instance().call_vi();
         if (CaptureManager::is_capturing()) CaptureManager::vi();
@@ -940,7 +995,6 @@ static CoreResult init_core()
     g_main_ctx.core.show_notification = [](const char *str, const char *title, CoreMessageTone tone) {
         DialogService::show_notification(str, title ? std::make_optional(title) : std::nullopt, tone);
     };
-    g_main_ctx.core.update_screen = PluginUtil::update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
     g_main_ctx.core.find_available_rom = RomBrowser::find_available_rom;
     g_main_ctx.core.mge_available = PluginUtil::mge_available;
@@ -1185,13 +1239,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::broadcast<Messenger::Message::AppReady>();
     Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 
-    g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
-    if (!g_ui_timer)
-    {
-        DialogService::show_dialog("timeSetEvent call failed. Verify that your system supports multimedia timers.",
-            "Error", CoreMessageTone::Error);
-        return -1;
-    }
+    timeBeginPeriod(1);
+    g_render_thread = std::jthread(render_thread_proc);
 
     WinDarkMode::attach(g_main_ctx.hwnd);
 
@@ -1209,7 +1258,9 @@ quit:
     g_main_ctx.exiting = true;
     LuaDialog::close_all();
 
-    timeKillEvent(g_ui_timer);
+    g_render_thread.request_stop();
+    g_render_thread.join();
+    timeEndPeriod(1);
     Gdiplus::GdiplusShutdown(gdi_plus_token);
     CoUninitialize();
     if (g_sdl_initialized) SDL_Quit();

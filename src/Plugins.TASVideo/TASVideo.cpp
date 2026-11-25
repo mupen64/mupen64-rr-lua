@@ -8,7 +8,7 @@
 #include "Core/Graphics.hpp"
 #include "Core/Plugin.hpp"
 #include "OpenGL.hpp"
-#include "RSP.hpp"
+#include "Renderer.hpp"
 #include "Config.hpp"
 #include <cstdint>
 #include <cwchar>
@@ -29,18 +29,10 @@ static void log_shim(const wchar_t *str)
 M64RRSpec::PluginInit *g_plugin;
 const M64RRSpec::WindowingAPI *g_wsi;
 
-static bool init_rsp_thread()
+static void start_renderer()
 {
-    if (RSP.thread)
-    {
-        RSP_SendMessage(RSPMSG_START);
-        return true;
-    }
-
-    RSP.halt = FALSE;
-    RSP.thread = std::make_unique<std::jthread>(RSP_ThreadProc);
-    RSP_SendMessage(RSPMSG_START);
-    return true;
+    if (!renderer.thread) renderer.thread = std::make_unique<std::jthread>(Render_ThreadProc);
+    Render_SendMessage(RENDER_START);
 }
 
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
@@ -79,28 +71,24 @@ EXPORT void CALL M64RRProcessEvent(M64RRSpec::Event event)
         init_count--;
         if (init_count > 0) break;
 
-        if (!RSP.thread) break;
-        if (RSP.busy) RSP.halt = TRUE;
-        RSP_SendMessage(RSPMSG_CLOSE);
-        RSP.thread->join();
-        RSP.thread.reset();
+        if (!renderer.thread) break;
+        draw_sink = nullptr;
+        Render_SendMessage(RENDER_CLOSE);
+        renderer.thread->join();
+        renderer.thread.reset();
         break;
     case M64RRSpec::Event::Type::RomOpened:
-        init_rsp_thread();
+        start_renderer();
+        renderer.pending.clear();
+        draw_sink = Render_Submit;
         break;
     case M64RRSpec::Event::Type::RomClosed:
-        RSP_SendMessage(RSPMSG_BLACKOUT);
+        draw_sink = nullptr;
+        renderer.pending.clear();
+        if (renderer.thread) Render_SendMessage(RENDER_BLACKOUT);
         break;
     default:
         break;
-    }
-}
-
-EXPORT void CALL M64RRProcessDList(void)
-{
-    if (RSP.thread)
-    {
-        RSP_SendMessage(RSPMSG_PROCESSDLIST);
     }
 }
 
@@ -108,14 +96,17 @@ EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height)
 {
     if (width) *width = OGL.width;
     if (height) *height = OGL.height;
-    if (buffer)
-    {
-        gCapturedPixels = buffer;
-        if (RSP.thread)
-        {
-            RSP_SendMessage(RSPMSG_READPIXELS);
-        }
-    }
+    if (buffer && renderer.thread) Render_SendMessage(RENDER_READPIXELS, buffer);
+}
+
+EXPORT uint64_t CALL M64RRGetVideoSequence()
+{
+    return renderer.sequence.load();
+}
+
+EXPORT void CALL M64RRVerticalInterrupt()
+{
+    Render_VerticalInterrupt();
 }
 
 #ifndef _WIN32

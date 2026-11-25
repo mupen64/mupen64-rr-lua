@@ -27,6 +27,12 @@ void create(HWND hwnd);
  */
 void update_screen();
 
+/** \brief Presents the latest frame. Called by the render thread. */
+void present();
+
+/** \brief Releases D3D resources on the render thread before the control is destroyed. */
+void release_render_resources();
+
 /**
  * \brief Returns the handle of the MGE control.
  */

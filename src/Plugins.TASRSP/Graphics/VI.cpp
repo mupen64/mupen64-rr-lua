@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include "GBI.hpp"
 #include "VI.hpp"
 #include "N64.hpp"
+#include "Common.hpp"
 #include "Types.hpp"
 #include "gSP.hpp"
 
@@ -33,16 +33,4 @@ void VI_UpdateSize()
 
     if (VI.width == 0.0f) VI.width = 320.0f;
     if (VI.height == 0.0f) VI.height = 240.0f;
-}
-
-void VI_UpdateScreen()
-{
-    glFinish();
-
-    if (gSP.changed & CHANGED_COLORBUFFER)
-    {
-        gSP.changed &= ~CHANGED_COLORBUFFER;
-    }
-
-    glFinish();
 }

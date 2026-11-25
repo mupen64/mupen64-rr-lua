@@ -261,11 +261,6 @@ class EmuContext : public QQuickItem
      */
     void gfxRequestSize(uint32_t width, uint32_t height);
 
-    /**
-     * @brief Requests that the video output be updated.
-     */
-    void updateScreen();
-
     // Dialog service
     // ============================================
 
@@ -314,6 +309,7 @@ class EmuContext : public QQuickItem
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
+    M64RRSpec::PtrVerticalInterrupt m_fn_vertical_interrupt{};
 
     QPointer<RomManager> m_rom_manager;
 

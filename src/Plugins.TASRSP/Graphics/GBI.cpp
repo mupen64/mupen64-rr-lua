@@ -17,6 +17,7 @@
 #endif
 
 #include "Common.hpp"
+#include "DrawList.hpp"
 #include "RDP.hpp"
 #include "F3D.hpp"
 #include "F3DEX.hpp"
@@ -32,7 +33,8 @@
 #include "F3DEX3.hpp"
 #include "Types.hpp"
 #include "CRC.hpp"
-#ifdef _WIN32
+#include "convert.hpp"
+#ifdef TASRSP_MICROCODE_DIALOG
 #include "MicrocodeDialog_Win32.hpp"
 #endif
 
@@ -102,10 +104,6 @@ GBIInfo GBI;
 void GBI_Unknown(u32 w0, u32 w1)
 {
     DebugMsg(L"UNKNOWN GBI COMMAND 0x%02X", _SHIFTR(w0, 24, 8));
-}
-
-void GBI_Nop(u32 w0, u32 w1)
-{
 }
 
 MicrocodeInfo *GBI_AddMicrocode()
@@ -197,12 +195,12 @@ MicrocodeInfo *GBI_DetectMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
     unswap_copy(&RDRAM[uc_dstart & 0x1FFFFFFF], (uint8_t *)uc_data, 2048);
     strcpy_s(uc_str, sizeof(uc_str), "Not Found");
 
-    for (u32 i = 0; i < 2048; i++)
+    for (u32 i = 0; i + 2 < sizeof(uc_data); i++)
     {
         if ((uc_data[i] == 'R') && (uc_data[i + 1] == 'S') && (uc_data[i + 2] == 'P'))
         {
             u32 j = 0;
-            while (uc_data[i + j] > 0x0A)
+            while (i + j < sizeof(uc_data) && j < sizeof(uc_str) - 1 && uc_data[i + j] > 0x0A)
             {
                 uc_str[j] = uc_data[i + j];
                 j++;
@@ -277,7 +275,7 @@ MicrocodeInfo *GBI_DetectMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
         }
     }
 
-#ifdef _WIN32
+#ifdef TASRSP_MICROCODE_DIALOG
     current->type = MicrocodeDialog::show();
 #else
     current->type = NONE;
@@ -310,6 +308,7 @@ void GBI_MakeCurrent(MicrocodeInfo *current)
     {
         for (int i = 0; i <= 0xFF; i++) GBI.cmd[i] = GBI_Unknown;
 
+        DrawList_StateChanged();
         RDP_Init();
 
         switch (current->type)
@@ -351,28 +350,6 @@ void GBI_MakeCurrent(MicrocodeInfo *current)
             F3DEX3_Init();
             break;
         }
-
-        for (int i = 0; i <= 0xFF; i++)
-        {
-            GBI.cmd_headless[i] = GBI.cmd[i];
-        }
-
-        GBI.cmd_headless[G_TRI1] = GBI_Nop;
-        GBI.cmd_headless[G_TRI2] = GBI_Nop;
-        GBI.cmd_headless[G_TRI4] = GBI_Nop;
-        GBI.cmd_headless[G_QUAD] = GBI_Nop;
-        GBI.cmd_headless[G_LINE3D] = GBI_Nop;
-
-        GBI.cmd_headless[G_FILLRECT] = GBI_Nop;
-        GBI.cmd_headless[G_TEXRECT] = GBI_Nop;
-        GBI.cmd_headless[G_TEXRECTFLIP] = GBI_Nop;
-        GBI.cmd_headless[G_OBJ_RECTANGLE] = GBI_Nop;
-        GBI.cmd_headless[G_OBJ_RECTANGLE_R] = GBI_Nop;
-        GBI.cmd_headless[G_OBJ_SPRITE] = GBI_Nop;
-
-        GBI.cmd_headless[G_SETCOMBINE] = GBI_Nop;
-        GBI.cmd_headless[G_SETTILE] = GBI_Nop;
-        GBI.cmd_headless[G_SETTILESIZE] = GBI_Nop;
     }
 
     GBI.current = current;

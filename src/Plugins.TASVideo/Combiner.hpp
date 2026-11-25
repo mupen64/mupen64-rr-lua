@@ -239,29 +239,29 @@ extern struct CombinerInfo
     switch (color)                                                                                                     \
     {                                                                                                                  \
     case PRIMITIVE:                                                                                                    \
-        constant.r = gDP.primColor.r;                                                                                  \
-        constant.g = gDP.primColor.g;                                                                                  \
-        constant.b = gDP.primColor.b;                                                                                  \
+        constant.r = renderDP.primColor.r;                                                                             \
+        constant.g = renderDP.primColor.g;                                                                             \
+        constant.b = renderDP.primColor.b;                                                                             \
         break;                                                                                                         \
     case ENVIRONMENT:                                                                                                  \
-        constant.r = gDP.envColor.r;                                                                                   \
-        constant.g = gDP.envColor.g;                                                                                   \
-        constant.b = gDP.envColor.b;                                                                                   \
+        constant.r = renderDP.envColor.r;                                                                              \
+        constant.g = renderDP.envColor.g;                                                                              \
+        constant.b = renderDP.envColor.b;                                                                              \
         break;                                                                                                         \
     case PRIMITIVE_ALPHA:                                                                                              \
-        constant.r = gDP.primColor.a;                                                                                  \
-        constant.g = gDP.primColor.a;                                                                                  \
-        constant.b = gDP.primColor.a;                                                                                  \
+        constant.r = renderDP.primColor.a;                                                                             \
+        constant.g = renderDP.primColor.a;                                                                             \
+        constant.b = renderDP.primColor.a;                                                                             \
         break;                                                                                                         \
     case ENV_ALPHA:                                                                                                    \
-        constant.r = gDP.envColor.a;                                                                                   \
-        constant.g = gDP.envColor.a;                                                                                   \
-        constant.b = gDP.envColor.a;                                                                                   \
+        constant.r = renderDP.envColor.a;                                                                              \
+        constant.g = renderDP.envColor.a;                                                                              \
+        constant.b = renderDP.envColor.a;                                                                              \
         break;                                                                                                         \
     case PRIM_LOD_FRAC:                                                                                                \
-        constant.r = gDP.primColor.l;                                                                                  \
-        constant.g = gDP.primColor.l;                                                                                  \
-        constant.b = gDP.primColor.l;                                                                                  \
+        constant.r = renderDP.primColor.l;                                                                             \
+        constant.g = renderDP.primColor.l;                                                                             \
+        constant.b = renderDP.primColor.l;                                                                             \
         break;                                                                                                         \
     case ONE:                                                                                                          \
         constant.r = 1.0f;                                                                                             \
@@ -278,13 +278,13 @@ extern struct CombinerInfo
     switch (alpha)                                                                                                     \
     {                                                                                                                  \
     case PRIMITIVE_ALPHA:                                                                                              \
-        constant.a = gDP.primColor.a;                                                                                  \
+        constant.a = renderDP.primColor.a;                                                                             \
         break;                                                                                                         \
     case ENV_ALPHA:                                                                                                    \
-        constant.a = gDP.envColor.a;                                                                                   \
+        constant.a = renderDP.envColor.a;                                                                              \
         break;                                                                                                         \
     case PRIM_LOD_FRAC:                                                                                                \
-        constant.a = gDP.primColor.l;                                                                                  \
+        constant.a = renderDP.primColor.l;                                                                             \
         break;                                                                                                         \
     case ONE:                                                                                                          \
         constant.a = 1.0f;                                                                                             \

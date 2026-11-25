@@ -8,20 +8,21 @@
 #include "Common.hpp"
 #include "Main.hpp"
 #include <components/MGECompositor.hpp>
-#include <components/Dispatcher.hpp>
 
 #include <Common/Assert.hpp>
 
-#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <plugin/Plugin.hpp>
 #include <Common.Views/Messages.hpp>
 #include <string>
 
 constexpr auto control_class_name = "game_control";
+constexpr UINT resize_control_message = WM_USER + 1;
 constexpr DXGI_FORMAT texture_format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
 const std::string VERTEX_SHADER = R"(
@@ -70,7 +71,8 @@ struct MgeFrame
 {
     int32_t width{};
     int32_t height{};
-    void *buffer{};
+    std::shared_ptr<void> buffer;
+    uint64_t revision{};
 };
 
 struct MgeGpu
@@ -87,6 +89,7 @@ struct MgeGpu
     ComPtr<ID3D11SamplerState> sampler;
     ComPtr<ID3D11VertexShader> vs;
     ComPtr<ID3D11PixelShader> ps;
+    uint64_t presented_revision{};
 };
 
 struct MgeContext
@@ -94,29 +97,14 @@ struct MgeContext
     HWND hwnd{};
     std::mutex frame_mutex;
     MgeFrame frame;
-    std::mutex gpu_mutex;
-    MgeGpu gpu;
-    std::atomic<uint64_t> requested_size;
-    uint64_t last_requested_size{};
+    std::optional<uint64_t> video_sequence;
 };
 
 static MgeContext mge_context{};
+static MgeGpu mge_gpu;
 
-static uint64_t pack_size(const int32_t width, const int32_t height)
+static void create_d3d(MgeGpu &gpu, const HWND hwnd, const int32_t width, const int32_t height)
 {
-    return (static_cast<uint64_t>(static_cast<uint32_t>(width)) << 32) | static_cast<uint32_t>(height);
-}
-
-static void unpack_size(const uint64_t size, int32_t &width, int32_t &height)
-{
-    width = static_cast<int32_t>(size >> 32);
-    height = static_cast<int32_t>(size & 0xFFFFFFFF);
-}
-
-static void create_d3d(const HWND hwnd)
-{
-    auto &gpu = mge_context.gpu;
-
     UINT flags = 0;
 #if defined(_DEBUG)
     flags |= D3D11_CREATE_DEVICE_DEBUG;
@@ -147,8 +135,8 @@ static void create_d3d(const HWND hwnd)
     need(hr, "GetParent IDXGIFactory2");
 
     DXGI_SWAP_CHAIN_DESC1 scdesc = {};
-    scdesc.Width = 0;
-    scdesc.Height = 0;
+    scdesc.Width = (UINT)width;
+    scdesc.Height = (UINT)height;
     scdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     scdesc.SampleDesc.Count = 1;
     scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -201,16 +189,8 @@ static void create_d3d(const HWND hwnd)
     gpu.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-static void destroy_d3d()
+static void create_texture(MgeGpu &gpu, const int32_t w, const int32_t h)
 {
-    std::lock_guard gpu_lock(mge_context.gpu_mutex);
-    mge_context.gpu = {};
-}
-
-static void create_texture(const int32_t w, const int32_t h)
-{
-    auto &gpu = mge_context.gpu;
-
     gpu.srv.Reset();
     gpu.texture.Reset();
 
@@ -237,14 +217,8 @@ static void create_texture(const int32_t w, const int32_t h)
     need(hr, "CreateShaderResourceView");
 }
 
-static void upload_and_present()
+static HRESULT upload_and_present(MgeGpu &gpu, const MgeFrame &frame)
 {
-    auto &gpu = mge_context.gpu;
-    const auto &frame = mge_context.frame;
-
-    if (!gpu.swapchain || !gpu.rtv || !gpu.srv || !frame.buffer) return;
-    if (gpu.width != frame.width || gpu.height != frame.height) return;
-
     D3D11_BOX db = {};
     db.left = 0;
     db.top = 0;
@@ -253,7 +227,7 @@ static void upload_and_present()
     db.bottom = frame.height;
     db.back = 1;
 
-    gpu.context->UpdateSubresource(gpu.texture.Get(), 0, &db, frame.buffer, frame.width * 4, 0);
+    gpu.context->UpdateSubresource(gpu.texture.Get(), 0, &db, frame.buffer.get(), frame.width * 4, 0);
 
     ID3D11RenderTargetView *rtv = gpu.rtv.Get();
     gpu.context->OMSetRenderTargets(1, &rtv, nullptr);
@@ -269,26 +243,24 @@ static void upload_and_present()
     ID3D11ShaderResourceView *null_srv[1] = {nullptr};
     gpu.context->PSSetShaderResources(0, 1, null_srv);
 
-    gpu.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
+    return gpu.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
 }
 
-static void resize_gpu(const int32_t width, const int32_t height)
+static void resize_gpu(MgeGpu &gpu, const int32_t width, const int32_t height)
 {
-    auto &gpu = mge_context.gpu;
-
     g_view_logger->info("Creating MGE (D3D11) context with size {}x{}...", width, height);
 
-    MoveWindow(mge_context.hwnd, 0, 0, width, height, TRUE);
+    PostMessage(mge_context.hwnd, resize_control_message, width, height);
 
     if (!gpu.device)
     {
-        create_d3d(mge_context.hwnd);
+        create_d3d(gpu, mge_context.hwnd, width, height);
     }
     else
     {
         gpu.context->OMSetRenderTargets(0, nullptr, nullptr);
         gpu.rtv.Reset();
-        const HRESULT hr = gpu.swapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+        const HRESULT hr = gpu.swapchain->ResizeBuffers(0, (UINT)width, (UINT)height, DXGI_FORMAT_UNKNOWN, 0);
         need(hr, "ResizeBuffers");
     }
 
@@ -307,53 +279,36 @@ static void resize_gpu(const int32_t width, const int32_t height)
     viewport.MaxDepth = 1.0f;
     gpu.context->RSSetViewports(1, &viewport);
 
-    create_texture(width, height);
+    create_texture(gpu, width, height);
 
     gpu.width = width;
     gpu.height = height;
 }
 
-static void apply_requested_size()
+void MGECompositor::present()
 {
-    need(is_on_gui_thread(), "MGECompositor::apply_requested_size called from non-GUI thread");
-
-    int32_t width{};
-    int32_t height{};
-    unpack_size(mge_context.requested_size.load(), width, height);
-    if (width <= 0 || height <= 0) return;
-
-    std::lock_guard gpu_lock(mge_context.gpu_mutex);
-    auto &gpu = mge_context.gpu;
-
-    if (!gpu.device || gpu.width != width || gpu.height != height)
+    auto &gpu = mge_gpu;
+    MgeFrame frame;
     {
-        resize_gpu(width, height);
+        const std::unique_lock lock(mge_context.frame_mutex, std::try_to_lock);
+        if (!lock.owns_lock() || mge_context.frame.revision == gpu.presented_revision) return;
+        frame = mge_context.frame;
     }
 
-    std::lock_guard frame_lock(mge_context.frame_mutex);
-    upload_and_present();
+    if (!gpu.device || gpu.width != frame.width || gpu.height != frame.height)
+    {
+        resize_gpu(gpu, frame.width, frame.height);
+    }
+
+    if (SUCCEEDED(upload_and_present(gpu, frame)))
+    {
+        gpu.presented_revision = frame.revision;
+    }
 }
 
-static void present_from_emu_thread()
+void MGECompositor::release_render_resources()
 {
-    const auto &frame = mge_context.frame;
-
-    {
-        const std::unique_lock gpu_lock(mge_context.gpu_mutex, std::try_to_lock);
-        if (gpu_lock.owns_lock() && mge_context.gpu.device && mge_context.gpu.width == frame.width &&
-            mge_context.gpu.height == frame.height)
-        {
-            upload_and_present();
-            return;
-        }
-    }
-
-    const auto size = pack_size(frame.width, frame.height);
-    if (size == mge_context.last_requested_size) return;
-
-    mge_context.last_requested_size = size;
-    mge_context.requested_size.store(size);
-    g_main_ctx.dispatcher->post(apply_requested_size);
+    mge_gpu = {};
 }
 
 static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -366,9 +321,9 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return MA_NOACTIVATE;
     case WM_SIZE:
         return 0;
-    case WM_NCDESTROY:
-        destroy_d3d();
-        break;
+    case resize_control_message:
+        MoveWindow(hwnd, 0, 0, static_cast<int>(wparam), static_cast<int>(lparam), TRUE);
+        return 0;
     default:
         break;
     }
@@ -400,32 +355,41 @@ void MGECompositor::init()
     });
 }
 
+static size_t frame_size(const MgeFrame &frame)
+{
+    return static_cast<size_t>(frame.width) * frame.height * 4;
+}
+
+static void make_frame_writable(MgeFrame &frame, const bool resized)
+{
+    if (!resized && frame.buffer.use_count() == 1) return;
+
+    auto *buffer = _aligned_malloc(frame_size(frame), 16);
+    need(buffer, "Failed to allocate MGE buffers");
+    ZeroMemory(buffer, frame_size(frame));
+    frame.buffer = std::shared_ptr<void>(buffer, _aligned_free);
+}
+
 void MGECompositor::update_screen()
 {
+    std::lock_guard lock(mge_context.frame_mutex);
     int32_t width{};
     int32_t height{};
     PluginUtil::get_video_size(&width, &height);
     if (width <= 0 || height <= 0) return;
 
-    std::lock_guard frame_lock(mge_context.frame_mutex);
     auto &frame = mge_context.frame;
+    const bool resized = width != frame.width || height != frame.height;
 
-    if (width != frame.width || height != frame.height || !frame.buffer)
-    {
-        _aligned_free(frame.buffer);
+    const auto sequence = PluginUtil::get_video_sequence();
+    if (!resized && sequence && sequence == mge_context.video_sequence) return;
 
-        const auto buffer_size = static_cast<size_t>(width) * height * 4;
-        frame.buffer = _aligned_malloc(buffer_size, 16);
-        need(frame.buffer, "Failed to allocate MGE buffers");
-        ZeroMemory(frame.buffer, buffer_size);
-
-        frame.width = width;
-        frame.height = height;
-    }
-
-    PluginUtil::read_video(frame.buffer);
-
-    present_from_emu_thread();
+    frame.width = width;
+    frame.height = height;
+    make_frame_writable(frame, resized);
+    PluginUtil::read_video(frame.buffer.get());
+    mge_context.video_sequence = sequence;
+    ++frame.revision;
 }
 
 HWND MGECompositor::hwnd()
@@ -435,7 +399,7 @@ HWND MGECompositor::hwnd()
 
 void MGECompositor::get_video_size(int32_t *width, int32_t *height)
 {
-    std::lock_guard frame_lock(mge_context.frame_mutex);
+    std::lock_guard lock(mge_context.frame_mutex);
     if (width)
     {
         *width = mge_context.frame.width;
@@ -448,18 +412,20 @@ void MGECompositor::get_video_size(int32_t *width, int32_t *height)
 
 void MGECompositor::copy_video(void *buffer)
 {
-    std::lock_guard frame_lock(mge_context.frame_mutex);
+    std::lock_guard lock(mge_context.frame_mutex);
     const auto &frame = mge_context.frame;
     if (!frame.buffer) return;
-    memcpy(buffer, frame.buffer, static_cast<size_t>(frame.width) * frame.height * 4);
+    memcpy(buffer, frame.buffer.get(), frame_size(frame));
 }
 
 void MGECompositor::load_screen(void *data)
 {
-    std::lock_guard frame_lock(mge_context.frame_mutex);
-    const auto &frame = mge_context.frame;
+    std::lock_guard lock(mge_context.frame_mutex);
+    auto &frame = mge_context.frame;
     if (!frame.buffer) return;
-    memcpy(frame.buffer, data, static_cast<size_t>(frame.width) * frame.height * 4);
 
-    present_from_emu_thread();
+    make_frame_writable(frame, false);
+    memcpy(frame.buffer.get(), data, frame_size(frame));
+    mge_context.video_sequence = PluginUtil::get_video_sequence();
+    ++frame.revision;
 }

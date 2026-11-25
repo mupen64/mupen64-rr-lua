@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.hpp"
+#include "DrawList.hpp"
 #include "S2DEX.hpp"
 #include "S2DEX2.hpp"
 #include "F3D.hpp"
@@ -17,6 +19,7 @@ void S2DEX2_Init()
     // Set GeometryMode flags
     GBI_InitFlags(F3DEX2);
 
+    DrawList_StateChanged();
     gSP.geometryMode = 0;
 
     GBI.PCStackSize = 18;

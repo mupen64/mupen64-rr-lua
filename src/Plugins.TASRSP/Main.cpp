@@ -9,6 +9,7 @@
 #include "Core/Plugin.hpp"
 #include "Core/Types.hpp"
 #include "HLE.hpp"
+#include "Graphics/Graphics.hpp"
 #include <cstdint>
 #include <cstring>
 #include <exception>
@@ -66,6 +67,7 @@ void on_rom_closed()
 {
     memset(g_plugin->dmem, 0, 0x1000);
     memset(g_plugin->imem, 0, 0x1000);
+    Graphics_Reset();
     g_rsp_alive = false;
 }
 
@@ -75,12 +77,9 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 
     const auto task = (OSTask_t *)(g_plugin->dmem + 0xFC0);
 
-    const auto effective_speed_mode = g_plugin->get_effective_speed_mode();
-    const auto skip_audio = effective_speed_mode == CoreSpeedMode::UltraFastForward;
-
     if (task->type == 1 && task->data_ptr != 0)
     {
-        if (g_plugin->process_dlist) g_plugin->process_dlist();
+        Graphics_Process(g_plugin);
 
         g_plugin->sp_register->sp_status_reg |= 0x0203;
         if ((g_plugin->sp_register->sp_status_reg & 0x40) != 0) g_plugin->mi_register->mi_intr_reg |= 0x1;
@@ -135,7 +134,6 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 
     if (task->type == 2)
     {
-        if (skip_audio) return Cycles;
 
         ucode_load(task);
 

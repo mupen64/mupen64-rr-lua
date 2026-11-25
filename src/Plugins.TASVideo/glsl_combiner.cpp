@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "Common.hpp"
+#include "Renderer.hpp"
 #include "glsl_combiner.hpp"
 #include "Combiner.hpp"
 #include "OpenGL.hpp"
@@ -554,17 +555,22 @@ void GLSLCombiner_UpdateColors(GLSLProgram *program)
 {
     glUseProgram(program->program);
 
-    glUniform4f(program->locPrimColor, gDP.primColor.r, gDP.primColor.g, gDP.primColor.b, gDP.primColor.a);
-    glUniform4f(program->locEnvColor, gDP.envColor.r, gDP.envColor.g, gDP.envColor.b, gDP.envColor.a);
-    glUniform4f(program->locCenterColor, gDP.key.center.r, gDP.key.center.g, gDP.key.center.b, gDP.key.center.a);
-    glUniform4f(program->locScaleColor, gDP.key.scale.r, gDP.key.scale.g, gDP.key.scale.b, gDP.key.scale.a);
-    glUniform4f(program->locFogColor, gDP.fogColor.r, gDP.fogColor.g, gDP.fogColor.b, gDP.fogColor.a);
+    glUniform4f(
+        program->locPrimColor, renderDP.primColor.r, renderDP.primColor.g, renderDP.primColor.b, renderDP.primColor.a);
+    glUniform4f(
+        program->locEnvColor, renderDP.envColor.r, renderDP.envColor.g, renderDP.envColor.b, renderDP.envColor.a);
+    glUniform4f(program->locCenterColor, renderDP.key.center.r, renderDP.key.center.g, renderDP.key.center.b,
+        renderDP.key.center.a);
+    glUniform4f(
+        program->locScaleColor, renderDP.key.scale.r, renderDP.key.scale.g, renderDP.key.scale.b, renderDP.key.scale.a);
+    glUniform4f(
+        program->locFogColor, renderDP.fogColor.r, renderDP.fogColor.g, renderDP.fogColor.b, renderDP.fogColor.a);
 
-    glUniform1f(program->locLodFrac, gDP.primColor.l);
-    glUniform1f(program->locPrimLodFrac, gDP.primColor.l);
+    glUniform1f(program->locLodFrac, renderDP.primColor.l);
+    glUniform1f(program->locPrimLodFrac, renderDP.primColor.l);
 
-    glUniform1f(program->locK4, gDP.convert.k4 / 255.0f);
-    glUniform1f(program->locK5, gDP.convert.k5 / 255.0f);
+    glUniform1f(program->locK4, renderDP.convert.k4 / 255.0f);
+    glUniform1f(program->locK5, renderDP.convert.k5 / 255.0f);
 
     glUniform1f(program->locNoise, 0.5f);
 }

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.hpp"
 #include "F3D.hpp"
 #include "F3DEX.hpp"
 #include "F3DEX2.hpp"

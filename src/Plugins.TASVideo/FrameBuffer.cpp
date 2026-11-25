@@ -5,6 +5,7 @@
  */
 
 #include "Common.hpp"
+#include "Renderer.hpp"
 #include "N64.hpp"
 #include "OpenGL.hpp"
 #include "FrameBuffer.hpp"
@@ -138,75 +139,6 @@ void FrameBuffer_Destroy()
     while (frameBuffer.bottom) FrameBuffer_RemoveBottom();
 }
 
-void FrameBuffer_SaveBuffer(u32 address, u16 size, u16 width, u16 height)
-{
-    FrameBuffer *current = frameBuffer.top;
-
-    // Search through saved frame buffers
-    while (current != NULL)
-    {
-        if ((current->startAddress == address) && (current->width == width) && (current->height == height) &&
-            (current->size == size))
-        {
-            if ((current->scaleX != OGL.scaleX) || (current->scaleY != OGL.scaleY))
-            {
-                FrameBuffer_Remove(current);
-                break;
-            }
-
-            glBindTexture(GL_TEXTURE_2D, current->texture->glName);
-            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, OGL.height - current->texture->height,
-                current->texture->width, current->texture->height);
-            *(u32 *)&RDRAM[current->startAddress] = current->startAddress;
-
-            current->changed = TRUE;
-
-            FrameBuffer_MoveToTop(current);
-
-            gSP.changed |= CHANGED_TEXTURE;
-            return;
-        }
-        current = current->lower;
-    }
-
-    // Wasn't found, create a new one
-    current = FrameBuffer_AddTop();
-
-    current->startAddress = address;
-    current->endAddress = address + ((width * height << size >> 1) - 1);
-    current->width = width;
-    current->height = height;
-    current->size = size;
-    current->scaleX = OGL.scaleX;
-    current->scaleY = OGL.scaleY;
-
-    current->texture->width = current->width * OGL.scaleX;
-    current->texture->height = current->height * OGL.scaleY;
-    current->texture->clampS = 1;
-    current->texture->clampT = 1;
-    current->texture->address = current->startAddress;
-    current->texture->clampWidth = current->width;
-    current->texture->clampHeight = current->height;
-    current->texture->frameBufferTexture = TRUE;
-    current->texture->maskS = 0;
-    current->texture->maskT = 0;
-    current->texture->mirrorS = 0;
-    current->texture->mirrorT = 0;
-    current->texture->realWidth = pow2(current->width * OGL.scaleX);
-    current->texture->realHeight = pow2(current->height * OGL.scaleY);
-    current->texture->textureBytes = current->texture->realWidth * current->texture->realHeight * 4;
-    cache.cachedBytes += current->texture->textureBytes;
-
-    glBindTexture(GL_TEXTURE_2D, current->texture->glName);
-    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, OGL.height - current->texture->height, current->texture->realWidth,
-        current->texture->realHeight, 0);
-    *(u32 *)&RDRAM[current->startAddress] = current->startAddress;
-
-    current->changed = TRUE;
-
-    gSP.changed |= CHANGED_TEXTURE;
-}
-
 void FrameBuffer_RenderBuffer(u32 address)
 {
     FrameBuffer *current = frameBuffer.top;
@@ -219,8 +151,8 @@ void FrameBuffer_RenderBuffer(u32 address)
 
             FrameBuffer_MoveToTop(current);
 
-            gSP.changed |= CHANGED_TEXTURE | CHANGED_VIEWPORT;
-            gDP.changed |= CHANGED_COMBINE;
+            renderSP.changed |= CHANGED_TEXTURE | CHANGED_VIEWPORT;
+            renderDP.changed |= CHANGED_COMBINE;
             return;
         }
         current = current->lower;
@@ -237,8 +169,8 @@ void FrameBuffer_RestoreBuffer(u32 address, u16 size, u16 width)
         {
             FrameBuffer_MoveToTop(current);
 
-            gSP.changed |= CHANGED_TEXTURE | CHANGED_VIEWPORT;
-            gDP.changed |= CHANGED_COMBINE;
+            renderSP.changed |= CHANGED_TEXTURE | CHANGED_VIEWPORT;
+            renderDP.changed |= CHANGED_COMBINE;
             return;
         }
         current = current->lower;
@@ -263,31 +195,31 @@ void FrameBuffer_ActivateBufferTexture(s16 t, FrameBuffer *buffer)
     buffer->texture->scaleS = OGL.scaleX / (float)buffer->texture->realWidth;
     buffer->texture->scaleT = OGL.scaleY / (float)buffer->texture->realHeight;
 
-    if (gSP.textureTile[t]->shifts > 10)
-        buffer->texture->shiftScaleS = (float)(1 << (16 - gSP.textureTile[t]->shifts));
-    else if (gSP.textureTile[t]->shifts > 0)
-        buffer->texture->shiftScaleS = 1.0f / (float)(1 << gSP.textureTile[t]->shifts);
+    if (renderSP.textureTile[t]->shifts > 10)
+        buffer->texture->shiftScaleS = (float)(1 << (16 - renderSP.textureTile[t]->shifts));
+    else if (renderSP.textureTile[t]->shifts > 0)
+        buffer->texture->shiftScaleS = 1.0f / (float)(1 << renderSP.textureTile[t]->shifts);
     else
         buffer->texture->shiftScaleS = 1.0f;
 
-    if (gSP.textureTile[t]->shiftt > 10)
-        buffer->texture->shiftScaleT = (float)(1 << (16 - gSP.textureTile[t]->shiftt));
-    else if (gSP.textureTile[t]->shiftt > 0)
-        buffer->texture->shiftScaleT = 1.0f / (float)(1 << gSP.textureTile[t]->shiftt);
+    if (renderSP.textureTile[t]->shiftt > 10)
+        buffer->texture->shiftScaleT = (float)(1 << (16 - renderSP.textureTile[t]->shiftt));
+    else if (renderSP.textureTile[t]->shiftt > 0)
+        buffer->texture->shiftScaleT = 1.0f / (float)(1 << renderSP.textureTile[t]->shiftt);
     else
         buffer->texture->shiftScaleT = 1.0f;
 
-    if (gDP.loadType == LOADTYPE_TILE)
+    if (renderDP.loadType == LOADTYPE_TILE)
     {
-        buffer->texture->offsetS = gDP.loadTile->uls;
+        buffer->texture->offsetS = renderDP.loadTile->uls;
         buffer->texture->offsetT =
-            (float)buffer->height - (gDP.loadTile->ult + (gDP.textureImage.address - buffer->startAddress) /
-                                                             (buffer->width << buffer->size >> 1));
+            (float)buffer->height - (renderDP.loadTile->ult + (renderDP.textureImage.address - buffer->startAddress) /
+                                                                  (buffer->width << buffer->size >> 1));
     }
     else
     {
         buffer->texture->offsetS = 0.0f;
-        buffer->texture->offsetT = (float)buffer->height - (gDP.textureImage.address - buffer->startAddress) /
+        buffer->texture->offsetT = (float)buffer->height - (renderDP.textureImage.address - buffer->startAddress) /
                                                                (buffer->width << buffer->size >> 1);
     }
 

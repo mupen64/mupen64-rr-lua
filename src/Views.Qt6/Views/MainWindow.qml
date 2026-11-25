@@ -100,7 +100,6 @@ ApplicationWindow {
 
         // Graphics integration
         onGfxRequestSize: (width, height) => coreDisplay.reserveSize(width, height)
-        onUpdateScreen: coreDisplay.readPixels()
 
         // Dialog service
         onOpenInfoDialog: function (id: int, title: string, content: string, type: int) {
@@ -138,21 +137,16 @@ ApplicationWindow {
         paths.screenshotDir: settingsPaths.screenshotDir
         paths.backupDir: settingsPaths.backupDir
 
-
         Component.onDestruction: {
-            dialogService.discardDialogs()
+            dialogService.discardDialogs();
         }
     }
 
     RomManager {
         id: romList
 
-
         function reloadWithSettings() {
-            reloadRomList(
-                String(settingsPaths.romDir),
-                false
-            );
+            reloadRomList(String(settingsPaths.romDir), false);
         }
 
         Component.onCompleted: {
@@ -161,17 +155,24 @@ ApplicationWindow {
     }
 
     // invalidateVisuals() must be called on each UI frame to
-    // request a new frame from the core
+    // request a new frame from the core, which is then read on demand
     FrameAnimation {
         running: core.launched
-        onTriggered: core.invalidateVisuals()
+        onTriggered: {
+            core.invalidateVisuals();
+            coreDisplay.readPixels();
+        }
     }
 
     // Settings objects
     // =====================================
 
-    SettingsCore { id: settingsCore }
-    SettingsPaths { id: settingsPaths }
+    SettingsCore {
+        id: settingsCore
+    }
+    SettingsPaths {
+        id: settingsPaths
+    }
     SettingsActions {
         id: settingsActions
 
@@ -189,7 +190,7 @@ ApplicationWindow {
 
     DialogService {
         id: dialogService
-        onDialogFinished: function(id, result) {
+        onDialogFinished: function (id, result) {
             core.finishDialog(id, result);
         }
     }

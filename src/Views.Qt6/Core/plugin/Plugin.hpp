@@ -99,8 +99,6 @@ class PluginSet
     Plugin m_audio;
     Plugin m_input;
     Plugin m_rsp;
-
-    M64RRSpec::PtrProcessDList m_video_process_dlist;
 };
 
 // namespace PluginUtil

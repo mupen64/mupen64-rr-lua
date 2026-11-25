@@ -22,7 +22,6 @@ struct r4300
 {
     std::atomic<CoreSpeedMode> desired_speed_mode{CoreSpeedMode::Normal};
     std::atomic<CoreSpeedMode> effective_speed_mode{CoreSpeedMode::Normal};
-    std::atomic<bool> screen_invalidated_vi{true};
     std::atomic<bool> screen_invalidated_frame{true};
     std::atomic<size_t> frame_advance_outstanding{0};
     bool frame_skipped{false};
@@ -96,7 +95,7 @@ void vr_frame_advance(size_t count);
 void vr_pause_emu();
 void vr_resume_emu();
 bool vr_get_paused();
-bool vr_get_frame_advance();
+size_t vr_get_frame_advance();
 void vr_wait_increment();
 void vr_wait_decrement();
 CoreResult vr_start_rom(std::filesystem::path path);

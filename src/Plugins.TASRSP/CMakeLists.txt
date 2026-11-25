@@ -5,6 +5,54 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR_Plugins_TASRSP STATIC
+    "Graphics/3DMath.hpp"
+    "Graphics/CRC.cpp"
+    "Graphics/CRC.hpp"
+    "Graphics/Common.hpp"
+    "Graphics/DepthBuffer.cpp"
+    "Graphics/DepthBuffer.hpp"
+    "Graphics/DrawList.cpp"
+    "Graphics/DrawList.hpp"
+    "Graphics/F3D.cpp"
+    "Graphics/F3D.hpp"
+    "Graphics/F3DDKR.cpp"
+    "Graphics/F3DDKR.hpp"
+    "Graphics/F3DEX.cpp"
+    "Graphics/F3DEX.hpp"
+    "Graphics/F3DEX2.cpp"
+    "Graphics/F3DEX2.hpp"
+    "Graphics/F3DEX3.cpp"
+    "Graphics/F3DEX3.hpp"
+    "Graphics/F3DPD.cpp"
+    "Graphics/F3DPD.hpp"
+    "Graphics/F3DWRUS.cpp"
+    "Graphics/F3DWRUS.hpp"
+    "Graphics/GBI.cpp"
+    "Graphics/GBI.hpp"
+    "Graphics/Graphics.hpp"
+    "Graphics/L3D.cpp"
+    "Graphics/L3D.hpp"
+    "Graphics/L3DEX.cpp"
+    "Graphics/L3DEX.hpp"
+    "Graphics/L3DEX2.cpp"
+    "Graphics/L3DEX2.hpp"
+    "Graphics/N64.hpp"
+    "Graphics/RDP.cpp"
+    "Graphics/RDP.hpp"
+    "Graphics/RSP.cpp"
+    "Graphics/RSP.hpp"
+    "Graphics/S2DEX.cpp"
+    "Graphics/S2DEX.hpp"
+    "Graphics/S2DEX2.cpp"
+    "Graphics/S2DEX2.hpp"
+    "Graphics/Types.hpp"
+    "Graphics/VI.cpp"
+    "Graphics/VI.hpp"
+    "Graphics/convert.hpp"
+    "Graphics/gDP.cpp"
+    "Graphics/gDP.hpp"
+    "Graphics/gSP.cpp"
+    "Graphics/gSP.hpp"
     "ADPCM.hpp"
     "Config.hpp"
     "HLE.hpp"
@@ -41,3 +89,9 @@ target_compile_definitions(Mupen64RR_Plugins_TASRSP PRIVATE
     PLUGIN_NAMESPACE=BuiltinTAS::TASRSP
     # g_plugin=M64RRBuiltinTASRSPPlugin
 )
+
+if (MUPEN64RR_BUILD_WIN32)
+    target_sources(Mupen64RR_Plugins_TASRSP PRIVATE Graphics/MicrocodeDialog_Win32.cpp Graphics/Resource.rc)
+    target_compile_definitions(Mupen64RR_Plugins_TASRSP PRIVATE TASRSP_MICROCODE_DIALOG)
+    target_link_libraries(Mupen64RR_Plugins_TASRSP PRIVATE Mupen64RR_Plugins_Win32_Common)
+endif()

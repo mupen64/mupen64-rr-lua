@@ -464,21 +464,6 @@ void gen_interrupt()
         // The next graphics task starts a new frame. See the frame_counted comment in dma_sp_write's caller.
         g_r4300.frame_counted = false;
 
-        // NOTE: It's ok to not update screen when lagging, doesn't cause any obvious issues
-        const auto skip = g_r4300.frame_skipped;
-
-        // Special case: a frame advance operation ending forces an invalidation, because we want to guarantee that the
-        // graphics will be visible.
-        const bool last_frame_advance = g_r4300.frame_advance_outstanding == 1;
-        const bool needs_update = g_r4300.screen_invalidated_vi || last_frame_advance;
-        const bool update = !g_core->cfg->render_throttling || (needs_update && !skip);
-
-        if (update)
-        {
-            g_core->update_screen();
-            g_r4300.screen_invalidated_vi = false;
-        }
-
         // Detecting when a new frame is being presented requires checking if the VI origin changed.
         const bool vi_origin_changed = last_vi_origin != vi_register.vi_origin;
 
