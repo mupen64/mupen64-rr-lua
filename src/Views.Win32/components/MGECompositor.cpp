@@ -8,12 +8,15 @@
 #include "Common.hpp"
 #include "Main.hpp"
 #include <components/MGECompositor.hpp>
+#include <components/Dispatcher.hpp>
 
 #include <Common/Assert.hpp>
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <mutex>
 #include <plugin/Plugin.hpp>
 #include <Common.Views/Messages.hpp>
 #include <string>
@@ -63,15 +66,17 @@ const std::string FRAGMENT_SHADER = R"(
     }
     )";
 
-struct MgeContext
+struct MgeFrame
 {
-    int32_t last_width{};
-    int32_t last_height{};
     int32_t width{};
     int32_t height{};
-    void *rgba_buffer{};
+    void *buffer{};
+};
 
-    HWND hwnd{};
+struct MgeGpu
+{
+    int32_t width{};
+    int32_t height{};
 
     ComPtr<ID3D11Device> device;
     ComPtr<ID3D11DeviceContext> context;
@@ -84,10 +89,34 @@ struct MgeContext
     ComPtr<ID3D11PixelShader> ps;
 };
 
+struct MgeContext
+{
+    HWND hwnd{};
+    std::mutex frame_mutex;
+    MgeFrame frame;
+    std::mutex gpu_mutex;
+    MgeGpu gpu;
+    std::atomic<uint64_t> requested_size;
+    uint64_t last_requested_size{};
+};
+
 static MgeContext mge_context{};
+
+static uint64_t pack_size(const int32_t width, const int32_t height)
+{
+    return (static_cast<uint64_t>(static_cast<uint32_t>(width)) << 32) | static_cast<uint32_t>(height);
+}
+
+static void unpack_size(const uint64_t size, int32_t &width, int32_t &height)
+{
+    width = static_cast<int32_t>(size >> 32);
+    height = static_cast<int32_t>(size & 0xFFFFFFFF);
+}
 
 static void create_d3d(const HWND hwnd)
 {
+    auto &gpu = mge_context.gpu;
+
     UINT flags = 0;
 #if defined(_DEBUG)
     flags |= D3D11_CREATE_DEVICE_DEBUG;
@@ -102,11 +131,11 @@ static void create_d3d(const HWND hwnd)
         ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &device_raw, nullptr, &context_raw);
     need(hr, "D3D11CreateDevice");
 
-    mge_context.device.Attach(device_raw);
-    mge_context.context.Attach(context_raw);
+    gpu.device.Attach(device_raw);
+    gpu.context.Attach(context_raw);
 
     ComPtr<IDXGIDevice> dxgi_device;
-    hr = mge_context.device.As(&dxgi_device);
+    hr = gpu.device.As(&dxgi_device);
     need(hr, "Get IDXGIDevice");
 
     ComPtr<IDXGIAdapter> adapter;
@@ -130,10 +159,10 @@ static void create_d3d(const HWND hwnd)
     scdesc.Flags = 0;
 
     IDXGISwapChain1 *swap_raw{};
-    hr = factory->CreateSwapChainForHwnd(mge_context.device.Get(), hwnd, &scdesc, nullptr, nullptr, &swap_raw);
+    hr = factory->CreateSwapChainForHwnd(gpu.device.Get(), hwnd, &scdesc, nullptr, nullptr, &swap_raw);
     need(hr, "CreateSwapChainForHwnd");
 
-    mge_context.swapchain.Attach(swap_raw);
+    gpu.swapchain.Attach(swap_raw);
 
     factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
@@ -146,7 +175,7 @@ static void create_d3d(const HWND hwnd)
     sampdesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     sampdesc.MinLOD = 0;
     sampdesc.MaxLOD = D3D11_FLOAT32_MAX;
-    hr = mge_context.device->CreateSamplerState(&sampdesc, &mge_context.sampler);
+    hr = gpu.device->CreateSamplerState(&sampdesc, &gpu.sampler);
     need(hr, "CreateSamplerState");
 
     ComPtr<ID3DBlob> vs_blob, ps_blob, err_blob;
@@ -158,41 +187,32 @@ static void create_d3d(const HWND hwnd)
         &ps_blob, &err_blob);
     need(hr, "D3DCompile");
 
-    hr = mge_context.device->CreateVertexShader(
-        vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr, &mge_context.vs);
+    hr = gpu.device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr, &gpu.vs);
     need(hr, "CreateVertexShader");
 
-    hr = mge_context.device->CreatePixelShader(
-        ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr, &mge_context.ps);
+    hr = gpu.device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr, &gpu.ps);
     need(hr, "CreatePixelShader");
 
     // Set up the pipeline
-    mge_context.context->VSSetShader(mge_context.vs.Get(), nullptr, 0);
-    mge_context.context->PSSetShader(mge_context.ps.Get(), nullptr, 0);
-    ID3D11SamplerState *samps[] = {mge_context.sampler.Get()};
-    mge_context.context->PSSetSamplers(0, 1, samps);
-    mge_context.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    gpu.context->VSSetShader(gpu.vs.Get(), nullptr, 0);
+    gpu.context->PSSetShader(gpu.ps.Get(), nullptr, 0);
+    ID3D11SamplerState *samps[] = {gpu.sampler.Get()};
+    gpu.context->PSSetSamplers(0, 1, samps);
+    gpu.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 static void destroy_d3d()
 {
-    mge_context.srv.Reset();
-    mge_context.texture.Reset();
-    mge_context.rtv.Reset();
-    mge_context.swapchain.Reset();
-    mge_context.context.Reset();
-    mge_context.device.Reset();
-    mge_context.vs.Reset();
-    mge_context.ps.Reset();
-    mge_context.sampler.Reset();
+    std::lock_guard gpu_lock(mge_context.gpu_mutex);
+    mge_context.gpu = {};
 }
 
-static void ensure_texture_exists_with_size(const int w, const int h)
+static void create_texture(const int32_t w, const int32_t h)
 {
-    if (mge_context.texture && mge_context.last_width == w && mge_context.last_height == h) return;
+    auto &gpu = mge_context.gpu;
 
-    mge_context.srv.Reset();
-    mge_context.texture.Reset();
+    gpu.srv.Reset();
+    gpu.texture.Reset();
 
     D3D11_TEXTURE2D_DESC desc = {};
     desc.Width = (UINT)w;
@@ -206,78 +226,77 @@ static void ensure_texture_exists_with_size(const int w, const int h)
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 
-    HRESULT hr = mge_context.device->CreateTexture2D(&desc, nullptr, &mge_context.texture);
+    HRESULT hr = gpu.device->CreateTexture2D(&desc, nullptr, &gpu.texture);
     need(hr, "CreateTexture2D");
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srvd = {};
     srvd.Format = desc.Format;
     srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srvd.Texture2D.MipLevels = 1;
-    hr = mge_context.device->CreateShaderResourceView(mge_context.texture.Get(), &srvd, &mge_context.srv);
+    hr = gpu.device->CreateShaderResourceView(gpu.texture.Get(), &srvd, &gpu.srv);
     need(hr, "CreateShaderResourceView");
-
-    mge_context.last_width = w;
-    mge_context.last_height = h;
 }
 
-static void upload_rgb32_buffer()
+static void upload_and_present()
 {
-    if (!mge_context.texture) return;
+    auto &gpu = mge_context.gpu;
+    const auto &frame = mge_context.frame;
+
+    if (!gpu.swapchain || !gpu.rtv || !gpu.srv || !frame.buffer) return;
+    if (gpu.width != frame.width || gpu.height != frame.height) return;
 
     D3D11_BOX db = {};
     db.left = 0;
     db.top = 0;
     db.front = 0;
-    db.right = mge_context.width;
-    db.bottom = mge_context.height;
+    db.right = frame.width;
+    db.bottom = frame.height;
     db.back = 1;
 
-    mge_context.context->UpdateSubresource(
-        mge_context.texture.Get(), 0, &db, mge_context.rgba_buffer, mge_context.width * 4, 0);
-}
+    gpu.context->UpdateSubresource(gpu.texture.Get(), 0, &db, frame.buffer, frame.width * 4, 0);
 
-static void render_and_present()
-{
-    need(mge_context.context && mge_context.rtv && mge_context.srv, "D3D context not initialized");
-
-    ID3D11RenderTargetView *rtv = mge_context.rtv.Get();
-    mge_context.context->OMSetRenderTargets(1, &rtv, nullptr);
+    ID3D11RenderTargetView *rtv = gpu.rtv.Get();
+    gpu.context->OMSetRenderTargets(1, &rtv, nullptr);
 
     // Bind SRV
-    ID3D11ShaderResourceView *srvs[] = {mge_context.srv.Get()};
-    mge_context.context->PSSetShaderResources(0, 1, srvs);
+    ID3D11ShaderResourceView *srvs[] = {gpu.srv.Get()};
+    gpu.context->PSSetShaderResources(0, 1, srvs);
 
     // Draw fullscreen quad
-    mge_context.context->Draw(6, 0);
+    gpu.context->Draw(6, 0);
 
     // Unbind SRV to allow UpdateSubresource
     ID3D11ShaderResourceView *null_srv[1] = {nullptr};
-    mge_context.context->PSSetShaderResources(0, 1, null_srv);
+    gpu.context->PSSetShaderResources(0, 1, null_srv);
 
-    mge_context.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
+    gpu.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
 }
 
-static void recreate_mge_context_d3d()
+static void resize_gpu(const int32_t width, const int32_t height)
 {
-    g_view_logger->info("Creating MGE (D3D11) context with size {}x{}...", mge_context.width, mge_context.height);
+    auto &gpu = mge_context.gpu;
 
-    if (!mge_context.device)
+    g_view_logger->info("Creating MGE (D3D11) context with size {}x{}...", width, height);
+
+    MoveWindow(mge_context.hwnd, 0, 0, width, height, TRUE);
+
+    if (!gpu.device)
     {
         create_d3d(mge_context.hwnd);
     }
     else
     {
-        mge_context.context->OMSetRenderTargets(0, nullptr, nullptr);
-        mge_context.rtv.Reset();
-        const HRESULT hr = mge_context.swapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+        gpu.context->OMSetRenderTargets(0, nullptr, nullptr);
+        gpu.rtv.Reset();
+        const HRESULT hr = gpu.swapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
         need(hr, "ResizeBuffers");
     }
 
     ComPtr<ID3D11Texture2D> back_buffer;
-    HRESULT hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
+    HRESULT hr = gpu.swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
     need(hr, "GetBuffer");
 
-    hr = mge_context.device->CreateRenderTargetView(back_buffer.Get(), nullptr, &mge_context.rtv);
+    hr = gpu.device->CreateRenderTargetView(back_buffer.Get(), nullptr, &gpu.rtv);
     need(hr, "CreateRenderTargetView");
 
     D3D11_TEXTURE2D_DESC desc;
@@ -286,18 +305,55 @@ static void recreate_mge_context_d3d()
     viewport.Width = static_cast<float>(desc.Width);
     viewport.Height = static_cast<float>(desc.Height);
     viewport.MaxDepth = 1.0f;
-    mge_context.context->RSSetViewports(1, &viewport);
+    gpu.context->RSSetViewports(1, &viewport);
 
-    _aligned_free(mge_context.rgba_buffer);
+    create_texture(width, height);
 
-    const auto buffer_size = mge_context.width * mge_context.height * 4;
+    gpu.width = width;
+    gpu.height = height;
+}
 
-    mge_context.rgba_buffer = _aligned_malloc(buffer_size, 16);
-    need(mge_context.rgba_buffer, "Failed to allocate MGE buffers");
+static void apply_requested_size()
+{
+    need(is_on_gui_thread(), "MGECompositor::apply_requested_size called from non-GUI thread");
 
-    ZeroMemory(mge_context.rgba_buffer, buffer_size);
+    int32_t width{};
+    int32_t height{};
+    unpack_size(mge_context.requested_size.load(), width, height);
+    if (width <= 0 || height <= 0) return;
 
-    ensure_texture_exists_with_size(mge_context.width, mge_context.height);
+    std::lock_guard gpu_lock(mge_context.gpu_mutex);
+    auto &gpu = mge_context.gpu;
+
+    if (!gpu.device || gpu.width != width || gpu.height != height)
+    {
+        resize_gpu(width, height);
+    }
+
+    std::lock_guard frame_lock(mge_context.frame_mutex);
+    upload_and_present();
+}
+
+static void present_from_emu_thread()
+{
+    const auto &frame = mge_context.frame;
+
+    {
+        const std::unique_lock gpu_lock(mge_context.gpu_mutex, std::try_to_lock);
+        if (gpu_lock.owns_lock() && mge_context.gpu.device && mge_context.gpu.width == frame.width &&
+            mge_context.gpu.height == frame.height)
+        {
+            upload_and_present();
+            return;
+        }
+    }
+
+    const auto size = pack_size(frame.width, frame.height);
+    if (size == mge_context.last_requested_size) return;
+
+    mge_context.last_requested_size = size;
+    mge_context.requested_size.store(size);
+    g_main_ctx.dispatcher->post(apply_requested_size);
 }
 
 static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -346,21 +402,30 @@ void MGECompositor::init()
 
 void MGECompositor::update_screen()
 {
-    PluginUtil::get_video_size(&mge_context.width, &mge_context.height);
+    int32_t width{};
+    int32_t height{};
+    PluginUtil::get_video_size(&width, &height);
+    if (width <= 0 || height <= 0) return;
 
-    if (mge_context.width != mge_context.last_width || mge_context.height != mge_context.last_height)
+    std::lock_guard frame_lock(mge_context.frame_mutex);
+    auto &frame = mge_context.frame;
+
+    if (width != frame.width || height != frame.height || !frame.buffer)
     {
-        MoveWindow(mge_context.hwnd, 0, 0, mge_context.width, mge_context.height, TRUE);
-        recreate_mge_context_d3d();
+        _aligned_free(frame.buffer);
+
+        const auto buffer_size = static_cast<size_t>(width) * height * 4;
+        frame.buffer = _aligned_malloc(buffer_size, 16);
+        need(frame.buffer, "Failed to allocate MGE buffers");
+        ZeroMemory(frame.buffer, buffer_size);
+
+        frame.width = width;
+        frame.height = height;
     }
 
-    PluginUtil::read_video(mge_context.rgba_buffer);
+    PluginUtil::read_video(frame.buffer);
 
-    upload_rgb32_buffer();
-    render_and_present();
-
-    mge_context.last_width = mge_context.width;
-    mge_context.last_height = mge_context.height;
+    present_from_emu_thread();
 }
 
 HWND MGECompositor::hwnd()
@@ -370,26 +435,31 @@ HWND MGECompositor::hwnd()
 
 void MGECompositor::get_video_size(int32_t *width, int32_t *height)
 {
+    std::lock_guard frame_lock(mge_context.frame_mutex);
     if (width)
     {
-        *width = mge_context.width;
+        *width = mge_context.frame.width;
     }
     if (height)
     {
-        *height = mge_context.height;
+        *height = mge_context.frame.height;
     }
 }
 
 void MGECompositor::copy_video(void *buffer)
 {
-    memcpy(buffer, mge_context.rgba_buffer, mge_context.width * mge_context.height * 4);
+    std::lock_guard frame_lock(mge_context.frame_mutex);
+    const auto &frame = mge_context.frame;
+    if (!frame.buffer) return;
+    memcpy(buffer, frame.buffer, static_cast<size_t>(frame.width) * frame.height * 4);
 }
 
 void MGECompositor::load_screen(void *data)
 {
-    memcpy(mge_context.rgba_buffer, data, mge_context.width * mge_context.height * 4);
+    std::lock_guard frame_lock(mge_context.frame_mutex);
+    const auto &frame = mge_context.frame;
+    if (!frame.buffer) return;
+    memcpy(frame.buffer, data, static_cast<size_t>(frame.width) * frame.height * 4);
 
-    ensure_texture_exists_with_size(mge_context.width, mge_context.height);
-    upload_rgb32_buffer();
-    render_and_present();
+    present_from_emu_thread();
 }
