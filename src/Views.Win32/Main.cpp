@@ -27,6 +27,7 @@
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_init.h>
 #include <array>
+#include <atomic>
 #include <cctype>
 #include <clocale>
 #include <cstddef>
@@ -37,6 +38,7 @@
 #include <format>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <plugin/Plugin.hpp>
@@ -80,7 +82,9 @@ static bool g_sdl_initialized = false;
 
 constexpr UINT_PTR sdl_timer_id = 1;
 constexpr UINT render_stopped_message = WM_USER + 27;
+constexpr UINT default_refresh_rate = 60;
 std::jthread g_render_thread;
+static std::atomic_bool g_refresh_rate_invalidated{true};
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
 DWORD g_ui_thread_id{};
@@ -671,6 +675,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         return 0;
     }
     case WM_MOVE: {
+        g_refresh_rate_invalidated = true;
         PluginUtil::move_screen(wParam, lParam);
 
         if (IsIconic(g_main_ctx.hwnd))
@@ -690,6 +695,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_SIZE: {
+        g_refresh_rate_invalidated = true;
         SendMessage(Statusbar::hwnd(), WM_SIZE, 0, 0);
         Toasts::relayout();
         RECT rect{};
@@ -716,6 +722,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         break;
     }
+    case WM_DISPLAYCHANGE:
+        g_refresh_rate_invalidated = true;
+        return DefWindowProc(hwnd, Message, wParam, lParam);
     case WM_FOCUS_MAIN_WINDOW:
         SetFocus(g_main_ctx.hwnd);
         break;
@@ -834,10 +843,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+UINT Main::screen_refresh_rate()
+{
+    static std::mutex mutex;
+    static UINT refresh_rate = default_refresh_rate;
+    const std::lock_guard lock(mutex);
+    if (!g_refresh_rate_invalidated.exchange(false)) return refresh_rate;
+
+    const HMONITOR monitor = MonitorFromWindow(g_main_ctx.hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFOEX monitor_info{};
+    monitor_info.cbSize = sizeof(monitor_info);
+    DEVMODE display_mode{};
+    display_mode.dmSize = sizeof(display_mode);
+
+    refresh_rate = default_refresh_rate;
+    if (monitor && GetMonitorInfo(monitor, &monitor_info) &&
+        EnumDisplaySettings(monitor_info.szDevice, ENUM_CURRENT_SETTINGS, &display_mode) &&
+        display_mode.dmDisplayFrequency > 1)
+        refresh_rate = display_mode.dmDisplayFrequency;
+
+    return refresh_rate;
+}
+
 static void render_thread_proc(const std::stop_token &stop)
 {
     using clock = std::chrono::steady_clock;
-    constexpr auto period = std::chrono::nanoseconds(1'000'000'000 / 60);
 
     auto next = clock::now();
     while (!stop.stop_requested())
@@ -847,7 +877,9 @@ static void render_thread_proc(const std::stop_token &stop)
         PluginUtil::refresh_screen();
         MGECompositor::present();
 
-        next += period;
+        const auto refresh_rate =
+            PluginUtil::video_reads_on_demand() ? Main::screen_refresh_rate() : default_refresh_rate;
+        next += std::chrono::duration_cast<clock::duration>(std::chrono::duration<double>(1.0 / refresh_rate));
         next = std::max(next, clock::now());
         std::this_thread::sleep_until(next);
     }

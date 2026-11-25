@@ -40,9 +40,6 @@ LRESULT CALLBACK LuaRendererManager::main_window_subclass_proc(
     case WM_SIZE:
         for (const auto &realm : LuaRealmManager::instance().realms())
             for (const auto &window : realm->windows) window->reposition();
-        [[fallthrough]];
-    case WM_DISPLAYCHANGE:
-        instance().m_refresh_rate_invalidated = true;
         break;
     case WM_NCDESTROY:
         RemoveWindowSubclass(hwnd, main_window_subclass_proc, id);
@@ -106,32 +103,12 @@ void LuaRendererManager::draw(bool force)
     }
 }
 
-UINT LuaRendererManager::get_screen_refresh_rate()
-{
-
-    if (!m_refresh_rate_invalidated.exchange(false)) return m_cached_refresh_rate;
-
-    const HMONITOR monitor = MonitorFromWindow(g_main_ctx.hwnd, MONITOR_DEFAULTTONEAREST);
-
-    m_cached_refresh_rate = 60;
-    MONITORINFOEX monitor_info{};
-    monitor_info.cbSize = sizeof(monitor_info);
-    DEVMODE display_mode{};
-    display_mode.dmSize = sizeof(display_mode);
-    if (monitor && GetMonitorInfo(monitor, &monitor_info) &&
-        EnumDisplaySettings(monitor_info.szDevice, ENUM_CURRENT_SETTINGS, &display_mode) &&
-        display_mode.dmDisplayFrequency > 1)
-        m_cached_refresh_rate = display_mode.dmDisplayFrequency;
-
-    return m_cached_refresh_rate;
-}
-
 void LuaRendererManager::draw_clock_proc(std::stop_token stop_token)
 {
     while (!stop_token.stop_requested())
     {
         g_main_ctx.dispatcher->invoke([]() { instance().draw(false); });
-        std::this_thread::sleep_for(std::chrono::duration<double>(1.0 / instance().get_screen_refresh_rate()));
+        std::this_thread::sleep_for(std::chrono::duration<double>(1.0 / Main::screen_refresh_rate()));
     }
 }
 

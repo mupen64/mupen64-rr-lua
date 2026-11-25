@@ -121,5 +121,7 @@ namespace Main
  */
 void init_sdl();
 
+UINT screen_refresh_rate();
+
 void request_size(uint32_t width, uint32_t height);
 } // namespace Main
