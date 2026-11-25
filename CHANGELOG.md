@@ -24,7 +24,8 @@
 - Fixed inaccurate flipped rectangle rendering in TASVideo.
 - Fixed certain text in Super Mario 64 (PAL) appearing garbled with TASVideo.
 - Fixed scrolling dialogs having their text overflow due to improper scissor handling with TASVideo.
-- Fixed TASVideo SM64 black bars hack sometimes failing during fade transitions.  
+- Fixed TASVideo SM64 black bars hack sometimes failing during fade transitions.
+- Potentially fixed spurious swapchain initialization errors on ROM start.
 
 ## ⚡ Performance
 

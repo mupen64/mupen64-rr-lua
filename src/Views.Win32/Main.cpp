@@ -79,6 +79,7 @@ MainContext g_main_ctx{};
 static bool g_sdl_initialized = false;
 
 constexpr UINT_PTR sdl_timer_id = 1;
+constexpr UINT render_stopped_message = WM_USER + 27;
 std::jthread g_render_thread;
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
@@ -752,9 +753,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             if (realm->main_window && !realm->main_window->close()) realm->stop();
         // This needs the UI thread to still be responsive.
         LuaRendererManager::instance().stop();
-        DestroyWindow(hwnd);
-        break;
+        // Keep pumping messages while DXGI finishes using the compositor window.
+        g_render_thread.request_stop();
+        return 0;
     }
+    case render_stopped_message:
+        DestroyWindow(hwnd);
+        return 0;
     case WM_CLOSE:
         if (!confirm_user_exit()) return 0;
 
@@ -840,11 +845,15 @@ static void render_thread_proc(const std::stop_token &stop)
         g_main_ctx.core_ctx->vr_invalidate_visuals();
         PluginUtil::invalidate_screen();
         PluginUtil::refresh_screen();
+        MGECompositor::present();
 
         next += period;
         next = std::max(next, clock::now());
         std::this_thread::sleep_until(next);
     }
+
+    MGECompositor::release_render_resources();
+    PostMessage(g_main_ctx.hwnd, render_stopped_message, 0, 0);
 }
 
 static CoreResult init_core()
