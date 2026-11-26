@@ -252,7 +252,6 @@ void EmuContext::frameAdvance(size_t frames)
     m_core_ctx->vr_frame_advance(frames);
 }
 
-
 // Lua-related state
 // ============================================
 
