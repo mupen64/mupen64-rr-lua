@@ -184,6 +184,17 @@ class EmuContext : public QQuickItem
     Q_INVOKABLE EmuPaths *paths();
 
     /**
+     * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
+     * @note May reallocate the image if needed.
+     *
+     * @param image The image to read to.
+     */
+    void readVideoOutput(QImage &image);
+
+    // Lua-related state
+    // ============================================
+
+    /**
      * @brief Queues a controller input override, to be applied by the next `callbacks.input` invocation.
      * Used by Lua scripts (joypad.set).
      */
@@ -193,14 +204,6 @@ class EmuContext : public QQuickItem
      * @brief Returns the last controller input observed by the Lua engine for a port (joypad.get).
      */
     CoreButtons luaControllerInput(int32_t controller) const;
-
-    /**
-     * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
-     * @note May reallocate the image if needed.
-     *
-     * @param image The image to read to.
-     */
-    void readVideoOutput(QImage &image);
 
     // Dialog service
     // ============================================
@@ -335,6 +338,9 @@ class EmuContext : public QQuickItem
     int registerDialog(std::move_only_function<void(int)> finish);
     void cancelPendingDialogs();
     void startDialogForCoreResult(CoreResult result);
+
+    // Lua-related state
+    // ============================================
 
     /** Applies a pending Lua controller input override on the core thread (see LuaInstance::setJoypad()). */
     bool luaApplyControllerInput(int32_t controller, CoreButtons *input);

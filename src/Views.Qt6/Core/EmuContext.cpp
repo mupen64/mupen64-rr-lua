@@ -252,25 +252,9 @@ void EmuContext::frameAdvance(size_t frames)
     m_core_ctx->vr_frame_advance(frames);
 }
 
-bool EmuContext::luaApplyControllerInput(int32_t controller, CoreButtons *input)
-{
-    if (controller < 0 || controller >= 4) return false;
 
-    std::lock_guard lock(m_lua_controller_mutex);
-    if (!m_lua_controller_overwrite[controller]) return false;
-
-    *input = m_lua_controller_data[controller];
-    m_lua_controller_overwrite[controller] = false;
-    return true;
-}
-
-void EmuContext::luaStashControllerInput(int32_t controller, const CoreButtons &input)
-{
-    if (controller < 0 || controller >= 4) return;
-
-    std::lock_guard lock(m_lua_controller_mutex);
-    m_lua_last_controller_data[controller] = input;
-}
+// Lua-related state
+// ============================================
 
 void EmuContext::luaSetControllerInput(int32_t controller, CoreButtons keys)
 {
@@ -539,13 +523,6 @@ void EmuContext::setWaitAtMovieEnd(bool value)
     waitAtMovieEndChanged(value);
 }
 
-int EmuContext::registerDialog(std::move_only_function<void(int)> finish)
-{
-    const int id = m_next_dialog_id++;
-    m_pending_dialogs.emplace(id, PendingDialog{std::move(finish)});
-    return id;
-}
-
 std::future<size_t> EmuContext::startMultiDialog(
     QAnyStringView title, QAnyStringView content, const QList<QString> &choices, QmlCoreMessageTone::Value type)
 {
@@ -602,14 +579,6 @@ void EmuContext::finishDialog(int id, int result)
     finish(result);
 }
 
-void EmuContext::cancelPendingDialogs()
-{
-    auto pending = std::move(m_pending_dialogs);
-    m_pending_dialogs.clear();
-
-    for (auto &entry : pending) entry.second.finish(-1);
-}
-
 // Misc. functions
 // ==========================
 EmuOptions *EmuContext::options()
@@ -660,6 +629,21 @@ void EmuContext::setRomManager(RomManager *value)
 // Internal utilities
 // ==========================
 
+int EmuContext::registerDialog(std::move_only_function<void(int)> finish)
+{
+    const int id = m_next_dialog_id++;
+    m_pending_dialogs.emplace(id, PendingDialog{std::move(finish)});
+    return id;
+}
+
+void EmuContext::cancelPendingDialogs()
+{
+    auto pending = std::move(m_pending_dialogs);
+    m_pending_dialogs.clear();
+
+    for (auto &entry : pending) entry.second.finish(-1);
+}
+
 void EmuContext::startDialogForCoreResult(CoreResult result)
 {
     using namespace Qt::Literals;
@@ -673,6 +657,29 @@ void EmuContext::startDialogForCoreResult(CoreResult result)
 
     auto title = u"%1 Error %2"_s.arg(module, static_cast<int32_t>(result));
     this->startInfoDialog(title, error, QmlCoreMessageTone::Error);
+}
+
+// Lua-related state
+// ============================================
+
+bool EmuContext::luaApplyControllerInput(int32_t controller, CoreButtons *input)
+{
+    if (controller < 0 || controller >= 4) return false;
+
+    std::lock_guard lock(m_lua_controller_mutex);
+    if (!m_lua_controller_overwrite[controller]) return false;
+
+    *input = m_lua_controller_data[controller];
+    m_lua_controller_overwrite[controller] = false;
+    return true;
+}
+
+void EmuContext::luaStashControllerInput(int32_t controller, const CoreButtons &input)
+{
+    if (controller < 0 || controller >= 4) return;
+
+    std::lock_guard lock(m_lua_controller_mutex);
+    m_lua_last_controller_data[controller] = input;
 }
 
 void CoreUtil::clear_plugin_funcs(CoreParams &params)
