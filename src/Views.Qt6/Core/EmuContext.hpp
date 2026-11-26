@@ -184,6 +184,17 @@ class EmuContext : public QQuickItem
     Q_INVOKABLE EmuPaths *paths();
 
     /**
+     * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
+     * @note May reallocate the image if needed.
+     *
+     * @param image The image to read to.
+     */
+    void readVideoOutput(QImage &image);
+
+    // Lua-related state
+    // ============================================
+
+    /**
      * @brief Queues a controller input override, to be applied by the next `callbacks.input` invocation.
      * Used by Lua scripts (joypad.set).
      */
