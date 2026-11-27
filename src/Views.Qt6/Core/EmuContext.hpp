@@ -205,28 +205,6 @@ class EmuContext : public QQuickItem
      */
     CoreButtons luaControllerInput(int32_t controller) const;
 
-    /**
-     * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
-     * @note May reallocate the image if needed.
-     *
-     * @param image The image to read to.
-     */
-    void readVideoOutput(QImage &image);
-
-    // Lua-related state
-    // ============================================
-
-    /**
-     * @brief Queues a controller input override, to be applied by the next `callbacks.input` invocation.
-     * Used by Lua scripts (joypad.set).
-     */
-    void luaSetControllerInput(int32_t controller, CoreButtons keys);
-
-    /**
-     * @brief Returns the last controller input observed by the Lua engine for a port (joypad.get).
-     */
-    CoreButtons luaControllerInput(int32_t controller) const;
-
     // Dialog service
     // ============================================
 
