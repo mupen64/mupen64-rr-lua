@@ -85,7 +85,13 @@ ApplicationWindow {
                 anchors.top: parent.top
                 anchors.left: parent.left
             }
-            // TODO: Lua canvas management (separate PR)
+
+            LuaCanvasManager {
+                id: luaCanvasManager
+                anchors.fill: coreDisplay
+                display: coreDisplay
+                instanceManager: luaManager
+            }
         }
     }
 
